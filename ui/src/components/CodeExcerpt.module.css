@@ -1,0 +1,93 @@
+.code {
+  margin: 0;
+  border-radius: var(--radius);
+  background: var(--code-ground);
+  color: var(--code-ink);
+  overflow: hidden;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--code-edge);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--code-comment);
+}
+
+.legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--code-ink);
+}
+
+.swatch {
+  width: 8px;
+  height: 8px;
+  background: var(--code-comment);
+}
+
+.body {
+  margin: 0;
+  padding: 8px 0;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.7;
+}
+
+.line {
+  display: flex;
+  gap: 12px;
+  padding-right: 12px;
+  width: max-content;
+  min-width: 100%;
+  white-space: pre;
+}
+
+.number {
+  flex: none;
+  width: 32px;
+  text-align: right;
+  color: var(--code-number);
+  user-select: none;
+}
+
+.marked {
+  background: var(--code-mark);
+  box-shadow: inset 2px 0 var(--code-comment);
+}
+
+.marked .number { color: var(--code-ink); }
+
+/* La marge des étapes : le numéro de l'étape du déroulé, en pastille cyan sur la ligne qui la porte. */
+.badge {
+  flex: none;
+  width: 18px;
+  margin-left: -6px;
+  user-select: none;
+}
+
+.badge b {
+  display: inline-block;
+  min-width: 15px;
+  padding: 0 3px;
+  border-radius: var(--radius-tight);
+  background: var(--code-comment);
+  color: var(--code-ground);
+  font-size: 9.5px;
+  font-weight: 500;
+  line-height: 15px;
+  text-align: center;
+}
+
+.badge b[data-focus] { background: var(--code-keyword); box-shadow: 0 0 0 2px var(--code-comment); }
+
+.plain { color: inherit; }
+.comment { color: var(--code-comment); }
+.string { color: var(--code-string); }
+.keyword { color: var(--code-keyword); font-weight: 500; }

@@ -1,0 +1,22 @@
+id: docker
+name: Dockerfile
+deploys: true
+tech: [docker]
+files: [Dockerfile, "*.Dockerfile", "Dockerfile.*"]
+script: docker.ts
+rules: |
+  % Le fichier lancé, pour un contexte de build donné : écrit par un manifeste, ou deviné.
+  dk_at(F, N, P, T) :- dk_ctx(F, P), docker_rel(F, N, R), T = cat(P, R), present(T).
+  dk_at(F, N, P, T) :- dk_ctx(F, P), docker_pkg(F, N, J, S), K = cat(P, J), pkg_script(K, S, T), present(T).
+
+  % Un manifeste qui construit ce Dockerfile écrit son contexte ; il lance ce que lance l'image, sauf s'il donne sa propre commande.
+  dk_ctx(D, P) :- unit_dockerfile(C, S, D), unit_ctx(C, S, P).
+  dk_built(D) :- unit_dockerfile(_, _, D).
+  unit_runs(C, S, T) :- unit_dockerfile(C, S, D), unit_ctx(C, S, P), dk_at(D, _, P, T), not unit_command(C, S).
+
+  % Un Dockerfile seul : le contexte n'est pas écrit ; le dossier du Dockerfile d'abord, la racine du dépôt sinon.
+  dk_ctx(F, P) :- dockerfile_pre(F, P).
+  dk_ctx(F, "") :- dockerfile_pre(F, _).
+  dk_found(F) :- dockerfile_pre(F, P), dk_at(F, _, P, _).
+  unit_runs(F, N, T) :- dockerfile_pre(F, P), dk_at(F, N, P, T), not dk_built(F).
+  unit_runs(F, N, T) :- dk_at(F, N, "", T), not dk_found(F), not dk_built(F).

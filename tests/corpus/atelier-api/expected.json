@@ -1,0 +1,457 @@
+{
+  "_about": "Ce que VisionLayer doit trouver dans atelier-api. Chaque élément porte sa preuve (fichier:ligne). Écrit à la main ; ce n'est jamais une sortie de VisionLayer.",
+  "deployables": [
+    {
+      "name": "API",
+      "kind": "service",
+      "runs": "src/server.ts",
+      "proof": [
+        "Dockerfile:9",
+        "fly.toml:7"
+      ],
+      "machines": 2,
+      "machines_proof": "fly.toml:15"
+    },
+    {
+      "name": "Worker emails",
+      "kind": "worker",
+      "runs": "src/email/main.ts",
+      "proof": [
+        "fly.toml:8",
+        "docker-compose.yml:22"
+      ]
+    },
+    {
+      "name": "App web",
+      "kind": "client",
+      "runs": "web/index.html",
+      "proof": [
+        "web/index.html:10"
+      ]
+    }
+  ],
+  "entrypoints": [
+    {
+      "method": "POST",
+      "path": "/auth/signup",
+      "handler": "signup",
+      "declared_at": "src/app.ts:36",
+      "handler_at": "src/auth/signup.ts:17",
+      "called_by_web_app": true
+    },
+    {
+      "method": "POST",
+      "path": "/auth/login",
+      "handler": "login",
+      "declared_at": "src/app.ts:37",
+      "handler_at": "src/auth/login.ts:13",
+      "called_by_web_app": true
+    },
+    {
+      "method": "POST",
+      "path": "/auth/reset",
+      "handler": "requestReset",
+      "declared_at": "src/app.ts:38",
+      "handler_at": "src/auth/reset.ts:13",
+      "called_by_web_app": false
+    },
+    {
+      "method": "GET",
+      "path": "/workshops",
+      "handler": "listWorkshops",
+      "declared_at": "src/app.ts:40",
+      "handler_at": "src/workshops/list.ts:6",
+      "called_by_web_app": true
+    },
+    {
+      "method": "GET",
+      "path": "/workshops/:id",
+      "handler": "getWorkshop",
+      "declared_at": "src/app.ts:41",
+      "handler_at": "src/workshops/get.ts:7",
+      "called_by_web_app": true
+    },
+    {
+      "method": "POST",
+      "path": "/bookings",
+      "handler": "createBooking",
+      "declared_at": "src/app.ts:43",
+      "handler_at": "src/bookings/create.ts:14",
+      "called_by_web_app": true
+    },
+    {
+      "method": "GET",
+      "path": "/bookings/:id",
+      "handler": "getBooking",
+      "declared_at": "src/app.ts:44",
+      "handler_at": "src/bookings/get.ts:8",
+      "called_by_web_app": true
+    },
+    {
+      "method": "PATCH",
+      "path": "/bookings/:id",
+      "handler": "cancelBooking",
+      "declared_at": "src/app.ts:45",
+      "handler_at": "src/bookings/update.ts:13",
+      "called_by_web_app": true
+    },
+    {
+      "method": "POST",
+      "path": "/bookings/:id/transfer",
+      "handler": "transferBooking",
+      "declared_at": "src/app.ts:46",
+      "handler_at": "src/bookings/transfer.ts:12",
+      "called_by_web_app": false
+    },
+    {
+      "method": "POST",
+      "path": "/payments",
+      "handler": "createPayment",
+      "declared_at": "src/app.ts:48",
+      "handler_at": "src/payments/create.ts:13",
+      "called_by_web_app": true
+    },
+    {
+      "method": "POST",
+      "path": "/payments/:id/refund",
+      "handler": "refundPayment",
+      "declared_at": "src/app.ts:49",
+      "handler_at": "src/payments/refund.ts:11",
+      "called_by_web_app": false
+    },
+    {
+      "method": "POST",
+      "path": "/webhooks/stripe",
+      "handler": "stripeWebhook",
+      "declared_at": "src/app.ts:31",
+      "handler_at": "src/webhooks/stripe.ts:14",
+      "called_by": "Stripe"
+    },
+    {
+      "method": "POST",
+      "path": "/reviews",
+      "handler": "createReview",
+      "declared_at": "src/app.ts:51",
+      "handler_at": "src/reviews/create.ts:9",
+      "called_by_web_app": false
+    },
+    {
+      "method": "GET",
+      "path": "/admin/export",
+      "handler": "exportUsers",
+      "declared_at": "src/app.ts:52",
+      "handler_at": "src/admin/export.ts:7",
+      "called_by_web_app": false
+    },
+    {
+      "method": "GET",
+      "path": "/healthz",
+      "handler": "health",
+      "declared_at": "src/app.ts:53",
+      "handler_at": "src/health.ts:4",
+      "called_by": "plateforme (sonde de santé)"
+    }
+  ],
+  "entrypoints_count": 15,
+  "entrypoints_without_screen": [
+    "POST /auth/login",
+    "PATCH /bookings/:id",
+    "POST /auth/reset",
+    "POST /bookings/:id/transfer",
+    "POST /payments/:id/refund",
+    "POST /reviews",
+    "GET /admin/export"
+  ],
+  "scheduled": {
+    "where": "processus de l'API (donc sur chacune des 2 machines)",
+    "proof": "src/server.ts:7",
+    "jobs": [
+      {
+        "name": "expireHolds",
+        "cron": "* * * * *",
+        "proof": "src/jobs/index.ts:13"
+      },
+      {
+        "name": "sendReminders",
+        "cron": "0 8 * * *",
+        "proof": "src/jobs/index.ts:14"
+      },
+      {
+        "name": "purgeSessions",
+        "cron": "0 3 * * *",
+        "proof": "src/jobs/index.ts:15"
+      }
+    ]
+  },
+  "datastores": [
+    {
+      "name": "Postgres",
+      "tables": 14,
+      "schema": "src/db/schema.ts",
+      "client": "src/db.ts:6"
+    },
+    {
+      "name": "Redis",
+      "role": "file emails (BullMQ)",
+      "client": "src/queue.ts:7"
+    }
+  ],
+  "tables": {
+    "bookings": {
+      "written_by": [
+        "createBooking",
+        "cancelBooking",
+        "transferBooking",
+        "confirmBooking",
+        "markPaymentFailed",
+        "markRefunded",
+        "expireHolds"
+      ],
+      "status_values": [
+        "pending",
+        "confirmed",
+        "cancelled",
+        "refunded",
+        "on_hold"
+      ],
+      "never_written_status": "on_hold",
+      "status_declared_at": "src/db/schema.ts:35"
+    },
+    "payments": {
+      "written_by": [
+        "createPayment",
+        "confirmBooking",
+        "markPaymentFailed",
+        "markRefunded"
+      ],
+      "comment": "src/db/schema.ts:71",
+      "unique": "src/db/schema.ts:75"
+    },
+    "audit_log": {
+      "written_by": [
+        "déclencheur audit_bookings"
+      ],
+      "proof": "drizzle/0001_audit.sql:12"
+    },
+    "processed_events": {
+      "written_by": [
+        "stripeWebhook"
+      ]
+    },
+    "email_jobs": {
+      "written_by": [
+        "sendEmail (worker)"
+      ]
+    },
+    "settings": {
+      "written_by": [],
+      "read_by": []
+    }
+  },
+  "externals": [
+    {
+      "name": "Stripe",
+      "client": "src/stripe.ts:4",
+      "timeout_ms": 10000,
+      "retries": 2,
+      "proof": "src/stripe.ts:5"
+    },
+    {
+      "name": "Resend",
+      "client": "src/email/resend.ts:11",
+      "only_inside": "src/email"
+    },
+    {
+      "name": "SMTP (nodemailer)",
+      "client": "src/email/smtp.ts:9"
+    }
+  ],
+  "contract": {
+    "name": "EmailSender",
+    "declared_at": "src/email/types.ts:40",
+    "operation": "send",
+    "implementations": [
+      "src/email/resend.ts:7",
+      "src/email/smtp.ts:5",
+      "src/email/console.ts:6"
+    ],
+    "factory": "src/email/index.ts:12",
+    "chosen_by_env": "EMAIL_PROVIDER",
+    "rule_comment": "src/email/index.ts:1"
+  },
+  "flows": {
+    "createPayment": {
+      "steps": [
+        {
+          "what": "exige un utilisateur",
+          "at": "src/payments/create.ts:14",
+          "refusal": "401 unauthenticated"
+        },
+        {
+          "what": "la réservation attend un paiement",
+          "at": "src/payments/create.ts:19",
+          "refusal": "409 not_pending"
+        },
+        {
+          "what": "garde dépassée",
+          "at": "src/payments/create.ts:22",
+          "refusal": "410 hold_expired",
+          "tested": false
+        },
+        {
+          "what": "reprend un paiement commencé",
+          "at": "src/payments/create.ts:26"
+        },
+        {
+          "what": "crée le paiement chez Stripe avec une clé par réservation",
+          "at": "src/payments/create.ts:36",
+          "refusal": "502 payment_unavailable",
+          "tested": true,
+          "test": "src/payments/keys.spec.ts"
+        },
+        {
+          "what": "renvoie le clientSecret",
+          "at": "src/payments/create.ts:45"
+        }
+      ],
+      "called_by": "web/src/api/payments.ts:11"
+    }
+  },
+  "behaviours": {
+    "race": {
+      "what": "expireHolds lit les réservations pending puis les annule sans revérifier l'état : un paiement confirmé entre-temps est annulé",
+      "read": "src/jobs/expire.ts:15",
+      "write": "src/jobs/expire.ts:20",
+      "other_writer": "src/bookings/confirm.ts:28",
+      "protection": null
+    },
+    "protections": [
+      {
+        "kind": "verrou",
+        "at": "src/bookings/create.ts:21"
+      },
+      {
+        "kind": "verrou",
+        "at": "src/bookings/transfer.ts:17"
+      },
+      {
+        "kind": "contrainte unique",
+        "at": "src/db/schema.ts:55"
+      },
+      {
+        "kind": "contrainte unique",
+        "at": "src/db/schema.ts:75"
+      },
+      {
+        "kind": "idempotence Stripe",
+        "at": "src/payments/create.ts:36"
+      },
+      {
+        "kind": "événements déjà traités",
+        "at": "src/webhooks/stripe.ts:25"
+      },
+      {
+        "kind": "jobId BullMQ",
+        "at": "src/bookings/confirm.ts:31"
+      }
+    ],
+    "write_then_enqueue": {
+      "what": "la réservation est écrite, puis mise en file hors transaction : si Redis tombe, le client reçoit 500 mais la réservation existe",
+      "write_ends": "src/bookings/create.ts:38",
+      "enqueue": "src/bookings/create.ts:39"
+    },
+    "scheduled_on_every_machine": {
+      "what": "les 3 tâches planifiées tournent dans l'API, déployée sur 2 machines : chacune tourne deux fois",
+      "proof": [
+        "src/server.ts:7",
+        "fly.toml:15"
+      ]
+    },
+    "out_of_order_webhook": {
+      "what": "payment_failed repasse la réservation à pending sans regarder son état : un échec reçu après un succès annule la confirmation",
+      "at": "src/webhooks/stripe.ts:53",
+      "contradicts": "src/webhooks/stripe.ts:2"
+    },
+    "failures": [
+      {
+        "dependency": "Postgres",
+        "timeout": null,
+        "retries": 0,
+        "proof": "src/db.ts:6"
+      },
+      {
+        "dependency": "Redis",
+        "timeout": null,
+        "retries": 0,
+        "proof": "src/queue.ts:7"
+      },
+      {
+        "dependency": "Stripe",
+        "timeout_ms": 10000,
+        "retries": 2,
+        "proof": "src/stripe.ts:5"
+      },
+      {
+        "dependency": "email (file)",
+        "retries": 5,
+        "proof": "src/email/retry.ts:6"
+      }
+    ],
+    "error_tracking": null,
+    "personal_data": {
+      "fields": [
+        "users.email",
+        "users.name",
+        "users.phone",
+        "sessions.ip",
+        "bookings.notes"
+      ],
+      "logged": {
+        "what": "le corps de l'inscription (email et mot de passe) part dans les logs",
+        "at": "src/auth/signup.ts:19"
+      },
+      "sent_to": {
+        "Stripe": "montant et bookingId seulement (pas d'email)",
+        "Resend": [
+          "users.email",
+          "users.name",
+          "bookings.notes (rappel)"
+        ]
+      },
+      "retention": {
+        "sessions": "30 jours (purgeSessions)",
+        "others": "sans limite déclarée"
+      },
+      "account_deletion": null
+    },
+    "unguarded_admin": {
+      "what": "GET /admin/export exporte les clients avec requireUser seulement, sans requireAdmin",
+      "at": "src/admin/export.ts:8"
+    },
+    "dead_code": [
+      {
+        "symbol": "importCsv",
+        "at": "src/import/csv.ts:6"
+      }
+    ],
+    "contradiction": {
+      "doc": "README.md:24",
+      "code": "src/config.ts:3",
+      "what": "le README dit 15 minutes, le code garde 30"
+    }
+  },
+  "env_vars_by_name_only": [
+    "PORT",
+    "DATABASE_URL",
+    "REDIS_URL",
+    "STRIPE_SECRET_KEY",
+    "STRIPE_WEBHOOK_SECRET",
+    "EMAIL_PROVIDER",
+    "RESEND_API_KEY",
+    "SMTP_URL",
+    "SESSION_SECRET",
+    "WEB_ORIGIN",
+    "LOG_LEVEL"
+  ],
+  "_entrypoints_note": "called_by_web_app : le code de web/src/api appelle la route. entrypoints_without_screen : aucun écran (pages, hooks) n'importe la fonction cliente, ou il n'y en a pas."
+}

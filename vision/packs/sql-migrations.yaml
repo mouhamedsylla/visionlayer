@@ -1,0 +1,9 @@
+id: sql-migrations
+name: Migrations SQL
+tech: [postgresql]
+files: ["*.sql"]
+script: sql-migrations.ts
+rules: |
+  % Un déclencheur posé sur une table, et les tables que son code écrit (sa fonction, ou son corps écrit sur place).
+  entity_trigger(N, Name, Ops) :- sql_trigger(_, Name, Ops, N, _).
+  trigger_writes(Name, E) :- sql_trigger(_, Name, _, _, Fn), sql_routine_access(_, Fn, write, E).

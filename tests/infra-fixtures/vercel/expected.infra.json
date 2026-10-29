@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "environments": [],
+  "components": [
+    {
+      "id": "external:api.acme.io",
+      "name": "api.acme.io",
+      "kind": "other",
+      "source": {
+        "kind": "extracted",
+        "path": "vercel.json",
+        "line": 5
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "externe": "oui"
+      }
+    },
+    {
+      "id": "platform:vercel",
+      "name": "Vercel",
+      "kind": "platform",
+      "source": {
+        "kind": "extracted",
+        "path": "vercel.json",
+        "line": 1
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "regions": "cdg1",
+        "framework": "nextjs",
+        "rewrites": "1",
+        "redirects": "1",
+        "functions": "app/api/**/*.ts",
+        "crons": "/api/cron/digest @ 0 6 * * *"
+      }
+    }
+  ],
+  "links": [
+    {
+      "from": "platform:vercel",
+      "to": "external:api.acme.io",
+      "kind": "routes_to",
+      "source": {
+        "kind": "extracted",
+        "path": "vercel.json",
+        "line": 5
+      },
+      "environments": [
+        "all"
+      ],
+      "label": "/api/:path*"
+    }
+  ],
+  "envVars": [
+    {
+      "name": "ANALYTICS_ID",
+      "source": {
+        "kind": "extracted",
+        "path": "vercel.json",
+        "line": 12
+      },
+      "environments": [
+        "all"
+      ],
+      "component": "platform:vercel"
+    },
+    {
+      "name": "NEXT_PUBLIC_API_URL",
+      "source": {
+        "kind": "extracted",
+        "path": "vercel.json",
+        "line": 12
+      },
+      "environments": [
+        "all"
+      ],
+      "component": "platform:vercel"
+    }
+  ],
+  "sources": [
+    {
+      "path": "vercel.json",
+      "format": "vercel"
+    }
+  ],
+  "warnings": []
+}

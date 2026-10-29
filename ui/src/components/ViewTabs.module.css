@@ -1,0 +1,32 @@
+.tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--ground-veil);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.tab:hover {
+  border-color: var(--blue-edge);
+}
+
+.on {
+  border-color: var(--night);
+  background: var(--night);
+  color: var(--surface);
+}
+
+.count {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  opacity: 0.75;
+}

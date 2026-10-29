@@ -1,0 +1,4 @@
+id: html
+name: Page web
+files: ["**/*.html"]
+script: html.ts

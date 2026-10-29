@@ -1,0 +1,122 @@
+{
+  "version": 1,
+  "environments": [
+    "staging",
+    "prod"
+  ],
+  "components": [
+    {
+      "id": "external:api.acme.io",
+      "name": "api.acme.io",
+      "kind": "other",
+      "source": {
+        "kind": "extracted",
+        "path": "netlify.toml",
+        "line": 19
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "externe": "oui"
+      }
+    },
+    {
+      "id": "platform:netlify",
+      "name": "Netlify",
+      "kind": "platform",
+      "source": {
+        "kind": "extracted",
+        "path": "netlify.toml",
+        "line": 1
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "command": "pnpm build",
+        "publish": "dist",
+        "functions": "netlify/functions",
+        "contexts": "prod, staging",
+        "redirects": "2"
+      },
+      "perEnv": {
+        "prod": {
+          "command": "pnpm build --mode prod"
+        }
+      }
+    }
+  ],
+  "links": [
+    {
+      "from": "platform:netlify",
+      "to": "external:api.acme.io",
+      "kind": "routes_to",
+      "source": {
+        "kind": "extracted",
+        "path": "netlify.toml",
+        "line": 19
+      },
+      "environments": [
+        "all"
+      ],
+      "label": "/api/*"
+    }
+  ],
+  "envVars": [
+    {
+      "name": "API_URL",
+      "source": {
+        "kind": "extracted",
+        "path": "netlify.toml",
+        "line": 13
+      },
+      "environments": [
+        "prod",
+        "staging"
+      ],
+      "component": "platform:netlify"
+    },
+    {
+      "name": "NODE_VERSION",
+      "source": {
+        "kind": "extracted",
+        "path": "netlify.toml",
+        "line": 7
+      },
+      "environments": [
+        "all"
+      ],
+      "component": "platform:netlify"
+    },
+    {
+      "name": "SENTRY_DSN",
+      "source": {
+        "kind": "extracted",
+        "path": "netlify.toml",
+        "line": 14
+      },
+      "environments": [
+        "prod"
+      ],
+      "component": "platform:netlify"
+    }
+  ],
+  "sources": [
+    {
+      "path": "netlify.toml",
+      "format": "netlify"
+    }
+  ],
+  "warnings": [
+    {
+      "code": "env_only",
+      "message": "variable SENTRY_DSN présente uniquement en prod",
+      "source": {
+        "kind": "extracted",
+        "path": "netlify.toml",
+        "line": 14
+      }
+    }
+  ]
+}

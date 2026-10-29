@@ -1,0 +1,231 @@
+{
+  "version": 1,
+  "environments": [
+    "prod"
+  ],
+  "components": [
+    {
+      "id": "database:postgres",
+      "name": "postgres",
+      "kind": "database",
+      "source": {
+        "kind": "extracted",
+        "path": "k8s/base/app.yaml",
+        "line": 41
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "kind": "StatefulSet",
+        "image": "postgres:16",
+        "replicas": "1",
+        "namespace": "shop",
+        "ports": "5432",
+        "service": "postgres (5432→5432)"
+      }
+    },
+    {
+      "id": "gateway:shop",
+      "name": "shop",
+      "kind": "gateway",
+      "source": {
+        "kind": "extracted",
+        "path": "k8s/base/ingress.yaml",
+        "line": 1
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "kind": "Ingress",
+        "domains": "shop.acme.io",
+        "class": "nginx",
+        "tls": "oui"
+      }
+    },
+    {
+      "id": "job:nightly-report",
+      "name": "nightly-report",
+      "kind": "job",
+      "source": {
+        "kind": "extracted",
+        "path": "k8s/base/app.yaml",
+        "line": 69
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "kind": "CronJob",
+        "image": "ghcr.io/acme/shop-report:1.0.0",
+        "schedule": "0 2 * * *"
+      }
+    },
+    {
+      "id": "service:api",
+      "name": "api",
+      "kind": "service",
+      "source": {
+        "kind": "extracted",
+        "path": "k8s/base/app.yaml",
+        "line": 1
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "kind": "Deployment",
+        "image": "ghcr.io/acme/shop-api:2.1.0",
+        "replicas": "2",
+        "namespace": "shop",
+        "ports": "8080",
+        "envFrom": "api-config",
+        "service": "api (80→8080)"
+      },
+      "perEnv": {
+        "prod": {
+          "replicas": "6"
+        }
+      }
+    }
+  ],
+  "links": [
+    {
+      "from": "gateway:shop",
+      "to": "name:web",
+      "kind": "routes_to",
+      "source": {
+        "kind": "extracted",
+        "path": "k8s/base/ingress.yaml",
+        "line": 1
+      },
+      "environments": [
+        "all"
+      ],
+      "label": "shop.acme.io/"
+    },
+    {
+      "from": "gateway:shop",
+      "to": "service:api",
+      "kind": "routes_to",
+      "source": {
+        "kind": "extracted",
+        "path": "k8s/base/ingress.yaml",
+        "line": 1
+      },
+      "environments": [
+        "all"
+      ],
+      "label": "shop.acme.io/api"
+    }
+  ],
+  "envVars": [
+    {
+      "name": "CACHE_TTL",
+      "source": {
+        "kind": "extracted",
+        "path": "k8s/base/app.yaml",
+        "line": 83
+      },
+      "environments": [
+        "all"
+      ]
+    },
+    {
+      "name": "DATABASE_URL",
+      "source": {
+        "kind": "extracted",
+        "path": "k8s/base/app.yaml",
+        "line": 91
+      },
+      "environments": [
+        "all"
+      ]
+    },
+    {
+      "name": "DATABASE_URL",
+      "source": {
+        "kind": "extracted",
+        "path": "k8s/base/app.yaml",
+        "line": 1
+      },
+      "environments": [
+        "all"
+      ],
+      "component": "service:api"
+    },
+    {
+      "name": "FEATURE_FLAGS",
+      "source": {
+        "kind": "extracted",
+        "path": "k8s/base/app.yaml",
+        "line": 83
+      },
+      "environments": [
+        "all"
+      ]
+    },
+    {
+      "name": "LOG_LEVEL",
+      "source": {
+        "kind": "extracted",
+        "path": "k8s/base/app.yaml",
+        "line": 1
+      },
+      "environments": [
+        "all"
+      ],
+      "component": "service:api"
+    },
+    {
+      "name": "SENTRY_DSN",
+      "source": {
+        "kind": "extracted",
+        "path": "k8s/overlays/prod/api-patch.yaml",
+        "line": 1
+      },
+      "environments": [
+        "prod"
+      ],
+      "component": "service:api"
+    },
+    {
+      "name": "STRIPE_KEY",
+      "source": {
+        "kind": "extracted",
+        "path": "k8s/base/app.yaml",
+        "line": 91
+      },
+      "environments": [
+        "all"
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "path": "k8s/base/app.yaml",
+      "format": "kubernetes"
+    },
+    {
+      "path": "k8s/base/ingress.yaml",
+      "format": "kubernetes"
+    },
+    {
+      "path": "k8s/overlays/prod/api-patch.yaml",
+      "format": "kubernetes",
+      "environment": "prod"
+    }
+  ],
+  "warnings": [
+    {
+      "code": "unknown_link_target",
+      "message": "cible inconnue « web » (routes_to) — aucun composant ne porte ce nom",
+      "source": {
+        "kind": "extracted",
+        "path": "k8s/base/ingress.yaml",
+        "line": 1
+      }
+    }
+  ]
+}

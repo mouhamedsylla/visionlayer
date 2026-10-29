@@ -1,0 +1,67 @@
+id: express
+name: Express
+tech: [express]
+languages: [javascript, typescript]
+# Pas de `when` : un fichier peut déclarer ses routes sur un routeur importé sans importer Express.
+script: express.ts
+rules: |
+  % Un objet Express, là où il est créé, et partout où il est importé (ré-exports et défaut compris).
+  ex_obj(F, V, F, V) :- express_obj(F, V, _, _).
+  ex_obj(F, D, G, N) :- export_default(F, V), ex_obj(F, V, G, N), D = "default".
+  ex_obj(F, V, G, N) :- imports(F, V, H, I), ex_obj(H, I, G, N).
+  ex_named(F, V) :- ex_obj(F, V, _, _).
+
+  % Un routeur ou une sous-app montés sous un préfixe ; les préfixes s'additionnent.
+  ex_mount(PG, PN, Pre, CG, CN) :- mount_on(F, P, Pre, C, _), ex_obj(F, P, PG, PN), ex_obj(F, C, CG, CN).
+  ex_mounted(G, N) :- ex_mount(_, _, _, G, N).
+  ex_prefix(G, N, "") :- express_obj(G, N, _, _), not ex_mounted(G, N).
+  ex_prefix(CG, CN, P) :- ex_prefix(PG, PN, P0), ex_mount(PG, PN, Pre, CG, CN), P = cat(P0, Pre).
+
+  % Ce qu'un code de route répond : un appel sur son deuxième paramètre (`res.status(409).json(…)`).
+  http_reply(F, FL, L, P, N) :- handler_at(_, _, F, FL), param_call(F, FL, 1, P, N, L).
+
+  % Les routes : la méthode, le préfixe de leur routeur, leur chemin.
+  ex_route(F, M, Full, H, HL) :- http_on(F, O, M, Path, H, HL, _), ex_obj(F, O, G, N), ex_prefix(G, N, P), Path != "/", Full = cat(P, Path).
+  ex_route(F, M, P, H, HL) :- http_on(F, O, M, "/", H, HL, _), ex_obj(F, O, G, N), ex_prefix(G, N, P), P != "".
+  ex_route(F, M, "/", H, HL) :- http_on(F, O, M, "/", H, HL, _), ex_obj(F, O, G, N), ex_prefix(G, N, "").
+  entrypoint(F, http, K, H, HL) :- ex_route(F, M, Path, H, HL), K = cat(M, " ", Path).
+  entrypoint(F, http, K, "", L) :- static_on(F, O, Pre, L), ex_obj(F, O, G, N), ex_prefix(G, N, P), K = cat("GET ", P, Pre, "/*").
+
+  % Le code est `orders.list`, membre d'un module importé en entier.
+  ex_member(F, K, G, L) :- handler_member(F, O, M, Path, Mod, Mem), ex_obj(F, O, G0, N0), ex_prefix(G0, N0, P), K = cat(M, " ", P, Path), imports(F, Mod, G, "*"), defines(G, Mem, L).
+  handler_at(F, K, G, L) :- ex_member(F, K, G, L).
+
+  % Une garde : une fonction du dépôt qui répond 403 (rôle) ou 401 (connexion) ; une fonction qui en appelle une en est une.
+  guard_at(G, L, role) :- status_in(G, L, "403").
+  guard_at(G, L, auth) :- status_in(G, L, "401").
+  guard_at(G, L, Lv) :- calls_in(G, L, C, _), resolves(G, C, H, M), guard_at(H, M, Lv).
+  mw_guard(F, Mw, Lv, H, M) :- resolves(F, Mw, H, M), guard_at(H, M, Lv).
+
+  % Ce qui garde une route (la ligne qui la déclare), et la fonction qui la tient : G1 sur la route, G2 et G3 avant elle
+  % sur son objet, G2 et G3 posés sur le parent avant que son routeur y soit monté, G4 dans son code.
+  pguard(F, L, Lv, H, D) :- http_on(F, O, M, P, _, _, L), route_mw(F, O, M, P, Mw, _), mw_guard(F, Mw, Lv, H, D).
+  pguard(F, L, Lv, H, D) :- use_covers(F, O, M, P, Mw, _), http_on(F, O, M, P, _, _, L), mw_guard(F, Mw, Lv, H, D).
+  obj_guard(CG, CN, Lv, H, D) :- mount_on(F, P, Pre, C, ML), ex_obj(F, C, CG, CN), mount_on(F, P, "", Mw, UL), UL < ML, mw_guard(F, Mw, Lv, H, D).
+  obj_guard(CG, CN, Lv, H, D) :- mount_on(F, P, Pre, C, ML), ex_obj(F, C, CG, CN), mount_on(F, P, Pre, Mw, UL), UL < ML, mw_guard(F, Mw, Lv, H, D).
+  obj_guard(CG, CN, Lv, H, D) :- obj_guard(PG, PN, Lv, H, D), ex_mount(PG, PN, _, CG, CN).
+  pguard(F, L, Lv, H, D) :- http_on(F, O, _, _, _, _, L), ex_obj(F, O, G, N), obj_guard(G, N, Lv, H, D).
+  pguard(F, L, Lv, G, D) :- http_on(F, _, M, P, H, HL, L), H = "", calls_in(F, HL, C, _), resolves(F, C, G, D), guard_at(G, D, Lv).
+  pguard(F, L, Lv, G2, D2) :- http_on(F, _, _, _, H, _, L), H != "", resolves(F, H, G, D), calls_in(G, D, C, _), resolves(G, C, G2, D2), guard_at(G2, D2, Lv).
+  prot(F, L, Lv) :- pguard(F, L, Lv, _, _).
+
+  % Garde d'un point d'entrée, en relation neutre : ce pack lit les gardes de chaque route qu'il déclare.
+  entry_guard(F, L, Lv, H, D) :- pguard(F, L, Lv, H, D).
+  guards_read(F, L) :- http_on(F, _, _, _, _, _, L).
+
+  % Une route dont le chemin dit admin : par lui-même, ou par le préfixe d'un routeur qui la contient.
+  admin_obj(G, N) :- mount_on(F, P, Pre, C, _), admin_word(F, Pre), ex_obj(F, C, G, N).
+  admin_obj(CG, CN) :- admin_obj(PG, PN), ex_mount(PG, PN, _, CG, CN).
+  admin_route(F, L) :- http_on(F, _, _, P, _, _, L), admin_word(F, P).
+  admin_route(F, L) :- http_on(F, O, _, _, _, _, L), ex_obj(F, O, G, N), admin_obj(G, N).
+  route_key(F, L, K) :- http_on(F, O, M, P, H, HL, L), ex_route(F, M, Full, H, HL), K = cat(M, " ", Full).
+
+  % Constat unguarded_route (docs/fonctionnement/constats.md).
+  role_prot(F, L) :- prot(F, L, role).
+  auth_prot(F, L) :- prot(F, L, auth).
+  finding(unguarded_route, K, "auth", F, L) :- admin_route(F, L), route_key(F, L, K), not role_prot(F, L), auth_prot(F, L).
+  finding(unguarded_route, K, "none", F, L) :- admin_route(F, L), route_key(F, L, K), not role_prot(F, L), not auth_prot(F, L).

@@ -1,0 +1,9 @@
+id: firebase
+name: Firebase (firebase.json)
+deploys: true
+tech: [firebase]
+files: [firebase.json]
+script: firebase.ts
+rules: |
+  % Une codebase de Cloud Functions lance ce que lance le paquet de son dossier.
+  unit_runs(F, N, C) :- fn_source(F, N, D), pkg_runs(D, C).

@@ -1,0 +1,7 @@
+{
+  "repo": "https://github.com/dockersamples/example-voting-app",
+  "commit": "63e9150ca17af4ed05880d4245e486481f73fcb4",
+  "license": "Apache-2.0",
+  "added": "2026-10-02",
+  "why": "microservices en trois langages (Python, Node, C#), Redis et Postgres, docker-compose, docker-stack et Kubernetes"
+}

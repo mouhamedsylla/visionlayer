@@ -1,0 +1,7 @@
+{
+  "projects": { "default": "acme-dev-123", "dev": "acme-dev-123", "prod": "acme-prod-456" },
+  "targets": {
+    "acme-dev-123": { "hosting": { "web": ["acme-dev-web"] } },
+    "acme-prod-456": { "hosting": { "web": ["acme-web"] } }
+  }
+}

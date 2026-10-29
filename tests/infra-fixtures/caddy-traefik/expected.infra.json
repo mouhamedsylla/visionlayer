@@ -1,0 +1,244 @@
+{
+  "version": 1,
+  "environments": [],
+  "components": [
+    {
+      "id": "database:db",
+      "name": "db",
+      "kind": "database",
+      "source": {
+        "kind": "extracted",
+        "path": "compose.yaml",
+        "line": 13
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "image": "mysql:8",
+        "healthcheck": "oui"
+      }
+    },
+    {
+      "id": "proxy:caddy",
+      "name": "caddy",
+      "kind": "proxy",
+      "source": {
+        "kind": "extracted",
+        "path": "Caddyfile",
+        "line": 1
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "tls": "auto (Caddy)",
+        "domains": "acme.io, www.acme.io, admin.acme.io"
+      }
+    },
+    {
+      "id": "proxy:traefik",
+      "name": "traefik",
+      "kind": "proxy",
+      "source": {
+        "kind": "extracted",
+        "path": "compose.yaml",
+        "line": 2
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "image": "traefik:v3.1",
+        "ports": "80:80, 443:443",
+        "entrypoints": "web (:80), websecure (:443)",
+        "tls": "oui (letsencrypt)",
+        "providers": "docker"
+      }
+    },
+    {
+      "id": "service:api",
+      "name": "api",
+      "kind": "service",
+      "source": {
+        "kind": "extracted",
+        "path": "compose.yaml",
+        "line": 10
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "image": "ghcr.io/acme/api:3.2",
+        "domains": "api.acme.io"
+      }
+    },
+    {
+      "id": "service:web",
+      "name": "web",
+      "kind": "service",
+      "source": {
+        "kind": "extracted",
+        "path": "compose.yaml",
+        "line": 5
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "image": "ghcr.io/acme/web:3.2",
+        "domains": "acme.io, www.acme.io"
+      }
+    }
+  ],
+  "links": [
+    {
+      "from": "proxy:caddy",
+      "to": "name:grafana",
+      "kind": "routes_to",
+      "source": {
+        "kind": "extracted",
+        "path": "Caddyfile",
+        "line": 12
+      },
+      "environments": [
+        "all"
+      ],
+      "label": "admin.acme.io"
+    },
+    {
+      "from": "proxy:caddy",
+      "to": "service:api",
+      "kind": "routes_to",
+      "source": {
+        "kind": "extracted",
+        "path": "Caddyfile",
+        "line": 4
+      },
+      "environments": [
+        "all"
+      ],
+      "label": "acme.io, www.acme.io"
+    },
+    {
+      "from": "proxy:caddy",
+      "to": "service:web",
+      "kind": "routes_to",
+      "source": {
+        "kind": "extracted",
+        "path": "Caddyfile",
+        "line": 5
+      },
+      "environments": [
+        "all"
+      ],
+      "label": "acme.io, www.acme.io"
+    },
+    {
+      "from": "proxy:traefik",
+      "to": "service:api",
+      "kind": "routes_to",
+      "source": {
+        "kind": "extracted",
+        "path": "compose.yaml",
+        "line": 10
+      },
+      "environments": [
+        "all"
+      ],
+      "label": "api.acme.io"
+    },
+    {
+      "from": "proxy:traefik",
+      "to": "service:web",
+      "kind": "routes_to",
+      "source": {
+        "kind": "extracted",
+        "path": "compose.yaml",
+        "line": 5
+      },
+      "environments": [
+        "all"
+      ],
+      "label": "acme.io"
+    },
+    {
+      "from": "proxy:traefik",
+      "to": "service:web",
+      "kind": "routes_to",
+      "source": {
+        "kind": "extracted",
+        "path": "compose.yaml",
+        "line": 5
+      },
+      "environments": [
+        "all"
+      ],
+      "label": "www.acme.io"
+    },
+    {
+      "from": "service:api",
+      "to": "database:db",
+      "kind": "depends_on",
+      "source": {
+        "kind": "extracted",
+        "path": "compose.yaml",
+        "line": 10
+      },
+      "environments": [
+        "all"
+      ]
+    }
+  ],
+  "envVars": [
+    {
+      "name": "DATABASE_URL",
+      "source": {
+        "kind": "extracted",
+        "path": "compose.yaml",
+        "line": 10
+      },
+      "environments": [
+        "all"
+      ],
+      "component": "service:api"
+    },
+    {
+      "name": "PORT",
+      "source": {
+        "kind": "extracted",
+        "path": "compose.yaml",
+        "line": 10
+      },
+      "environments": [
+        "all"
+      ],
+      "component": "service:api"
+    }
+  ],
+  "sources": [
+    {
+      "path": "Caddyfile",
+      "format": "caddy"
+    },
+    {
+      "path": "compose.yaml",
+      "format": "docker-compose"
+    },
+    {
+      "path": "traefik.yml",
+      "format": "traefik"
+    }
+  ],
+  "warnings": [
+    {
+      "code": "unknown_link_target",
+      "message": "cible inconnue « grafana » (routes_to) — aucun composant ne porte ce nom",
+      "source": {
+        "kind": "extracted",
+        "path": "Caddyfile",
+        "line": 12
+      }
+    }
+  ]
+}

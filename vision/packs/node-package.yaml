@@ -1,0 +1,11 @@
+id: node-package
+name: Paquet Node (package.json)
+tech: []
+files: [package.json]
+script: node-package.ts
+rules: |
+  % Ce que lance un paquet : sa source si elle existe, sinon le fichier que désigne main.
+  pkg_src_at(D, C) :- pkg_src(D, C), present(C).
+  pkg_has_src(D) :- pkg_src_at(D, _).
+  pkg_runs(D, C) :- pkg_src_at(D, C).
+  pkg_runs(D, C) :- pkg_main(D, C), present(C), not pkg_has_src(D).

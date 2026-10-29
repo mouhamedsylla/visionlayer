@@ -1,0 +1,90 @@
+.detail {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 22px 28px 26px;
+}
+
+.corner {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 0 solid var(--night);
+  opacity: 0.75;
+}
+
+.a { left: 0; top: 0; border-width: 1.5px 0 0 1.5px; }
+.b { right: 0; top: 0; border-width: 1.5px 1.5px 0 0; }
+.c { left: 0; bottom: 0; border-width: 0 0 1.5px 1.5px; }
+.d { right: 0; bottom: 0; border-width: 0 1.5px 1.5px 0; }
+
+.where {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+  overflow-wrap: break-word;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+}
+
+.headline {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.findings {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.finding {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 6px 8px;
+  margin-left: -8px;
+  border: 0;
+  border-radius: var(--radius-tight);
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.finding:disabled {
+  cursor: default;
+}
+
+.finding:not(:disabled):hover,
+.on:not(:disabled) {
+  background: var(--blue-wash);
+}
+
+.refs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.error {
+  margin: 0;
+  font-size: 12.5px;
+}

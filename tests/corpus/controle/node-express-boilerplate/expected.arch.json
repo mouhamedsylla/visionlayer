@@ -1,0 +1,686 @@
+{
+  "version": 2,
+  "system": {
+    "name": "node-express-boilerplate"
+  },
+  "nodes": [
+    {
+      "id": "smtp",
+      "name": "SMTP",
+      "level": "system",
+      "role": "external",
+      "status": "extracted",
+      "proof": [
+        {
+          "path": "src/services/email.service.js",
+          "line": 5,
+          "source": "syntax",
+          "text": "const transport = nodemailer.createTransport(config.email.smtp);"
+        }
+      ],
+      "facets": {},
+      "tech": [
+        "nodemailer"
+      ]
+    },
+    {
+      "id": "app",
+      "name": "node-app",
+      "level": "deployable",
+      "role": "service",
+      "status": "extracted",
+      "proof": [
+        {
+          "path": "docker-compose.yml",
+          "line": 4,
+          "source": "manifest",
+          "text": "node-app:"
+        },
+        {
+          "path": "ecosystem.config.json",
+          "line": 5,
+          "source": "manifest",
+          "text": "\"script\": \"src/index.js\","
+        }
+      ],
+      "facets": {
+        "entrypoints": [
+          {
+            "id": "app:src/index.js",
+            "kind": "main",
+            "key": "src/index.js",
+            "proof": {
+              "path": "ecosystem.config.json",
+              "line": 5,
+              "source": "manifest",
+              "text": "\"script\": \"src/index.js\","
+            }
+          },
+          {
+            "id": "app:POST /v1/auth/register",
+            "kind": "http",
+            "key": "POST /v1/auth/register",
+            "proof": {
+              "path": "src/routes/v1/auth.route.js",
+              "line": 9,
+              "source": "syntax",
+              "text": "router.post('/register', validate(authValidation.register), authController.register);"
+            },
+            "handler": {
+              "path": "src/controllers/auth.controller.js",
+              "line": 5,
+              "name": "register"
+            }
+          },
+          {
+            "id": "app:POST /v1/auth/login",
+            "kind": "http",
+            "key": "POST /v1/auth/login",
+            "proof": {
+              "path": "src/routes/v1/auth.route.js",
+              "line": 10,
+              "source": "syntax",
+              "text": "router.post('/login', validate(authValidation.login), authController.login);"
+            },
+            "handler": {
+              "path": "src/controllers/auth.controller.js",
+              "line": 11,
+              "name": "login"
+            }
+          },
+          {
+            "id": "app:POST /v1/auth/logout",
+            "kind": "http",
+            "key": "POST /v1/auth/logout",
+            "proof": {
+              "path": "src/routes/v1/auth.route.js",
+              "line": 11,
+              "source": "syntax",
+              "text": "router.post('/logout', validate(authValidation.logout), authController.logout);"
+            },
+            "handler": {
+              "path": "src/controllers/auth.controller.js",
+              "line": 18,
+              "name": "logout"
+            }
+          },
+          {
+            "id": "app:POST /v1/auth/refresh-tokens",
+            "kind": "http",
+            "key": "POST /v1/auth/refresh-tokens",
+            "proof": {
+              "path": "src/routes/v1/auth.route.js",
+              "line": 12,
+              "source": "syntax",
+              "text": "router.post('/refresh-tokens', validate(authValidation.refreshTokens), authController.refreshTokens);"
+            },
+            "handler": {
+              "path": "src/controllers/auth.controller.js",
+              "line": 23,
+              "name": "refreshTokens"
+            }
+          },
+          {
+            "id": "app:POST /v1/auth/forgot-password",
+            "kind": "http",
+            "key": "POST /v1/auth/forgot-password",
+            "proof": {
+              "path": "src/routes/v1/auth.route.js",
+              "line": 13,
+              "source": "syntax",
+              "text": "router.post('/forgot-password', validate(authValidation.forgotPassword), authController.forgotPassword);"
+            },
+            "handler": {
+              "path": "src/controllers/auth.controller.js",
+              "line": 28,
+              "name": "forgotPassword"
+            }
+          },
+          {
+            "id": "app:POST /v1/auth/reset-password",
+            "kind": "http",
+            "key": "POST /v1/auth/reset-password",
+            "proof": {
+              "path": "src/routes/v1/auth.route.js",
+              "line": 14,
+              "source": "syntax",
+              "text": "router.post('/reset-password', validate(authValidation.resetPassword), authController.resetPassword);"
+            },
+            "handler": {
+              "path": "src/controllers/auth.controller.js",
+              "line": 34,
+              "name": "resetPassword"
+            }
+          },
+          {
+            "id": "app:POST /v1/auth/send-verification-email",
+            "kind": "http",
+            "key": "POST /v1/auth/send-verification-email",
+            "proof": {
+              "path": "src/routes/v1/auth.route.js",
+              "line": 15,
+              "source": "syntax",
+              "text": "router.post('/send-verification-email', auth(), authController.sendVerificationEmail);"
+            },
+            "handler": {
+              "path": "src/controllers/auth.controller.js",
+              "line": 39,
+              "name": "sendVerificationEmail"
+            }
+          },
+          {
+            "id": "app:POST /v1/auth/verify-email",
+            "kind": "http",
+            "key": "POST /v1/auth/verify-email",
+            "proof": {
+              "path": "src/routes/v1/auth.route.js",
+              "line": 16,
+              "source": "syntax",
+              "text": "router.post('/verify-email', validate(authValidation.verifyEmail), authController.verifyEmail);"
+            },
+            "handler": {
+              "path": "src/controllers/auth.controller.js",
+              "line": 45,
+              "name": "verifyEmail"
+            }
+          },
+          {
+            "id": "app:POST /v1/users",
+            "kind": "http",
+            "key": "POST /v1/users",
+            "proof": {
+              "path": "src/routes/v1/user.route.js",
+              "line": 11,
+              "source": "syntax",
+              "text": ".post(auth('manageUsers'), validate(userValidation.createUser), userController.createUser)"
+            },
+            "handler": {
+              "path": "src/controllers/user.controller.js",
+              "line": 7,
+              "name": "createUser"
+            }
+          },
+          {
+            "id": "app:GET /v1/users",
+            "kind": "http",
+            "key": "GET /v1/users",
+            "proof": {
+              "path": "src/routes/v1/user.route.js",
+              "line": 12,
+              "source": "syntax",
+              "text": ".get(auth('getUsers'), validate(userValidation.getUsers), userController.getUsers);"
+            },
+            "handler": {
+              "path": "src/controllers/user.controller.js",
+              "line": 12,
+              "name": "getUsers"
+            }
+          },
+          {
+            "id": "app:GET /v1/users/:userId",
+            "kind": "http",
+            "key": "GET /v1/users/:userId",
+            "proof": {
+              "path": "src/routes/v1/user.route.js",
+              "line": 16,
+              "source": "syntax",
+              "text": ".get(auth('getUsers'), validate(userValidation.getUser), userController.getUser)"
+            },
+            "handler": {
+              "path": "src/controllers/user.controller.js",
+              "line": 19,
+              "name": "getUser"
+            }
+          },
+          {
+            "id": "app:PATCH /v1/users/:userId",
+            "kind": "http",
+            "key": "PATCH /v1/users/:userId",
+            "proof": {
+              "path": "src/routes/v1/user.route.js",
+              "line": 17,
+              "source": "syntax",
+              "text": ".patch(auth('manageUsers'), validate(userValidation.updateUser), userController.updateUser)"
+            },
+            "handler": {
+              "path": "src/controllers/user.controller.js",
+              "line": 27,
+              "name": "updateUser"
+            }
+          },
+          {
+            "id": "app:DELETE /v1/users/:userId",
+            "kind": "http",
+            "key": "DELETE /v1/users/:userId",
+            "proof": {
+              "path": "src/routes/v1/user.route.js",
+              "line": 18,
+              "source": "syntax",
+              "text": ".delete(auth('manageUsers'), validate(userValidation.deleteUser), userController.deleteUser);"
+            },
+            "handler": {
+              "path": "src/controllers/user.controller.js",
+              "line": 32,
+              "name": "deleteUser"
+            }
+          },
+          {
+            "id": "app:GET /v1/docs",
+            "kind": "http",
+            "key": "GET /v1/docs",
+            "proof": {
+              "path": "src/routes/v1/docs.route.js",
+              "line": 14,
+              "source": "syntax",
+              "text": "router.get("
+            }
+          }
+        ],
+        "config": {
+          "env": [
+            {
+              "name": "NODE_ENV",
+              "readAt": [
+                {
+                  "path": "src/config/config.js",
+                  "line": 9,
+                  "source": "syntax",
+                  "text": "NODE_ENV: Joi.string().valid('production', 'development', 'test').required(),"
+                }
+              ]
+            },
+            {
+              "name": "PORT",
+              "readAt": [
+                {
+                  "path": "src/config/config.js",
+                  "line": 10,
+                  "source": "syntax",
+                  "text": "PORT: Joi.number().default(3000),"
+                }
+              ]
+            },
+            {
+              "name": "MONGODB_URL",
+              "readAt": [
+                {
+                  "path": "src/config/config.js",
+                  "line": 11,
+                  "source": "syntax",
+                  "text": "MONGODB_URL: Joi.string().required().description('Mongo DB url'),"
+                }
+              ]
+            },
+            {
+              "name": "JWT_SECRET",
+              "readAt": [
+                {
+                  "path": "src/config/config.js",
+                  "line": 12,
+                  "source": "syntax",
+                  "text": "JWT_SECRET: Joi.string().required().description('JWT secret key'),"
+                }
+              ]
+            },
+            {
+              "name": "JWT_ACCESS_EXPIRATION_MINUTES",
+              "readAt": [
+                {
+                  "path": "src/config/config.js",
+                  "line": 13,
+                  "source": "syntax",
+                  "text": "JWT_ACCESS_EXPIRATION_MINUTES: Joi.number().default(30).description('minutes after which access tokens expire'),"
+                }
+              ]
+            },
+            {
+              "name": "JWT_REFRESH_EXPIRATION_DAYS",
+              "readAt": [
+                {
+                  "path": "src/config/config.js",
+                  "line": 14,
+                  "source": "syntax",
+                  "text": "JWT_REFRESH_EXPIRATION_DAYS: Joi.number().default(30).description('days after which refresh tokens expire'),"
+                }
+              ]
+            },
+            {
+              "name": "JWT_RESET_PASSWORD_EXPIRATION_MINUTES",
+              "readAt": [
+                {
+                  "path": "src/config/config.js",
+                  "line": 15,
+                  "source": "syntax",
+                  "text": "JWT_RESET_PASSWORD_EXPIRATION_MINUTES: Joi.number()"
+                }
+              ]
+            },
+            {
+              "name": "JWT_VERIFY_EMAIL_EXPIRATION_MINUTES",
+              "readAt": [
+                {
+                  "path": "src/config/config.js",
+                  "line": 18,
+                  "source": "syntax",
+                  "text": "JWT_VERIFY_EMAIL_EXPIRATION_MINUTES: Joi.number()"
+                }
+              ]
+            },
+            {
+              "name": "SMTP_HOST",
+              "readAt": [
+                {
+                  "path": "src/config/config.js",
+                  "line": 21,
+                  "source": "syntax",
+                  "text": "SMTP_HOST: Joi.string().description('server that will send the emails'),"
+                }
+              ]
+            },
+            {
+              "name": "SMTP_PORT",
+              "readAt": [
+                {
+                  "path": "src/config/config.js",
+                  "line": 22,
+                  "source": "syntax",
+                  "text": "SMTP_PORT: Joi.number().description('port to connect to the email server'),"
+                }
+              ]
+            },
+            {
+              "name": "SMTP_USERNAME",
+              "readAt": [
+                {
+                  "path": "src/config/config.js",
+                  "line": 23,
+                  "source": "syntax",
+                  "text": "SMTP_USERNAME: Joi.string().description('username for email server'),"
+                }
+              ]
+            },
+            {
+              "name": "SMTP_PASSWORD",
+              "readAt": [
+                {
+                  "path": "src/config/config.js",
+                  "line": 24,
+                  "source": "syntax",
+                  "text": "SMTP_PASSWORD: Joi.string().description('password for email server'),"
+                }
+              ]
+            },
+            {
+              "name": "EMAIL_FROM",
+              "readAt": [
+                {
+                  "path": "src/config/config.js",
+                  "line": 25,
+                  "source": "syntax",
+                  "text": "EMAIL_FROM: Joi.string().description('the from field in the emails sent by the app'),"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "tech": [
+        "nodejs",
+        "express"
+      ],
+      "instances": {
+        "min": 1,
+        "proof": {
+          "path": "ecosystem.config.json",
+          "line": 6,
+          "source": "manifest",
+          "text": "\"instances\": 1,"
+        }
+      }
+    },
+    {
+      "id": "cli",
+      "name": "create-nodejs-express-app",
+      "level": "deployable",
+      "role": "binary",
+      "status": "extracted",
+      "proof": [
+        {
+          "path": "package.json",
+          "line": 5,
+          "source": "manifest",
+          "text": "\"bin\": \"bin/createNodejsApp.js\","
+        }
+      ],
+      "facets": {
+        "entrypoints": [
+          {
+            "id": "cli:create-nodejs-express-app",
+            "kind": "cli",
+            "key": "create-nodejs-express-app",
+            "proof": {
+              "path": "package.json",
+              "line": 5,
+              "source": "manifest",
+              "text": "\"bin\": \"bin/createNodejsApp.js\","
+            },
+            "handler": {
+              "path": "bin/createNodejsApp.js",
+              "line": 1,
+              "name": "(script)"
+            }
+          }
+        ]
+      },
+      "tech": [
+        "nodejs"
+      ]
+    },
+    {
+      "id": "mongodb",
+      "name": "mongodb",
+      "level": "deployable",
+      "role": "store",
+      "status": "extracted",
+      "proof": [
+        {
+          "path": "docker-compose.yml",
+          "line": 18,
+          "source": "manifest",
+          "text": "mongodb:"
+        },
+        {
+          "path": "docker-compose.yml",
+          "line": 19,
+          "source": "manifest",
+          "text": "image: mongo:4.2.1-bionic"
+        }
+      ],
+      "facets": {
+        "data": {
+          "shape": "document",
+          "entities": [
+            {
+              "name": "users",
+              "proof": {
+                "path": "src/models/user.model.js",
+                "line": 89,
+                "source": "syntax",
+                "text": "const User = mongoose.model('User', userSchema);"
+              }
+            },
+            {
+              "name": "tokens",
+              "proof": {
+                "path": "src/models/token.model.js",
+                "line": 42,
+                "source": "syntax",
+                "text": "const Token = mongoose.model('Token', tokenSchema);"
+              }
+            }
+          ]
+        }
+      },
+      "tech": [
+        "mongodb"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "app>read>mongodb#users",
+      "from": "app",
+      "to": "mongodb",
+      "kind": "read",
+      "count": 5,
+      "occurrences": [
+        {
+          "path": "src/services/user.service.js",
+          "line": 11,
+          "source": "syntax",
+          "text": "if (await User.isEmailTaken(userBody.email)) {"
+        },
+        {
+          "path": "src/services/user.service.js",
+          "line": 27,
+          "source": "syntax",
+          "text": "const users = await User.paginate(filter, options);"
+        },
+        {
+          "path": "src/services/user.service.js",
+          "line": 37,
+          "source": "syntax",
+          "text": "return User.findById(id);"
+        },
+        {
+          "path": "src/services/user.service.js",
+          "line": 46,
+          "source": "syntax",
+          "text": "return User.findOne({ email });"
+        },
+        {
+          "path": "src/config/passport.js",
+          "line": 16,
+          "source": "syntax",
+          "text": "const user = await User.findById(payload.sub);"
+        }
+      ],
+      "target": {
+        "entity": "users"
+      }
+    },
+    {
+      "id": "app>write>mongodb#users",
+      "from": "app",
+      "to": "mongodb",
+      "kind": "write",
+      "count": 3,
+      "occurrences": [
+        {
+          "path": "src/services/user.service.js",
+          "line": 14,
+          "source": "syntax",
+          "text": "return User.create(userBody);"
+        },
+        {
+          "path": "src/services/user.service.js",
+          "line": 64,
+          "source": "syntax",
+          "text": "await user.save();"
+        },
+        {
+          "path": "src/services/user.service.js",
+          "line": 78,
+          "source": "syntax",
+          "text": "await user.remove();"
+        }
+      ],
+      "target": {
+        "entity": "users"
+      }
+    },
+    {
+      "id": "app>read>mongodb#tokens",
+      "from": "app",
+      "to": "mongodb",
+      "kind": "read",
+      "count": 2,
+      "occurrences": [
+        {
+          "path": "src/services/token.service.js",
+          "line": 56,
+          "source": "syntax",
+          "text": "const tokenDoc = await Token.findOne({ token, type, user: payload.sub, blacklisted: false });"
+        },
+        {
+          "path": "src/services/auth.service.js",
+          "line": 28,
+          "source": "syntax",
+          "text": "const refreshTokenDoc = await Token.findOne({ token: refreshToken, type: tokenTypes.REFRESH, blacklisted: false });"
+        }
+      ],
+      "target": {
+        "entity": "tokens"
+      }
+    },
+    {
+      "id": "app>write>mongodb#tokens",
+      "from": "app",
+      "to": "mongodb",
+      "kind": "write",
+      "count": 5,
+      "occurrences": [
+        {
+          "path": "src/services/token.service.js",
+          "line": 38,
+          "source": "syntax",
+          "text": "const tokenDoc = await Token.create({"
+        },
+        {
+          "path": "src/services/auth.service.js",
+          "line": 32,
+          "source": "syntax",
+          "text": "await refreshTokenDoc.remove();"
+        },
+        {
+          "path": "src/services/auth.service.js",
+          "line": 47,
+          "source": "syntax",
+          "text": "await refreshTokenDoc.remove();"
+        },
+        {
+          "path": "src/services/auth.service.js",
+          "line": 68,
+          "source": "syntax",
+          "text": "await Token.deleteMany({ user: user.id, type: tokenTypes.RESET_PASSWORD });"
+        },
+        {
+          "path": "src/services/auth.service.js",
+          "line": 86,
+          "source": "syntax",
+          "text": "await Token.deleteMany({ user: user.id, type: tokenTypes.VERIFY_EMAIL });"
+        }
+      ],
+      "target": {
+        "entity": "tokens"
+      }
+    },
+    {
+      "id": "app>request>smtp",
+      "from": "app",
+      "to": "smtp",
+      "kind": "request",
+      "count": 1,
+      "occurrences": [
+        {
+          "path": "src/services/email.service.js",
+          "line": 23,
+          "source": "syntax",
+          "text": "await transport.sendMail(msg);"
+        }
+      ]
+    }
+  ],
+  "findings": [],
+  "coverage": []
+}

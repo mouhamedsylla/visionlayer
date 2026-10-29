@@ -1,0 +1,32 @@
+{
+  "repository": {
+    "root": "FIXTURE_ROOT"
+  },
+  "files": [
+    {
+      "path": "src/a.ts",
+      "language": "typescript",
+      "symbols": [],
+      "parseError": "syntax error detected by parser"
+    },
+    {
+      "path": "src/b.ts",
+      "language": "typescript",
+      "symbols": [
+        {
+          "id": "src/b.ts#ok",
+          "name": "ok",
+          "kind": "function",
+          "exported": true,
+          "location": {
+            "path": "src/b.ts",
+            "startLine": 1,
+            "endLine": 3
+          }
+        }
+      ]
+    }
+  ],
+  "dependencies": [],
+  "reExports": []
+}

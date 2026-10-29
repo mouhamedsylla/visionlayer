@@ -1,0 +1,6 @@
+id: node-http
+name: Serveur HTTP de Node (node:http)
+tech: [nodejs]
+languages: [javascript, typescript]
+when: { imports: [http, https, "node:http", "node:https", http2, "node:http2"] }
+script: node-http.ts

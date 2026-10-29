@@ -1,0 +1,64 @@
+.sequence {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+/* Les couloirs restent sous le bandeau quand on descend dans les étapes. */
+.head {
+  position: sticky;
+  top: var(--header-h, 0px);
+  z-index: 3;
+  display: grid;
+  grid-template-columns: var(--sequence-columns);
+  align-items: end;
+  padding-top: 12px;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: var(--surface);
+}
+
+.caption {
+  padding: 0 14px 10px;
+}
+
+.lanes {
+  display: grid;
+}
+
+.lane {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 4px 10px;
+  padding: 6px 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-tight);
+  background: var(--ground);
+  text-align: center;
+  min-width: 0;
+}
+
+.own {
+  border-color: var(--night);
+  background: var(--night);
+  color: var(--surface);
+}
+
+.title {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  overflow-wrap: break-word;
+}
+
+.sub {
+  font-size: 10.5px;
+  opacity: 0.8;
+  overflow-wrap: break-word;
+}
+
+@media (max-width: 900px) {
+  .head {
+    display: none;
+  }
+}

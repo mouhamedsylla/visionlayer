@@ -1,0 +1,27 @@
+[build]
+  command = "pnpm build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[context.production]
+  command = "pnpm build --mode prod"
+
+[context.production.environment]
+  API_URL = "https://api.acme.io"
+  SENTRY_DSN = "https://x@sentry.io/1"
+
+[context.deploy-preview.environment]
+  API_URL = "https://staging-api.acme.io"
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://api.acme.io/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

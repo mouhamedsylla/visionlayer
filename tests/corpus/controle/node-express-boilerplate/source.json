@@ -1,0 +1,7 @@
+{
+  "repo": "https://github.com/hagopj13/node-express-boilerplate",
+  "commit": "179ae84efec61b14206d0305d941daed6c6d07f9",
+  "license": "MIT",
+  "added": "2026-10-02",
+  "why": "Express écrit autrement : routeurs montés sous un préfixe par une boucle, contrôleurs, services ; Mongoose, qui n'a pas de pack : ce qu'il porte doit sortir non lu"
+}

@@ -1,0 +1,29 @@
+# Surcharge production : `docker compose -f docker-compose.yml -f docker-compose.prod.yml up`.
+services:
+  api:
+    image: ghcr.io/rypha/reference-api:1.4.0
+    restart: always
+    deploy:
+      replicas: 2
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: "587"
+      INVITATION_TTL_HOURS: "72"
+      SENTRY_DSN: ${SENTRY_DSN}
+
+  db:
+    restart: always
+
+  redis:
+    restart: always
+
+  nginx:
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro

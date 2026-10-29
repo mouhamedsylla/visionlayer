@@ -1,0 +1,43 @@
+{
+  "repository": { "root": "FIXTURE_ROOT" },
+  "files": [
+    {
+      "path": "src/repository.ts",
+      "language": "typescript",
+      "symbols": [
+        {
+          "id": "src/repository.ts#Thing",
+          "name": "Thing",
+          "kind": "interface",
+          "exported": true,
+          "location": { "path": "src/repository.ts", "startLine": 1, "endLine": 3 }
+        },
+        {
+          "id": "src/repository.ts#save",
+          "name": "save",
+          "kind": "function",
+          "exported": true,
+          "location": { "path": "src/repository.ts", "startLine": 5, "endLine": 7 }
+        }
+      ]
+    },
+    {
+      "path": "src/service.ts",
+      "language": "typescript",
+      "symbols": [
+        {
+          "id": "src/service.ts#create",
+          "name": "create",
+          "kind": "function",
+          "exported": true,
+          "location": { "path": "src/service.ts", "startLine": 4, "endLine": 6 }
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    { "from": "src/service.ts", "to": "src/repository.ts", "raw": "./repository", "external": false },
+    { "from": "src/service.ts", "to": "src/repository.ts", "raw": "./repository", "external": false }
+  ],
+  "reExports": []
+}

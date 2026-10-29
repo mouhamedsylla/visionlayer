@@ -1,0 +1,64 @@
+.lanes {
+  position: relative;
+  min-height: 56px;
+}
+
+.life {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-left: 1px dashed var(--line);
+}
+
+.arrow {
+  position: absolute;
+  top: 22px;
+  border-top: 1.6px solid var(--night);
+}
+
+.arrow::after {
+  content: "";
+  position: absolute;
+  top: -5.5px;
+  right: -1px;
+  border: 5px solid transparent;
+  border-left: 7px solid currentColor;
+  border-right: 0;
+}
+
+.leftward::after {
+  right: auto;
+  left: -1px;
+  border-left: 0;
+  border-right: 7px solid currentColor;
+}
+
+.call { color: var(--night); border-top-color: var(--night); }
+.data { color: var(--blue); border-top-color: var(--blue); }
+.back { color: var(--ink-soft); border-top: 1.4px dashed var(--ink-soft); }
+
+.marker {
+  position: absolute;
+  top: 13px;
+  transform: translateX(-50%);
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--surface);
+  border: 1px solid currentColor;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.marker.none {
+  color: var(--ink-soft);
+}
+
+@media (max-width: 900px) {
+  .lanes {
+    display: none;
+  }
+}

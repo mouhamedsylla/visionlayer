@@ -1,0 +1,28 @@
+.calls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.local,
+.lib {
+  padding: 1px 7px;
+  border-radius: var(--radius-tight);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+}
+
+.local {
+  border: 1px solid var(--blue-ring);
+  background: var(--blue-wash);
+  color: var(--blue-ink);
+  text-decoration: none;
+}
+
+.local:hover { border-color: var(--blue-edge); }
+
+.lib {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink-soft);
+}

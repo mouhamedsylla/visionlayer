@@ -1,0 +1,27 @@
+/* Le code reste en vue pendant qu'on parcourt les étapes, et défile seul quand la fonction est longue. */
+.wrap {
+  position: sticky;
+  top: calc(var(--header-h, 0px) + 16px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  max-height: calc(100vh - var(--header-h, 0px) - 96px);
+  overflow-y: auto;
+}
+
+.note {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.pages {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink-soft);
+}

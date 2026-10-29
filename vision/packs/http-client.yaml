@@ -1,0 +1,42 @@
+id: http-client
+name: Appels HTTP sortants (fetch, axios)
+languages: [javascript, typescript]
+script: http-client.ts
+rules: |
+  % Un appel dont l'adresse n'est pas écrite : non lu, jamais oublié.
+  unresolved(F, path_dynamic, L) :- http_unread(F, L).
+
+  % Une fonction là où elle est définie : dans le fichier, importée, alias et ré-exports compris.
+  fn_at(F, N, F, N) :- defines(F, N, _).
+  fn_at(F, N, H, J) :- imports(F, N, G, I), fn_at(G, I, H, J).
+  fn_at(F, N, H, J) :- imports(F, "*", G, "*"), fn_at(G, N, H, J).
+
+  % Une instance d'axios, et le chemin de sa base, partout où elle est importée.
+  inst_in(F, V, Pre) :- axios_inst(F, V, Pre).
+  inst_in(F, V, Pre) :- imports(F, V, H, I), inst_in(H, I, Pre).
+  inst_in(F, V, Pre) :- imports(F, "*", H, "*"), inst_in(H, V, Pre).
+  http_call(F, M, P2, L) :- http_member(F, O, M, P, L), inst_in(F, O, Pre), P2 = cat(Pre, P).
+
+  % Une enveloppe : son paramètre I va dans l'adresse ; de proche en proche, une enveloppe d'enveloppe en est une.
+  wrapper(G, N, I) :- http_wrapper_url(G, N, I).
+  wrapper(G, N, I) :- fn_passes(G, N, I, C, J), fn_at(G, C, H, D), wrapper(H, D, J).
+  wrapper(G, N, I) :- fn_passes_member(G, N, I, O, _), inst_in(G, O, _).
+  wpre(G, N, "") :- http_wrapper_url(G, N, _).
+  wpre(G, N, Pre) :- fn_passes_member(G, N, _, O, _), inst_in(G, O, Pre).
+  wpre(G, N, Pre) :- fn_passes(G, N, I, C, J), fn_at(G, C, H, D), wrapper(H, D, J), wpre(H, D, Pre).
+  % Sa méthode : fixée par elle, ou passée dans le paramètre K.
+  wfixed(G, N, M) :- http_wrapper_fixed(G, N, M).
+  wfixed(G, N, M) :- fn_passes_member(G, N, _, O, M), inst_in(G, O, _).
+  wfixed(G, N, M) :- fn_passes_method(G, N, C, M), fn_at(G, C, H, D), wrapper(H, D, _).
+  wfixed(G, N, M) :- fn_passes(G, N, _, C, _), fn_at(G, C, H, D), wfixed(H, D, M).
+  wmethod(G, N, K) :- http_wrapper_method(G, N, K).
+  wmethod(G, N, K) :- fn_passes(G, N, K, C, J), fn_at(G, C, H, D), wmethod(H, D, J).
+
+  % L'appel d'une enveloppe : son chemin, et sa méthode (écrite à l'appel, fixée, ou GET).
+  wcall(F, N, P, L, H, D) :- http_arg(F, N, I, P, L), fn_at(F, N, H, D), wrapper(H, D, I).
+  cmethod(F, N, L, M) :- wcall(F, N, _, L, H, D), http_arg_verb(F, N, K, M, L), wmethod(H, D, K).
+  cmethod(F, N, L, M) :- wcall(F, N, _, L, _, _), http_opt(F, N, M, L).
+  cmethod(F, N, L, M) :- wcall(F, N, _, L, H, D), wfixed(H, D, M).
+  has_cmethod(F, N, L) :- cmethod(F, N, L, _).
+  http_call(F, M, P2, L) :- wcall(F, N, P, L, H, D), wpre(H, D, Pre), P2 = cat(Pre, P), cmethod(F, N, L, M).
+  http_call(F, "GET", P2, L) :- wcall(F, N, P, L, H, D), wpre(H, D, Pre), P2 = cat(Pre, P), not has_cmethod(F, N, L).

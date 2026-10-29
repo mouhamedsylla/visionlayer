@@ -1,0 +1,6 @@
+id: fly
+name: Fly.io
+deploys: true
+tech: [flyio]
+files: [fly.toml]
+script: fly.ts

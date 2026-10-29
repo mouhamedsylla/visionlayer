@@ -1,0 +1,121 @@
+/* La barre s'ouvre et se réduit en glissant : la largeur change, les icônes ne bougent pas, les noms apparaissent en fondu. */
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 232px;
+  height: 100%;
+  padding: 16px 12px 14px;
+  overflow: hidden;
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  transition: width var(--dur-3) var(--ease);
+}
+
+.folded {
+  width: 64px;
+}
+
+.label {
+  white-space: nowrap;
+  transition: opacity var(--dur-2) var(--ease) 80ms;
+}
+
+.folded .label {
+  opacity: 0;
+  pointer-events: none;
+  transition-delay: 0ms;
+  transition-duration: var(--dur-1);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 36px;
+  padding: 0 7px;
+  margin-bottom: 10px;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+/* Un intitulé de groupe, ou réduit, un trait à sa place : même hauteur, rien ne saute. */
+.group {
+  position: relative;
+  height: 34px;
+  padding: 14px 11px 6px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.group::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 20px;
+  width: 28px;
+  height: 1px;
+  background: var(--line);
+  opacity: 0;
+  transition: opacity var(--dur-2) var(--ease);
+}
+
+.folded .group::after {
+  opacity: 1;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+  height: 34px;
+  padding: 0 11px;
+  border-radius: var(--radius);
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  transition: background var(--dur-1) var(--ease);
+}
+
+.brand svg,
+.item svg,
+.fold svg {
+  flex: none;
+}
+
+.item:hover {
+  background: var(--night-faint);
+}
+
+.active,
+.active:hover {
+  --icon-accent: var(--cyan);
+  background: var(--night);
+  color: var(--surface);
+}
+
+.pending {
+  opacity: 0.38;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.fold {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+  height: 34px;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--ground);
+  font-size: 13px;
+  color: var(--ink-soft);
+  cursor: pointer;
+}

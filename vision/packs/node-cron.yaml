@@ -1,0 +1,27 @@
+id: node-cron
+name: node-cron
+tech: [nodecron]
+languages: [javascript, typescript]
+when: { imports: [node-cron] }
+script: node-cron.ts
+rules: |
+  % L'expression : écrite, ou lue dans une constante du fichier ou importée.
+  cron_expr(F, X, X) :- cron_task(F, "lit", X, _, _, _).
+  cron_expr(F, X, E) :- cron_task(F, "ref", X, _, _, _), const_in(F, X, E).
+
+  % Une tâche planifiée : un point d'entrée dont la clé est l'expression.
+  entrypoint(F, schedule, E, H, HL) :- cron_task(F, _, X, H, HL, _), cron_expr(F, X, E).
+
+  % Une méthode d'un objet : le code est l'objet, ou la fonction d'un module importé entier.
+  handler_at(F, E, G, L) :- cron_member(F, X, O, _), cron_expr(F, X, E), resolves(F, O, G, L).
+  handler_at(F, E, G, L) :- cron_member(F, X, O, M), cron_expr(F, X, E), imports(F, O, G, "*"), defines(G, M, L).
+
+  % Une tâche en arrière-plan : son fichier est le code, et fait partie du déployable.
+  cron_file_at(F, E, G) :- cron_file(F, X, G), present(G), cron_expr(F, X, E).
+  depends(F, G) :- cron_file_at(F, _, G).
+  handler_at(F, E, G, 1) :- cron_file_at(F, E, G).
+
+  % Une expression qu'on ne sait pas lire : un trou de couverture, pas une tâche qui disparaît.
+  cron_read(F, X) :- cron_expr(F, X, _).
+  unresolved(F, target_unknown, L) :- cron_task(F, _, X, _, _, L), not cron_read(F, X).
+  unresolved(F, target_unknown, L) :- cron_dynamic(F, L).

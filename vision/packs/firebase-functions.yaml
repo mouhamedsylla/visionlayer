@@ -1,0 +1,6 @@
+id: firebase-functions
+name: Cloud Functions for Firebase
+tech: [firebase]
+languages: [javascript, typescript]
+when: { imports: [firebase-functions] }
+script: firebase-functions.ts

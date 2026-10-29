@@ -1,0 +1,45 @@
+{
+  "repository": { "root": "FIXTURE_ROOT" },
+  "files": [
+    { "path": "src/auth/index.ts", "language": "typescript", "symbols": [] },
+    {
+      "path": "src/auth/token.ts",
+      "language": "typescript",
+      "symbols": [
+        {
+          "id": "src/auth/token.ts#generate",
+          "name": "generate",
+          "kind": "function",
+          "exported": true,
+          "location": { "path": "src/auth/token.ts", "startLine": 1, "endLine": 3 }
+        }
+      ]
+    },
+    {
+      "path": "src/consumer.ts",
+      "language": "typescript",
+      "symbols": [
+        {
+          "id": "src/consumer.ts#run",
+          "name": "run",
+          "kind": "function",
+          "exported": true,
+          "location": { "path": "src/consumer.ts", "startLine": 3, "endLine": 5 }
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    { "from": "src/auth/index.ts", "to": "src/auth/token.ts", "raw": "./token", "external": false },
+    { "from": "src/consumer.ts", "to": "src/auth/index.ts", "raw": "./auth/index", "external": false }
+  ],
+  "reExports": [
+    {
+      "file": "src/auth/index.ts",
+      "exportedName": "generateToken",
+      "originalName": "generate",
+      "sourceFile": "src/auth/token.ts",
+      "external": false
+    }
+  ]
+}

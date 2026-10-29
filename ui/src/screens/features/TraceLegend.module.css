@@ -1,0 +1,25 @@
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+  margin-top: 24px;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.item i {
+  width: 20px;
+}
+
+.extracted { border-top: 2px solid var(--night); }
+.comment { border-top: 3px solid var(--cyan); }
+.call { border-top: 1.6px solid var(--night); }
+.data { border-top: 1.6px solid var(--blue); }
+.back { border-top: 1.4px dashed var(--ink-soft); }

@@ -1,0 +1,19 @@
+app = "atelier-api"
+primary_region = "cdg"
+
+[build]
+
+[processes]
+  app = "pnpm exec tsx src/server.ts"
+  worker = "pnpm exec tsx src/email/main.ts"
+
+[http_service]
+  internal_port = 3000
+  processes = ["app"]
+  force_https = true
+  auto_stop_machines = "off"
+  min_machines_running = 2
+
+[[vm]]
+  size = "shared-cpu-1x"
+  processes = ["app", "worker"]

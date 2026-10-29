@@ -1,0 +1,101 @@
+/* La marque à gauche, le nom au milieu, la preuve à droite ; les pastilles et le reste dessous, alignés sur le nom. */
+.card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 10px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  transition: border-color var(--dur-1) var(--ease);
+}
+
+.card + .card { margin-top: 6px; }
+
+.plain { grid-template-columns: 0 minmax(0, 1fr) auto; column-gap: 0; }
+.plain > [data-proof] { margin-left: 10px; }
+
+.card:has(.link:hover) { border-color: var(--blue-edge); }
+
+.mark {
+  grid-row: 1;
+  grid-column: 1;
+  display: flex;
+}
+
+.text {
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.card > [data-proof] { grid-column: 3; grid-row: 1; }
+
+.kind {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ink-soft);
+}
+
+.title {
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow-wrap: break-word;
+}
+
+.link {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.link:hover { color: var(--blue-ink); }
+
+.chips,
+.more {
+  grid-column: 2 / -1;
+  min-width: 0;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  border-radius: var(--radius-tight);
+  background: var(--night-faint);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+.chip svg { flex: none; color: var(--blue-ink); }
+
+.more {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+/* Une ligne du reste : une petite icône, puis le texte qui passe à la ligne sous lui-même. */
+.more > span {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.more > span > svg {
+  flex: none;
+  margin-top: 4px;
+  color: var(--blue-ink);
+}

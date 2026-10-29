@@ -1,0 +1,70 @@
+.wrap {
+  padding: 22px 24px 32px;
+  min-width: 0;
+}
+
+.caption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+/* L'en-tête des colonnes reste sous le bandeau ; quand le tableau ne tient pas, il défile de côté. */
+.table thead th {
+  position: sticky;
+  top: var(--header-h, 0px);
+  z-index: 2;
+  background: var(--ground);
+}
+
+.scroll {
+  min-width: 0;
+}
+
+.slide {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.table th {
+  padding: 8px 8px;
+  border-bottom: 1px solid var(--night);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--ink-soft);
+  text-align: left;
+  vertical-align: bottom;
+  white-space: nowrap;
+}
+
+.detail {
+  display: block;
+  margin-top: 2px;
+  white-space: normal;
+  font-size: 10px;
+  color: var(--ink-pale);
+}
+
+.table td {
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+.group td {
+  padding: 6px 10px;
+  background: var(--night-faint);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  cursor: default;
+}

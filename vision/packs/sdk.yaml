@@ -1,0 +1,37 @@
+id: sdk
+name: Clients de services externes
+tech: [stripe, resend, nodemailer, openai, anthropic]
+languages: [javascript, typescript]
+# Pas de `when` : un fichier peut appeler un client importé, sans importer le SDK.
+script: sdk.ts
+rules: |
+  external_pkg("stripe", "Stripe", stripe).
+  external_pkg("resend", "Resend", resend).
+  external_pkg("nodemailer", "Serveur SMTP", nodemailer).
+  external_pkg("openai", "OpenAI", openai).
+  external_pkg("@anthropic-ai/sdk", "Anthropic", anthropic).
+
+  % Un client : la classe d'un SDK, ou la fonction qui le crée.
+  sdk_make("stripe", "default").
+  sdk_make("nodemailer", "createTransport").
+  is_client(F, S, P) :- made(F, S, P, "new", _), external_pkg(P, _, _).
+  is_client(F, S, P) :- made(F, S, P, H, _), sdk_make(P, H).
+  client(F, P) :- is_client(F, _, P).
+
+  % Ses appels : dans le fichier, puis partout où il est importé, alias et ré-exports compris.
+  sdk_call(F, P, M, L) :- site_call(F, S, M, L), is_client(F, S, P).
+  client_in(F, V, P) :- site_var(F, S, V), is_client(F, S, P).
+  client_in(F, V, P) :- imports(F, V, H, I), client_in(H, I, P).
+  client_in(F, V, P) :- imports(F, "*", H, "*"), client_in(H, V, P).
+  sdk_call(F, P, M, L) :- member_call(F, V, M, L), imports(F, V, H, I), client_in(H, I, P).
+
+  % Un client rendu par une fonction : getStripe().customers.list(), ou const s = getStripe().
+  client_fn(F, Fn, P) :- fn_returns(F, Fn, S), is_client(F, S, P).
+  client_fn(F, Fn, P) :- imports(F, Fn, H, I), client_fn(H, I, P).
+  sdk_call(F, P, M, L) :- fn_call_member(F, Fn, M, L), client_fn(F, Fn, P).
+
+  % Vérifier la signature d'un appel entrant : c'est ce service qui appelle ce code (webhook), pas une requête vers lui.
+  webhook_check("stripe", "webhooks.constructEvent").
+  webhook_check("stripe", "webhooks.constructEventAsync").
+  inbound_from(F, P, L) :- sdk_call(F, P, M, L), webhook_check(P, M).
+  calls_external(F, P, L) :- sdk_call(F, P, M, L), not webhook_check(P, M).

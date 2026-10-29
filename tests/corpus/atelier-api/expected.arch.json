@@ -1,0 +1,2595 @@
+{
+  "version": 2,
+  "system": {
+    "name": "atelier-api"
+  },
+  "nodes": [
+    {
+      "id": "stripe",
+      "name": "Stripe",
+      "level": "system",
+      "role": "external",
+      "tech": [
+        "stripe"
+      ],
+      "status": "extracted",
+      "proof": [
+        {
+          "path": "src/stripe.ts",
+          "line": 4,
+          "text": "export const stripe = new Stripe(env.STRIPE_SECRET_KEY, {",
+          "source": "pack",
+          "pack": "stripe"
+        }
+      ],
+      "attributes": [
+        {
+          "key": "timeout",
+          "value": "10000",
+          "proof": {
+            "path": "src/stripe.ts",
+            "line": 5,
+            "text": "timeout: 10_000,",
+            "source": "pack",
+            "pack": "stripe"
+          }
+        },
+        {
+          "key": "retries",
+          "value": "2",
+          "proof": {
+            "path": "src/stripe.ts",
+            "line": 5,
+            "text": "timeout: 10_000,",
+            "source": "pack",
+            "pack": "stripe"
+          }
+        }
+      ],
+      "facets": {}
+    },
+    {
+      "id": "resend",
+      "name": "Resend",
+      "level": "system",
+      "role": "external",
+      "tech": [
+        "resend"
+      ],
+      "status": "extracted",
+      "proof": [
+        {
+          "path": "src/email/resend.ts",
+          "line": 11,
+          "text": "this.client = new Resend(apiKey);",
+          "source": "syntax"
+        }
+      ],
+      "facets": {}
+    },
+    {
+      "id": "smtp",
+      "name": "Serveur SMTP",
+      "level": "system",
+      "role": "external",
+      "tech": [
+        "nodemailer"
+      ],
+      "status": "extracted",
+      "proof": [
+        {
+          "path": "src/email/smtp.ts",
+          "line": 9,
+          "text": "this.transport = nodemailer.createTransport(url);",
+          "source": "syntax"
+        }
+      ],
+      "facets": {}
+    },
+    {
+      "id": "api",
+      "name": "API",
+      "level": "deployable",
+      "role": "service",
+      "tech": [
+        "nodejs",
+        "express"
+      ],
+      "status": "extracted",
+      "proof": [
+        {
+          "path": "Dockerfile",
+          "line": 9,
+          "text": "CMD [\"pnpm\", \"exec\", \"tsx\", \"src/server.ts\"]",
+          "source": "manifest"
+        },
+        {
+          "path": "fly.toml",
+          "line": 7,
+          "text": "app = \"pnpm exec tsx src/server.ts\"",
+          "source": "manifest"
+        }
+      ],
+      "instances": {
+        "min": 2,
+        "proof": {
+          "path": "fly.toml",
+          "line": 15,
+          "text": "min_machines_running = 2",
+          "source": "manifest"
+        }
+      },
+      "facets": {
+        "entrypoints": [
+          {
+            "id": "api:POST /webhooks/stripe",
+            "kind": "http",
+            "key": "POST /webhooks/stripe",
+            "handler": {
+              "path": "src/webhooks/stripe.ts",
+              "line": 14,
+              "name": "stripeWebhook"
+            },
+            "proof": {
+              "path": "src/app.ts",
+              "line": 31,
+              "text": "app.post(\"/webhooks/stripe\", express.raw({ type: \"application/json\" }), route(stripeWebhook));",
+              "source": "pack",
+              "pack": "express"
+            },
+            "access": {
+              "level": "signature",
+              "proof": {
+                "path": "src/webhooks/stripe.ts",
+                "line": 17,
+                "text": "event = stripe.webhooks.constructEvent(",
+                "source": "pack",
+                "pack": "stripe"
+              }
+            },
+            "calledBy": [
+              "stripe"
+            ]
+          },
+          {
+            "id": "api:POST /auth/signup",
+            "kind": "http",
+            "key": "POST /auth/signup",
+            "handler": {
+              "path": "src/auth/signup.ts",
+              "line": 17,
+              "name": "signup"
+            },
+            "proof": {
+              "path": "src/app.ts",
+              "line": 36,
+              "text": "app.post(\"/auth/signup\", route(signup));",
+              "source": "pack",
+              "pack": "express"
+            },
+            "access": {
+              "level": "public"
+            },
+            "calledBy": [
+              "web"
+            ]
+          },
+          {
+            "id": "api:POST /auth/login",
+            "kind": "http",
+            "key": "POST /auth/login",
+            "handler": {
+              "path": "src/auth/login.ts",
+              "line": 13,
+              "name": "login"
+            },
+            "proof": {
+              "path": "src/app.ts",
+              "line": 37,
+              "text": "app.post(\"/auth/login\", route(login));",
+              "source": "pack",
+              "pack": "express"
+            },
+            "access": {
+              "level": "public"
+            },
+            "calledBy": [
+              "web"
+            ]
+          },
+          {
+            "id": "api:POST /auth/reset",
+            "kind": "http",
+            "key": "POST /auth/reset",
+            "handler": {
+              "path": "src/auth/reset.ts",
+              "line": 13,
+              "name": "requestReset"
+            },
+            "proof": {
+              "path": "src/app.ts",
+              "line": 38,
+              "text": "app.post(\"/auth/reset\", route(requestReset));",
+              "source": "pack",
+              "pack": "express"
+            },
+            "access": {
+              "level": "public"
+            }
+          },
+          {
+            "id": "api:GET /workshops",
+            "kind": "http",
+            "key": "GET /workshops",
+            "handler": {
+              "path": "src/workshops/list.ts",
+              "line": 6,
+              "name": "listWorkshops"
+            },
+            "proof": {
+              "path": "src/app.ts",
+              "line": 40,
+              "text": "app.get(\"/workshops\", route(listWorkshops));",
+              "source": "pack",
+              "pack": "express"
+            },
+            "access": {
+              "level": "public"
+            },
+            "calledBy": [
+              "web"
+            ]
+          },
+          {
+            "id": "api:GET /workshops/:id",
+            "kind": "http",
+            "key": "GET /workshops/:id",
+            "handler": {
+              "path": "src/workshops/get.ts",
+              "line": 7,
+              "name": "getWorkshop"
+            },
+            "proof": {
+              "path": "src/app.ts",
+              "line": 41,
+              "text": "app.get(\"/workshops/:id\", route(getWorkshop));",
+              "source": "pack",
+              "pack": "express"
+            },
+            "access": {
+              "level": "public"
+            },
+            "calledBy": [
+              "web"
+            ]
+          },
+          {
+            "id": "api:POST /bookings",
+            "kind": "http",
+            "key": "POST /bookings",
+            "handler": {
+              "path": "src/bookings/create.ts",
+              "line": 14,
+              "name": "createBooking"
+            },
+            "proof": {
+              "path": "src/app.ts",
+              "line": 43,
+              "text": "app.post(\"/bookings\", route(createBooking));",
+              "source": "pack",
+              "pack": "express"
+            },
+            "access": {
+              "level": "authenticated",
+              "proof": {
+                "path": "src/bookings/create.ts",
+                "line": 15,
+                "text": "const user = await requireUser(req);",
+                "source": "syntax"
+              }
+            },
+            "calledBy": [
+              "web"
+            ]
+          },
+          {
+            "id": "api:GET /bookings/:id",
+            "kind": "http",
+            "key": "GET /bookings/:id",
+            "handler": {
+              "path": "src/bookings/get.ts",
+              "line": 8,
+              "name": "getBooking"
+            },
+            "proof": {
+              "path": "src/app.ts",
+              "line": 44,
+              "text": "app.get(\"/bookings/:id\", route(getBooking));",
+              "source": "pack",
+              "pack": "express"
+            },
+            "access": {
+              "level": "authenticated",
+              "proof": {
+                "path": "src/bookings/get.ts",
+                "line": 9,
+                "text": "const user = await requireUser(req);",
+                "source": "syntax"
+              }
+            },
+            "calledBy": [
+              "web"
+            ]
+          },
+          {
+            "id": "api:PATCH /bookings/:id",
+            "kind": "http",
+            "key": "PATCH /bookings/:id",
+            "handler": {
+              "path": "src/bookings/update.ts",
+              "line": 13,
+              "name": "cancelBooking"
+            },
+            "proof": {
+              "path": "src/app.ts",
+              "line": 45,
+              "text": "app.patch(\"/bookings/:id\", route(cancelBooking));",
+              "source": "pack",
+              "pack": "express"
+            },
+            "access": {
+              "level": "authenticated",
+              "proof": {
+                "path": "src/bookings/update.ts",
+                "line": 14,
+                "text": "const user = await requireUser(req);",
+                "source": "syntax"
+              }
+            },
+            "calledBy": [
+              "web"
+            ]
+          },
+          {
+            "id": "api:POST /bookings/:id/transfer",
+            "kind": "http",
+            "key": "POST /bookings/:id/transfer",
+            "handler": {
+              "path": "src/bookings/transfer.ts",
+              "line": 12,
+              "name": "transferBooking"
+            },
+            "proof": {
+              "path": "src/app.ts",
+              "line": 46,
+              "text": "app.post(\"/bookings/:id/transfer\", route(transferBooking));",
+              "source": "pack",
+              "pack": "express"
+            },
+            "access": {
+              "level": "authenticated",
+              "proof": {
+                "path": "src/bookings/transfer.ts",
+                "line": 13,
+                "text": "const user = await requireUser(req);",
+                "source": "syntax"
+              }
+            }
+          },
+          {
+            "id": "api:POST /payments",
+            "kind": "http",
+            "key": "POST /payments",
+            "handler": {
+              "path": "src/payments/create.ts",
+              "line": 13,
+              "name": "createPayment"
+            },
+            "proof": {
+              "path": "src/app.ts",
+              "line": 48,
+              "text": "app.post(\"/payments\", route(createPayment));",
+              "source": "pack",
+              "pack": "express"
+            },
+            "access": {
+              "level": "authenticated",
+              "proof": {
+                "path": "src/payments/create.ts",
+                "line": 14,
+                "text": "const user = await requireUser(req);",
+                "source": "syntax"
+              }
+            },
+            "calledBy": [
+              "web"
+            ]
+          },
+          {
+            "id": "api:POST /payments/:id/refund",
+            "kind": "http",
+            "key": "POST /payments/:id/refund",
+            "handler": {
+              "path": "src/payments/refund.ts",
+              "line": 11,
+              "name": "refundPayment"
+            },
+            "proof": {
+              "path": "src/app.ts",
+              "line": 49,
+              "text": "app.post(\"/payments/:id/refund\", route(refundPayment));",
+              "source": "pack",
+              "pack": "express"
+            },
+            "access": {
+              "level": "role",
+              "roles": [
+                "admin"
+              ],
+              "proof": {
+                "path": "src/payments/refund.ts",
+                "line": 12,
+                "text": "await requireAdmin(req);",
+                "source": "syntax"
+              }
+            }
+          },
+          {
+            "id": "api:POST /reviews",
+            "kind": "http",
+            "key": "POST /reviews",
+            "handler": {
+              "path": "src/reviews/create.ts",
+              "line": 9,
+              "name": "createReview"
+            },
+            "proof": {
+              "path": "src/app.ts",
+              "line": 51,
+              "text": "app.post(\"/reviews\", route(createReview));",
+              "source": "pack",
+              "pack": "express"
+            },
+            "access": {
+              "level": "authenticated",
+              "proof": {
+                "path": "src/reviews/create.ts",
+                "line": 10,
+                "text": "const user = await requireUser(req);",
+                "source": "syntax"
+              }
+            }
+          },
+          {
+            "id": "api:GET /admin/export",
+            "kind": "http",
+            "key": "GET /admin/export",
+            "handler": {
+              "path": "src/admin/export.ts",
+              "line": 7,
+              "name": "exportUsers"
+            },
+            "proof": {
+              "path": "src/app.ts",
+              "line": 52,
+              "text": "app.get(\"/admin/export\", route(exportUsers));",
+              "source": "pack",
+              "pack": "express"
+            },
+            "access": {
+              "level": "authenticated",
+              "proof": {
+                "path": "src/admin/export.ts",
+                "line": 8,
+                "text": "await requireUser(req);",
+                "source": "syntax"
+              }
+            }
+          },
+          {
+            "id": "api:GET /healthz",
+            "kind": "http",
+            "key": "GET /healthz",
+            "handler": {
+              "path": "src/health.ts",
+              "line": 4,
+              "name": "health"
+            },
+            "proof": {
+              "path": "src/app.ts",
+              "line": 53,
+              "text": "app.get(\"/healthz\", route(health));",
+              "source": "pack",
+              "pack": "express"
+            },
+            "access": {
+              "level": "public"
+            }
+          },
+          {
+            "id": "api:cron:expireHolds",
+            "kind": "schedule",
+            "key": "* * * * *",
+            "handler": {
+              "path": "src/jobs/expire.ts",
+              "line": 11,
+              "name": "expireHolds"
+            },
+            "proof": {
+              "path": "src/jobs/index.ts",
+              "line": 13,
+              "text": "cron.schedule(\"* * * * *\", run(\"expireHolds\", expireHolds));",
+              "source": "pack",
+              "pack": "node-cron"
+            },
+            "access": {
+              "level": "internal"
+            }
+          },
+          {
+            "id": "api:cron:sendReminders",
+            "kind": "schedule",
+            "key": "0 8 * * *",
+            "handler": {
+              "path": "src/jobs/reminders.ts",
+              "line": 9,
+              "name": "sendReminders"
+            },
+            "proof": {
+              "path": "src/jobs/index.ts",
+              "line": 14,
+              "text": "cron.schedule(\"0 8 * * *\", run(\"sendReminders\", sendReminders), { timezone: \"Europe/Paris\" });",
+              "source": "pack",
+              "pack": "node-cron"
+            },
+            "access": {
+              "level": "internal"
+            }
+          },
+          {
+            "id": "api:cron:purgeSessions",
+            "kind": "schedule",
+            "key": "0 3 * * *",
+            "handler": {
+              "path": "src/jobs/purge.ts",
+              "line": 6,
+              "name": "purgeSessions"
+            },
+            "proof": {
+              "path": "src/jobs/index.ts",
+              "line": 15,
+              "text": "cron.schedule(\"0 3 * * *\", run(\"purgeSessions\", purgeSessions));",
+              "source": "pack",
+              "pack": "node-cron"
+            },
+            "access": {
+              "level": "internal"
+            }
+          },
+          {
+            "id": "api:main",
+            "kind": "main",
+            "key": "src/server.ts",
+            "proof": {
+              "path": "Dockerfile",
+              "line": 9,
+              "text": "CMD [\"pnpm\", \"exec\", \"tsx\", \"src/server.ts\"]",
+              "source": "manifest"
+            },
+            "access": {
+              "level": "internal"
+            }
+          }
+        ],
+        "config": {
+          "env": [
+            {
+              "name": "PORT",
+              "readAt": [
+                {
+                  "path": "src/env.ts",
+                  "line": 4,
+                  "text": "PORT: z.coerce.number().default(3000),",
+                  "source": "pack",
+                  "pack": "zod"
+                }
+              ],
+              "required": false
+            },
+            {
+              "name": "DATABASE_URL",
+              "readAt": [
+                {
+                  "path": "src/env.ts",
+                  "line": 5,
+                  "text": "DATABASE_URL: z.string().url(),",
+                  "source": "pack",
+                  "pack": "zod"
+                }
+              ],
+              "required": true
+            },
+            {
+              "name": "REDIS_URL",
+              "readAt": [
+                {
+                  "path": "src/env.ts",
+                  "line": 6,
+                  "text": "REDIS_URL: z.string().url(),",
+                  "source": "pack",
+                  "pack": "zod"
+                }
+              ],
+              "required": true
+            },
+            {
+              "name": "STRIPE_SECRET_KEY",
+              "readAt": [
+                {
+                  "path": "src/env.ts",
+                  "line": 7,
+                  "text": "STRIPE_SECRET_KEY: z.string().min(1),",
+                  "source": "pack",
+                  "pack": "zod"
+                }
+              ],
+              "required": true
+            },
+            {
+              "name": "STRIPE_WEBHOOK_SECRET",
+              "readAt": [
+                {
+                  "path": "src/env.ts",
+                  "line": 8,
+                  "text": "STRIPE_WEBHOOK_SECRET: z.string().min(1),",
+                  "source": "pack",
+                  "pack": "zod"
+                }
+              ],
+              "required": true
+            },
+            {
+              "name": "EMAIL_PROVIDER",
+              "readAt": [
+                {
+                  "path": "src/env.ts",
+                  "line": 9,
+                  "text": "EMAIL_PROVIDER: z.enum([\"resend\", \"smtp\", \"console\"]).default(\"resend\"),",
+                  "source": "pack",
+                  "pack": "zod"
+                }
+              ],
+              "required": false
+            },
+            {
+              "name": "RESEND_API_KEY",
+              "readAt": [
+                {
+                  "path": "src/env.ts",
+                  "line": 10,
+                  "text": "RESEND_API_KEY: z.string().optional(),",
+                  "source": "pack",
+                  "pack": "zod"
+                }
+              ],
+              "required": false
+            },
+            {
+              "name": "SMTP_URL",
+              "readAt": [
+                {
+                  "path": "src/env.ts",
+                  "line": 11,
+                  "text": "SMTP_URL: z.string().optional(),",
+                  "source": "pack",
+                  "pack": "zod"
+                }
+              ],
+              "required": false
+            },
+            {
+              "name": "SESSION_SECRET",
+              "readAt": [
+                {
+                  "path": "src/env.ts",
+                  "line": 12,
+                  "text": "SESSION_SECRET: z.string().min(8),",
+                  "source": "pack",
+                  "pack": "zod"
+                }
+              ],
+              "required": true
+            },
+            {
+              "name": "WEB_ORIGIN",
+              "readAt": [
+                {
+                  "path": "src/env.ts",
+                  "line": 13,
+                  "text": "WEB_ORIGIN: z.string().default(\"http://localhost:5173\"),",
+                  "source": "pack",
+                  "pack": "zod"
+                }
+              ],
+              "required": false
+            },
+            {
+              "name": "LOG_LEVEL",
+              "readAt": [
+                {
+                  "path": "src/logger.ts",
+                  "line": 3,
+                  "text": "export const logger = pino({ level: process.env.LOG_LEVEL ?? \"info\" });",
+                  "source": "syntax"
+                }
+              ],
+              "required": false
+            }
+          ]
+        },
+        "trust": {
+          "exposure": "public",
+          "mechanisms": [
+            {
+              "name": "session par cookie",
+              "proof": {
+                "path": "src/auth/session.ts",
+                "line": 17,
+                "text": "res.cookie(COOKIE, id, { httpOnly: true, sameSite: \"lax\", secure: process.env.NODE_ENV === \"production\", expires: expiresAt });",
+                "source": "syntax"
+              }
+            },
+            {
+              "name": "signature",
+              "proof": {
+                "path": "src/webhooks/stripe.ts",
+                "line": 17,
+                "text": "event = stripe.webhooks.constructEvent(",
+                "source": "pack",
+                "pack": "stripe"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "worker",
+      "name": "Worker emails",
+      "level": "deployable",
+      "role": "worker",
+      "tech": [
+        "nodejs"
+      ],
+      "status": "extracted",
+      "proof": [
+        {
+          "path": "fly.toml",
+          "line": 8,
+          "text": "worker = \"pnpm exec tsx src/email/main.ts\"",
+          "source": "manifest"
+        },
+        {
+          "path": "docker-compose.yml",
+          "line": 22,
+          "text": "command: [\"pnpm\", \"exec\", \"tsx\", \"src/email/main.ts\"]",
+          "source": "manifest"
+        }
+      ],
+      "facets": {
+        "entrypoints": [
+          {
+            "id": "worker:emails",
+            "kind": "message",
+            "key": "emails",
+            "handler": {
+              "path": "src/email/worker.ts",
+              "line": 29,
+              "name": "sendEmail"
+            },
+            "proof": {
+              "path": "src/email/main.ts",
+              "line": 6,
+              "text": "const worker = new Worker(\"emails\", sendEmail, { connection, concurrency: 5 });",
+              "source": "pack",
+              "pack": "bullmq"
+            },
+            "access": {
+              "level": "internal"
+            },
+            "calledBy": [
+              "redis"
+            ]
+          }
+        ],
+        "config": {
+          "env": [
+            {
+              "name": "DATABASE_URL",
+              "readAt": [
+                {
+                  "path": "src/env.ts",
+                  "line": 5,
+                  "text": "DATABASE_URL: z.string().url(),",
+                  "source": "pack",
+                  "pack": "zod"
+                }
+              ],
+              "required": true
+            },
+            {
+              "name": "REDIS_URL",
+              "readAt": [
+                {
+                  "path": "src/env.ts",
+                  "line": 6,
+                  "text": "REDIS_URL: z.string().url(),",
+                  "source": "pack",
+                  "pack": "zod"
+                }
+              ],
+              "required": true
+            },
+            {
+              "name": "EMAIL_PROVIDER",
+              "readAt": [
+                {
+                  "path": "src/env.ts",
+                  "line": 9,
+                  "text": "EMAIL_PROVIDER: z.enum([\"resend\", \"smtp\", \"console\"]).default(\"resend\"),",
+                  "source": "pack",
+                  "pack": "zod"
+                }
+              ],
+              "required": false
+            },
+            {
+              "name": "RESEND_API_KEY",
+              "readAt": [
+                {
+                  "path": "src/env.ts",
+                  "line": 10,
+                  "text": "RESEND_API_KEY: z.string().optional(),",
+                  "source": "pack",
+                  "pack": "zod"
+                }
+              ],
+              "required": false
+            },
+            {
+              "name": "SMTP_URL",
+              "readAt": [
+                {
+                  "path": "src/env.ts",
+                  "line": 11,
+                  "text": "SMTP_URL: z.string().optional(),",
+                  "source": "pack",
+                  "pack": "zod"
+                }
+              ],
+              "required": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "emails",
+      "name": "Module emails",
+      "level": "component",
+      "role": "module",
+      "parent": "worker",
+      "status": "extracted",
+      "proof": [
+        {
+          "path": "src/email/types.ts",
+          "line": 40,
+          "text": "export interface EmailSender {",
+          "source": "syntax"
+        }
+      ],
+      "files": [
+        "src/email/console.ts",
+        "src/email/index.ts",
+        "src/email/render.ts",
+        "src/email/resend.ts",
+        "src/email/smtp.ts",
+        "src/email/types.ts",
+        "src/email/worker.ts"
+      ],
+      "facets": {
+        "contract": [
+          {
+            "name": "EmailSender",
+            "interface": {
+              "path": "src/email/types.ts",
+              "line": 40,
+              "name": "EmailSender"
+            },
+            "operations": [
+              {
+                "name": "send",
+                "line": 41
+              }
+            ],
+            "implementations": [
+              {
+                "name": "ResendSender",
+                "path": "src/email/resend.ts",
+                "line": 7
+              },
+              {
+                "name": "SmtpSender",
+                "path": "src/email/smtp.ts",
+                "line": 5
+              },
+              {
+                "name": "ConsoleSender",
+                "path": "src/email/console.ts",
+                "line": 6
+              }
+            ],
+            "selector": {
+              "symbol": {
+                "path": "src/email/index.ts",
+                "line": 12,
+                "name": "getSender"
+              },
+              "config": [
+                "EMAIL_PROVIDER"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "web",
+      "name": "App web",
+      "level": "deployable",
+      "role": "app",
+      "tech": [
+        "react",
+        "vite"
+      ],
+      "status": "extracted",
+      "proof": [
+        {
+          "path": "web/index.html",
+          "line": 10,
+          "text": "<script type=\"module\" src=\"/src/main.tsx\"></script>",
+          "source": "manifest"
+        }
+      ],
+      "facets": {
+        "entrypoints": [
+          {
+            "id": "web:main",
+            "kind": "main",
+            "key": "web/index.html",
+            "proof": {
+              "path": "web/index.html",
+              "line": 10,
+              "text": "<script type=\"module\" src=\"/src/main.tsx\"></script>",
+              "source": "manifest"
+            },
+            "access": {
+              "level": "public"
+            }
+          }
+        ],
+        "config": {
+          "env": [
+            {
+              "name": "VITE_API_URL",
+              "readAt": [
+                {
+                  "path": "web/src/api/client.ts",
+                  "line": 1,
+                  "text": "const API = import.meta.env.VITE_API_URL ?? \"http://localhost:3000\";",
+                  "source": "syntax"
+                }
+              ],
+              "required": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "postgres",
+      "name": "Postgres",
+      "level": "deployable",
+      "role": "store",
+      "tech": [
+        "postgresql"
+      ],
+      "status": "extracted",
+      "proof": [
+        {
+          "path": "docker-compose.yml",
+          "line": 3,
+          "text": "image: postgres:16",
+          "source": "manifest"
+        },
+        {
+          "path": "src/db.ts",
+          "line": 6,
+          "text": "export const pool = new pg.Pool({ connectionString: env.DATABASE_URL, max: 10 });",
+          "source": "syntax"
+        }
+      ],
+      "facets": {
+        "data": {
+          "shape": "relational",
+          "entities": [
+            {
+              "name": "users",
+              "proof": {
+                "path": "src/db/schema.ts",
+                "line": 9,
+                "text": "export const users = pgTable(\"users\", {",
+                "source": "pack",
+                "pack": "drizzle"
+              },
+              "constraints": [
+                {
+                  "kind": "unique",
+                  "fields": [
+                    "email"
+                  ],
+                  "proof": {
+                    "path": "src/db/schema.ts",
+                    "line": 11,
+                    "text": "email: text(\"email\").notNull().unique(),",
+                    "source": "pack",
+                    "pack": "drizzle"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "sessions",
+              "proof": {
+                "path": "src/db/schema.ts",
+                "line": 19,
+                "text": "export const sessions = pgTable(\"sessions\", {",
+                "source": "pack",
+                "pack": "drizzle"
+              }
+            },
+            {
+              "name": "password_resets",
+              "proof": {
+                "path": "src/db/schema.ts",
+                "line": 27,
+                "text": "export const passwordResets = pgTable(\"password_resets\", {",
+                "source": "pack",
+                "pack": "drizzle"
+              }
+            },
+            {
+              "name": "bookings",
+              "proof": {
+                "path": "src/db/schema.ts",
+                "line": 37,
+                "text": "export const bookings = pgTable(",
+                "source": "pack",
+                "pack": "drizzle"
+              },
+              "fields": [
+                {
+                  "name": "status",
+                  "type": "text",
+                  "values": [
+                    "pending",
+                    "confirmed",
+                    "cancelled",
+                    "refunded",
+                    "on_hold"
+                  ],
+                  "proof": {
+                    "path": "src/db/schema.ts",
+                    "line": 35,
+                    "text": "export const BOOKING_STATUS = [\"pending\", \"confirmed\", \"cancelled\", \"refunded\", \"on_hold\"] as const;",
+                    "source": "pack",
+                    "pack": "drizzle"
+                  }
+                }
+              ],
+              "constraints": [
+                {
+                  "kind": "unique",
+                  "name": "bookings_one_active",
+                  "fields": [
+                    "user_id",
+                    "slot_id"
+                  ],
+                  "where": "status in ('pending', 'confirmed')",
+                  "proof": {
+                    "path": "src/db/schema.ts",
+                    "line": 55,
+                    "text": "uniqueIndex(\"bookings_one_active\").on(t.userId, t.slotId).where(sql`status in ('pending', 'confirmed')`),",
+                    "source": "pack",
+                    "pack": "drizzle"
+                  }
+                }
+              ],
+              "triggers": [
+                {
+                  "name": "audit_bookings",
+                  "on": [
+                    "update"
+                  ],
+                  "proof": {
+                    "path": "drizzle/0001_audit.sql",
+                    "line": 12,
+                    "text": "CREATE TRIGGER audit_bookings AFTER UPDATE ON bookings FOR EACH ROW EXECUTE FUNCTION audit_bookings();",
+                    "source": "manifest"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "slots",
+              "proof": {
+                "path": "src/db/schema.ts",
+                "line": 60,
+                "text": "export const slots = pgTable(\"slots\", {",
+                "source": "pack",
+                "pack": "drizzle"
+              }
+            },
+            {
+              "name": "payments",
+              "proof": {
+                "path": "src/db/schema.ts",
+                "line": 72,
+                "text": "export const payments = pgTable(\"payments\", {",
+                "source": "pack",
+                "pack": "drizzle"
+              },
+              "constraints": [
+                {
+                  "kind": "unique",
+                  "fields": [
+                    "intent_id"
+                  ],
+                  "proof": {
+                    "path": "src/db/schema.ts",
+                    "line": 75,
+                    "text": "intentId: text(\"intent_id\").unique(),",
+                    "source": "pack",
+                    "pack": "drizzle"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "refunds",
+              "proof": {
+                "path": "src/db/schema.ts",
+                "line": 80,
+                "text": "export const refunds = pgTable(\"refunds\", {",
+                "source": "pack",
+                "pack": "drizzle"
+              },
+              "constraints": [
+                {
+                  "kind": "unique",
+                  "fields": [
+                    "stripe_refund_id"
+                  ],
+                  "proof": {
+                    "path": "src/db/schema.ts",
+                    "line": 83,
+                    "text": "stripeRefundId: text(\"stripe_refund_id\").unique(),",
+                    "source": "pack",
+                    "pack": "drizzle"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "processed_events",
+              "proof": {
+                "path": "src/db/schema.ts",
+                "line": 88,
+                "text": "export const processedEvents = pgTable(\"processed_events\", {",
+                "source": "pack",
+                "pack": "drizzle"
+              }
+            },
+            {
+              "name": "email_jobs",
+              "proof": {
+                "path": "src/db/schema.ts",
+                "line": 93,
+                "text": "export const emailJobs = pgTable(\"email_jobs\", {",
+                "source": "pack",
+                "pack": "drizzle"
+              }
+            },
+            {
+              "name": "workshops",
+              "proof": {
+                "path": "src/db/schema.ts",
+                "line": 104,
+                "text": "export const workshops = pgTable(\"workshops\", {",
+                "source": "pack",
+                "pack": "drizzle"
+              }
+            },
+            {
+              "name": "instructors",
+              "proof": {
+                "path": "src/db/schema.ts",
+                "line": 112,
+                "text": "export const instructors = pgTable(\"instructors\", {",
+                "source": "pack",
+                "pack": "drizzle"
+              }
+            },
+            {
+              "name": "reviews",
+              "proof": {
+                "path": "src/db/schema.ts",
+                "line": 118,
+                "text": "export const reviews = pgTable(\"reviews\", {",
+                "source": "pack",
+                "pack": "drizzle"
+              }
+            },
+            {
+              "name": "audit_log",
+              "proof": {
+                "path": "src/db/schema.ts",
+                "line": 128,
+                "text": "export const auditLog = pgTable(\"audit_log\", {",
+                "source": "pack",
+                "pack": "drizzle"
+              }
+            },
+            {
+              "name": "settings",
+              "proof": {
+                "path": "src/db/schema.ts",
+                "line": 136,
+                "text": "export const settings = pgTable(\"settings\", {",
+                "source": "pack",
+                "pack": "drizzle"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "redis",
+      "name": "Redis",
+      "level": "deployable",
+      "role": "channel",
+      "tech": [
+        "redis",
+        "bullmq"
+      ],
+      "status": "extracted",
+      "proof": [
+        {
+          "path": "docker-compose.yml",
+          "line": 10,
+          "text": "image: redis:7",
+          "source": "manifest"
+        },
+        {
+          "path": "src/queue.ts",
+          "line": 7,
+          "text": "export const connection = new IORedis(env.REDIS_URL, { maxRetriesPerRequest: null });",
+          "source": "syntax"
+        }
+      ],
+      "facets": {
+        "channel": {
+          "shape": "queue",
+          "topics": [
+            {
+              "name": "emails",
+              "proof": {
+                "path": "src/queue.ts",
+                "line": 9,
+                "text": "export const emailQueue = new Queue<EmailJob>(\"emails\", { connection, defaultJobOptions: JOB_DEFAULTS });",
+                "source": "pack",
+                "pack": "bullmq"
+              },
+              "settings": [
+                {
+                  "key": "attempts",
+                  "value": "5",
+                  "proof": {
+                    "path": "src/email/retry.ts",
+                    "line": 6,
+                    "text": "attempts: 5,",
+                    "source": "pack",
+                    "pack": "bullmq"
+                  }
+                },
+                {
+                  "key": "backoff",
+                  "value": "exponential 30000",
+                  "proof": {
+                    "path": "src/email/retry.ts",
+                    "line": 7,
+                    "text": "backoff: { type: \"exponential\", delay: 30_000 },",
+                    "source": "pack",
+                    "pack": "bullmq"
+                  }
+                },
+                {
+                  "key": "concurrency",
+                  "value": "5",
+                  "proof": {
+                    "path": "src/email/main.ts",
+                    "line": 6,
+                    "text": "const worker = new Worker(\"emails\", sendEmail, { connection, concurrency: 5 });",
+                    "source": "pack",
+                    "pack": "bullmq"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "web>call>api#api:POST /auth/signup",
+      "from": "web",
+      "to": "api",
+      "kind": "call",
+      "target": {
+        "entrypoint": "api:POST /auth/signup"
+      },
+      "count": 1,
+      "occurrences": [
+        {
+          "path": "web/src/api/auth.ts",
+          "line": 4,
+          "text": "api<{ id: string }>(\"/auth/signup\", { method: \"POST\", body: JSON.stringify(input) });",
+          "source": "syntax"
+        }
+      ]
+    },
+    {
+      "id": "web>call>api#api:POST /auth/login",
+      "from": "web",
+      "to": "api",
+      "kind": "call",
+      "target": {
+        "entrypoint": "api:POST /auth/login"
+      },
+      "count": 1,
+      "occurrences": [
+        {
+          "path": "web/src/api/auth.ts",
+          "line": 7,
+          "text": "api<{ id: string }>(\"/auth/login\", { method: \"POST\", body: JSON.stringify({ email, password }) });",
+          "source": "syntax"
+        }
+      ]
+    },
+    {
+      "id": "web>call>api#api:GET /workshops",
+      "from": "web",
+      "to": "api",
+      "kind": "call",
+      "target": {
+        "entrypoint": "api:GET /workshops"
+      },
+      "count": 1,
+      "occurrences": [
+        {
+          "path": "web/src/api/workshops.ts",
+          "line": 17,
+          "text": "export const listWorkshops = () => api<Workshop[]>(\"/workshops\");",
+          "source": "syntax"
+        }
+      ]
+    },
+    {
+      "id": "web>call>api#api:GET /workshops/:id",
+      "from": "web",
+      "to": "api",
+      "kind": "call",
+      "target": {
+        "entrypoint": "api:GET /workshops/:id"
+      },
+      "count": 1,
+      "occurrences": [
+        {
+          "path": "web/src/api/workshops.ts",
+          "line": 18,
+          "text": "export const getWorkshop = (id: string) => api<Workshop & { description: string; slots: Slot[] }>(`/workshops/${id}`);",
+          "source": "syntax"
+        }
+      ]
+    },
+    {
+      "id": "web>call>api#api:POST /bookings",
+      "from": "web",
+      "to": "api",
+      "kind": "call",
+      "target": {
+        "entrypoint": "api:POST /bookings"
+      },
+      "count": 1,
+      "occurrences": [
+        {
+          "path": "web/src/api/bookings.ts",
+          "line": 11,
+          "text": "api<Booking>(\"/bookings\", { method: \"POST\", body: JSON.stringify({ slotId, notes }) });",
+          "source": "syntax"
+        }
+      ]
+    },
+    {
+      "id": "web>call>api#api:GET /bookings/:id",
+      "from": "web",
+      "to": "api",
+      "kind": "call",
+      "target": {
+        "entrypoint": "api:GET /bookings/:id"
+      },
+      "count": 1,
+      "occurrences": [
+        {
+          "path": "web/src/api/bookings.ts",
+          "line": 13,
+          "text": "export const getBooking = (id: string) => api<Booking>(`/bookings/${id}`);",
+          "source": "syntax"
+        }
+      ]
+    },
+    {
+      "id": "web>call>api#api:PATCH /bookings/:id",
+      "from": "web",
+      "to": "api",
+      "kind": "call",
+      "target": {
+        "entrypoint": "api:PATCH /bookings/:id"
+      },
+      "count": 1,
+      "occurrences": [
+        {
+          "path": "web/src/api/bookings.ts",
+          "line": 16,
+          "text": "api<{ id: string; status: string }>(`/bookings/${id}`, { method: \"PATCH\", body: JSON.stringify({ status: \"cancelled\" }) });",
+          "source": "syntax"
+        }
+      ]
+    },
+    {
+      "id": "web>call>api#api:POST /payments",
+      "from": "web",
+      "to": "api",
+      "kind": "call",
+      "target": {
+        "entrypoint": "api:POST /payments"
+      },
+      "count": 1,
+      "occurrences": [
+        {
+          "path": "web/src/api/payments.ts",
+          "line": 12,
+          "text": "return api<PaymentStart>(\"/payments\", { method: \"POST\", body: JSON.stringify({ bookingId }) });",
+          "source": "syntax"
+        }
+      ]
+    },
+    {
+      "id": "stripe>call>api#api:POST /webhooks/stripe",
+      "from": "stripe",
+      "to": "api",
+      "kind": "call",
+      "target": {
+        "entrypoint": "api:POST /webhooks/stripe"
+      },
+      "count": 1,
+      "occurrences": [
+        {
+          "path": "src/webhooks/stripe.ts",
+          "line": 17,
+          "text": "event = stripe.webhooks.constructEvent(",
+          "source": "pack",
+          "pack": "stripe",
+          "entrypoints": [
+            "api:POST /webhooks/stripe"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "api>request>stripe",
+      "from": "api",
+      "to": "stripe",
+      "kind": "request",
+      "count": 3,
+      "occurrences": [
+        {
+          "path": "src/payments/create.ts",
+          "line": 33,
+          "text": "const intent = await stripe.paymentIntents.create(",
+          "source": "pack",
+          "pack": "stripe",
+          "entrypoints": [
+            "api:POST /payments"
+          ]
+        },
+        {
+          "path": "src/payments/refund.ts",
+          "line": 16,
+          "text": "const refund = await stripe.refunds.create({ payment_intent: payment.intentId }, { idempotencyKey: `refund-${payment.bookingId}` });",
+          "source": "pack",
+          "pack": "stripe",
+          "entrypoints": [
+            "api:POST /payments/:id/refund"
+          ]
+        },
+        {
+          "path": "src/bookings/update.ts",
+          "line": 26,
+          "text": "const refund = await stripe.refunds.create({ payment_intent: payment.intentId }, { idempotencyKey: `refund-${booking.id}` });",
+          "source": "pack",
+          "pack": "stripe",
+          "entrypoints": [
+            "api:PATCH /bookings/:id"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "worker>request>resend",
+      "from": "worker",
+      "to": "resend",
+      "kind": "request",
+      "count": 1,
+      "occurrences": [
+        {
+          "path": "src/email/resend.ts",
+          "line": 11,
+          "text": "this.client = new Resend(apiKey);",
+          "source": "syntax"
+        }
+      ]
+    },
+    {
+      "id": "worker>request>smtp",
+      "from": "worker",
+      "to": "smtp",
+      "kind": "request",
+      "count": 1,
+      "occurrences": [
+        {
+          "path": "src/email/smtp.ts",
+          "line": 9,
+          "text": "this.transport = nodemailer.createTransport(url);",
+          "source": "syntax"
+        }
+      ]
+    },
+    {
+      "id": "api>write>postgres#bookings",
+      "from": "api",
+      "to": "postgres",
+      "kind": "write",
+      "target": {
+        "entity": "bookings"
+      },
+      "count": 7,
+      "occurrences": [
+        {
+          "path": "src/bookings/create.ts",
+          "line": 28,
+          "text": "const [booking] = await tx.insert(bookings).values({",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:POST /bookings"
+          ]
+        },
+        {
+          "path": "src/bookings/update.ts",
+          "line": 21,
+          "text": "await db.update(bookings).set({ status: \"cancelled\", cancelledAt: new Date(), cancelReason: input.reason ?? \"customer\" }).where(eq(bookings.id, booking.id));",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:PATCH /bookings/:id"
+          ]
+        },
+        {
+          "path": "src/bookings/transfer.ts",
+          "line": 24,
+          "text": "await tx.update(bookings).set({ userId: target.id }).where(eq(bookings.id, booking.id));",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:POST /bookings/:id/transfer"
+          ]
+        },
+        {
+          "path": "src/bookings/confirm.ts",
+          "line": 28,
+          "text": "await tx.update(bookings).set({ status: \"confirmed\", confirmedAt: new Date() }).where(eq(bookings.id, bookingId));",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:POST /webhooks/stripe"
+          ]
+        },
+        {
+          "path": "src/webhooks/stripe.ts",
+          "line": 53,
+          "text": "await tx.update(bookings).set({ status: \"pending\" }).where(eq(bookings.id, bookingId));",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:POST /webhooks/stripe"
+          ]
+        },
+        {
+          "path": "src/payments/refund.ts",
+          "line": 27,
+          "text": "await tx.update(bookings).set({ status: \"refunded\", refundedAt: new Date() }).where(eq(bookings.id, payment.bookingId));",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:POST /webhooks/stripe"
+          ]
+        },
+        {
+          "path": "src/jobs/expire.ts",
+          "line": 19,
+          "text": ".update(bookings)",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:cron:expireHolds"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "api>write>postgres#payments",
+      "from": "api",
+      "to": "postgres",
+      "kind": "write",
+      "target": {
+        "entity": "payments"
+      },
+      "count": 4,
+      "occurrences": [
+        {
+          "path": "src/payments/create.ts",
+          "line": 42,
+          "text": "await db.insert(payments).values({ bookingId: booking.id, intentId: intent.id,",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:POST /payments"
+          ]
+        },
+        {
+          "path": "src/bookings/confirm.ts",
+          "line": 20,
+          "text": "await tx.update(payments).set({ status: \"succeeded\" }).where(eq(payments.intentId, intentId));",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:POST /webhooks/stripe"
+          ]
+        },
+        {
+          "path": "src/webhooks/stripe.ts",
+          "line": 52,
+          "text": "await tx.update(payments).set({ status: \"failed\" }).where(eq(payments.intentId, intentId));",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:POST /webhooks/stripe"
+          ]
+        },
+        {
+          "path": "src/payments/refund.ts",
+          "line": 25,
+          "text": "await tx.update(payments).set({ status: \"refunded\" }).where(eq(payments.id, payment.id));",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:POST /webhooks/stripe"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "api>write>postgres#slots",
+      "from": "api",
+      "to": "postgres",
+      "kind": "write",
+      "target": {
+        "entity": "slots"
+      },
+      "count": 2,
+      "occurrences": [
+        {
+          "path": "src/bookings/create.ts",
+          "line": 27,
+          "text": "await tx.update(slots).set({ seatsTaken: slot.seats_taken + 1 }).where(sql`id = ${slot.id}`);",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:POST /bookings"
+          ]
+        },
+        {
+          "path": "src/jobs/expire.ts",
+          "line": 22,
+          "text": "await db.update(slots).set({ seatsTaken: sql`${slots.seatsTaken} - 1` }).where(eq(slots.id, b.slotId));",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:cron:expireHolds"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "api>write>postgres#refunds",
+      "from": "api",
+      "to": "postgres",
+      "kind": "write",
+      "target": {
+        "entity": "refunds"
+      },
+      "count": 3,
+      "occurrences": [
+        {
+          "path": "src/bookings/update.ts",
+          "line": 27,
+          "text": "await db.insert(refunds).values({ paymentId: payment.id, stripeRefundId: refund.id, status: \"pending\" });",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:PATCH /bookings/:id"
+          ]
+        },
+        {
+          "path": "src/payments/refund.ts",
+          "line": 17,
+          "text": "await db.insert(refunds).values({ paymentId: payment.id, stripeRefundId: refund.id, status: \"pending\" }).onConflictDoNothing();",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:POST /payments/:id/refund"
+          ]
+        },
+        {
+          "path": "src/payments/refund.ts",
+          "line": 26,
+          "text": "await tx.update(refunds).set({ status: \"succeeded\" }).where(eq(refunds.paymentId, payment.id));",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:POST /webhooks/stripe"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "api>write>postgres#processed_events",
+      "from": "api",
+      "to": "postgres",
+      "kind": "write",
+      "target": {
+        "entity": "processed_events"
+      },
+      "count": 1,
+      "occurrences": [
+        {
+          "path": "src/webhooks/stripe.ts",
+          "line": 25,
+          "text": "const fresh = await tx.insert(processedEvents).values({ id: event.id }).onConflictDoNothing().returning();",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:POST /webhooks/stripe"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "api>write>postgres#users",
+      "from": "api",
+      "to": "postgres",
+      "kind": "write",
+      "target": {
+        "entity": "users"
+      },
+      "count": 1,
+      "occurrences": [
+        {
+          "path": "src/auth/signup.ts",
+          "line": 28,
+          "text": ".insert(users)",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:POST /auth/signup"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "api>write>postgres#sessions",
+      "from": "api",
+      "to": "postgres",
+      "kind": "write",
+      "target": {
+        "entity": "sessions"
+      },
+      "count": 1,
+      "occurrences": [
+        {
+          "path": "src/auth/session.ts",
+          "line": 16,
+          "text": "await db.insert(sessions).values({ id, userId, ip, expiresAt });",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:POST /auth/signup"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "api>write>postgres#password_resets",
+      "from": "api",
+      "to": "postgres",
+      "kind": "write",
+      "target": {
+        "entity": "password_resets"
+      },
+      "count": 1,
+      "occurrences": [
+        {
+          "path": "src/auth/reset.ts",
+          "line": 19,
+          "text": "await db.insert(passwordResets).values({ token, userId: user.id, expiresAt: new Date(Date.now() + 3600_000) });",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:POST /auth/reset"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "api>write>postgres#reviews",
+      "from": "api",
+      "to": "postgres",
+      "kind": "write",
+      "target": {
+        "entity": "reviews"
+      },
+      "count": 1,
+      "occurrences": [
+        {
+          "path": "src/reviews/create.ts",
+          "line": 12,
+          "text": "const [review] = await db.insert(reviews).values({ ...input, userId: user.id }).returning();",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:POST /reviews"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "api>read>postgres#bookings",
+      "from": "api",
+      "to": "postgres",
+      "kind": "read",
+      "target": {
+        "entity": "bookings"
+      },
+      "count": 6,
+      "occurrences": [
+        {
+          "path": "src/bookings/get.ts",
+          "line": 10,
+          "text": "const [booking] = await db.select().from(bookings).where(eq(bookings.id, req.params.id!));",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:GET /bookings/:id"
+          ]
+        },
+        {
+          "path": "src/payments/create.ts",
+          "line": 17,
+          "text": "const [booking] = await db.select().from(bookings).where(eq(bookings.id, bookingId));",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:POST /payments"
+          ]
+        },
+        {
+          "path": "src/bookings/transfer.ts",
+          "line": 17,
+          "text": "sql`SELECT id, user_id, status FROM bookings WHERE id = ${req.params.id!} FOR UPDATE`,",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:POST /bookings/:id/transfer"
+          ]
+        },
+        {
+          "path": "src/bookings/confirm.ts",
+          "line": 14,
+          "text": "const [booking] = await tx.select().from(bookings).where(eq(bookings.id, bookingId));",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:POST /webhooks/stripe"
+          ]
+        },
+        {
+          "path": "src/jobs/expire.ts",
+          "line": 13,
+          "text": ".select({ id: bookings.id, slotId: bookings.slotId })",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:cron:expireHolds"
+          ]
+        },
+        {
+          "path": "src/jobs/reminders.ts",
+          "line": 12,
+          "text": ".select({ id: bookings.id })",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:cron:sendReminders"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "api>read>postgres#slots",
+      "from": "api",
+      "to": "postgres",
+      "kind": "read",
+      "target": {
+        "entity": "slots"
+      },
+      "count": 2,
+      "occurrences": [
+        {
+          "path": "src/bookings/create.ts",
+          "line": 21,
+          "text": "sql`SELECT id, seats, seats_taken, price_cents FROM slots WHERE id = ${input.slotId} FOR UPDATE`,",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:POST /bookings"
+          ]
+        },
+        {
+          "path": "src/workshops/get.ts",
+          "line": 10,
+          "text": "const upcoming = await db.select().from(slots).where(and(eq(slots.workshopId, workshop.id), gt(slots.startsAt, new Date())));",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:GET /workshops/:id"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "api>read>postgres#payments",
+      "from": "api",
+      "to": "postgres",
+      "kind": "read",
+      "target": {
+        "entity": "payments"
+      },
+      "count": 3,
+      "occurrences": [
+        {
+          "path": "src/payments/create.ts",
+          "line": 25,
+          "text": "const [existing] = await db.select().from(payments).where(eq(payments.bookingId, booking.id));",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:POST /payments"
+          ]
+        },
+        {
+          "path": "src/payments/refund.ts",
+          "line": 13,
+          "text": "const [payment] = await db.select().from(payments).where(eq(payments.id, req.params.id!));",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:POST /payments/:id/refund"
+          ]
+        },
+        {
+          "path": "src/bookings/update.ts",
+          "line": 24,
+          "text": "const [payment] = await db.select().from(payments).where(eq(payments.bookingId, booking.id));",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:PATCH /bookings/:id"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "api>read>postgres#users",
+      "from": "api",
+      "to": "postgres",
+      "kind": "read",
+      "target": {
+        "entity": "users"
+      },
+      "count": 4,
+      "occurrences": [
+        {
+          "path": "src/auth/login.ts",
+          "line": 16,
+          "text": "const [user] = await db.select().from(users).where(eq(users.email, input.email.toLowerCase()));",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:POST /auth/login"
+          ]
+        },
+        {
+          "path": "src/auth/reset.ts",
+          "line": 16,
+          "text": "const [user] = await db.select({ id: users.id }).from(users).where(eq(users.email, email.toLowerCase()));",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:POST /auth/reset"
+          ]
+        },
+        {
+          "path": "src/admin/export.ts",
+          "line": 9,
+          "text": "const rows = await db.select({ email: users.email, name: users.name, phone: users.phone, createdAt: users.createdAt }).from(users);",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:GET /admin/export"
+          ]
+        },
+        {
+          "path": "src/bookings/transfer.ts",
+          "line": 22,
+          "text": "const [target] = await tx.select({ id: users.id }).from(users).where(eq(users.email, toEmail.toLowerCase()));",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:POST /bookings/:id/transfer"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "api>read>postgres#workshops",
+      "from": "api",
+      "to": "postgres",
+      "kind": "read",
+      "target": {
+        "entity": "workshops"
+      },
+      "count": 2,
+      "occurrences": [
+        {
+          "path": "src/workshops/list.ts",
+          "line": 8,
+          "text": ".select({ id: workshops.id, title: workshops.title, instructor: users.name })",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:GET /workshops"
+          ]
+        },
+        {
+          "path": "src/workshops/get.ts",
+          "line": 8,
+          "text": "const [workshop] = await db.select().from(workshops).where(and(eq(workshops.id, req.params.id!), eq(workshops.published, true)));",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "api:GET /workshops/:id"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "worker>read>postgres#users",
+      "from": "worker",
+      "to": "postgres",
+      "kind": "read",
+      "target": {
+        "entity": "users"
+      },
+      "count": 1,
+      "occurrences": [
+        {
+          "path": "src/email/worker.ts",
+          "line": 24,
+          "text": "const [user] = await db.select().from(users).where(eq(users.id, job.userId ?? \"\"));",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "worker:emails"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "worker>write>postgres#email_jobs",
+      "from": "worker",
+      "to": "postgres",
+      "kind": "write",
+      "target": {
+        "entity": "email_jobs"
+      },
+      "count": 1,
+      "occurrences": [
+        {
+          "path": "src/email/worker.ts",
+          "line": 32,
+          "text": "await db.insert(emailJobs).values({ template: job.data.template, bookingId: job.data.bookingId, providerId: result.id, status: result.status });",
+          "source": "pack",
+          "pack": "drizzle",
+          "entrypoints": [
+            "worker:emails"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "api>message>redis#emails",
+      "from": "api",
+      "to": "redis",
+      "kind": "message",
+      "target": {
+        "topic": "emails"
+      },
+      "count": 6,
+      "occurrences": [
+        {
+          "path": "src/bookings/create.ts",
+          "line": 39,
+          "text": "await emailQueue.add(\"booking-received\", { template: \"booking-received\", bookingId: booking.id });",
+          "source": "pack",
+          "pack": "bullmq",
+          "entrypoints": [
+            "api:POST /bookings"
+          ]
+        },
+        {
+          "path": "src/bookings/confirm.ts",
+          "line": 31,
+          "text": "await emailQueue.add(\"payment-accepted\", { template: \"payment-accepted\", bookingId }, { jobId: `payment-accepted-${bookingId}` });",
+          "source": "pack",
+          "pack": "bullmq",
+          "entrypoints": [
+            "api:POST /webhooks/stripe"
+          ]
+        },
+        {
+          "path": "src/webhooks/stripe.ts",
+          "line": 54,
+          "text": "await emailQueue.add(\"payment-failed\", { template: \"payment-failed\", bookingId }, { jobId: `payment-failed-${intentId}` });",
+          "source": "pack",
+          "pack": "bullmq",
+          "entrypoints": [
+            "api:POST /webhooks/stripe"
+          ]
+        },
+        {
+          "path": "src/payments/refund.ts",
+          "line": 28,
+          "text": "await emailQueue.add(\"refund-done\", { template: \"refund-done\", bookingId: payment.bookingId }, { jobId: `refund-done-${payment.bookingId}` });",
+          "source": "pack",
+          "pack": "bullmq",
+          "entrypoints": [
+            "api:POST /webhooks/stripe"
+          ]
+        },
+        {
+          "path": "src/auth/reset.ts",
+          "line": 20,
+          "text": "await emailQueue.add(\"password-reset\", { template: \"password-reset\", userId: user.id, token });",
+          "source": "pack",
+          "pack": "bullmq",
+          "entrypoints": [
+            "api:POST /auth/reset"
+          ]
+        },
+        {
+          "path": "src/jobs/reminders.ts",
+          "line": 17,
+          "text": "await emailQueue.add(\"reminder\", { template: \"reminder\", bookingId: b.id }, { jobId: `reminder-${b.id}` });",
+          "source": "pack",
+          "pack": "bullmq",
+          "entrypoints": [
+            "api:cron:sendReminders"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "redis>trigger>worker#worker:emails",
+      "from": "redis",
+      "to": "worker",
+      "kind": "trigger",
+      "target": {
+        "entrypoint": "worker:emails"
+      },
+      "count": 1,
+      "occurrences": [
+        {
+          "path": "src/email/main.ts",
+          "line": 6,
+          "text": "const worker = new Worker(\"emails\", sendEmail, { connection, concurrency: 5 });",
+          "source": "pack",
+          "pack": "bullmq",
+          "entrypoints": [
+            "worker:emails"
+          ]
+        }
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "code": "uncalled_entry",
+      "message": "« POST /auth/reset » : aucun code du dépôt n'appelle cette route",
+      "proof": [
+        {
+          "path": "src/app.ts",
+          "line": 38,
+          "text": "app.post(\"/auth/reset\", route(requestReset));",
+          "source": "pack",
+          "pack": "express"
+        }
+      ],
+      "nodes": [
+        "api"
+      ],
+      "source": "pack"
+    },
+    {
+      "code": "uncalled_entry",
+      "message": "« POST /bookings/:id/transfer » : aucun code du dépôt n'appelle cette route",
+      "proof": [
+        {
+          "path": "src/app.ts",
+          "line": 46,
+          "text": "app.post(\"/bookings/:id/transfer\", route(transferBooking));",
+          "source": "pack",
+          "pack": "express"
+        }
+      ],
+      "nodes": [
+        "api"
+      ],
+      "source": "pack"
+    },
+    {
+      "code": "uncalled_entry",
+      "message": "« POST /payments/:id/refund » : aucun code du dépôt n'appelle cette route",
+      "proof": [
+        {
+          "path": "src/app.ts",
+          "line": 49,
+          "text": "app.post(\"/payments/:id/refund\", route(refundPayment));",
+          "source": "pack",
+          "pack": "express"
+        }
+      ],
+      "nodes": [
+        "api"
+      ],
+      "source": "pack"
+    },
+    {
+      "code": "uncalled_entry",
+      "message": "« POST /reviews » : aucun code du dépôt n'appelle cette route",
+      "proof": [
+        {
+          "path": "src/app.ts",
+          "line": 51,
+          "text": "app.post(\"/reviews\", route(createReview));",
+          "source": "pack",
+          "pack": "express"
+        }
+      ],
+      "nodes": [
+        "api"
+      ],
+      "source": "pack"
+    },
+    {
+      "code": "uncalled_entry",
+      "message": "« GET /admin/export » : aucun code du dépôt n'appelle cette route",
+      "proof": [
+        {
+          "path": "src/app.ts",
+          "line": 52,
+          "text": "app.get(\"/admin/export\", route(exportUsers));",
+          "source": "pack",
+          "pack": "express"
+        }
+      ],
+      "nodes": [
+        "api"
+      ],
+      "source": "pack"
+    },
+    {
+      "code": "unguarded_route",
+      "message": "GET /admin/export renvoie les emails et téléphones des clients avec requireUser seulement, sans requireAdmin",
+      "proof": [
+        {
+          "path": "src/admin/export.ts",
+          "line": 8,
+          "text": "await requireUser(req);",
+          "source": "syntax"
+        },
+        {
+          "path": "src/admin/export.ts",
+          "line": 9,
+          "text": "const rows = await db.select({ email: users.email, name: users.name, phone: users.phone, createdAt: users.createdAt }).from(users);",
+          "source": "syntax"
+        }
+      ],
+      "nodes": [
+        "api",
+        "postgres"
+      ],
+      "source": "syntax"
+    },
+    {
+      "code": "race_read_then_write",
+      "message": "expireHolds lit les réservations pending puis les annule sans revérifier l'état : un paiement confirmé entre-temps est annulé",
+      "proof": [
+        {
+          "path": "src/jobs/expire.ts",
+          "line": 13,
+          "text": ".select({ id: bookings.id, slotId: bookings.slotId })",
+          "source": "syntax"
+        },
+        {
+          "path": "src/jobs/expire.ts",
+          "line": 19,
+          "text": ".update(bookings)",
+          "source": "syntax"
+        },
+        {
+          "path": "src/bookings/confirm.ts",
+          "line": 28,
+          "text": "await tx.update(bookings).set({ status: \"confirmed\", confirmedAt: new Date() }).where(eq(bookings.id, bookingId));",
+          "source": "syntax"
+        }
+      ],
+      "nodes": [
+        "api",
+        "postgres"
+      ],
+      "source": "syntax"
+    },
+    {
+      "code": "write_then_enqueue",
+      "message": "la réservation est écrite, puis mise en file hors transaction : si Redis tombe, le client reçoit une erreur mais la réservation existe",
+      "proof": [
+        {
+          "path": "src/bookings/create.ts",
+          "line": 38,
+          "text": "}); // fin de la transaction",
+          "source": "syntax"
+        },
+        {
+          "path": "src/bookings/create.ts",
+          "line": 39,
+          "text": "await emailQueue.add(\"booking-received\", { template: \"booking-received\", bookingId: booking.id });",
+          "source": "syntax"
+        }
+      ],
+      "nodes": [
+        "api",
+        "redis"
+      ],
+      "source": "syntax"
+    },
+    {
+      "code": "scheduled_on_every_instance",
+      "message": "les 3 tâches planifiées démarrent dans le processus de l'API, qui tourne sur 2 machines : chacune s'exécute deux fois",
+      "proof": [
+        {
+          "path": "src/server.ts",
+          "line": 7,
+          "text": "startCrons();",
+          "source": "syntax"
+        },
+        {
+          "path": "fly.toml",
+          "line": 15,
+          "text": "min_machines_running = 2",
+          "source": "manifest"
+        }
+      ],
+      "nodes": [
+        "api"
+      ],
+      "source": "syntax"
+    },
+    {
+      "code": "order_assumption",
+      "message": "payment_failed repasse la réservation à pending sans regarder son état, alors que le commentaire dit que l'ordre n'est jamais supposé",
+      "proof": [
+        {
+          "path": "src/webhooks/stripe.ts",
+          "line": 53,
+          "text": "await tx.update(bookings).set({ status: \"pending\" }).where(eq(bookings.id, bookingId));",
+          "source": "syntax"
+        },
+        {
+          "path": "src/webhooks/stripe.ts",
+          "line": 2,
+          "text": "// On note chaque id traité ; l'ordre n'est jamais supposé.",
+          "source": "syntax"
+        }
+      ],
+      "nodes": [
+        "api"
+      ],
+      "source": "syntax"
+    },
+    {
+      "code": "personal_data_logged",
+      "message": "le corps de l'inscription (email, nom, mot de passe) est écrit dans les logs",
+      "proof": [
+        {
+          "path": "src/auth/signup.ts",
+          "line": 19,
+          "text": "logger.info({ body: req.body }, \"signup\");",
+          "source": "syntax"
+        }
+      ],
+      "nodes": [
+        "api"
+      ],
+      "source": "syntax"
+    },
+    {
+      "code": "dead_code",
+      "message": "importCsv n'est appelée nulle part",
+      "proof": [
+        {
+          "path": "src/import/csv.ts",
+          "line": 6,
+          "text": "export async function importCsv(path: string, instructorId: string) {",
+          "source": "syntax"
+        }
+      ],
+      "nodes": [
+        "api"
+      ],
+      "source": "syntax"
+    },
+    {
+      "code": "unused_value",
+      "message": "bookings.status accepte on_hold, que rien n'écrit",
+      "proof": [
+        {
+          "path": "src/db/schema.ts",
+          "line": 35,
+          "text": "export const BOOKING_STATUS = [\"pending\", \"confirmed\", \"cancelled\", \"refunded\", \"on_hold\"] as const;",
+          "source": "pack",
+          "pack": "drizzle"
+        }
+      ],
+      "nodes": [
+        "postgres"
+      ],
+      "source": "pack"
+    },
+    {
+      "code": "doc_contradiction",
+      "message": "le README dit qu'une réservation non payée est libérée après 15 minutes ; le code garde 30 minutes",
+      "proof": [
+        {
+          "path": "README.md",
+          "line": 24,
+          "text": "- Une réservation non payée est libérée après **15 minutes**.",
+          "source": "manifest"
+        },
+        {
+          "path": "src/config.ts",
+          "line": 3,
+          "text": "export const HOLD_MINUTES = 30;",
+          "source": "syntax"
+        }
+      ],
+      "nodes": [
+        "api"
+      ],
+      "source": "syntax"
+    },
+    {
+      "code": "missing_timeout",
+      "message": "la connexion à Postgres n'a ni délai maximum ni reprise",
+      "proof": [
+        {
+          "path": "src/db.ts",
+          "line": 6,
+          "text": "export const pool = new pg.Pool({ connectionString: env.DATABASE_URL, max: 10 });",
+          "source": "syntax"
+        }
+      ],
+      "nodes": [
+        "api",
+        "postgres"
+      ],
+      "source": "syntax"
+    },
+    {
+      "code": "missing_timeout",
+      "message": "la connexion à Redis n'a ni délai maximum ni reprise",
+      "proof": [
+        {
+          "path": "src/queue.ts",
+          "line": 7,
+          "text": "export const connection = new IORedis(env.REDIS_URL, { maxRetriesPerRequest: null });",
+          "source": "syntax"
+        }
+      ],
+      "nodes": [
+        "api",
+        "redis"
+      ],
+      "source": "syntax"
+    }
+  ],
+  "coverage": [
+    {
+      "level": "deployable",
+      "unit": "manifests",
+      "read": 4,
+      "total": 4,
+      "gaps": []
+    },
+    {
+      "level": "component",
+      "unit": "files",
+      "read": 60,
+      "total": 60,
+      "gaps": []
+    }
+  ]
+}

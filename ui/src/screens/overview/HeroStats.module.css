@@ -1,0 +1,64 @@
+.stats {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 32px 0;
+  padding-top: 26px;
+}
+
+.stat {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: var(--surface);
+}
+
+a.stat:hover .value {
+  background: var(--night);
+}
+
+.cross {
+  position: absolute;
+  left: -11px;
+  top: -26px;
+  width: 22px;
+  height: 22px;
+}
+
+.cross::before,
+.cross::after {
+  content: "";
+  position: absolute;
+  background: var(--deep-line);
+}
+
+.cross::before {
+  left: 10px;
+  top: 0;
+  width: 1px;
+  height: 22px;
+}
+
+.cross::after {
+  left: 0;
+  top: 10px;
+  width: 22px;
+  height: 1px;
+}
+
+.value {
+  padding: 6px 10px 7px;
+  background: var(--deep-veil);
+  font-family: var(--font-mono);
+  font-size: 34px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.label {
+  font-size: 13px;
+  color: var(--deep-text);
+  text-align: center;
+}

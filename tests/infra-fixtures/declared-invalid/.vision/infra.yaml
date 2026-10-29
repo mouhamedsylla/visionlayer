@@ -1,0 +1,4 @@
+version: 1
+components:
+  - name: Cloudflare
+    kind: cdn-ish

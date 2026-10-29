@@ -1,0 +1,13 @@
+{
+  "framework": "nextjs",
+  "regions": ["cdg1"],
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://api.acme.io/:path*" }
+  ],
+  "redirects": [
+    { "source": "/old", "destination": "/new", "permanent": true }
+  ],
+  "functions": { "app/api/**/*.ts": { "maxDuration": 30 } },
+  "crons": [{ "path": "/api/cron/digest", "schedule": "0 6 * * *" }],
+  "env": { "NEXT_PUBLIC_API_URL": "@api-url", "ANALYTICS_ID": "@analytics" }
+}

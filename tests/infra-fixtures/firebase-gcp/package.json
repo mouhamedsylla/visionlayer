@@ -1,0 +1,10 @@
+{
+  "name": "acme-app",
+  "private": true,
+  "scripts": {
+    "build": "vite build",
+    "deploy:dev": "pnpm build && firebase deploy --only hosting --project dev",
+    "deploy:prod": "pnpm build && firebase deploy --only hosting --project prod",
+    "deploy:render": "gcloud run deploy video-render --source render --project acme-prod-456"
+  }
+}

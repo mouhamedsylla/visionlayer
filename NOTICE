@@ -1,0 +1,13 @@
+VisionLayer
+Copyright 2026 RYPHA
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+It includes or depends on the following third-party software:
+
+- tree-sitter, tree-sitter-javascript, tree-sitter-typescript (MIT)
+- Model Context Protocol TypeScript SDK (MIT)
+- zod (MIT)
+- yaml (ISC)
+- minimatch (BlueOak-1.0.0)
+- Simple Icons (CC0-1.0): brand logos are the property of their respective owners

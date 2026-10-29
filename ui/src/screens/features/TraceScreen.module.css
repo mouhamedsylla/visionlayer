@@ -1,0 +1,21 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.body {
+  padding: 18px 28px 40px;
+}
+
+.callers {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+@media (max-width: 720px) {
+  .body {
+    padding: 16px;
+  }
+}

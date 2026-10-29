@@ -1,0 +1,9 @@
+.icon {
+  flex: none;
+  display: block;
+}
+
+.accent {
+  fill: var(--icon-accent, var(--blue));
+  stroke: none;
+}

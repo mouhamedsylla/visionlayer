@@ -1,0 +1,31 @@
+.tile,
+.bare {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  color: var(--night);
+}
+
+.tile {
+  border-radius: 6px;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.tile svg,
+.bare svg {
+  display: block;
+  fill: currentColor;
+}
+
+.bare {
+  color: var(--ink-soft);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}

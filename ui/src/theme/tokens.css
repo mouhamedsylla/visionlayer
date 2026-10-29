@@ -1,0 +1,65 @@
+/*
+ * Les seules couleurs de l'interface. Reprises des maquettes du canevas
+ * « VisionLayer — tous les écrans » (30/09) : bleu nuit, bleu RYPHA, fond clair.
+ * Aucun autre fichier n'écrit une couleur en dur (tests/ui-boundaries.test.ts).
+ */
+:root {
+  --night: #0a283c;
+  --blue: #2991d6;
+  --blue-ink: #1c6fa6;
+  --cyan: #8bd6ff;
+  --ground: #f7fafc;
+  --surface: #ffffff;
+  --ink: var(--night);
+  --ink-soft: #324e60;
+  --ink-pale: #9db2c1;
+  --line: #d5e1ea;
+
+  --blue-wash: rgba(41, 145, 214, 0.09);
+  --blue-ring: rgba(41, 145, 214, 0.16);
+  --blue-edge: rgba(41, 145, 214, 0.7);
+  --night-dash: rgba(10, 40, 60, 0.5);
+  --night-faint: rgba(10, 40, 60, 0.07);
+  --dots: rgba(10, 40, 60, 0.1);
+  --ground-veil: rgba(247, 250, 252, 0.92);
+  --hero-from: #f7fafc;
+  --hero-mid: #e6f4fc;
+  --hero-to: #d6eefa;
+
+  /* Le grand bandeau de la Vue d'ensemble : du fond clair au bleu nuit. */
+  --deep-1: #e3f3fc;
+  --deep-2: #b9e2f8;
+  --deep-3: #5fb2e6;
+  --deep-4: #1d6fa8;
+  --deep-dot-cyan: rgba(139, 214, 255, 0.55);
+  --deep-dot-night: rgba(10, 40, 60, 0.35);
+  --deep-veil: rgba(10, 40, 60, 0.62);
+  --deep-text: rgba(247, 250, 252, 0.92);
+  --deep-line: rgba(247, 250, 252, 0.7);
+  --glass: rgba(247, 250, 252, 0.55);
+  --glass-strong: rgba(255, 255, 255, 0.8);
+  --shadow-float: rgba(10, 40, 60, 0.12);
+
+  --font-sans: "DM Sans", system-ui, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, monospace;
+  --radius: 3px;
+  --radius-tight: 2px;
+
+  /* Le mouvement : court, qui ralentit à l'arrivée. */
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --dur-1: 120ms;
+  --dur-2: 200ms;
+  --dur-3: 320ms;
+  --shadow-header: rgba(10, 40, 60, 0.08);
+
+  /* Le code, comme dans les maquettes : fond bleu nuit, commentaires en cyan. */
+  --code-ground: var(--night);
+  --code-ink: #d8e8f3;
+  --code-number: #5e7e93;
+  --code-comment: var(--cyan);
+  --code-keyword: #ffffff;
+  --code-string: #b9ddf3;
+  --code-edge: rgba(139, 214, 255, 0.18);
+  --code-mark: rgba(41, 145, 214, 0.32);
+  --shadow-peek: rgba(10, 40, 60, 0.28);
+}

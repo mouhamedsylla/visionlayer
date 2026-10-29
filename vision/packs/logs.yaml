@@ -1,0 +1,26 @@
+id: logs
+name: Journaux (console, pino, winston)
+tech: [pino, winston]
+languages: [javascript, typescript]
+# Pas de `when` : un fichier peut écrire dans un journal importé, sans importer pino.
+script: logs.ts
+rules: |
+  log_maker("pino", "default").
+  log_maker("pino", "pino").
+  log_maker("winston", "createLogger").
+
+  % Un journal, et s'il masque des champs ; puis ses enfants, et partout où il est importé. La console est partout.
+  log_in(F, V, "no") :- log_make(F, V, P, C, _), log_maker(P, C), not log_redact(F, V).
+  log_in(F, V, "yes") :- log_make(F, V, P, C, _), log_maker(P, C), log_redact(F, V).
+  log_in(F, V, R) :- log_derive(F, V, U), log_in(F, U, R).
+  log_in(F, V, R) :- imports(F, V, H, I), log_in(H, I, R).
+  log_in(F, V, R) :- imports(F, "*", H, "*"), log_in(H, V, R).
+  log_in(F, "console", "no") :- file(F).
+
+  % Le code d'une route : une fonction nommée là où elle est définie, ou écrite sur place.
+  http_handler(G, L) :- entrypoint(F, http, K, _, _), handler_at(F, K, G, L).
+  http_handler(F, L) :- entrypoint(F, http, _, _, L).
+
+  % Constat personal_data_logged (docs/fonctionnement/constats.md), sur un journal qui ne masque rien.
+  finding(personal_data_logged, "body", "body", F, L) :- log_req_body(F, R, HL, L), log_in(F, R, "no"), http_handler(F, HL).
+  finding(personal_data_logged, N, "field", F, L) :- log_personal(F, R, N, L), log_in(F, R, "no").

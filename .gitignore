@@ -1,0 +1,17 @@
+node_modules/
+dist/
+build/
+coverage/
+# l'écran Couverture de l'interface n'est pas un rapport de tests
+!ui/src/**/coverage/
+.env
+.env.*
+!.env.example
+!.env.*.example
+# Fixtures du niveau Infrastructure : valeurs factices, qui prouvent qu'aucune valeur de .env n'entre dans le modèle
+!tests/infra-fixtures/**/.env.*
+.DS_Store
+*.log
+**/.vision/*
+!**/.vision/infra.yaml
+tests/corpus/controle/*/checkout/

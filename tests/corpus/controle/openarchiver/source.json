@@ -1,0 +1,12 @@
+{
+  "repo": "https://github.com/LogicLabs-OU/OpenArchiver",
+  "commit": "2082eba984ca771c23c2a7c60fc9284794e24b9b",
+  "license": "AGPL-3.0",
+  "added": "2026-10-02",
+  "why": "nos technologies (Express, Drizzle, BullMQ, Postgres), écrites par d'autres : monorepo, cinq processus dans un conteneur, frontend SvelteKit, Meilisearch, Tika, connecteurs Google, Microsoft et IMAP",
+  "oracle": {
+    "method": "écrit en lisant le code au commit indiqué, sans lancer VisionLayer. Pour un dépôt de cette taille, des scripts de lecture à part (non commités, indépendants de VisionLayer) ont listé les candidats : routes et handlers, appels du frontend, tables touchées par chaque processus d'après un graphe d'appels qualifié par classe, variables d'environnement. Chaque liste a été relue ; les corrections faites à la main sont : jointures relationnelles (with:), new UserService().findById(), routes appelées par un chemin variable, envoi de fichier par XMLHttpRequest.",
+    "scope": "nœuds, points d'entrée et leur code, entités, canaux, variables d'environnement, liens. Constats : seulement uncalled_entry (calculé sur tous les appels du frontend) et personal_data_logged (tous les appels de journal avec un champ objet) ; les autres codes ne sont pas recensés, leurs constats « en plus » sont relus un par un.",
+    "known_limits": "les liens vers les fournisseurs (Google, Microsoft, IMAP, S3) passent par une interface choisie à l'exécution : ils sont attribués aux processus qui créent les connecteurs. Les 50 appels du frontend vers /v1/enterprise/* visent des routes absentes de ce dépôt : aucun lien."
+  }
+}

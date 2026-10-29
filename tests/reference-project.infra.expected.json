@@ -1,0 +1,872 @@
+{
+  "version": 1,
+  "environments": [
+    "dev",
+    "prod"
+  ],
+  "components": [
+    {
+      "id": "cache:redis",
+      "name": "redis",
+      "kind": "cache",
+      "source": {
+        "kind": "extracted",
+        "path": "docker-compose.yml",
+        "line": 32
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "image": "redis:7-alpine"
+      },
+      "perEnv": {
+        "prod": {
+          "restart": "always"
+        }
+      }
+    },
+    {
+      "id": "database:db",
+      "name": "db",
+      "kind": "database",
+      "source": {
+        "kind": "extracted",
+        "path": "docker-compose.yml",
+        "line": 23
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "image": "postgres:16-alpine",
+        "volumes": "pgdata"
+      },
+      "perEnv": {
+        "prod": {
+          "restart": "always"
+        }
+      }
+    },
+    {
+      "id": "image:Dockerfile",
+      "name": "Dockerfile",
+      "kind": "image",
+      "source": {
+        "kind": "extracted",
+        "path": "Dockerfile",
+        "line": 2
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "workdir": "/app",
+        "user": "node",
+        "cmd": "[\"node\", \"dist/index.js\"]",
+        "base": "node:22-alpine",
+        "stages": "build",
+        "expose": "3000"
+      }
+    },
+    {
+      "id": "job:gha-deploy",
+      "name": "CI · Deploy",
+      "kind": "job",
+      "source": {
+        "kind": "extracted",
+        "path": ".github/workflows/deploy.yml",
+        "line": 1
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "workflow": "deploy.yml",
+        "triggers": "push (main), workflow_dispatch",
+        "jobs": "test, deploy"
+      }
+    },
+    {
+      "id": "platform:resend",
+      "name": "Resend",
+      "kind": "platform",
+      "source": {
+        "kind": "declared",
+        "path": ".vision/infra.yaml"
+      },
+      "environments": [
+        "prod"
+      ],
+      "attrs": {
+        "region": "eu"
+      },
+      "note": "Fournisseur d'e-mail transactionnel en production — joint via SMTP_HOST ; en dev, MailHog le remplace."
+    },
+    {
+      "id": "proxy:nginx",
+      "name": "nginx",
+      "kind": "proxy",
+      "source": {
+        "kind": "extracted",
+        "path": "docker-compose.yml",
+        "line": 35
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "image": "nginx:1.27-alpine",
+        "ports": "80:80",
+        "volumes": "./infra/nginx/nginx.conf",
+        "domains": "reference.local",
+        "listen": "80",
+        "tls": "non",
+        "upstreams": "api → api:3000"
+      },
+      "perEnv": {
+        "prod": {
+          "ports": "80:80, 443:443",
+          "volumes": "./infra/nginx/nginx.prod.conf, /etc/letsencrypt",
+          "restart": "always",
+          "domains": "reference.rypha.io",
+          "listen": "80, 443",
+          "tls": "oui"
+        }
+      }
+    },
+    {
+      "id": "service:api",
+      "name": "api",
+      "kind": "service",
+      "source": {
+        "kind": "extracted",
+        "path": "docker-compose.yml",
+        "line": 3
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "ports": "3000:3000",
+        "build": ". (Dockerfile)",
+        "volumes": "./src",
+        "env_file": ".env"
+      },
+      "perEnv": {
+        "prod": {
+          "image": "ghcr.io/rypha/reference-api:1.4.0",
+          "restart": "always",
+          "replicas": "2"
+        }
+      }
+    },
+    {
+      "id": "service:mailhog",
+      "name": "mailhog",
+      "kind": "service",
+      "source": {
+        "kind": "extracted",
+        "path": "docker-compose.yml",
+        "line": 44
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "image": "mailhog/mailhog:v1.0.1",
+        "ports": "8025:8025",
+        "profiles": "dev"
+      }
+    },
+    {
+      "id": "tf:aws_cloudfront_distribution.cdn",
+      "name": "aws_cloudfront_distribution.cdn",
+      "kind": "cdn",
+      "source": {
+        "kind": "extracted",
+        "path": "infra/terraform/main.tf",
+        "line": 37
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "type": "aws_cloudfront_distribution"
+      }
+    },
+    {
+      "id": "tf:aws_instance.app",
+      "name": "aws_instance.app",
+      "kind": "host",
+      "source": {
+        "kind": "extracted",
+        "path": "infra/terraform/main.tf",
+        "line": 14
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "type": "aws_instance",
+        "ami": "ami-0f3c9c466bb525749",
+        "instance_type": "t3.small"
+      }
+    },
+    {
+      "id": "tf:aws_route53_record.www",
+      "name": "aws_route53_record.www",
+      "kind": "dns",
+      "source": {
+        "kind": "extracted",
+        "path": "infra/terraform/main.tf",
+        "line": 53
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "type": "aws_route53_record",
+        "name": "reference.rypha.io"
+      }
+    },
+    {
+      "id": "tf:aws_s3_bucket.assets",
+      "name": "aws_s3_bucket.assets",
+      "kind": "storage",
+      "source": {
+        "kind": "extracted",
+        "path": "infra/terraform/main.tf",
+        "line": 34
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "type": "aws_s3_bucket",
+        "bucket": "reference-assets"
+      }
+    },
+    {
+      "id": "tf:aws_security_group.web",
+      "name": "aws_security_group.web",
+      "kind": "network",
+      "source": {
+        "kind": "extracted",
+        "path": "infra/terraform/main.tf",
+        "line": 22
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "type": "aws_security_group",
+        "name": "reference-web"
+      }
+    },
+    {
+      "id": "tf:provider.aws",
+      "name": "provider aws",
+      "kind": "platform",
+      "source": {
+        "kind": "extracted",
+        "path": "infra/terraform/main.tf",
+        "line": 4
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "region": "eu-west-3"
+      }
+    }
+  ],
+  "links": [
+    {
+      "from": "image:Dockerfile",
+      "to": "service:api",
+      "kind": "builds",
+      "source": {
+        "kind": "extracted",
+        "path": "docker-compose.yml",
+        "line": 3
+      },
+      "environments": [
+        "all"
+      ],
+      "label": "build"
+    },
+    {
+      "from": "job:gha-deploy",
+      "to": "env:prod",
+      "kind": "deploys",
+      "source": {
+        "kind": "extracted",
+        "path": ".github/workflows/deploy.yml",
+        "line": 17
+      },
+      "environments": [
+        "prod"
+      ],
+      "label": "déploie → prod"
+    },
+    {
+      "from": "proxy:nginx",
+      "to": "service:api",
+      "kind": "depends_on",
+      "source": {
+        "kind": "extracted",
+        "path": "docker-compose.yml",
+        "line": 35
+      },
+      "environments": [
+        "all"
+      ]
+    },
+    {
+      "from": "proxy:nginx",
+      "to": "service:api",
+      "kind": "routes_to",
+      "source": {
+        "kind": "extracted",
+        "path": "infra/nginx/nginx.conf",
+        "line": 13
+      },
+      "environments": [
+        "all"
+      ],
+      "label": "reference.local/api/"
+    },
+    {
+      "from": "proxy:nginx",
+      "to": "service:api",
+      "kind": "routes_to",
+      "source": {
+        "kind": "extracted",
+        "path": "infra/nginx/nginx.prod.conf",
+        "line": 21
+      },
+      "environments": [
+        "prod"
+      ],
+      "label": "reference.rypha.io/api/"
+    },
+    {
+      "from": "proxy:nginx",
+      "to": "service:mailhog",
+      "kind": "routes_to",
+      "source": {
+        "kind": "extracted",
+        "path": "infra/nginx/nginx.conf",
+        "line": 19
+      },
+      "environments": [
+        "all"
+      ],
+      "label": "reference.local/mail/"
+    },
+    {
+      "from": "service:api",
+      "to": "cache:redis",
+      "kind": "depends_on",
+      "source": {
+        "kind": "extracted",
+        "path": "docker-compose.yml",
+        "line": 3
+      },
+      "environments": [
+        "all"
+      ]
+    },
+    {
+      "from": "service:api",
+      "to": "database:db",
+      "kind": "depends_on",
+      "source": {
+        "kind": "extracted",
+        "path": "docker-compose.yml",
+        "line": 3
+      },
+      "environments": [
+        "all"
+      ]
+    },
+    {
+      "from": "service:api",
+      "to": "platform:resend",
+      "kind": "connects_to",
+      "source": {
+        "kind": "declared",
+        "path": ".vision/infra.yaml"
+      },
+      "environments": [
+        "prod"
+      ],
+      "label": "SMTP"
+    },
+    {
+      "from": "tf:aws_cloudfront_distribution.cdn",
+      "to": "tf:aws_instance.app",
+      "kind": "connects_to",
+      "source": {
+        "kind": "extracted",
+        "path": "infra/terraform/main.tf",
+        "line": 37
+      },
+      "environments": [
+        "all"
+      ]
+    },
+    {
+      "from": "tf:aws_cloudfront_distribution.cdn",
+      "to": "tf:aws_s3_bucket.assets",
+      "kind": "connects_to",
+      "source": {
+        "kind": "extracted",
+        "path": "infra/terraform/main.tf",
+        "line": 37
+      },
+      "environments": [
+        "all"
+      ]
+    },
+    {
+      "from": "tf:aws_instance.app",
+      "to": "tf:aws_security_group.web",
+      "kind": "connects_to",
+      "source": {
+        "kind": "extracted",
+        "path": "infra/terraform/main.tf",
+        "line": 14
+      },
+      "environments": [
+        "all"
+      ]
+    },
+    {
+      "from": "tf:aws_route53_record.www",
+      "to": "tf:aws_cloudfront_distribution.cdn",
+      "kind": "connects_to",
+      "source": {
+        "kind": "extracted",
+        "path": "infra/terraform/main.tf",
+        "line": 53
+      },
+      "environments": [
+        "all"
+      ]
+    },
+    {
+      "from": "tf:provider.aws",
+      "to": "tf:aws_cloudfront_distribution.cdn",
+      "kind": "deploys",
+      "source": {
+        "kind": "extracted",
+        "path": "infra/terraform/main.tf",
+        "line": 4
+      },
+      "environments": [
+        "all"
+      ]
+    },
+    {
+      "from": "tf:provider.aws",
+      "to": "tf:aws_instance.app",
+      "kind": "deploys",
+      "source": {
+        "kind": "extracted",
+        "path": "infra/terraform/main.tf",
+        "line": 4
+      },
+      "environments": [
+        "all"
+      ]
+    },
+    {
+      "from": "tf:provider.aws",
+      "to": "tf:aws_route53_record.www",
+      "kind": "deploys",
+      "source": {
+        "kind": "extracted",
+        "path": "infra/terraform/main.tf",
+        "line": 4
+      },
+      "environments": [
+        "all"
+      ]
+    },
+    {
+      "from": "tf:provider.aws",
+      "to": "tf:aws_s3_bucket.assets",
+      "kind": "deploys",
+      "source": {
+        "kind": "extracted",
+        "path": "infra/terraform/main.tf",
+        "line": 4
+      },
+      "environments": [
+        "all"
+      ]
+    },
+    {
+      "from": "tf:provider.aws",
+      "to": "tf:aws_security_group.web",
+      "kind": "deploys",
+      "source": {
+        "kind": "extracted",
+        "path": "infra/terraform/main.tf",
+        "line": 4
+      },
+      "environments": [
+        "all"
+      ]
+    }
+  ],
+  "envVars": [
+    {
+      "name": "DATABASE_URL",
+      "source": {
+        "kind": "extracted",
+        "path": ".env.example",
+        "line": 2
+      },
+      "environments": [
+        "all",
+        "prod"
+      ]
+    },
+    {
+      "name": "DATABASE_URL",
+      "source": {
+        "kind": "extracted",
+        "path": "docker-compose.yml",
+        "line": 3
+      },
+      "environments": [
+        "all",
+        "prod"
+      ],
+      "component": "service:api"
+    },
+    {
+      "name": "DEPLOY_SSH_KEY",
+      "source": {
+        "kind": "extracted",
+        "path": ".github/workflows/deploy.yml",
+        "line": 17
+      },
+      "environments": [
+        "all"
+      ],
+      "component": "job:gha-deploy"
+    },
+    {
+      "name": "GITHUB_TOKEN",
+      "source": {
+        "kind": "extracted",
+        "path": ".github/workflows/deploy.yml",
+        "line": 17
+      },
+      "environments": [
+        "all"
+      ],
+      "component": "job:gha-deploy"
+    },
+    {
+      "name": "INVITATION_TTL_HOURS",
+      "source": {
+        "kind": "extracted",
+        "path": ".env.example",
+        "line": 6
+      },
+      "environments": [
+        "all",
+        "prod"
+      ]
+    },
+    {
+      "name": "INVITATION_TTL_HOURS",
+      "source": {
+        "kind": "extracted",
+        "path": "docker-compose.yml",
+        "line": 3
+      },
+      "environments": [
+        "all",
+        "prod"
+      ],
+      "component": "service:api"
+    },
+    {
+      "name": "NODE_ENV",
+      "source": {
+        "kind": "extracted",
+        "path": "Dockerfile",
+        "line": 4
+      },
+      "environments": [
+        "all"
+      ],
+      "component": "image:Dockerfile"
+    },
+    {
+      "name": "PORT",
+      "source": {
+        "kind": "extracted",
+        "path": "Dockerfile",
+        "line": 13
+      },
+      "environments": [
+        "all"
+      ],
+      "component": "image:Dockerfile"
+    },
+    {
+      "name": "POSTGRES_DB",
+      "source": {
+        "kind": "extracted",
+        "path": "docker-compose.yml",
+        "line": 23
+      },
+      "environments": [
+        "all"
+      ],
+      "component": "database:db"
+    },
+    {
+      "name": "POSTGRES_PASSWORD",
+      "source": {
+        "kind": "extracted",
+        "path": "docker-compose.yml",
+        "line": 23
+      },
+      "environments": [
+        "all"
+      ],
+      "component": "database:db"
+    },
+    {
+      "name": "POSTGRES_USER",
+      "source": {
+        "kind": "extracted",
+        "path": "docker-compose.yml",
+        "line": 23
+      },
+      "environments": [
+        "all"
+      ],
+      "component": "database:db"
+    },
+    {
+      "name": "REDIS_URL",
+      "source": {
+        "kind": "extracted",
+        "path": ".env.example",
+        "line": 3
+      },
+      "environments": [
+        "all",
+        "prod"
+      ]
+    },
+    {
+      "name": "REDIS_URL",
+      "source": {
+        "kind": "extracted",
+        "path": "docker-compose.yml",
+        "line": 3
+      },
+      "environments": [
+        "all",
+        "prod"
+      ],
+      "component": "service:api"
+    },
+    {
+      "name": "SENTRY_DSN",
+      "source": {
+        "kind": "extracted",
+        "path": ".env.production.example",
+        "line": 8
+      },
+      "environments": [
+        "prod"
+      ]
+    },
+    {
+      "name": "SENTRY_DSN",
+      "source": {
+        "kind": "extracted",
+        "path": "docker-compose.prod.yml",
+        "line": 3
+      },
+      "environments": [
+        "prod"
+      ],
+      "component": "service:api"
+    },
+    {
+      "name": "SMTP_HOST",
+      "source": {
+        "kind": "extracted",
+        "path": ".env.example",
+        "line": 4
+      },
+      "environments": [
+        "all",
+        "prod"
+      ]
+    },
+    {
+      "name": "SMTP_HOST",
+      "source": {
+        "kind": "extracted",
+        "path": "docker-compose.yml",
+        "line": 3
+      },
+      "environments": [
+        "all",
+        "prod"
+      ],
+      "component": "service:api"
+    },
+    {
+      "name": "SMTP_PORT",
+      "source": {
+        "kind": "extracted",
+        "path": ".env.example",
+        "line": 5
+      },
+      "environments": [
+        "all",
+        "prod"
+      ]
+    },
+    {
+      "name": "SMTP_PORT",
+      "source": {
+        "kind": "extracted",
+        "path": "docker-compose.yml",
+        "line": 3
+      },
+      "environments": [
+        "all",
+        "prod"
+      ],
+      "component": "service:api"
+    },
+    {
+      "name": "SSH_KEY_NAME",
+      "source": {
+        "kind": "extracted",
+        "path": "infra/terraform/main.tf",
+        "line": 14
+      },
+      "environments": [
+        "all"
+      ],
+      "component": "tf:aws_instance.app"
+    },
+    {
+      "name": "TOKEN_SECRET",
+      "source": {
+        "kind": "extracted",
+        "path": ".env.example",
+        "line": 7
+      },
+      "environments": [
+        "all",
+        "prod"
+      ]
+    },
+    {
+      "name": "VPS_HOST",
+      "source": {
+        "kind": "extracted",
+        "path": ".github/workflows/deploy.yml",
+        "line": 17
+      },
+      "environments": [
+        "all"
+      ],
+      "component": "job:gha-deploy"
+    },
+    {
+      "name": "ZONE_ID",
+      "source": {
+        "kind": "extracted",
+        "path": "infra/terraform/main.tf",
+        "line": 53
+      },
+      "environments": [
+        "all"
+      ],
+      "component": "tf:aws_route53_record.www"
+    }
+  ],
+  "sources": [
+    {
+      "path": ".env.example",
+      "format": "dotenv"
+    },
+    {
+      "path": ".github/workflows/deploy.yml",
+      "format": "github-actions"
+    },
+    {
+      "path": "docker-compose.yml",
+      "format": "docker-compose"
+    },
+    {
+      "path": "Dockerfile",
+      "format": "dockerfile"
+    },
+    {
+      "path": "infra/nginx/nginx.conf",
+      "format": "nginx"
+    },
+    {
+      "path": "infra/terraform/main.tf",
+      "format": "terraform"
+    },
+    {
+      "path": ".env.production.example",
+      "format": "dotenv",
+      "environment": "prod"
+    },
+    {
+      "path": "docker-compose.prod.yml",
+      "format": "docker-compose",
+      "environment": "prod"
+    },
+    {
+      "path": "infra/nginx/nginx.prod.conf",
+      "format": "nginx",
+      "environment": "prod"
+    },
+    {
+      "path": ".vision/infra.yaml",
+      "format": "declared"
+    }
+  ],
+  "warnings": [
+    {
+      "code": "env_only",
+      "message": "variable SENTRY_DSN présente uniquement en prod",
+      "source": {
+        "kind": "extracted",
+        "path": ".env.production.example",
+        "line": 8
+      }
+    },
+    {
+      "code": "env_only",
+      "message": "variable SENTRY_DSN présente uniquement en prod",
+      "source": {
+        "kind": "extracted",
+        "path": "docker-compose.prod.yml",
+        "line": 3
+      }
+    }
+  ]
+}

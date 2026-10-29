@@ -1,0 +1,605 @@
+{
+  "version": 2,
+  "system": {
+    "name": "example-voting-app"
+  },
+  "nodes": [
+    {
+      "id": "vote",
+      "name": "vote",
+      "level": "deployable",
+      "role": "service",
+      "status": "extracted",
+      "proof": [
+        {
+          "path": "docker-compose.yml",
+          "line": 6,
+          "source": "manifest",
+          "text": "vote:"
+        },
+        {
+          "path": "vote/Dockerfile",
+          "line": 32,
+          "source": "manifest",
+          "text": "CMD [\"gunicorn\", \"app:app\", \"-b\", \"0.0.0.0:80\", \"--log-file\", \"-\", \"--access-logfile\", \"-\", \"--workers\", \"4\", \"--keep-alive\", \"0\"]"
+        }
+      ],
+      "facets": {
+        "entrypoints": [
+          {
+            "id": "vote:vote/app.py",
+            "kind": "main",
+            "key": "vote/app.py",
+            "proof": {
+              "path": "vote/Dockerfile",
+              "line": 32,
+              "source": "manifest",
+              "text": "CMD [\"gunicorn\", \"app:app\", \"-b\", \"0.0.0.0:80\", \"--log-file\", \"-\", \"--access-logfile\", \"-\", \"--workers\", \"4\", \"--keep-alive\", \"0\"]"
+            }
+          },
+          {
+            "id": "vote:GET /",
+            "kind": "http",
+            "key": "GET /",
+            "proof": {
+              "path": "vote/app.py",
+              "line": 24,
+              "source": "syntax",
+              "text": "@app.route(\"/\", methods=['POST','GET'])"
+            },
+            "handler": {
+              "path": "vote/app.py",
+              "line": 25,
+              "name": "hello"
+            }
+          },
+          {
+            "id": "vote:POST /",
+            "kind": "http",
+            "key": "POST /",
+            "proof": {
+              "path": "vote/app.py",
+              "line": 24,
+              "source": "syntax",
+              "text": "@app.route(\"/\", methods=['POST','GET'])"
+            },
+            "handler": {
+              "path": "vote/app.py",
+              "line": 25,
+              "name": "hello"
+            },
+            "calledBy": [
+              "seed"
+            ]
+          }
+        ],
+        "config": {
+          "env": [
+            {
+              "name": "OPTION_A",
+              "readAt": [
+                {
+                  "path": "vote/app.py",
+                  "line": 9,
+                  "source": "syntax",
+                  "text": "option_a = os.getenv('OPTION_A', \"Cats\")"
+                }
+              ]
+            },
+            {
+              "name": "OPTION_B",
+              "readAt": [
+                {
+                  "path": "vote/app.py",
+                  "line": 10,
+                  "source": "syntax",
+                  "text": "option_b = os.getenv('OPTION_B', \"Dogs\")"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "tech": [
+        "python",
+        "flask"
+      ],
+      "instances": {
+        "min": 2,
+        "proof": {
+          "path": "docker-stack.yml",
+          "line": 31,
+          "source": "manifest",
+          "text": "replicas: 2"
+        }
+      }
+    },
+    {
+      "id": "result",
+      "name": "result",
+      "level": "deployable",
+      "role": "service",
+      "status": "extracted",
+      "proof": [
+        {
+          "path": "docker-compose.yml",
+          "line": 27,
+          "source": "manifest",
+          "text": "result:"
+        },
+        {
+          "path": "result/Dockerfile",
+          "line": 25,
+          "source": "manifest",
+          "text": "CMD [\"node\", \"server.js\"]"
+        }
+      ],
+      "facets": {
+        "entrypoints": [
+          {
+            "id": "result:result/server.js",
+            "kind": "main",
+            "key": "result/server.js",
+            "proof": {
+              "path": "result/Dockerfile",
+              "line": 25,
+              "source": "manifest",
+              "text": "CMD [\"node\", \"server.js\"]"
+            }
+          },
+          {
+            "id": "result:GET /",
+            "kind": "http",
+            "key": "GET /",
+            "proof": {
+              "path": "result/server.js",
+              "line": 70,
+              "source": "syntax",
+              "text": "app.get('/', function (req, res) {"
+            },
+            "handler": {
+              "path": "result/server.js",
+              "line": 70,
+              "name": "(anonyme)"
+            }
+          },
+          {
+            "id": "result:connection",
+            "kind": "event",
+            "key": "connection",
+            "proof": {
+              "path": "result/server.js",
+              "line": 11,
+              "source": "syntax",
+              "text": "io.on('connection', function (socket) {"
+            },
+            "handler": {
+              "path": "result/server.js",
+              "line": 11,
+              "name": "(anonyme)"
+            },
+            "calledBy": [
+              "result-ui"
+            ]
+          },
+          {
+            "id": "result:subscribe",
+            "kind": "event",
+            "key": "subscribe",
+            "proof": {
+              "path": "result/server.js",
+              "line": 15,
+              "source": "syntax",
+              "text": "socket.on('subscribe', function (data) {"
+            },
+            "handler": {
+              "path": "result/server.js",
+              "line": 15,
+              "name": "(anonyme)"
+            }
+          }
+        ],
+        "config": {
+          "env": [
+            {
+              "name": "PORT",
+              "readAt": [
+                {
+                  "path": "result/server.js",
+                  "line": 9,
+                  "source": "syntax",
+                  "text": "var port = process.env.PORT || 4000;"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "tech": [
+        "nodejs",
+        "express"
+      ]
+    },
+    {
+      "id": "result-ui",
+      "name": "result (navigateur)",
+      "level": "deployable",
+      "role": "app",
+      "status": "extracted",
+      "proof": [
+        {
+          "path": "result/views/index.html",
+          "line": 1,
+          "source": "syntax",
+          "text": "<!DOCTYPE html>"
+        },
+        {
+          "path": "result/server.js",
+          "line": 68,
+          "source": "syntax",
+          "text": "app.use(express.static(__dirname + '/views'));"
+        }
+      ],
+      "facets": {
+        "entrypoints": [
+          {
+            "id": "result-ui:result/views/index.html",
+            "kind": "main",
+            "key": "result/views/index.html",
+            "proof": {
+              "path": "result/server.js",
+              "line": 68,
+              "source": "syntax",
+              "text": "app.use(express.static(__dirname + '/views'));"
+            }
+          }
+        ]
+      },
+      "tech": [
+        "angularjs"
+      ]
+    },
+    {
+      "id": "worker",
+      "name": "worker",
+      "level": "deployable",
+      "role": "worker",
+      "status": "extracted",
+      "proof": [
+        {
+          "path": "docker-compose.yml",
+          "line": 43,
+          "source": "manifest",
+          "text": "worker:"
+        },
+        {
+          "path": "worker/Dockerfile",
+          "line": 22,
+          "source": "manifest",
+          "text": "RUN dotnet publish -c release -o /app -a $TARGETARCH --self-contained false --no-restore"
+        }
+      ],
+      "facets": {
+        "entrypoints": [
+          {
+            "id": "worker:worker/Program.cs",
+            "kind": "main",
+            "key": "worker/Program.cs",
+            "proof": {
+              "path": "worker/Dockerfile",
+              "line": 22,
+              "source": "manifest",
+              "text": "RUN dotnet publish -c release -o /app -a $TARGETARCH --self-contained false --no-restore"
+            },
+            "handler": {
+              "path": "worker/Program.cs",
+              "line": 15,
+              "name": "Main"
+            }
+          },
+          {
+            "id": "worker:votes",
+            "kind": "message",
+            "key": "votes",
+            "proof": {
+              "path": "worker/Program.cs",
+              "line": 40,
+              "source": "syntax",
+              "text": "string json = redis.ListLeftPopAsync(\"votes\").Result;"
+            },
+            "handler": {
+              "path": "worker/Program.cs",
+              "line": 15,
+              "name": "Main"
+            },
+            "calledBy": [
+              "redis"
+            ]
+          }
+        ]
+      },
+      "tech": [
+        "dotnet"
+      ],
+      "instances": {
+        "min": 2,
+        "proof": {
+          "path": "docker-stack.yml",
+          "line": 46,
+          "source": "manifest",
+          "text": "replicas: 2"
+        }
+      }
+    },
+    {
+      "id": "seed",
+      "name": "seed",
+      "level": "deployable",
+      "role": "job",
+      "status": "extracted",
+      "proof": [
+        {
+          "path": "docker-compose.yml",
+          "line": 81,
+          "source": "manifest",
+          "text": "seed:"
+        },
+        {
+          "path": "seed-data/Dockerfile",
+          "line": 16,
+          "source": "manifest",
+          "text": "CMD [\"/seed/generate-votes.sh\"]"
+        }
+      ],
+      "facets": {
+        "entrypoints": [
+          {
+            "id": "seed:seed-data/generate-votes.sh",
+            "kind": "main",
+            "key": "seed-data/generate-votes.sh",
+            "proof": {
+              "path": "seed-data/Dockerfile",
+              "line": 16,
+              "source": "manifest",
+              "text": "CMD [\"/seed/generate-votes.sh\"]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "redis",
+      "name": "redis",
+      "level": "deployable",
+      "role": "channel",
+      "status": "extracted",
+      "proof": [
+        {
+          "path": "docker-compose.yml",
+          "line": 54,
+          "source": "manifest",
+          "text": "redis:"
+        },
+        {
+          "path": "docker-compose.yml",
+          "line": 55,
+          "source": "manifest",
+          "text": "image: redis:alpine"
+        }
+      ],
+      "facets": {
+        "channel": {
+          "shape": "queue",
+          "topics": [
+            {
+              "name": "votes",
+              "proof": {
+                "path": "vote/app.py",
+                "line": 37,
+                "source": "syntax",
+                "text": "redis.rpush('votes', data)"
+              }
+            }
+          ]
+        }
+      },
+      "tech": [
+        "redis"
+      ]
+    },
+    {
+      "id": "db",
+      "name": "db",
+      "level": "deployable",
+      "role": "store",
+      "status": "extracted",
+      "proof": [
+        {
+          "path": "docker-compose.yml",
+          "line": 64,
+          "source": "manifest",
+          "text": "db:"
+        },
+        {
+          "path": "docker-compose.yml",
+          "line": 65,
+          "source": "manifest",
+          "text": "image: postgres:15-alpine"
+        }
+      ],
+      "facets": {
+        "data": {
+          "shape": "relational",
+          "entities": [
+            {
+              "name": "votes",
+              "proof": {
+                "path": "worker/Program.cs",
+                "line": 96,
+                "source": "syntax",
+                "text": "command.CommandText = @\"CREATE TABLE IF NOT EXISTS votes ("
+              }
+            }
+          ]
+        }
+      },
+      "tech": [
+        "postgresql"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "id": "vote>message>redis#votes",
+      "from": "vote",
+      "to": "redis",
+      "kind": "message",
+      "count": 1,
+      "occurrences": [
+        {
+          "path": "vote/app.py",
+          "line": 37,
+          "source": "syntax",
+          "text": "redis.rpush('votes', data)"
+        }
+      ],
+      "target": {
+        "topic": "votes"
+      }
+    },
+    {
+      "id": "redis>trigger>worker#worker:votes",
+      "from": "redis",
+      "to": "worker",
+      "kind": "trigger",
+      "count": 1,
+      "occurrences": [
+        {
+          "path": "worker/Program.cs",
+          "line": 40,
+          "source": "syntax",
+          "text": "string json = redis.ListLeftPopAsync(\"votes\").Result;"
+        }
+      ],
+      "target": {
+        "entrypoint": "worker:votes"
+      }
+    },
+    {
+      "id": "worker>write>db#votes",
+      "from": "worker",
+      "to": "db",
+      "kind": "write",
+      "count": 3,
+      "occurrences": [
+        {
+          "path": "worker/Program.cs",
+          "line": 96,
+          "source": "syntax",
+          "text": "command.CommandText = @\"CREATE TABLE IF NOT EXISTS votes ("
+        },
+        {
+          "path": "worker/Program.cs",
+          "line": 138,
+          "source": "syntax",
+          "text": "command.CommandText = \"INSERT INTO votes (id, vote) VALUES (@id, @vote)\";"
+        },
+        {
+          "path": "worker/Program.cs",
+          "line": 145,
+          "source": "syntax",
+          "text": "command.CommandText = \"UPDATE votes SET vote = @vote WHERE id = @id\";"
+        }
+      ],
+      "target": {
+        "entity": "votes"
+      }
+    },
+    {
+      "id": "result>read>db#votes",
+      "from": "result",
+      "to": "db",
+      "kind": "read",
+      "count": 1,
+      "occurrences": [
+        {
+          "path": "result/server.js",
+          "line": 44,
+          "source": "syntax",
+          "text": "client.query('SELECT vote, COUNT(id) AS count FROM votes GROUP BY vote', [], function(err, result) {"
+        }
+      ],
+      "target": {
+        "entity": "votes"
+      }
+    },
+    {
+      "id": "seed>call>vote#vote:POST /",
+      "from": "seed",
+      "to": "vote",
+      "kind": "call",
+      "count": 3,
+      "occurrences": [
+        {
+          "path": "seed-data/generate-votes.sh",
+          "line": 4,
+          "source": "syntax",
+          "text": "ab -n 1000 -c 50 -p posta -T \"application/x-www-form-urlencoded\" http://vote/"
+        },
+        {
+          "path": "seed-data/generate-votes.sh",
+          "line": 5,
+          "source": "syntax",
+          "text": "ab -n 1000 -c 50 -p postb -T \"application/x-www-form-urlencoded\" http://vote/"
+        },
+        {
+          "path": "seed-data/generate-votes.sh",
+          "line": 6,
+          "source": "syntax",
+          "text": "ab -n 1000 -c 50 -p posta -T \"application/x-www-form-urlencoded\" http://vote/"
+        }
+      ],
+      "target": {
+        "entrypoint": "vote:POST /"
+      }
+    },
+    {
+      "id": "result-ui>call>result#result:connection",
+      "from": "result-ui",
+      "to": "result",
+      "kind": "call",
+      "count": 1,
+      "occurrences": [
+        {
+          "path": "result/views/app.js",
+          "line": 2,
+          "source": "syntax",
+          "text": "var socket = io.connect();"
+        }
+      ],
+      "target": {
+        "entrypoint": "result:connection"
+      }
+    }
+  ],
+  "findings": [
+    {
+      "code": "missing_timeout",
+      "message": "la connexion à db n'a aucun délai : node-postgres attend sans limite par défaut",
+      "proof": [
+        {
+          "path": "result/server.js",
+          "line": 20,
+          "source": "syntax",
+          "text": "var pool = new Pool({"
+        }
+      ],
+      "nodes": [
+        "result",
+        "db"
+      ],
+      "source": "declared"
+    }
+  ],
+  "coverage": []
+}

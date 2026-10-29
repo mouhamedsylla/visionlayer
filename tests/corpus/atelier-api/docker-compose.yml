@@ -1,0 +1,27 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: atelier
+      POSTGRES_PASSWORD: atelier
+      POSTGRES_DB: atelier
+    ports: ["5432:5432"]
+  redis:
+    image: redis:7
+    ports: ["6379:6379"]
+  api:
+    build: .
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://atelier:atelier@postgres:5432/atelier
+      REDIS_URL: redis://redis:6379
+    ports: ["3000:3000"]
+    depends_on: [postgres, redis]
+  worker:
+    build: .
+    command: ["pnpm", "exec", "tsx", "src/email/main.ts"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://atelier:atelier@postgres:5432/atelier
+      REDIS_URL: redis://redis:6379
+    depends_on: [postgres, redis]

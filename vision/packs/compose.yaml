@@ -1,0 +1,6 @@
+id: compose
+name: Docker Compose
+deploys: true
+tech: [docker]
+files: [compose.yaml, compose.yml, docker-compose.yml, docker-compose.yaml, "compose.*.yaml", "compose.*.yml", "docker-compose.*.yml", "docker-compose.*.yaml"]
+script: compose.ts

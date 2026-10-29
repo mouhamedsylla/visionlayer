@@ -1,0 +1,65 @@
+.fresh {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 34px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--ground);
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+.clock {
+  display: grid;
+  place-items: center;
+  align-self: stretch;
+  width: 32px;
+  border-right: 1px solid var(--line);
+  color: var(--blue-ink);
+}
+
+.when {
+  padding: 0 10px;
+  color: var(--ink-soft);
+}
+
+.time {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.since {
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  padding: 0 10px;
+  border-left: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink-pale);
+}
+
+/* Pendant l'analyse : un trait bleu qui court sous la pastille. */
+.busy::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 40%;
+  height: 2px;
+  background: var(--blue);
+  animation: run 1.1s ease-in-out infinite;
+}
+
+@keyframes run {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(250%); }
+}
+@media (max-width: 860px) {
+  .since {
+    display: none;
+  }
+}

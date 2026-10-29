@@ -1,0 +1,25 @@
+.ref {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--blue-ink);
+  white-space: nowrap;
+}
+
+/* Un repère qui s'ouvre : souligné au survol, au-dessus d'une ligne cliquable qui le recouvrirait. */
+.open {
+  position: relative;
+  z-index: 1;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  text-decoration: underline dotted transparent;
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
+}
+
+.open:hover,
+.on {
+  color: var(--night);
+  text-decoration-color: var(--blue);
+}

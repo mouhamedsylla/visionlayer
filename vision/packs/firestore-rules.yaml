@@ -1,0 +1,5 @@
+id: firestore-rules
+name: Règles de sécurité Firestore
+tech: [firestore]
+files: ["*.rules"]
+script: firestore-rules.ts

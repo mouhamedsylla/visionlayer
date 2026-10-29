@@ -1,0 +1,8 @@
+id: vite
+name: Vite
+tech: [vite]
+files: [vite.config.ts, vite.config.js, vite.config.mjs, vite.config.mts, vite.config.cjs, vite.config.cts]
+script: vite.ts
+rules: |
+  % Une page dans la racine d'une configuration de Vite : l'app est faite avec Vite.
+  unit_tech(H, N, vite) :- unit(H, N, "page"), page_dir(H, D), vite_root(_, D).

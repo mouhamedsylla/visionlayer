@@ -1,0 +1,23 @@
+services:
+  traefik:
+    image: traefik:v3.1
+    ports: ["80:80", "443:443"]
+  web:
+    image: ghcr.io/acme/web:3.2
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.web.rule=Host(`acme.io`) || Host(`www.acme.io`)"
+  api:
+    image: ghcr.io/acme/api:3.2
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgres://acme:acme@db/acme
+      - PORT=4000
+    labels:
+      traefik.http.routers.api.rule: Host(`api.acme.io`)
+  db:
+    image: mysql:8
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping"]

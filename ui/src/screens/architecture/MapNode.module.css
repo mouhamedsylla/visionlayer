@@ -1,0 +1,96 @@
+.node {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 9px 12px;
+  border: 1px dashed var(--night-dash);
+  border-radius: var(--radius-tight);
+  background: var(--ground-veil);
+  text-align: left;
+  cursor: pointer;
+}
+
+.node:hover {
+  border-style: solid;
+}
+
+.selected {
+  border: 1.5px solid var(--night);
+  background: var(--surface);
+  box-shadow: 0 0 0 4px var(--blue-ring);
+}
+
+.linked {
+  border-style: solid;
+  border-color: var(--blue-edge);
+  background: var(--surface);
+}
+
+.dim {
+  opacity: 0.55;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.blank {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+}
+
+.title {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.uses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding-top: 5px;
+  border-top: 1px solid var(--line);
+}
+
+.kind {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.2;
+  color: var(--ink-soft);
+}
+
+.name {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.25;
+  overflow-wrap: break-word;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.badge {
+  padding: 0 5px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-tight);
+  background: var(--surface);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  white-space: nowrap;
+}
+
+.warn {
+  border-color: var(--blue-edge);
+  color: var(--blue-ink);
+}

@@ -1,0 +1,29 @@
+id: firestore
+name: Firestore (code)
+tech: [firestore]
+languages: [javascript, typescript]
+# Pas de `when` : un fichier qui lit Firestore par un `db` importé d'un autre fichier n'importe pas Firebase lui-même.
+# Les règles ne gardent ses accès que si son code atteint un paquet Firestore.
+script: firestore.ts
+rules: |
+  fs_pkg("firebase").
+  fs_pkg("firebase-admin").
+  fs_pkg("@google-cloud/firestore").
+  % Un fichier utilise Firestore s'il importe un paquet Firestore, ou un fichier qui l'utilise.
+  fs_uses(F) :- imports_pkg(F, _, P, _), fs_pkg(P).
+  fs_uses(F) :- depends(F, G), fs_uses(G).
+  % Un chemin fabriqué par une fonction ou une constante d'un autre fichier, ré-exports compris.
+  fs_path_fn(G, N, C) :- imports(G, N, H, I), fs_path_fn(H, I, C).
+  fs_access(F, Op, C, L) :- fs_ref_op(F, Op, N, L), imports(F, N, G, I), fs_path_fn(G, I, C).
+  fs_access(F, Op, C, L) :- fs_ref_maybe(F, Op, N, L), imports(F, N, G, I), fs_path_fn(G, I, C).
+  % `getDb().collection("users")` : vrai si getDb fabrique la base de données.
+  fs_db(G, N) :- imports(G, N, H, I), fs_db(H, I).
+  fs_access(F, Op, C, L) :- fs_rooted(F, Op, C, N, L), imports(F, N, G, I), fs_db(G, I).
+  fs_path_fn(F, N, C) :- fs_path_fn_rooted(F, N, C, V), imports(F, V, G, I), fs_db(G, I).
+  fs_resolved(F, L) :- fs_access(F, _, _, L).
+  accesses(F, Op, firestore, C, L) :- fs_access(F, Op, C, L), fs_uses(F).
+  entity_def(firestore, document, C, F) :- accesses(F, _, firestore, C, _).
+  % Un accès dont le chemin n'est pas écrit dans le code : « non lu », jamais rien.
+  unresolved(F, path_dynamic, L) :- fs_unresolved(F, L), fs_uses(F), not fs_resolved(F, L).
+  unresolved(F, path_dynamic, L) :- fs_ref_op(F, _, _, L), fs_uses(F), not fs_resolved(F, L).
+  unresolved(F, path_dynamic, L) :- fs_rooted(F, _, _, _, L), fs_uses(F), not fs_resolved(F, L).

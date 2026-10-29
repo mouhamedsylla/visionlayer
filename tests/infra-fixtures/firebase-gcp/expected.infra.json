@@ -1,0 +1,468 @@
+{
+  "version": 1,
+  "environments": [
+    "dev",
+    "prod"
+  ],
+  "components": [
+    {
+      "id": "database:firestore-default",
+      "name": "Firestore",
+      "kind": "database",
+      "source": {
+        "kind": "extracted",
+        "path": "firebase.json",
+        "line": 2
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "base": "(default)",
+        "règles": "firestore.rules"
+      },
+      "perEnv": {
+        "dev": {
+          "projet": "acme-dev-123"
+        },
+        "prod": {
+          "projet": "acme-prod-456"
+        }
+      }
+    },
+    {
+      "id": "host:firebase-hosting-web",
+      "name": "Firebase Hosting · web",
+      "kind": "host",
+      "source": {
+        "kind": "extracted",
+        "path": "firebase.json",
+        "line": 6
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "public": "dist/web",
+        "réécritures": "** → /index.html"
+      },
+      "perEnv": {
+        "dev": {
+          "projet": "acme-dev-123",
+          "site": "acme-dev-web"
+        },
+        "prod": {
+          "projet": "acme-prod-456",
+          "site": "acme-web"
+        }
+      }
+    },
+    {
+      "id": "image:render/Dockerfile",
+      "name": "render/Dockerfile",
+      "kind": "image",
+      "source": {
+        "kind": "extracted",
+        "path": "render/Dockerfile",
+        "line": 2
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "cmd": "[\"python\", \"-m\", \"render\"]",
+        "base": "python:3.11-slim",
+        "expose": "8080"
+      }
+    },
+    {
+      "id": "job:cloudbuild-cloudbuild",
+      "name": "Cloud Build",
+      "kind": "job",
+      "source": {
+        "kind": "extracted",
+        "path": "cloudbuild.yaml",
+        "line": 1
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "étapes": "app, deploy",
+        "images": "node:20, gcr.io/google.com/cloudsdktool/cloud-sdk",
+        "logs": "CLOUD_LOGGING_ONLY"
+      }
+    },
+    {
+      "id": "job:script-deploy-dev",
+      "name": "script · deploy:dev",
+      "kind": "job",
+      "source": {
+        "kind": "extracted",
+        "path": "package.json",
+        "line": 6
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "commande": "pnpm build && firebase deploy --only hosting --project dev"
+      }
+    },
+    {
+      "id": "job:script-deploy-prod",
+      "name": "script · deploy:prod",
+      "kind": "job",
+      "source": {
+        "kind": "extracted",
+        "path": "package.json",
+        "line": 7
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "commande": "pnpm build && firebase deploy --only hosting --project prod"
+      }
+    },
+    {
+      "id": "job:script-deploy-render",
+      "name": "script · deploy:render",
+      "kind": "job",
+      "source": {
+        "kind": "extracted",
+        "path": "package.json",
+        "line": 8
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "commande": "gcloud run deploy video-render --source render --project acme-prod-456"
+      }
+    },
+    {
+      "id": "job:script-functions-deploy",
+      "name": "script · functions · deploy",
+      "kind": "job",
+      "source": {
+        "kind": "extracted",
+        "path": "functions/package.json",
+        "line": 3
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "commande": "firebase deploy --only functions"
+      }
+    },
+    {
+      "id": "service:firebase-functions-default",
+      "name": "Cloud Functions",
+      "kind": "service",
+      "source": {
+        "kind": "extracted",
+        "path": "firebase.json",
+        "line": 15
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "source": "functions",
+        "codebase": "default",
+        "predeploy": "npm --prefix \"$RESOURCE_DIR\" run build"
+      },
+      "perEnv": {
+        "dev": {
+          "projet": "acme-dev-123"
+        },
+        "prod": {
+          "projet": "acme-prod-456"
+        }
+      }
+    },
+    {
+      "id": "service:video-render",
+      "name": "video-render",
+      "kind": "service",
+      "source": {
+        "kind": "extracted",
+        "path": "firebase.json",
+        "line": 10
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "plateforme": "Cloud Run",
+        "région": "europe-west1",
+        "source": "render"
+      }
+    },
+    {
+      "id": "storage:firebase-storage",
+      "name": "Cloud Storage",
+      "kind": "storage",
+      "source": {
+        "kind": "extracted",
+        "path": "firebase.json",
+        "line": 3
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "règles": "storage.rules"
+      },
+      "perEnv": {
+        "dev": {
+          "projet": "acme-dev-123"
+        },
+        "prod": {
+          "projet": "acme-prod-456"
+        }
+      }
+    }
+  ],
+  "links": [
+    {
+      "from": "host:firebase-hosting-web",
+      "to": "service:firebase-functions-default",
+      "kind": "routes_to",
+      "source": {
+        "kind": "extracted",
+        "path": "firebase.json",
+        "line": 9
+      },
+      "environments": [
+        "all"
+      ],
+      "label": "/api/** → api"
+    },
+    {
+      "from": "host:firebase-hosting-web",
+      "to": "service:video-render",
+      "kind": "routes_to",
+      "source": {
+        "kind": "extracted",
+        "path": "firebase.json",
+        "line": 10
+      },
+      "environments": [
+        "all"
+      ],
+      "label": "/render/** (Cloud Run)"
+    },
+    {
+      "from": "job:cloudbuild-cloudbuild",
+      "to": "env:prod",
+      "kind": "deploys",
+      "source": {
+        "kind": "extracted",
+        "path": "cloudbuild.yaml",
+        "line": 7
+      },
+      "environments": [
+        "prod"
+      ],
+      "label": "Firebase (hosting) → prod"
+    },
+    {
+      "from": "job:script-deploy-dev",
+      "to": "env:dev",
+      "kind": "deploys",
+      "source": {
+        "kind": "extracted",
+        "path": "package.json",
+        "line": 6
+      },
+      "environments": [
+        "dev"
+      ],
+      "label": "Firebase (hosting) → dev"
+    },
+    {
+      "from": "job:script-deploy-prod",
+      "to": "env:prod",
+      "kind": "deploys",
+      "source": {
+        "kind": "extracted",
+        "path": "package.json",
+        "line": 7
+      },
+      "environments": [
+        "prod"
+      ],
+      "label": "Firebase (hosting) → prod"
+    },
+    {
+      "from": "job:script-deploy-render",
+      "to": "env:prod",
+      "kind": "deploys",
+      "source": {
+        "kind": "extracted",
+        "path": "package.json",
+        "line": 8
+      },
+      "environments": [
+        "prod"
+      ],
+      "label": "Cloud Run (video-render) → prod"
+    },
+    {
+      "from": "job:script-functions-deploy",
+      "to": "env:all",
+      "kind": "deploys",
+      "source": {
+        "kind": "extracted",
+        "path": "functions/package.json",
+        "line": 3
+      },
+      "environments": [
+        "all"
+      ],
+      "label": "Firebase (functions)"
+    }
+  ],
+  "envVars": [
+    {
+      "name": "AI_MODEL",
+      "source": {
+        "kind": "extracted",
+        "path": "functions/.env.acme-dev-123",
+        "line": 1
+      },
+      "environments": [
+        "dev",
+        "prod"
+      ],
+      "component": "service:firebase-functions-default"
+    },
+    {
+      "name": "FIREBASE_TOKEN",
+      "source": {
+        "kind": "extracted",
+        "path": "cloudbuild.yaml",
+        "line": 7
+      },
+      "environments": [
+        "all"
+      ],
+      "component": "job:cloudbuild-cloudbuild"
+    },
+    {
+      "name": "PORT",
+      "source": {
+        "kind": "extracted",
+        "path": "render/Dockerfile",
+        "line": 11
+      },
+      "environments": [
+        "all"
+      ],
+      "component": "image:render/Dockerfile"
+    },
+    {
+      "name": "RENDER_DIR",
+      "source": {
+        "kind": "extracted",
+        "path": "render/Dockerfile",
+        "line": 11
+      },
+      "environments": [
+        "all"
+      ],
+      "component": "image:render/Dockerfile"
+    },
+    {
+      "name": "RENDER_URL",
+      "source": {
+        "kind": "extracted",
+        "path": "functions/.env.acme-dev-123",
+        "line": 3
+      },
+      "environments": [
+        "dev"
+      ],
+      "component": "service:firebase-functions-default"
+    },
+    {
+      "name": "RENDER_VOICE",
+      "source": {
+        "kind": "extracted",
+        "path": "render/Dockerfile",
+        "line": 11
+      },
+      "environments": [
+        "all"
+      ],
+      "component": "image:render/Dockerfile"
+    },
+    {
+      "name": "TASKS_QUEUE",
+      "source": {
+        "kind": "extracted",
+        "path": "functions/.env.acme-dev-123",
+        "line": 2
+      },
+      "environments": [
+        "dev"
+      ],
+      "component": "service:firebase-functions-default"
+    }
+  ],
+  "sources": [
+    {
+      "path": "cloudbuild.yaml",
+      "format": "cloudbuild"
+    },
+    {
+      "path": "firebase.json",
+      "format": "firebase"
+    },
+    {
+      "path": "functions/package.json",
+      "format": "package-scripts"
+    },
+    {
+      "path": "package.json",
+      "format": "package-scripts"
+    },
+    {
+      "path": "render/Dockerfile",
+      "format": "dockerfile"
+    },
+    {
+      "path": "functions/.env.acme-dev-123",
+      "format": "dotenv",
+      "environment": "dev"
+    },
+    {
+      "path": "functions/.env.acme-prod-456",
+      "format": "dotenv",
+      "environment": "prod"
+    }
+  ],
+  "warnings": [
+    {
+      "code": "env_only",
+      "message": "variable RENDER_URL présente uniquement en dev",
+      "source": {
+        "kind": "extracted",
+        "path": "functions/.env.acme-dev-123",
+        "line": 3
+      }
+    },
+    {
+      "code": "env_only",
+      "message": "variable TASKS_QUEUE présente uniquement en dev",
+      "source": {
+        "kind": "extracted",
+        "path": "functions/.env.acme-dev-123",
+        "line": 2
+      }
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+id: drizzle
+name: Drizzle ORM
+tech: [drizzle]
+languages: [javascript, typescript]
+# Pas de `when` : un fichier peut lire une table importée avec un `db` importé, sans importer drizzle-orm.
+script: drizzle.ts
+rules: |
+  table_tech("pgTable", postgresql, relational).
+  table_tech("mysqlTable", mysql, relational).
+  table_tech("sqliteTable", sqlite, relational).
+  entity_def(Tech, Shape, Name, G) :- table(G, _, Name, Fn), table_tech(Fn, Tech, Shape).
+
+  % Une table là où elle est déclarée, et partout où elle est importée, ré-exports compris (schema/index.ts).
+  table_in(G, V, N, Fn) :- table(G, V, N, Fn).
+  table_in(G, V, N, Fn) :- imports(G, V, H, I), table_in(H, I, N, Fn).
+  table_in(G, V, N, Fn) :- imports(G, "*", H, "*"), table_in(H, V, N, Fn).
+
+  % Les colonnes et les contraintes d'une table (drizzle-columns.ts), rendues en relations neutres.
+  entity_field(Tech, N, C, Type, Null) :- col_def(F, T, C, Type, Null), table(F, T, N, Fn), table_tech(Fn, Tech, _).
+  entity_value(Tech, N, Db, V) :- col_enum(F, T, K, V, _), col_key(F, T, K, Db), table(F, T, N, Fn), table_tech(Fn, Tech, _).
+  entity_constraint(Tech, N, K, Name, Cols, W) :- tbl_cons(F, T, K, Name, Cols, W), table(F, T, N, Fn), table_tech(Fn, Tech, _).
+  entity_ref(Tech, N, Cols, R) :- col_ref(F, T, Cols, V), table(F, T, N, Fn), table_tech(Fn, Tech, _), table_in(F, V, R, _).
+  entity_default(Tech, N, Db, V) :- col_default(F, T, K, V), col_key(F, T, K, Db), table(F, T, N, Fn), table_tech(Fn, Tech, _).
+
+  % Où le code écrit chaque colonne : la valeur quand elle est littérale, "" sinon.
+  entity_write(Tech, N, Db, V, G, L) :- db_set_val(G, Tv, K, V, L), table_in(G, Tv, N, Fn), table(F, T, N, Fn), col_key(F, T, K, Db), table_tech(Fn, Tech, _).
+  entity_write(Tech, N, Db, "", G, L) :- db_set_any(G, Tv, K, L), table_in(G, Tv, N, Fn), table(F, T, N, Fn), col_key(F, T, K, Db), table_tech(Fn, Tech, _).
+
+  % Une opération ne compte que si son argument est vraiment une table déclarée.
+  accesses(F, Op, Tech, Name, L) :- db_op(F, Op, V, L), table_in(F, V, Name, Fn), table_tech(Fn, Tech, _).
+  accesses(F, Op, Tech, Name, L) :- db_op_ns(F, Op, NS, P, L), imports(F, NS, G, "*"), table_in(G, P, Name, Fn), table_tech(Fn, Tech, _).
+  accesses(F, Op, Tech, Name, L) :- sql_table_var(F, Op, V, L), table_in(F, V, Name, Fn), table_tech(Fn, Tech, _).
+  % L'API relationnelle et le SQL brut nomment la table : par le nom exporté, par le nom en base.
+  accesses(F, read, Tech, Name, L) :- rq_op(F, K, L), table(_, K, Name, Fn), table_tech(Fn, Tech, _).
+  accesses(F, Op, Tech, Name, L) :- sql_table(F, Op, Name, L), table(_, _, Name, Fn), table_tech(Fn, Tech, _).
+
+  % Constat unused_value (docs/fonctionnement/constats.md) : une valeur permise d'une colonne que rien n'écrit.
+  enum_val(N, C, V, F, L) :- col_enum(F, T, C, V, L), table(F, T, N, _).
+  val_written(N, C, V) :- db_set_val(F, T, C, V, _), table_in(F, T, N, _).
+  val_written(N, C, V) :- col_default(F, T, C, V), table(F, T, N, _).
+  val_written(N, C, V) :- sql_write_lit(_, N, V), enum_val(N, C, V, _, _).
+  % Une écriture dont on ne lit pas la valeur, ou pas les colonnes : rien n'est affirmé.
+  col_open(N, C) :- db_set_any(F, T, C, _), table_in(F, T, N, _).
+  tbl_open(N) :- db_set_whole(F, T, _), table_in(F, T, N, _).
+  finding(unused_value, S, V, F, L) :- enum_val(N, C, V, F, L), not val_written(N, C, V), not col_open(N, C), not tbl_open(N), S = cat(N, ".", C).

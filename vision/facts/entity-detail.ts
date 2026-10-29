@@ -1,0 +1,100 @@
+import type { Constraint, Entity, Field, FieldWrite } from "../arch/types.js";
+import type { Database, Value } from "./datalog.js";
+
+/**
+ * Le détail d'une entité, d'après les relations neutres des packs :
+ *
+ *   entity_field(Tech, Entité, Champ, Type, null|notnull)        ses champs
+ *   entity_value(Tech, Entité, Champ, Valeur)                    les valeurs permises d'un champ
+ *   entity_constraint(Tech, Entité, Genre, Nom, Champs, Où)      primary, unique, index, check ; Champs séparés par des virgules
+ *   entity_ref(Tech, Entité, Champs, Entité visée)               une clé étrangère
+ *   entity_default(Tech, Entité, Champ, Valeur)                  la valeur par défaut posée par la base
+ *   entity_write(Tech, Entité, Champ, Valeur|"", Fichier, Ligne) une écriture du champ par le code ; "" quand la valeur est calculée
+ *   entity_trigger(Entité, Nom, Opérations)                      du code de la base qui s'exécute quand elle change
+ *   trigger_writes(Nom, Entité)                                  ce que ce code écrit
+ *
+ * Un déclencheur lu dans un fichier SQL ne dit pas sa base : il revient à
+ * l'entité de ce nom, quel que soit son stockage.
+ */
+export type EntityDetail = Pick<Entity, "fields" | "constraints" | "triggers">;
+
+export function entityDetails(db: Database): (tech: string, entity: string) => EntityDetail {
+  const s = (v: Value | undefined) => String(v);
+  const key = (tech: string, entity: string) => `${tech}\0${entity}`;
+  const list = <T>(m: Map<string, T[]>, k: string) => m.get(k) ?? m.set(k, []).get(k)!;
+  const split = (v: Value | undefined) => s(v).split(",").filter(Boolean);
+
+  const values = new Map<string, string[]>();
+  for (const t of db.get("entity_value")) list(values, `${key(s(t.args[0]), s(t.args[1]))}\0${s(t.args[2])}`).push(s(t.args[3]));
+
+  const defaults = new Map(db.get("entity_default").map((t) => [`${key(s(t.args[0]), s(t.args[1]))}\0${s(t.args[2])}`, s(t.args[3])]));
+  const writes = fieldWrites(db);
+
+  const fields = new Map<string, Field[]>();
+  for (const t of db.get("entity_field")) {
+    const k = key(s(t.args[0]), s(t.args[1]));
+    const name = s(t.args[2]);
+    const vals = values.get(`${k}\0${name}`);
+    const def = defaults.get(`${k}\0${name}`);
+    const w = writes.get(`${k}\0${name}`);
+    const f: Field = {
+      name, type: s(t.args[3]), nullable: s(t.args[4]) === "null", ...(vals ? { values: [...new Set(vals)] } : {}),
+      ...(def !== undefined ? { default: def } : {}), ...(w ? { writes: w } : {}), proof: t.proof[0]!,
+    };
+    const own = list(fields, k);
+    if (!own.some((x) => x.name === name)) own.push(f);
+  }
+
+  const constraints = new Map<string, Constraint[]>();
+  const addConstraint = (k: string, c: Constraint) => {
+    const own = list(constraints, k);
+    if (!own.some((x) => x.kind === c.kind && x.fields.join() === c.fields.join() && x.name === c.name)) own.push(c);
+  };
+  for (const t of db.get("entity_constraint")) {
+    const [name, where] = [s(t.args[3]), s(t.args[5])];
+    addConstraint(key(s(t.args[0]), s(t.args[1])), {
+      kind: s(t.args[2]) as Constraint["kind"], ...(name ? { name } : {}), fields: split(t.args[4]), ...(where ? { where } : {}), proof: t.proof[0]!,
+    });
+  }
+  for (const t of db.get("entity_ref")) {
+    addConstraint(key(s(t.args[0]), s(t.args[1])), { kind: "foreign", fields: split(t.args[2]), references: s(t.args[3]), proof: t.proof[0]! });
+  }
+
+  const trigWrites = new Map<string, string[]>();
+  for (const t of db.get("trigger_writes")) list(trigWrites, s(t.args[0])).push(s(t.args[1]));
+  const triggers = new Map<string, NonNullable<Entity["triggers"]>>();
+  for (const t of db.get("entity_trigger")) {
+    const name = s(t.args[1]);
+    const w = [...new Set(trigWrites.get(name) ?? [])].sort();
+    list(triggers, s(t.args[0])).push({ name, on: split(t.args[2]) as ("insert" | "update" | "delete")[], proof: t.proof[0]!, ...(w.length ? { writes: w } : {}) });
+  }
+
+  return (tech, entity) => {
+    const k = key(tech, entity);
+    const f = fields.get(k), c = constraints.get(k), tr = triggers.get(entity);
+    return { ...(f?.length ? { fields: f } : {}), ...(c?.length ? { constraints: c } : {}), ...(tr?.length ? { triggers: tr } : {}) };
+  };
+}
+
+/** Les écritures de chaque champ, à leur ligne, avec la fonction de premier niveau qui les contient. */
+function fieldWrites(db: Database): Map<string, FieldWrite[]> {
+  const s = (v: Value | undefined) => String(v);
+  const spans = new Map<string, { name: string; from: number; to: number }[]>();
+  for (const t of db.get("fn_span")) {
+    const file = s(t.args[0]);
+    (spans.get(file) ?? spans.set(file, []).get(file)!).push({ name: s(t.args[1]), from: Number(t.args[2]), to: Number(t.args[3]) });
+  }
+  const out = new Map<string, FieldWrite[]>();
+  for (const t of db.get("entity_write")) {
+    const [tech, entity, field, value, path] = t.args.slice(0, 5).map(s) as [string, string, string, string, string];
+    const line = Number(t.args[5]);
+    const k = `${tech}\0${entity}\0${field}`;
+    const own = out.get(k) ?? out.set(k, []).get(k)!;
+    if (own.some((w) => w.proof.path === path && w.proof.line === line)) continue;
+    const fn = spans.get(path)?.filter((f) => f.from <= line && line <= f.to).sort((a, b) => b.from - a.from)[0]?.name;
+    const proof = t.proof.find((p) => p.path === path && p.line === line) ?? { path, line, source: "pack" as const };
+    own.push({ ...(value ? { value } : {}), ...(fn ? { fn } : {}), proof });
+  }
+  for (const list of out.values()) list.sort((a, b) => a.proof.path.localeCompare(b.proof.path) || a.proof.line - b.proof.line);
+  return out;
+}

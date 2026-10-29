@@ -1,0 +1,134 @@
+.wrap {
+  position: relative;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--glass-strong);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.button:hover,
+.on {
+  border-color: var(--blue-edge);
+  background: var(--surface);
+}
+
+.total {
+  padding: 0 7px;
+  border-radius: 9px;
+  background: var(--night);
+  color: var(--surface);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 18px;
+}
+
+.urgent {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 8px;
+  border-left: 1px solid var(--line);
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--blue-ink);
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: var(--blue);
+}
+
+.chevron {
+  width: 6px;
+  height: 6px;
+  margin: 0 2px 3px 2px;
+  border-right: 1.5px solid var(--ink-soft);
+  border-bottom: 1.5px solid var(--ink-soft);
+  transform: rotate(45deg);
+  transition: transform var(--dur-2) var(--ease);
+}
+
+.on .chevron {
+  transform: translateY(3px) rotate(225deg);
+}
+
+.pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: min(380px, calc(100vw - 32px));
+  max-height: min(60vh, 520px);
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: 0 14px 36px var(--shadow-float);
+  overflow-y: auto;
+  transform-origin: top right;
+  animation: pop var(--dur-2) var(--ease);
+}
+
+@keyframes pop {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.heading {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ink-soft);
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  align-items: baseline;
+  gap: 10px;
+  padding: 7px 0 7px 10px;
+  border-top: 1px solid var(--night-faint);
+  box-shadow: inset 2px 0 var(--line);
+  font-size: 13px;
+}
+
+.row:first-child {
+  border-top: 0;
+}
+
+.hot {
+  box-shadow: inset 2px 0 var(--blue);
+}
+
+.value {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 500;
+  text-align: right;
+}

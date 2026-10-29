@@ -1,0 +1,11 @@
+.wrap {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.note {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+}

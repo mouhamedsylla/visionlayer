@@ -1,0 +1,39 @@
+id: bullmq
+name: BullMQ
+tech: [bullmq, redis]
+languages: [javascript, typescript]
+# Pas de `when` : un fichier peut mettre en file avec une file importée, sans importer bullmq.
+script: bullmq.ts
+rules: |
+  bq_produce("add").
+  bq_produce("addBulk").
+  bq_produce("upsertJobScheduler").
+
+  % Une file : son nom écrit, ou lu dans une constante ; puis partout où elle est importée, alias et ré-exports compris.
+  queue_topic(F, V, T) :- queue_def(F, V, T).
+  queue_topic(F, V, T) :- queue_def_ref(F, V, C), const_in(F, C, T).
+  queue_in(F, V, T) :- queue_topic(F, V, T).
+  queue_in(F, V, T) :- imports(F, V, H, I), queue_in(H, I, T).
+  queue_in(F, V, T) :- imports(F, "*", H, "*"), queue_in(H, V, T).
+  channel_topic(F, T, redis) :- queue_topic(F, _, T).
+
+  % Mettre en file : add, addBulk, un planificateur ; ou un flux, file par file.
+  publishes(F, T) :- member_call(F, V, M, _), bq_produce(M), queue_in(F, V, T).
+  publish_at(F, T, L) :- member_call(F, V, M, L), bq_produce(M), queue_in(F, V, T).
+  flow_in(F, V) :- flow_def(F, V).
+  flow_in(F, V) :- imports(F, V, H, I), flow_in(H, I).
+  publishes(F, T) :- flow_job(F, V, T, _), flow_in(F, V).
+  channel_topic(F, T, redis) :- flow_job(F, V, T, _), flow_in(F, V).
+
+  % Un travailleur : un point d'entrée que la file déclenche.
+  worker_topic(F, T, H, HL) :- worker_new(F, T, H, HL, _).
+  worker_topic(F, T, H, HL) :- worker_ref(F, C, H, HL, _), const_in(F, C, T).
+  entrypoint(F, message, T, H, HL) :- worker_topic(F, T, H, HL).
+  subscribes(F, T) :- worker_topic(F, T, _, _).
+  channel_topic(F, T, redis) :- worker_topic(F, T, _, _).
+
+  % Un processeur isolé : son fichier est le code du point d'entrée, et fait partie du déployable.
+  worker_file_at(F, T, G) :- worker_file(F, T, G), present(G).
+  worker_file_at(F, T, G) :- worker_file(F, C, G), present(G), const_in(F, C, T).
+  depends(F, G) :- worker_file_at(F, _, G).
+  handler_at(F, T, G, 1) :- worker_file_at(F, T, G).

@@ -1,0 +1,87 @@
+id: stores
+name: Stockages et files reconnus par leur image ou leur pilote
+tech: [postgresql, mysql, mariadb, mongodb, redis, rabbitmq, elasticsearch, minio]
+languages: [javascript, typescript]
+# Pas de `when` : un fichier peut interroger une connexion importée, sans importer le pilote.
+script: stores.ts
+rules: |
+  % image_store(Image, Technologie, Rôle, Forme) : le dernier segment du nom de l'image, sans version.
+  image_store("postgres", postgresql, store, relational).
+  image_store("postgresql", postgresql, store, relational).
+  image_store("postgis", postgresql, store, relational).
+  image_store("mysql", mysql, store, relational).
+  image_store("mariadb", mariadb, store, relational).
+  image_store("mongo", mongodb, store, document).
+  image_store("mongodb", mongodb, store, document).
+  image_store("redis", redis, store, "key-value").
+  image_store("redis-stack", redis, store, "key-value").
+  image_store("redis-stack-server", redis, store, "key-value").
+  image_store("valkey", redis, store, "key-value").
+  image_store("rabbitmq", rabbitmq, channel, queue).
+  image_store("elasticsearch", elasticsearch, store, search).
+  image_store("minio", minio, store, blob).
+
+  % store_driver(Paquet, Technologie) ; store_make(Paquet, Chemin) : ce qui ouvre une connexion.
+  store_driver("pg", postgresql).
+  store_driver("postgres", postgresql).
+  store_driver("mysql2", mysql).
+  store_driver("mongodb", mongodb).
+  store_driver("mongoose", mongodb).
+  store_driver("ioredis", redis).
+  store_driver("redis", redis).
+  store_make("pg", "Pool").
+  store_make("pg", "Client").
+  store_make("postgres", "default").
+  store_make("mysql2", "createPool").
+  store_make("mysql2", "createConnection").
+  store_make("mysql2", "createPoolCluster").
+  store_make("mongodb", "MongoClient").
+  store_make("mongodb", "MongoClient.connect").
+  store_make("mongoose", "connect").
+  store_make("mongoose", "createConnection").
+  store_make("ioredis", "default").
+  store_make("ioredis", "Redis").
+  store_make("ioredis", "Cluster").
+  store_make("ioredis", "Redis.Cluster").
+  store_make("redis", "createClient").
+  store_make("redis", "createCluster").
+  store_shape(postgresql, relational).
+  store_shape(mysql, relational).
+  store_shape(mongodb, document).
+
+  % Une connexion : là où elle est ouverte (c'est la preuve du stockage), puis ce qui en est tiré, puis partout où elle est importée.
+  db_open(F, V, T) :- db_conn(F, V, P, C, _), store_make(P, C), store_driver(P, T).
+  uses_store(R, T) :- db_conn(F, _, P, C, _), store_make(P, C), store_driver(P, T), reach(R, F).
+  conn_in(F, V, T) :- db_open(F, V, T).
+  conn_in(F, V, T) :- db_derive(F, V, U, _), conn_in(F, U, T).
+  conn_in(F, V, T) :- imports(F, V, H, I), conn_in(H, I, T).
+  conn_in(F, V, T) :- imports(F, "*", H, "*"), conn_in(H, V, T).
+
+  % Une requête qui nomme sa table, sur une connexion.
+  db_access(F, Op, T, N, L) :- db_query(F, V, Op, N, L), conn_in(F, V, T).
+
+  % Une collection, nommée sur place ou gardée dans une variable, elle aussi importable.
+  coll_in(F, V, T, N) :- db_coll(F, V, R, N, _), conn_in(F, R, T).
+  coll_in(F, V, T, N) :- imports(F, V, H, I), coll_in(H, I, T, N).
+  coll_in(F, V, T, N) :- imports(F, "*", H, "*"), coll_in(H, V, T, N).
+  db_access(F, Op, T, N, L) :- db_coll_op(F, R, N, Op, L), conn_in(F, R, T).
+  db_access(F, Op, T, N, L) :- db_coll_var_op(F, V, Op, L), coll_in(F, V, T, N).
+
+  accesses(F, Op, T, N, L) :- db_access(F, Op, T, N, L).
+  % Une entité vue seulement à l'usage : là où elle est nommée.
+  entity_seen(T, S, N, F) :- db_coll(F, V, R, N, _), conn_in(F, R, T), store_shape(T, S).
+  entity_seen(T, S, N, F) :- db_query(F, V, _, N, _), conn_in(F, V, T), store_shape(T, S).
+  entity_seen(T, S, N, F) :- db_coll_op(F, R, N, _, _), conn_in(F, R, T), store_shape(T, S).
+
+  % Constat missing_timeout (docs/fonctionnement/constats.md), d'après les valeurs par défaut documentées des pilotes.
+  % node-postgres : sans option de délai, la connexion et les requêtes attendent sans limite (connectionTimeoutMillis vaut 0).
+  pg_timeout("connectionTimeoutMillis").
+  pg_timeout("query_timeout").
+  pg_timeout("statement_timeout").
+  pg_timeout("lock_timeout").
+  pg_timed(F, L) :- db_conn_opt(F, L, K, _), pg_timeout(K).
+  finding(missing_timeout, T, "connect", F, L) :- db_conn(F, _, "pg", C, L), store_make("pg", C), db_conn_opts(F, L), not pg_timed(F, L), store_driver("pg", T).
+  % ioredis : maxRetriesPerRequest à null rejoue chaque commande sans limite ; sans commandTimeout, elle attend sans fin.
+  redis_timed(F, L) :- db_conn_opt(F, L, "commandTimeout", _).
+  finding(missing_timeout, T, "retry", F, L) :- db_conn(F, _, "ioredis", C, L), store_make("ioredis", C), db_conn_opt(F, L, "maxRetriesPerRequest", "null"), not redis_timed(F, L), store_driver("ioredis", T).
+  finding_store(missing_timeout, T, T) :- finding(missing_timeout, T, _, _, _).

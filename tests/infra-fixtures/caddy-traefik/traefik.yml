@@ -1,0 +1,12 @@
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+providers:
+  docker: {}
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: ops@acme.io
+      storage: /acme.json

@@ -1,0 +1,16 @@
+steps:
+  - name: node:20
+    id: app
+    entrypoint: bash
+    args: ["-c", "corepack enable && pnpm install --frozen-lockfile && pnpm build"]
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    id: deploy
+    entrypoint: bash
+    secretEnv: ["FIREBASE_TOKEN"]
+    args: ["-c", "firebase deploy --only hosting --project prod"]
+availableSecrets:
+  secretManager:
+    - versionName: projects/acme-prod-456/secrets/firebase-token/versions/latest
+      env: FIREBASE_TOKEN
+options:
+  logging: CLOUD_LOGGING_ONLY

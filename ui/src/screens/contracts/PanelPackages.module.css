@@ -1,0 +1,61 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pkg {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border: 1px dashed var(--night-dash);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.leak {
+  border: 1.5px solid var(--night);
+  box-shadow: 0 0 0 3px var(--blue-ring);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+
+.text b {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* La règle tient : une coche dans un carré bleu. */
+.ok {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-tight);
+  background: var(--blue);
+}
+
+.ok::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 3px;
+  width: 4px;
+  height: 8px;
+  border: solid var(--surface);
+  border-width: 0 1.8px 1.8px 0;
+  transform: rotate(45deg);
+}

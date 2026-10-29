@@ -1,0 +1,50 @@
+{
+  "repository": {
+    "root": "FIXTURE_ROOT"
+  },
+  "files": [
+    {
+      "path": "src/a.ts",
+      "language": "typescript",
+      "symbols": [
+        {
+          "id": "src/a.ts#greet",
+          "name": "greet",
+          "kind": "function",
+          "exported": true,
+          "location": {
+            "path": "src/a.ts",
+            "startLine": 1,
+            "endLine": 3
+          }
+        }
+      ]
+    },
+    {
+      "path": "src/b.ts",
+      "language": "typescript",
+      "symbols": [
+        {
+          "id": "src/b.ts#run",
+          "name": "run",
+          "kind": "function",
+          "exported": true,
+          "location": {
+            "path": "src/b.ts",
+            "startLine": 3,
+            "endLine": 5
+          }
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "from": "src/b.ts",
+      "to": "src/a.ts",
+      "raw": "./a",
+      "external": false
+    }
+  ],
+  "reExports": []
+}

@@ -1,0 +1,15 @@
+id: zod-env
+name: Variables d'environnement déclarées avec Zod
+languages: [javascript, typescript]
+# Pas de `when` : le fichier qui valide l'environnement peut importer le schéma sans importer zod.
+script: zod-env.ts
+rules: |
+  % Les schémas qu'un fichier applique à l'environnement : écrits là, importés, ou dont ils sont composés.
+  env_schema(P, P, S) :- env_parse(P, S).
+  env_schema(P, G, I) :- env_schema(P, F, S), imports(F, S, G, I).
+  env_schema(P, G, S) :- env_schema(P, F, S), imports(F, "*", G, "*").
+  env_schema(P, F, T) :- env_schema(P, F, S), schema_uses(F, S, T).
+
+  % Leurs clés de premier niveau sont les variables du fichier qui les applique ; les fichiers qui l'importent les lisent sur lui.
+  env(P, K) :- env_key(F, S, K, _, _), env_schema(P, F, S).
+  env_required(P, K, R) :- env_schema(P, F, S), env_key(F, S, K, R, _).

@@ -1,0 +1,107 @@
+.box {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.quote {
+  margin: 0;
+  padding: 16px 18px 6px;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+.check {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+  margin: 0;
+  padding: 8px 18px 14px;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.origin {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.comment {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--blue);
+}
+
+.ok {
+  color: var(--blue-ink);
+}
+
+.leak {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 12px;
+  margin: 8px 0 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.count {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ink-soft);
+}
+
+.op {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
+  gap: 14px;
+}
+
+.opNote {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.more {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.more a {
+  color: var(--blue-ink);
+}
+
+.empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+}

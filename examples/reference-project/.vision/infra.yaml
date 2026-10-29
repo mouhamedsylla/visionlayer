@@ -1,0 +1,21 @@
+# Part DÉCLARÉE de l'infrastructure : ce qu'aucun fichier du repository ne dit.
+# Tout ce qui est ici est affiché avec l'étiquette « déclaré », distinct des faits extraits.
+# Seul fichier de .vision/ écrit à la main — à versionner (ADR 0010).
+version: 1
+
+environments: [dev, prod]
+
+components:
+  - name: Resend
+    kind: platform
+    environments: [prod]
+    note: Fournisseur d'e-mail transactionnel en production — joint via SMTP_HOST ; en dev, MailHog le remplace.
+    attrs:
+      region: eu
+
+links:
+  - from: service:api
+    to: platform:resend
+    kind: connects_to
+    environments: [prod]
+    label: SMTP

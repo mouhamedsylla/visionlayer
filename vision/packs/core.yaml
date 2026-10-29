@@ -1,0 +1,75 @@
+id: core
+name: Règles communes
+# Aucune pile ici : seulement des faits neutres joints entre eux.
+rules: |
+  % Ce que lance un déployable, et tout ce que ce fichier importe de proche en proche.
+  reach(R, R) :- unit_runs(_, _, R), present(R).
+  reach(R, H) :- reach(R, G), depends(G, H).
+
+  % Le code derrière un nom : défini dans le fichier, ou importé d'un autre fichier du dépôt.
+  resolves(F, N, F, L) :- defines(F, N, L).
+  resolves(F, N, G, L) :- imports(F, N, G, I), defines(G, I, L).
+
+  % Une constante texte, là où elle est écrite et partout où elle est importée.
+  const_in(F, C, T) :- const_str(F, C, T).
+  const_in(F, C, T) :- imports(F, C, H, I), const_in(H, I, T).
+
+  % Un point d'entrée appartient à chaque déployable dont le code contient son fichier.
+  entry_in(R, F, K, Key) :- entrypoint(F, K, Key, _, _), reach(R, F).
+  handler_at(F, Key, G, L) :- entrypoint(F, _, Key, H, _), H != "", resolves(F, H, G, L).
+
+  % Une classe qui implémente une interface du dépôt ; une fonction qui fabrique ses implémentations.
+  implements_at(F, C, G, I, L) :- implements(F, C, I, L), resolves(F, I, G, _), interface_def(G, I, _).
+  selects(S, Fn, G, I) :- instantiates(S, Fn, C, _), resolves(S, C, F, _), implements_at(F, C, G, I, _).
+
+  % Constat dead_code (docs/fonctionnement/constats.md) : une fonction exportée que rien n'emploie.
+  fn_used(F, N) :- export_fn(F, N, _), imports(_, _, F, N).
+  fn_used(F, N) :- export_fn(F, N, _), used_here(F, N).
+  % Importé en entier (import * as m, require, import dynamique, import "./x") : tout peut servir.
+  whole_import(F) :- imports(_, X, F, "*"), X != "*".
+  whole_import(F) :- imports(_, "", F, "").
+  fn_used(F, N) :- export_fn(F, N, _), whole_import(F).
+  % Un fichier qui ré-exporte tout : la fonction sert si le nom est employé à travers lui.
+  fn_used(F, N) :- export_fn(F, N, _), imports(G, "*", F, "*"), reexp_used(G, N).
+  reexp_used(G, N) :- imports(_, _, G, N), imports(G, "*", _, "*").
+  reexp_used(G, N) :- imports(H, "*", G, "*"), reexp_used(H, N).
+  fn_used(F, N) :- export_fn(F, N, _), imports(G, "*", F, "*"), whole_import(G).
+  fn_used(F, N) :- handler_at(_, _, F, L), export_fn(F, N, L).
+  launched(F) :- reach(F, F).
+  launched(F) :- pkg_script(_, _, F).
+  % Le code d'un déployable, ou un fichier que personne n'importe, rangé avec lui (src/import/csv.ts à côté de src/app.ts).
+  % Ailleurs (un script, une maquette, une configuration) : rien n'est affirmé. Dit par des négations, pour que la seule preuve soit la fonction.
+  reached(F) :- reach(_, F).
+  reached_top(D) :- reach(_, F), top_dir(F, D).
+  in_scope(F) :- reached(F).
+  in_scope(F) :- export_fn(F, _, _), top_dir(F, D), reached_top(D), not config_file(F).
+  outside(F) :- export_fn(F, _, _), not in_scope(F).
+  finding(dead_code, N, "fn", F, L) :- export_fn(F, N, L), not outside(F), not fn_used(F, N), not launched(F), not test_file(F).
+
+  % Constat write_then_enqueue : dans une même fonction, une écriture puis une publication, sans transaction commune.
+  wq_pair(F, W, P, T) :- publish_at(F, T, P), accesses(F, write, _, _, W), W < P, fn_span(F, _, S, E), W >= S, P <= E.
+  wq_after_tx(F, W, P) :- wq_pair(F, W, P, _), tx_span(F, S, E), W >= S, W <= E, P > E.
+  wq_in_tx(F, W, P) :- wq_pair(F, W, P, _), tx_span(F, S, E), W >= S, W <= E, P >= S, P <= E.
+  finding(write_then_enqueue, T, "tx", F, P) :- wq_pair(F, W, P, T), wq_after_tx(F, W, P), not wq_in_tx(F, W, P).
+  finding(write_then_enqueue, T, "plain", F, P) :- wq_pair(F, W, P, T), write_ctx(F, W, "conn").
+  finding_proof(write_then_enqueue, T, "tx", F, P, F, W) :- wq_pair(F, W, P, T), wq_after_tx(F, W, P), not wq_in_tx(F, W, P).
+  finding_proof(write_then_enqueue, T, "plain", F, P, F, W) :- wq_pair(F, W, P, T), write_ctx(F, W, "conn").
+
+  % Constat race_read_then_write : lire des lignes filtrées sur une colonne, les mettre à jour sans refiltrer sur elle,
+  % alors qu'une autre fonction met à jour cette colonne. Un verrou (for update) le fait taire.
+  col_updater(N, C, G, L) :- upd_set(G, V, C, L), table_in(G, V, N, _).
+  race(F, Fn, N, C, R, U) :- read_filter(F, V, C, R), upd_at(F, V2, U), R < U, fn_span(F, Fn, S, E), R >= S, U <= E, table_in(F, V, N, _), table_in(F, V2, N, _).
+  upd_cond(F, U, C) :- upd_where(F, _, C, U).
+  locked(F, R) :- read_locked(F, R).
+  other_upd(F, Fn, N, C) :- race(F, Fn, N, C, _, _), col_updater(N, C, G, _), G != F.
+  other_upd(F, Fn, N, C) :- race(F, Fn, N, C, _, _), col_updater(N, C, F, L), fn_span(F, Fn, S, E), L < S.
+  other_upd(F, Fn, N, C) :- race(F, Fn, N, C, _, _), col_updater(N, C, F, L), fn_span(F, Fn, S, E), L > E.
+  race_hit(F, Fn, D, R, U, N, C) :- race(F, Fn, N, C, R, U), not upd_cond(F, U, C), not locked(F, R), D = cat(N, ".", C).
+  finding(race_read_then_write, Fn, D, F, R) :- race_hit(F, Fn, D, R, _, N, C), other_upd(F, Fn, N, C).
+  finding_proof(race_read_then_write, Fn, D, F, R, F, U) :- race_hit(F, Fn, D, R, U, N, C), other_upd(F, Fn, N, C).
+  finding_proof(race_read_then_write, Fn, D, F, R, G, L) :- race_hit(F, Fn, D, R, _, N, C), col_updater(N, C, G, L), G != F.
+  finding_proof(race_read_then_write, Fn, D, F, R, F, L) :- race_hit(F, Fn, D, R, _, N, C), col_updater(N, C, F, L), fn_span(F, Fn, S, E), L < S.
+  finding_proof(race_read_then_write, Fn, D, F, R, F, L) :- race_hit(F, Fn, D, R, _, N, C), col_updater(N, C, F, L), fn_span(F, Fn, S, E), L > E.
+
+  % Un nom de variable d'environnement lu sur l'objet qui les déclare (env.EMAIL_PROVIDER).
+  env_read(F, K, L) :- member_upper(F, V, K, L), resolves(F, V, G, _), env(G, K).

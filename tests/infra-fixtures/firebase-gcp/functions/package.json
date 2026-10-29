@@ -1,0 +1,5 @@
+{
+  "name": "functions",
+  "scripts": { "build": "tsc", "deploy": "firebase deploy --only functions" },
+  "engines": { "node": "20" }
+}

@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "environments": [],
+  "components": [
+    {
+      "id": "proxy:web",
+      "name": "web",
+      "kind": "proxy",
+      "source": {
+        "kind": "extracted",
+        "path": "docker-compose.yml",
+        "line": 2
+      },
+      "environments": [
+        "all"
+      ],
+      "attrs": {
+        "image": "nginx:1.27"
+      }
+    }
+  ],
+  "links": [],
+  "envVars": [],
+  "sources": [
+    {
+      "path": "docker-compose.yml",
+      "format": "docker-compose"
+    },
+    {
+      "path": ".vision/infra.yaml",
+      "format": "declared"
+    }
+  ],
+  "warnings": [
+    {
+      "code": "declared_invalid",
+      "message": ".vision/infra.yaml invalide — components.0.kind : Invalid option: expected one of \"service\"|\"database\"|\"cache\"|\"queue\"|\"storage\"|\"proxy\"|\"gateway\"|\"cdn\"|\"dns\"|\"host\"|\"platform\"|\"job\"|\"image\"|\"network\"|\"other\"",
+      "source": {
+        "kind": "declared",
+        "path": ".vision/infra.yaml"
+      }
+    }
+  ]
+}

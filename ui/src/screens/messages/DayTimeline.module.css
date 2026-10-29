@@ -1,0 +1,134 @@
+.day {
+  --label: 170px;
+  display: flex;
+  flex-direction: column;
+  padding: 6px 14px 12px;
+}
+
+.ticks {
+  position: relative;
+  height: 18px;
+  margin-left: var(--label);
+}
+
+.tick {
+  position: absolute;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ink-soft);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: var(--label) minmax(0, 1fr);
+  align-items: center;
+  min-height: 46px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-tight);
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.row:hover,
+.on {
+  background: var(--blue-wash);
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  padding: 4px 10px 4px 6px;
+}
+
+.name {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 500;
+  overflow-wrap: break-word;
+}
+
+.when {
+  font-size: 11.5px;
+  color: var(--ink-soft);
+}
+
+.track {
+  position: relative;
+  align-self: stretch;
+}
+
+.line,
+.dotted {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-left: 1px solid var(--line);
+}
+
+.dotted {
+  border-left-style: dotted;
+}
+
+.band {
+  position: absolute;
+  top: 15px;
+  height: 16px;
+  background: repeating-linear-gradient(90deg, var(--night) 0 1px, transparent 1px 4px);
+}
+
+.mark {
+  position: absolute;
+  top: 11px;
+  width: 12px;
+  height: 24px;
+  margin-left: -6px;
+  border-radius: 2px;
+  background: var(--night);
+}
+
+.times,
+.over,
+.none {
+  position: absolute;
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+.times {
+  top: 15px;
+  margin-left: 12px;
+  color: var(--night);
+}
+
+.over {
+  right: 0;
+  bottom: 1px;
+  padding: 0 4px;
+  background: var(--surface);
+  color: var(--night);
+}
+
+.none {
+  top: 13px;
+  left: 0;
+  right: 0;
+  padding: 2px 8px;
+  border: 1.5px dashed var(--blue-edge);
+  border-radius: var(--radius-tight);
+  background: var(--surface);
+  color: var(--ink-soft);
+  white-space: normal;
+}
+
+@container (max-width: 560px) {
+  .day {
+    --label: 120px;
+  }
+}
