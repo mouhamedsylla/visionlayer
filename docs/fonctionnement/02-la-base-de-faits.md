@@ -1,6 +1,6 @@
 # 2. La base de faits
 
-Code : [vision/facts/base.ts](../../vision/facts/base.ts), [vision/facts/syntax.ts](../../vision/facts/syntax.ts), [vision/facts/types.ts](../../vision/facts/types.ts). Décision : [RYP-190](https://linear.app/rypha/issue/RYP-190), doc 07 §4.2.
+Code : [vision/facts/base.ts](../../vision/facts/base.ts), [vision/facts/syntax.ts](../../vision/facts/syntax.ts), [vision/facts/types.ts](../../vision/facts/types.ts). Décision : RYP-190, doc 07 §4.2.
 
 ## Le concept
 

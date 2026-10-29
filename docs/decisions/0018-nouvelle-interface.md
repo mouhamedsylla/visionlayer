@@ -28,6 +28,6 @@ Les écrans à construire existent déjà. Ce sont les maquettes du canevas « V
 
 ## Conséquences
 
-- L'interface n'a pour l'instant qu'un écran, Architecture. Les autres suivent l'ordre des maquettes ([RYP-198](https://linear.app/rypha/issue/RYP-198)).
+- L'interface n'a pour l'instant qu'un écran, Architecture. Les autres suivent l'ordre des maquettes (RYP-198).
 - Les écrans qui dépendaient des actions de l'ancien serveur (scan, connaissance, activité des agents, création de projet) reviendront avec leurs propres routes, chacune dans son fichier de `vision/web/`.
 - `vision scan`, `archi`, `cost` et `knowledge` lisent encore la carte version 1. Ils partent à l'étape 5 de l'ADR 0017.

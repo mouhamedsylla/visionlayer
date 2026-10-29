@@ -118,8 +118,8 @@ Les déroulés de features restent calculés à la demande (ADR 0012) et ne sont
    - le type et le schéma de la version 2 ;
    - une conversion de la version 1 vers la version 2 ([vision/arch/neutral.ts](../../vision/arch/neutral.ts)), pour que la carte de Nafar s'y décrive dès aujourd'hui ;
    - l'oracle d'atelier-api écrit en version 2 ([expected.arch.json](../../tests/corpus/atelier-api/expected.arch.json)), validé par le schéma.
-2. **Avec le moteur de packs ([RYP-190](https://linear.app/rypha/issue/RYP-190)) :** l'extraction produit directement la version 2. Fait le 01/10 pour les technologies d'atelier-api. Le pack Firebase ([RYP-191](https://linear.app/rypha/issue/RYP-191)) est en pause : il s'écrit depuis la documentation de Firebase, forme par forme, comme les autres packs, et non en recopiant le code de la version 1.
-3. **Contrôle à l'aveugle ([RYP-224](https://linear.app/rypha/issue/RYP-224)) :** un projet jamais vu, son oracle écrit avant de lancer ; on compte ce qui est trouvé, faux et non lu.
+2. **Avec le moteur de packs (RYP-190) :** l'extraction produit directement la version 2. Fait le 01/10 pour les technologies d'atelier-api. Le pack Firebase (RYP-191) est en pause : il s'écrit depuis la documentation de Firebase, forme par forme, comme les autres packs, et non en recopiant le code de la version 1.
+3. **Contrôle à l'aveugle (RYP-224) :** un projet jamais vu, son oracle écrit avant de lancer ; on compte ce qui est trouvé, faux et non lu.
 4. **Nouvelle interface :** les écrans ne sont pas migrés un par un. L'interface actuelle est jetée, et chaque écran est recodé depuis les maquettes, refaites le 30/09 pour n'importe quel projet. Il lit la version 2 et a son état « non lu ». Les déroulés et les contrats calculés à la demande sont refaits sur la base de faits avant.
 5. **Bascule et retrait :** `scan` écrit la version 2. L'ancien moteur (`vision/arch/build.ts`, `analyze.ts`, `flow.ts`, `contract.ts`) est retiré. Un fichier en version 1 reste lisible, converti au chargement, jusqu'à la fin du jalon 2. Sans le pack Firebase, les parties Firebase de Nafar apparaissent comme non lues.
 
@@ -150,5 +150,5 @@ Les déroulés de features restent calculés à la demande (ADR 0012) et ne sont
 
   L'ADR 0012 comptait 27 règles : l'écart vient du code de Nafar depuis, la v1 trouve aussi 26.
 - La conversion perd une seule chose : les champs du contrat calculés à la demande (`contract.ts`). Ils restent à la demande et rejoignent la facette `contract` avec le pack.
-- Le score de couverture du corpus devient possible : comparer la carte produite à l'oracle, nœud par nœud et lien par lien ([RYP-196](https://linear.app/rypha/issue/RYP-196)).
+- Le score de couverture du corpus devient possible : comparer la carte produite à l'oracle, nœud par nœud et lien par lien (RYP-196).
 - Le serveur MCP reste en lecture seule (ADR 0009). Il servira la version 2 quand le fichier basculera.

@@ -6,7 +6,7 @@
 Après la migration npm → pnpm ([ADR pnpm](../../package.json) / mémoire de session), la commande documentée dans le guide (`pnpm run scan -- /tmp/mon-essai`) a échoué :
 
 ```
-Error: ENOENT: no such file or directory, scandir '/Users/macbook/projects/rypha-fabric/workflow/--'
+Error: ENOENT: no such file or directory, scandir '/chemin/vers/visionlayer/--'
 ```
 
 **Cause** : contrairement à npm, pnpm ne retire pas le séparateur `--` avant de le transmettre au script — `pnpm run scan -- /tmp/mon-essai` exécute littéralement `tsx cli/scan.ts -- /tmp/mon-essai`. `cli/scan.ts` prenait `process.argv[2]` comme chemin cible, et recevait donc `"--"` au lieu du vrai chemin. Pire : pour `vision context`/`vision report`, qui localisent leurs arguments par position relative au flag `--task`, un `--` en tête décalait aussi la résolution du chemin racine — pas seulement un problème d'affichage.

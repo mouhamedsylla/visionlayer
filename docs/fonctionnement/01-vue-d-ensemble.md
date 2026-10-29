@@ -75,7 +75,7 @@ Le dépôt contient encore l'ancien moteur, **la carte version 1** (`vision/arch
 
 L'ancienne interface, qui lisait la version 1, est archivée depuis le 02/10 dans `archive/ui-v1/` ([ADR 0018](../decisions/0018-nouvelle-interface.md)). La nouvelle, dans `ui/` avec son serveur `vision/web/`, est recodée écran par écran à partir des maquettes du canevas « VisionLayer — tous les écrans » et ne lit que le modèle neutre. Ses premiers écrans sont la Vue d'ensemble, Architecture, Bloc, Features et Données.
 
-Quand les écrans sont recodés et que `scan` écrit la version 2, l'ancien moteur est retiré ([ADR 0017 §8](../decisions/0017-modele-neutre.md#8-la-migration)). Le pack Firebase est en pause ([RYP-191](https://linear.app/rypha/issue/RYP-191)). Il ne bloque pas les nouveaux écrans : d'ici là, les parties Firebase de Nafar y apparaissent comme non lues.
+Quand les écrans sont recodés et que `scan` écrit la version 2, l'ancien moteur est retiré ([ADR 0017 §8](../decisions/0017-modele-neutre.md#8-la-migration)). Le pack Firebase est en pause (RYP-191). Il ne bloque pas les nouveaux écrans : d'ici là, les parties Firebase de Nafar y apparaissent comme non lues.
 
 ## Les commandes
 

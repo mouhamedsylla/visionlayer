@@ -187,7 +187,7 @@ block_merge_until_approved: true
 
 ## 5. Ordre d'implémentation révisé
 
-**Détail périmètre par périmètre (MVP0-5) : voir [mvp-roadmap.md](./mvp-roadmap.md)** — scope exact, livrable, cas de test, et gouvernance applicable à chaque étape, avant tout contact avec Nafar.
+**Détail périmètre par périmètre (MVP0-5) : voir mvp-roadmap.md** — scope exact, livrable, cas de test, et gouvernance applicable à chaque étape, avant tout contact avec Nafar.
 
 La roadmap initiale (`vision-layer-concept.md` §37) plaçait la gouvernance et Semgrep/CI en fin de séquence (étapes 9, 13). C'est corrigé ici : **la gouvernance minimale doit exister avant même le MVP0 de VisionLayer**, parce qu'elle ne dépend pas de VisionLayer pour fonctionner (c'est du process, pas du code).
 
@@ -246,4 +246,4 @@ Le MVP0 (repository scanner) n'a plus de décision bloquante en attente.
 
 ## 7. Prochaine étape
 
-Les pistes A et B qui figuraient ici sont dépassées : le MVP0 et les périmètres suivants sont livrés (voir [mvp-roadmap.md](./mvp-roadmap.md)). La suite du travail, son ordre et ses raisons sont dans [feuille-de-route.md](./feuille-de-route.md) ; chaque étape y est un ticket du projet [Rypha-Fabric](https://linear.app/rypha/project/rypha-fabric-52baf17f7362) dans Linear, qui fait foi pour l'avancement.
+Les pistes A et B qui figuraient ici sont dépassées : le MVP0 et les périmètres suivants sont livrés (voir mvp-roadmap.md). La suite du travail, son ordre et ses raisons sont dans feuille-de-route.md ; chaque étape y est un ticket du projet Rypha-Fabric dans Linear, qui fait foi pour l'avancement.

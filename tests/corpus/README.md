@@ -7,7 +7,7 @@ Deux ensembles, jamais mélangés ([fonctionnement, chapitre 6](../../docs/fonct
 Les projets avec lesquels on construit les packs. On peut les lire autant qu'on veut, et ajuster un pack pour une forme qu'ils emploient, à condition que cette forme soit documentée par la technologie.
 
 - [atelier-api](atelier-api) : Express, Drizzle, Postgres, BullMQ, node-cron, Stripe, Resend, Vite et React, Docker, Compose, Fly.io.
-- Nafar (`/Users/macbook/projects/learn-app`, hors du dépôt).
+- Nafar, une application de l'auteur, hors du dépôt.
 
 ## Contrôle
 
@@ -19,7 +19,7 @@ Les projets qui servent à juger, dans [controle/](controle) :
 - [node-express-boilerplate](controle/node-express-boilerplate) (hagopj13, MIT)
 - [openarchiver](controle/openarchiver) (LogicLabs-OU, AGPL-3.0)
 
-Ces trois premiers projets sortent en partie de la pile (Python, C#, Mongoose, Meilisearch, socket.io) : ils ont été mal choisis. Leurs limites dans la pile sont corrigées, test d'abord ([RYP-224](https://linear.app/rypha/issue/RYP-224)) ; ils passent alors dans l'apprentissage, et trois nouveaux projets de contrôle, dans la pile, les remplacent.
+Ces trois premiers projets sortent en partie de la pile (Python, C#, Mongoose, Meilisearch, socket.io) : ils ont été mal choisis. Leurs limites dans la pile sont corrigées, test d'abord (RYP-224) ; ils passent alors dans l'apprentissage, et trois nouveaux projets de contrôle, dans la pile, les remplacent.
 
 Premier lancement le 02/10/2026 ; les mesures sont dans chaque `resultat.md` et au [chapitre 6](../../docs/fonctionnement/06-limites-et-verification.md#le-premier-contrôle-à-laveugle-02102026). Pour cloner le code au bon commit :
 

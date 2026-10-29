@@ -216,7 +216,7 @@ Chaque niveau affiche sa **couverture** : fichiers lus, langages non pris en cha
 
 - **Incrémental** : un fait est rattaché au fichier qui le prouve ; un fichier modifié ne recalcule que ses faits et les règles qu'ils touchent.
 - **Profondeur à la demande** : la carte d'ensemble est persistée ; l'intérieur d'un composant ou le déroulé d'une feature se calcule quand on l'ouvre (comme aujourd'hui pour les features).
-- **Budget** : un temps maximum par niveau sur un gros dépôt ([RYP-173](https://linear.app/rypha/issue/RYP-173)).
+- **Budget** : un temps maximum par niveau sur un gros dépôt (RYP-173).
 
 ### 4.9 Ce que les agents apportent
 
@@ -262,7 +262,7 @@ Chaque étape se vérifie sur **deux projets au moins** : Nafar, et un projet de
 6. **Index de symboles SCIP** quand un indexeur est installé ; sinon, la syntaxe seule, et la couverture le dit.
 7. **Reconnaissance des styles et découpage en composants** (règles, puis détection de communautés).
 8. **Migration de l'interface** vers le modèle neutre, écran par écran, avec l'état « non lu ». *Révisé le 02/10 : l'interface est recodée depuis les maquettes, l'ancienne est jetée avec la carte version 1.*
-9. **Passage sur trois dépôts réels d'autres piles** ([RYP-172](https://linear.app/rypha/issue/RYP-172)) et sur un gros dépôt ([RYP-173](https://linear.app/rypha/issue/RYP-173)).
+9. **Passage sur trois dépôts réels d'autres piles** (RYP-172) et sur un gros dépôt (RYP-173).
 
 **Vérifier sans se tromper soi-même** (décidé le 01/10/2026). Un bon score sur un projet du corpus prouve peu quand le projet et les packs ont été écrits par la même équipe. Trois ensembles, jamais mélangés :
 - le **corpus d'apprentissage**, où l'on ajuste les packs ;
@@ -279,7 +279,7 @@ Trois mesures pour chacun : trouvé, faux, non lu. Détail : [fonctionnement, ch
 3. Les traces d'exécution viennent plus tard ; le modèle prévoit la source « exécution » dès son ADR.
 4. Corpus aligné sur l'ordre des langages (voir §7, point 1).
 
-L'ADR du modèle neutre prendra le numéro 0017 : 0016 est déjà « Créer un projet », et 0014 reste réservé au format du contexte ([RYP-222](https://linear.app/rypha/issue/RYP-222)).
+L'ADR du modèle neutre prendra le numéro 0017 : 0016 est déjà « Créer un projet », et 0014 reste réservé au format du contexte (RYP-222).
 
 Les questions telles qu'elles étaient posées :
 

@@ -357,38 +357,38 @@ Ils forment le jalon 2. La colonne « Actuel » dit ce qu'est devenu l'ancien ti
 
 | # | Ticket | Actuel | Terminé quand |
 |---|---|---|---|
-| A1 · [RYP-175](https://linear.app/rypha/issue/RYP-175) | **Graphe du système et fonction `reach`** : un index unique des nœuds et liens extraits et déclarés (section 5), et `reach(départ) → atteints + chemin`. Construit depuis la carte persistée et la connaissance, sans rescanner. | nouveau | L'écran Feature et un test sur `shop` obtiennent les mêmes éléments atteints par `reach` ; le calcul sur Nafar tient sous 300 ms à partir de la carte persistée. |
-| A2 · [RYP-176](https://linear.app/rypha/issue/RYP-176) | **Conséquences d'un changement** (section 6) : plages modifiées → symboles → points d'entrée → features → données → déclenchements → affirmations, classées. | nouveau | Sur `shop` : modifier `cancelOrder` remonte ses features, l'écriture dans `orders` et `onOrderCreated`. Le cas `family.ts` remonte l'invariant d'entité. |
-| A3 · [RYP-177](https://linear.app/rypha/issue/RYP-177) | **Format v1 des affirmations** : longueur bornée ; champ `detail` pour le pourquoi long ; lien `see` vers une PR ou un ADR ; `decision` marquable « ne pas annuler » ; invariants de données sur l'entité. Version du schéma. | avance une partie de RYP-142 | Le schéma refuse une affirmation trop longue ; les anciens fichiers se lisent toujours. |
-| A4 · [RYP-178](https://linear.app/rypha/issue/RYP-178) | **Rendu condensé commun** : un seul formateur pour l'agent (classement, plafond honnête, état, budget), utilisé par tous les canaux. | nouveau | Chaque canal passe par lui ; un test vérifie le plafond et l'état affiché. |
+| A1 · RYP-175 | **Graphe du système et fonction `reach`** : un index unique des nœuds et liens extraits et déclarés (section 5), et `reach(départ) → atteints + chemin`. Construit depuis la carte persistée et la connaissance, sans rescanner. | nouveau | L'écran Feature et un test sur `shop` obtiennent les mêmes éléments atteints par `reach` ; le calcul sur Nafar tient sous 300 ms à partir de la carte persistée. |
+| A2 · RYP-176 | **Conséquences d'un changement** (section 6) : plages modifiées → symboles → points d'entrée → features → données → déclenchements → affirmations, classées. | nouveau | Sur `shop` : modifier `cancelOrder` remonte ses features, l'écriture dans `orders` et `onOrderCreated`. Le cas `family.ts` remonte l'invariant d'entité. |
+| A3 · RYP-177 | **Format v1 des affirmations** : longueur bornée ; champ `detail` pour le pourquoi long ; lien `see` vers une PR ou un ADR ; `decision` marquable « ne pas annuler » ; invariants de données sur l'entité. Version du schéma. | avance une partie de RYP-142 | Le schéma refuse une affirmation trop longue ; les anciens fichiers se lisent toujours. |
+| A4 · RYP-178 | **Rendu condensé commun** : un seul formateur pour l'agent (classement, plafond honnête, état, budget), utilisé par tous les canaux. | nouveau | Chaque canal passe par lui ; un test vérifie le plafond et l'état affiché. |
 
 ### B. Livraison
 
 | # | Ticket | Actuel | Terminé quand |
 |---|---|---|---|
-| B1 · [RYP-179](https://linear.app/rypha/issue/RYP-179) | **Niveau 0** : `vision_overview` et hook de démarrage de session (blocs, features et buts, décisions à ne pas annuler). | nouveau | ≤ 500 tokens sur Nafar ; support du hook vérifié pour Claude Code et Codex. |
-| B2 · [RYP-133](https://linear.app/rypha/issue/RYP-133) | **Niveau 1** : `vision_flow` et `vision_architecture` (bloc) ajoutent les affirmations de la feature ou du bloc ; nouvel outil `vision_data` pour une entité. | remplace RYP-133 | Le texte d'une feature contient ses règles et ses pannes avec leur état ; mesuré en tokens. |
-| B3 · [RYP-134](https://linear.app/rypha/issue/RYP-134) | **Niveau 2** : hook avant et après modification, avec les conséquences (A2), la mémoire de session et les deltas. | remplace RYP-134 | < 300 ms par modification sur Nafar ; ne bloque jamais ; ne renvoie pas deux fois la même affirmation. |
-| B4 · [RYP-180](https://linear.app/rypha/issue/RYP-180) | **Niveau 3** : `vision_knowledge` (un concept, une affirmation, son détail, son code depuis la référence). | nouveau | Lecture seule ; chemins bornés au dépôt. |
-| B5 · [RYP-181](https://linear.app/rypha/issue/RYP-181) | **`vision_context` comme piste** : comparer aussi la tâche au texte des affirmations et aux buts. | modifie RYP-133 | Les deux tâches Nafar ci-dessus retrouvent leurs concepts ; le résultat est marqué « par mots-clés ». |
-| B6 · [RYP-182](https://linear.app/rypha/issue/RYP-182) | **`vision_context` et la langue** : une tâche en français ne retrouve pas un code en anglais. Étudier un lexique issu des buts déclarés, sans interprétation sémantique cachée. | nouveau | Décision écrite ; pas de régression sur les tests existants. |
+| B1 · RYP-179 | **Niveau 0** : `vision_overview` et hook de démarrage de session (blocs, features et buts, décisions à ne pas annuler). | nouveau | ≤ 500 tokens sur Nafar ; support du hook vérifié pour Claude Code et Codex. |
+| B2 · RYP-133 | **Niveau 1** : `vision_flow` et `vision_architecture` (bloc) ajoutent les affirmations de la feature ou du bloc ; nouvel outil `vision_data` pour une entité. | remplace RYP-133 | Le texte d'une feature contient ses règles et ses pannes avec leur état ; mesuré en tokens. |
+| B3 · RYP-134 | **Niveau 2** : hook avant et après modification, avec les conséquences (A2), la mémoire de session et les deltas. | remplace RYP-134 | < 300 ms par modification sur Nafar ; ne bloque jamais ; ne renvoie pas deux fois la même affirmation. |
+| B4 · RYP-180 | **Niveau 3** : `vision_knowledge` (un concept, une affirmation, son détail, son code depuis la référence). | nouveau | Lecture seule ; chemins bornés au dépôt. |
+| B5 · RYP-181 | **`vision_context` comme piste** : comparer aussi la tâche au texte des affirmations et aux buts. | modifie RYP-133 | Les deux tâches Nafar ci-dessus retrouvent leurs concepts ; le résultat est marqué « par mots-clés ». |
+| B6 · RYP-182 | **`vision_context` et la langue** : une tâche en français ne retrouve pas un code en anglais. Étudier un lexique issu des buts déclarés, sans interprétation sémantique cachée. | nouveau | Décision écrite ; pas de régression sur les tests existants. |
 
 ### C. Écriture au fil de l'eau
 
 | # | Ticket | Actuel | Terminé quand |
 |---|---|---|---|
-| C1 · [RYP-135](https://linear.app/rypha/issue/RYP-135) | **Consignes aux agents** pour CLAUDE.md et AGENTS.md : quoi écrire, ne jamais répéter un fait extrait, invariants de données sur l'entité, décisions, reconfirmation. | RYP-135, élargi | Texte court, relu, avec des exemples tirés du prototype. |
-| C2 · [RYP-183](https://linear.app/rypha/issue/RYP-183) | **Demandes d'écriture par le hook** : nouveau point d'entrée sans feature, code ancré modifié, affirmation contredite → l'agent est invité à déclarer ou à reconfirmer. | nouveau | Sur `shop`, ajouter une fonction appelable déclenche la demande. |
-| C3 · [RYP-140](https://linear.app/rypha/issue/RYP-140) | **Section Connaissance du rapport de PR**, à partir des conséquences (A2) sur tout le diff. | RYP-140, fondé sur A2 | Le rapport liste touché, périmé, contredit, manquant. |
-| C4 · [RYP-141](https://linear.app/rypha/issue/RYP-141) | **Regroupements proposés** pour les points d'entrée sans feature. | RYP-141, gardé | Inchangé. |
+| C1 · RYP-135 | **Consignes aux agents** pour CLAUDE.md et AGENTS.md : quoi écrire, ne jamais répéter un fait extrait, invariants de données sur l'entité, décisions, reconfirmation. | RYP-135, élargi | Texte court, relu, avec des exemples tirés du prototype. |
+| C2 · RYP-183 | **Demandes d'écriture par le hook** : nouveau point d'entrée sans feature, code ancré modifié, affirmation contredite → l'agent est invité à déclarer ou à reconfirmer. | nouveau | Sur `shop`, ajouter une fonction appelable déclenche la demande. |
+| C3 · RYP-140 | **Section Connaissance du rapport de PR**, à partir des conséquences (A2) sur tout le diff. | RYP-140, fondé sur A2 | Le rapport liste touché, périmé, contredit, manquant. |
+| C4 · RYP-141 | **Regroupements proposés** pour les points d'entrée sans feature. | RYP-141, gardé | Inchangé. |
 
 ### D. Justesse des états
 
 | # | Ticket | Actuel |
 |---|---|---|
-| D1 · [RYP-137](https://linear.app/rypha/issue/RYP-137) | Un but ne se périme pas à chaque modification du corps (constat 2). | RYP-137, gardé |
-| D2 · [RYP-138](https://linear.app/rypha/issue/RYP-138) | Règle appliquée côté client seulement (constat 4), calculée par `reach` et le type de bloc. | RYP-138, fondé sur A1 |
-| D3 · [RYP-139](https://linear.app/rypha/issue/RYP-139) | Tests qui atteignent les ancrages : alias, Python, test qui cite l'identifiant. | RYP-139, gardé |
+| D1 · RYP-137 | Un but ne se périme pas à chaque modification du corps (constat 2). | RYP-137, gardé |
+| D2 · RYP-138 | Règle appliquée côté client seulement (constat 4), calculée par `reach` et le type de bloc. | RYP-138, fondé sur A1 |
+| D3 · RYP-139 | Tests qui atteignent les ancrages : alias, Python, test qui cite l'identifiant. | RYP-139, gardé |
 
 ### E. Valider, puis figer
 
@@ -396,16 +396,16 @@ Ils remplacent ensemble RYP-136. E1 à E4 sont une étape de validation, pas des
 
 | # | Ticket | Actuel | Terminé quand |
 |---|---|---|---|
-| E1 · [RYP-136](https://linear.app/rypha/issue/RYP-136) | **Scénarios, oracles et critères, écrits avant tout passage** (11.3, 11.7) : connaissance de Nafar pour le banc, consignes S1 à S7, oracles cachés, seuils de décision. | remplace RYP-136 | Commité et relu ; calibrage de A fait sur le pilote. |
-| E2 · [RYP-184](https://linear.app/rypha/issue/RYP-184) | **Banc déterministe** (11.4) : diffs de référence et piégés ; vérification que la nuance arrive au bon niveau, avec son état, dans le budget. | nouveau | Test dans la suite normale ; S1 à S6 livrent leur nuance, y compris le diff piégé de S1. |
-| E3 · [RYP-185](https://linear.app/rypha/issue/RYP-185) | **Lanceur de banc temporaire** (11.2, 11.5, 11.9) : `workflow/bench/`, worktrees jetables, quatre conditions, Claude Code et Codex en mode non interactif, mesures par passage. | nouveau | Le pilote tourne de bout en bout ; mesures en JSON ; transcripts hors Git. |
-| E4 · [RYP-186](https://linear.app/rypha/issue/RYP-186) | **Campagne et doc 05** (11.6, 11.10) : pilote, campagne, ablation, puis deux dépôts d'autres stacks. | nouveau, avec RYP-172 | Doc 05 écrit ; décision prise sur H1, H2 et H3. |
-| E5 · [RYP-142](https://linear.app/rypha/issue/RYP-142) | **Format et livraison définitifs, ADR 0014** ; archivage du lanceur. | RYP-142, élargi | Après E4, D1 et D2. |
-| E6 · [RYP-143](https://linear.app/rypha/issue/RYP-143) | **Connaissance réelle de Nafar**, écrite par les agents au fil de leurs tâches. | RYP-143, gardé | Nécessite ton accord pour modifier learn-app. |
+| E1 · RYP-136 | **Scénarios, oracles et critères, écrits avant tout passage** (11.3, 11.7) : connaissance de Nafar pour le banc, consignes S1 à S7, oracles cachés, seuils de décision. | remplace RYP-136 | Commité et relu ; calibrage de A fait sur le pilote. |
+| E2 · RYP-184 | **Banc déterministe** (11.4) : diffs de référence et piégés ; vérification que la nuance arrive au bon niveau, avec son état, dans le budget. | nouveau | Test dans la suite normale ; S1 à S6 livrent leur nuance, y compris le diff piégé de S1. |
+| E3 · RYP-185 | **Lanceur de banc temporaire** (11.2, 11.5, 11.9) : `workflow/bench/`, worktrees jetables, quatre conditions, Claude Code et Codex en mode non interactif, mesures par passage. | nouveau | Le pilote tourne de bout en bout ; mesures en JSON ; transcripts hors Git. |
+| E4 · RYP-186 | **Campagne et doc 05** (11.6, 11.10) : pilote, campagne, ablation, puis deux dépôts d'autres stacks. | nouveau, avec RYP-172 | Doc 05 écrit ; décision prise sur H1, H2 et H3. |
+| E5 · RYP-142 | **Format et livraison définitifs, ADR 0014** ; archivage du lanceur. | RYP-142, élargi | Après E4, D1 et D2. |
+| E6 · RYP-143 | **Connaissance réelle de Nafar**, écrite par les agents au fil de leurs tâches. | RYP-143, gardé | Nécessite ton accord pour modifier learn-app. |
 
 ### Ordre
 
-> **29/09/2026.** Ces tickets sont maintenant répartis entre les jalons 3, 4 et 5 de la [feuille de route](../feuille-de-route.md) : on construit d'abord l'interface et le démarrage d'un projet ([06](./06-demarrer-un-projet.md)). L'ordre ci-dessous reste celui du jalon 5.
+> **29/09/2026.** Ces tickets sont maintenant répartis entre les jalons 3, 4 et 5 de la feuille de route : on construit d'abord l'interface et le démarrage d'un projet ([06](./06-demarrer-un-projet.md)). L'ordre ci-dessous reste celui du jalon 5.
 
 La condition C (section 11.2) livre les niveaux 0 à 3 : tout ce qu'elle utilise doit exister avant la campagne.
 

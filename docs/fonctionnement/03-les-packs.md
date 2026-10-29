@@ -154,7 +154,7 @@ Des formes de l'API des technologies déjà prises en charge, que les packs livr
 | des décorateurs (`@Post()`, NestJS) | pas vus : il faut un autre pack |
 | `this.client.emails.send()` | le service externe est vu là où le client est créé, pas à chaque appel |
 | `userRef(uid).collection("x")`, quand `userRef` vient d'un autre fichier | compté comme chemin calculé : le moteur ne sait pas encore coller deux morceaux de chemin |
-| Storage et Authentication côté code (`uploadBytes`, `signInWith…`) | pas encore lus : pack en cours ([RYP-191](https://linear.app/rypha/issue/RYP-191)) |
+| Storage et Authentication côté code (`uploadBytes`, `signInWith…`) | pas encore lus : pack en cours (RYP-191) |
 | `httpsCallable(functions, "x")`, `getFunctions().taskQueue("x").enqueue()` | l'appel d'une fonction et la mise en file pas encore lus : pack en cours |
 | `export * as admin from "./admin"` (groupe de fonctions, déployées `admin-x`) | le préfixe du groupe n'est pas ajouté au nom |
 | un site d'hébergement relié à la page qu'il sert | le site est lu, pas encore relié à l'app (le lien passe par la configuration du build) |

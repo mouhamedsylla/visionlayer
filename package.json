@@ -1,8 +1,8 @@
 {
-  "name": "@rypha/vision",
+  "name": "visionlayer",
   "version": "0.0.0",
   "private": true,
-  "description": "RYPHA VisionLayer — MVP0/MVP1: scan, extraction, navigation",
+  "description": "See the system your AI agents are building. Keep what they knew.",
   "license": "Apache-2.0",
   "type": "module",
   "packageManager": "pnpm@10.33.0",

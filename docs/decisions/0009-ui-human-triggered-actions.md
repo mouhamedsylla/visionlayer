@@ -3,7 +3,7 @@
 **Statut :** Accepté — remplace en partie [ADR 0008](./0008-ui-read-only-react-flow-elk.md) (section « lecture seule »)
 
 ## Contexte
-L'ADR 0008 avait rendu l'interface strictement en lecture seule en appliquant la règle de [mvp-roadmap.md — MVP5](../mvp-roadmap.md) : « `vision update` ne doit pas être appelé de façon silencieusement autonome par l'agent ». À l'usage, cela oblige à retourner au terminal pour `scan`, `update`, `report`, ce qui contredit l'objectif même de MVP6 (ne plus taper de commandes pour observer le système).
+L'ADR 0008 avait rendu l'interface strictement en lecture seule en appliquant la règle de mvp-roadmap.md — MVP5 : « `vision update` ne doit pas être appelé de façon silencieusement autonome par l'agent ». À l'usage, cela oblige à retourner au terminal pour `scan`, `update`, `report`, ce qui contredit l'objectif même de MVP6 (ne plus taper de commandes pour observer le système).
 
 Relecture de la règle MVP5 : elle vise l'**agent** (NIST AI RMF — Govern : l'agent propose, un humain confirme). Un humain qui clique un bouton « Mettre à jour le modèle » **est** l'étape humaine explicite que la règle exige. La contrainte n'est donc pas « pas d'écriture depuis l'UI », mais « pas d'écriture sans geste humain volontaire ».
 

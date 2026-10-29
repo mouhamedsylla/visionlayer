@@ -3,7 +3,7 @@
 **Statut :** Accepté
 
 ## Contexte
-[mvp-roadmap.md — MVP3](../mvp-roadmap.md) posait la question sans la trancher : *"si `integrations/git` a besoin d'un token pour un remote privé, ce chemin de code devient HIGH immédiatement (gestion des secrets) — à trancher explicitement au moment de l'implémentation."* Au moment d'implémenter `vision update`/`vision diff`, il faut donc décider si Git est utilisé pour autre chose que lire l'état local.
+mvp-roadmap.md — MVP3 posait la question sans la trancher : *"si `integrations/git` a besoin d'un token pour un remote privé, ce chemin de code devient HIGH immédiatement (gestion des secrets) — à trancher explicitement au moment de l'implémentation."* Au moment d'implémenter `vision update`/`vision diff`, il faut donc décider si Git est utilisé pour autre chose que lire l'état local.
 
 ## Décision
 `vision update`/`vision diff` n'utilisent Git que pour lire le commit courant (`git rev-parse HEAD`) sur le dépôt **local**, via `execFileSync` (jamais un shell, jamais de concatenation de chaîne — pas d'injection possible). **Aucun accès réseau, aucun remote, aucun token.** Le "before/after" comparé par `vision diff` n'est pas "avant/après un commit Git" mais "avant/après le dernier `vision update`" — deux snapshots du modèle VisionLayer lui-même, stockés localement dans `.vision/`.
