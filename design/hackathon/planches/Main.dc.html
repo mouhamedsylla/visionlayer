@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Vue d'ensemble — atelier-api</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/visionlayerhackathon/components/bundle.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+:root{--canvas:#f3f2ef;--surface:#ffffff;--surface-sunken:#f7f6f4;--line:#e6e4e0;--line-strong:#d4d1cb;--ink:#121211;--ink-2:#3e3d3a;--muted:#6c6a66;--night:#141413;--night-2:#1f1f1d;--night-line:#34332f;--on-night:#f5f4f1;--on-night-muted:#a29f99;--tile-empty:#ebe9e5;--tile-quiet:#c8c5bf;--signal:#e2791d;--signal-ink:#9a4d0c;--signal-soft:#fbeee1;--critical:#d23f2c;--critical-ink:#a92f1f;--critical-soft:#fbe7e3;--live:#2c9a57;--live-ink:#1e7342;--live-soft:#e3f3e9;--radius-tile:3px;--radius-control:8px;--radius-card:12px;--radius-pill:999px;--shadow-card:0 1px 2px rgba(18,18,17,.04);--shadow-pop:0 8px 24px rgba(18,18,17,.16);--font-sans:"Geist","Inter",system-ui,sans-serif;--font-mono:"Geist Mono","JetBrains Mono",ui-monospace,monospace}
+body{margin:0;background:#f3f2ef}
+a{color:#121211}a:hover{color:#3e3d3a}
+.vl p,.vl h1,.vl h2{margin:0}
+.vl button{font-family:inherit}
+.vl-tile{cursor:pointer;width:20px;height:20px}
+</style>
+</helmet>
+<div class="vl" style="display: flex; flex-wrap: wrap; min-height: 1310px; background: var(--canvas)">
+
+  <nav aria-label="Navigation" style="flex: 1 1 232px; max-width: 100%; box-sizing: border-box; background: var(--surface); border-right: 1px solid var(--line); padding: 14px 12px; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 2px 4px">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="8" fill="#121211"/><g fill="#f5f4f1"><circle cx="7.5" cy="9" r="1.4" opacity=".45"/><circle cx="7.5" cy="15" r="1.4" opacity=".7"/><circle cx="7.5" cy="21" r="1.4"/><circle cx="11.5" cy="9" r="1.4" opacity=".7"/><circle cx="11.5" cy="15" r="1.4"/><circle cx="11.5" cy="21" r="1.4"/><rect x="16" y="7.5" width="8" height="6" rx="1.5"/></g><rect x="16" y="16.5" width="8" height="6" rx="1.5" fill="#a29f99"/><path d="M20 13.5v3" stroke="#f5f4f1" stroke-width="1.2"/></svg>
+      <div style="display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1">
+        <span style="font-weight: 600; font-size: 14px; line-height: 18px">VisionLayer</span>
+        <span class="mono" style="font-size: 11px; line-height: 14px; color: var(--muted)">atelier-api, main</span>
+      </div>
+      <button aria-label="Replier la barre latérale" style="border: 0; background: none; color: var(--muted); padding: 4px; cursor: pointer"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2"/><path d="M6.5 2.5v11"/></svg></button>
+    </div>
+
+    <label style="display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 8px; border-radius: 8px; background: var(--surface-sunken); border: 1px solid var(--line); color: var(--muted)">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>
+      <input placeholder="Rechercher…" aria-label="Rechercher une route, une table, un fichier" style="border: 0; background: none; outline: none; font: 400 12.5px/1 var(--font-sans); color: var(--ink); flex: 1; min-width: 0">
+      <span class="vl-kbd">⌘K</span>
+    </label>
+
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span class="vl-label" style="padding: 6px 8px 4px">Système</span>
+      <a href="#" class="vl-nav vl-nav--active"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="9" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="2.5" y="9" width="4.5" height="4.5" rx="1"/><rect x="9" y="9" width="4.5" height="4.5" rx="1"/></svg><span>Vue d'ensemble</span></a>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2" y="2.5" width="5" height="4" rx="1"/><rect x="9" y="9.5" width="5" height="4" rx="1"/><path d="M4.5 6.5v5H9"/></svg><span>Carte</span><span class="vl-count">3</span></a>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3.5" y="7" width="9" height="6.5" rx="1"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg><span>Accès</span><span class="vl-count vl-count--critical">2</span></a>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><ellipse cx="8" cy="4" rx="5" ry="1.8"/><path d="M3 4v8c0 1 2.2 1.8 5 1.8s5-.8 5-1.8V4M3 8c0 1 2.2 1.8 5 1.8S13 9 13 8"/></svg><span>Données</span><span class="vl-count">14</span></a>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3.2l2 1.3"/></svg><span>Tâches planifiées</span><span class="vl-count vl-count--signal">3</span></a>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span class="vl-label" style="padding: 6px 8px 4px">Connaissance</span>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 2.5h8v11l-4-2.5-4 2.5z"/></svg><span>Règles et décisions</span><span class="vl-count vl-count--critical">1</span></a>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="5" width="10" height="8" rx="2"/><path d="M8 2.5V5M6 9h.01M10 9h.01"/></svg><span>Sessions d'agents</span><span class="vl-count">0</span></a>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span class="vl-label" style="padding: 6px 8px 4px">Lecture</span>
+      <a href="Pack.dc.html" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m8 2 5.5 3v6L8 14l-5.5-3V5z"/><path d="M8 8v6M8 8l5.5-3M8 8 2.5 5"/></svg><span>Packs</span><span class="vl-count vl-count--signal">1</span></a>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="1.5"/><path d="M2.5 8h11M8 2.5v11" stroke-dasharray="2 1.5"/></svg><span>Couverture</span></a>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span class="vl-label" style="padding: 6px 8px 4px">Pratique</span>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M7 5.5 10 8l-3 2.5z"/></svg><span>Replays</span><span class="vl-count">1</span></a>
+    </div>
+
+    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px">
+      <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px; background: var(--night); color: var(--on-night); text-decoration: none">
+        <span style="width: 26px; height: 26px; border-radius: 7px; background: var(--night-2); border: 1px solid var(--night-line); display: grid; place-items: center"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#f5f4f1" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.5v2.5M8 12v2.5M1.5 8H4M12 8h2.5"/></svg></span>
+        <span style="flex: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-weight: 600; font-size: 13px; line-height: 16px">Demander à Vigie</span><span style="font-size: 11.5px; line-height: 14px; color: var(--on-night-muted)">Muse Spark, cite ses preuves</span></span>
+        <span class="vl-kbd" style="background: var(--night-2); color: var(--on-night-muted); border-color: var(--night-line)">⌘J</span>
+      </a>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="2"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"/></svg><span>Réglages</span></a>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 8px 6px 2px; border-top: 1px solid var(--line)">
+        <span style="width: 28px; height: 28px; border-radius: 50%; background: var(--surface-sunken); border: 1px solid var(--line-strong); display: grid; place-items: center; font: 600 11px/1 var(--font-sans)">MS</span>
+        <span style="display: flex; flex-direction: column; gap: 1px"><span style="font-weight: 600; font-size: 12.5px; line-height: 16px">Mouhamed Sylla</span><span style="font-size: 11.5px; line-height: 14px; color: var(--muted)">Ingénieur, Dakar</span></span>
+      </div>
+    </div>
+  </nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 24px; border-bottom: 1px solid var(--line); background: var(--surface)">
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted)">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2"/><path d="M6.5 2.5v11"/></svg>
+        <span>atelier-api</span><span aria-hidden="true">›</span><span style="color: var(--ink); font-weight: 500">Vue d'ensemble</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px">
+        <span class="vl-pill"><i class="vl-dot vl-dot--live"></i>MAR. 20 OCT.<span class="vl-pill__sep"></span>21:48<span class="vl-pill__sep"></span>033e2af</span>
+        <button class="vl-btn vl-btn--secondary" aria-label="Analyser de nouveau" style="width: 32px; padding: 0; justify-content: center"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.5-3.5M13 3v2.5h-2.5"/></svg></button>
+        <button class="vl-btn vl-btn--secondary" aria-label="Commentaires" style="width: 32px; padding: 0; justify-content: center"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2.5 3.5h11v7h-6l-3 2.5v-2.5h-2z"/></svg></button>
+      </div>
+    </header>
+
+    <div style="padding: 20px 24px 28px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px">
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <h1 style="font: 600 24px/30px var(--font-sans); letter-spacing: -.02em">Bonsoir, Mouhamed</h1>
+          <p style="color: var(--muted)">atelier-api : Express, Postgres, Stripe. Analysé il y a 4 min. <span style="color: var(--ink)">9 points à savoir, dont 6 constats.</span></p>
+        </div>
+        <div style="display: flex; gap: 8px">
+          <button class="vl-btn vl-btn--secondary">Tous les déployables<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg></button>
+          <button class="vl-btn vl-btn--primary"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>Brancher un agent</button>
+        </div>
+      </div>
+
+      <section aria-label="Bibliothèque non lue" style="display: flex; flex-wrap: wrap; background: var(--night); color: var(--on-night); border-radius: 12px; overflow: hidden">
+        <div style="flex: 999 1 420px; min-width: 0; padding: 20px 24px 22px; display: flex; flex-direction: column; gap: 12px">
+          <span class="vl-tag vl-tag--signal" style="align-self: flex-start">Non lu, src/app.ts:34</span>
+          <h2 style="font: 600 20px/27px var(--font-sans); letter-spacing: -.01em">VisionLayer ne lit pas <code style="font: 500 18px/27px var(--font-mono)">cookie-parser</code>.<br>Le cookie de session des 8 points d'entrée gardés passe par lui.</h2>
+          <p style="color: var(--on-night-muted); max-width: 540px">Muse peut écrire le pack depuis la documentation de cookie-parser, jamais depuis ce projet. Ses tests tournent à part ; rien n'est chargé avant qu'ils passent, et le retirer rend la carte d'avant.</p>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 4px">
+            <a href="Pack.dc.html" class="vl-btn vl-btn--light" style="text-decoration: none"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m8 2 5.5 3v6L8 14l-5.5-3V5z"/><path d="M8 8v6M8 8l5.5-3M8 8 2.5 5"/></svg>Écrire le pack avec Muse</a>
+            <button class="vl-btn vl-btn--ghost-night">Voir ce qui n'est pas lu</button>
+          </div>
+        </div>
+        <div style="flex: 0 1 440px; min-width: 0; border-left: 1px solid var(--night-line); padding: 16px 0 6px; display: flex; flex-direction: column">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 20px 10px">
+            <span class="vl-label vl-label--night">API de cookie-parser</span>
+            <span class="mono" style="font-size: 11px; color: var(--on-night-muted); white-space: nowrap">7 formes</span>
+          </div>
+          <sc-for list="{{forms}}" as="f" hint-placeholder-count="4">
+            <div style="display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 8px 20px; border-top: 1px solid var(--night-line)">
+              <span class="mono" style="font-size: 10.5px; color: var(--on-night-muted)">{{f.idx}}</span>
+              <div style="min-width: 0"><code style="display: block; font: 400 12px/16px var(--font-mono); color: var(--on-night)">{{f.form}}</code><span style="display: block; font-size: 11.5px; line-height: 15px; color: var(--on-night-muted)">{{f.what}}</span></div>
+              <span class="vl-tag vl-tag--night">un test</span>
+            </div>
+          </sc-for>
+          <a href="#" style="padding: 8px 20px 4px; border-top: 1px solid var(--night-line); font-size: 12px; color: var(--on-night-muted); text-decoration: none">Voir les 3 autres formes ›</a>
+        </div>
+      </section>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(176px, 1fr)); gap: 12px">
+        <div class="vl-stat">
+          <span class="vl-label">Déployables</span>
+          <div class="vl-stat__row"><span class="vl-stat__value">3</span><span class="vl-mini" aria-hidden="true"><i></i><i></i><i class="e"></i><i></i><i class="e"></i><i class="e"></i><i class="q"></i><i class="e"></i><i class="e"></i></span></div>
+          <span class="vl-stat__note">API sur 2 machines, Fly.io</span>
+        </div>
+        <div class="vl-stat">
+          <span class="vl-label">Points d'entrée</span>
+          <div class="vl-stat__row"><span class="vl-stat__value">15<span class="vl-stat__unit">routes</span></span><span class="vl-bars" aria-hidden="true"><sc-for list="{{routeBars}}" as="b" hint-placeholder-count="15"><i class="{{b.cls}}" style="{{b.style}}"></i></sc-for></span></div>
+          <span class="vl-stat__note">7 sans écran qui les appelle</span>
+        </div>
+        <div class="vl-stat">
+          <span class="vl-label">Tables</span>
+          <div class="vl-stat__row"><span class="vl-stat__value">14</span><span class="vl-mini" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="s"></i><i class="e"></i></span></div>
+          <span class="vl-stat__note">settings : ni lue ni écrite</span>
+        </div>
+        <div class="vl-stat">
+          <span class="vl-label">Tâches planifiées</span>
+          <div class="vl-stat__row"><span class="vl-stat__value">3<span class="vl-stat__unit">× 2</span></span><span class="vl-mini" aria-hidden="true"><i></i><i class="s"></i><i class="e"></i><i></i><i class="s"></i><i class="e"></i><i></i><i class="s"></i><i class="e"></i></span></div>
+          <span class="vl-stat__note">Chacune tourne 2 fois</span>
+        </div>
+        <div class="vl-stat">
+          <span class="vl-label">Règles déclarées</span>
+          <div class="vl-stat__row"><span class="vl-stat__value">4<span class="vl-stat__unit">README</span></span><span class="vl-mini" aria-hidden="true"><i class="c"></i><i class="e"></i><i class="e"></i><i class="q"></i><i class="e"></i><i class="e"></i><i class="q"></i><i class="e"></i><i class="e"></i><i class="q"></i><i class="e"></i><i class="e"></i></span></div>
+          <span class="vl-stat__note">1 contredite par le code</span>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start">
+        <section class="vl-card" aria-label="Couverture par fichier" style="flex: 999 1 540px; min-width: 0; display: flex; flex-direction: column; position: relative">
+          <div class="vl-card__head" style="flex-wrap: wrap">
+            <span class="vl-label">Couverture par fichier</span>
+            <div class="vl-legend"><span><i></i>Lu</span><span><i class="q"></i>Sans fait</span><span><i class="s"></i>À surveiller</span><span><i class="c"></i>Constat</span></div>
+          </div>
+          <div style="padding: 14px 16px 6px; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px">
+            <p><span style="font: 600 24px/28px var(--font-sans); letter-spacing: -.02em">58</span> <span style="color: var(--muted)">de 60 fichiers lus entièrement</span></p>
+            <p style="font-size: 12px; color: var(--muted)"><b style="color: var(--ink); font-weight: 600">Se lit</b> par colonne : un dossier, une case par fichier.</p>
+          </div>
+          <div style="padding: 8px 16px 12px">
+            <div style="display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap">
+              <sc-for list="{{folders}}" as="d" hint-placeholder-count="13">
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+                  <div style="display: grid; grid-template-columns: repeat(2, 20px); gap: 4px; transform: rotate(180deg)">
+                    <sc-for list="{{d.tiles}}" as="t" hint-placeholder-count="4">
+                      <button class="{{t.cls}}" aria-label="{{t.label}}" onMouseEnter="{{t.pick}}" onFocus="{{t.pick}}" style="border: 0; padding: 0"></button>
+                    </sc-for>
+                  </div>
+                  <span class="mono" style="font-size: 10px; letter-spacing: .06em; color: var(--muted); text-transform: uppercase">{{d.name}}</span>
+                  <span class="mono" style="font-size: 10px; color: var(--muted); margin-top: -6px">{{d.count}}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="margin-top: 16px; display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; background: var(--night); color: var(--on-night)">
+              <span class="mono" style="font-size: 10.5px; letter-spacing: .06em; color: var(--on-night-muted); white-space: nowrap">CASE CHOISIE</span>
+              <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0"><span><code class="mono" style="font-size: 12px; font-weight: 500">{{tip.path}}</code><span style="color: var(--on-night-muted)">, {{tip.state}}</span></span><span style="font-size: 12px; color: var(--on-night-muted)">{{tip.what}}</span></span>
+            </div>
+          </div>
+          <div class="vl-card__foot" style="margin-top: auto; flex-wrap: wrap; gap: 8px">
+            <span>11 packs actifs, plus grand dossier : email, 10 fichiers</span>
+            <a href="#" class="vl-link">Ouvrir la couverture ›</a>
+          </div>
+        </section>
+
+        <div style="flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+          <section class="vl-card" aria-label="À savoir">
+            <div class="vl-card__head">
+              <span class="vl-label">À savoir <span class="vl-count vl-count--critical">9</span></span>
+              <a href="#" class="vl-link">Tout voir ›</a>
+            </div>
+            <sc-for list="{{attention}}" as="a" hint-placeholder-count="5">
+              <div class="vl-att">
+                <span class="{{a.iconCls}}"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="{{a.icon}}"/></svg></span>
+                <div style="min-width: 0">
+                  <p class="vl-att__title">{{a.title}}</p>
+                  <p class="vl-att__sub">{{a.sub}}, <span class="vl-ref">{{a.dir}}<b>{{a.file}}</b>:{{a.line}}</span></p>
+                </div>
+                <button class="vl-btn vl-btn--secondary vl-btn--sm">{{a.action}}</button>
+              </div>
+            </sc-for>
+            <div class="vl-card__foot"><span>3 à surveiller</span><a href="#" class="vl-link">Voir les 4 autres ›</a></div>
+          </section>
+
+          <section class="vl-card" aria-label="Ce que VisionLayer lit">
+            <div class="vl-card__head">
+              <span class="vl-label">Packs chargés</span>
+              <span class="mono" style="font-size: 11px; color: var(--muted)">11 + 1 manquant</span>
+            </div>
+            <div class="vl-card__body" style="display: flex; flex-wrap: wrap; gap: 6px">
+              <sc-for list="{{packs}}" as="p" hint-placeholder-count="11"><span class="vl-ref"><b>{{p}}</b></span></sc-for>
+              <span class="vl-ref vl-ref--declared" style="border-color: var(--signal); color: var(--signal-ink)"><b style="color: var(--signal-ink)">cookie-parser</b><span style="margin-left: 6px">non lu</span></span>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1310}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tip: { path: "src/admin/export.ts", state: "constat", what: "GET /admin/export : requireUser, jamais requireAdmin (ligne 8)" } };
+  }
+  renderVals() {
+    var self = this;
+    var STATES = { i: ["vl-tile", "lu"], q: ["vl-tile vl-tile--quiet", "lu, sans fait"], s: ["vl-tile vl-tile--signal", "à surveiller"], c: ["vl-tile vl-tile--critical", "constat"] };
+    var raw = [
+      ["auth", "src/auth/", [["login.ts", "i", "POST /auth/login, ouvre une session"], ["password.ts", "q", "hachage, aucun point d'entrée"], ["reset.ts", "i", "POST /auth/reset, sans écran"], ["session.ts", "s", "lit req.cookies : cookie-parser non lu"], ["signup.ts", "c", "le corps de l'inscription part dans les logs (ligne 19)"]]],
+      ["book.", "src/bookings/", [["confirm.ts", "i", "confirme, met l'email en file (jobId)"], ["create.ts", "s", "écrit puis met en file hors transaction (lignes 38-39)"], ["get.ts", "i", "GET /bookings/:id"], ["transfer.ts", "i", "verrou ligne 17"], ["update.ts", "i", "PATCH /bookings/:id, sans écran"]]],
+      ["pay.", "src/payments/", [["create.ts", "i", "POST /payments, clé d'idempotence"], ["keys.ts", "i", "clé par réservation"], ["keys.spec.ts", "q", "test"], ["refund.ts", "c", "exige le rôle admin, attribué nulle part"]]],
+      ["hooks", "src/webhooks/", [["stripe.ts", "c", "payment_failed repasse à pending sans regarder l'état (ligne 53)"]]],
+      ["jobs", "src/jobs/", [["expire.ts", "c", "lit pending puis annule sans revérifier (lignes 15-20)"], ["index.ts", "s", "3 tâches dans l'API, déployée sur 2 machines"], ["purge.ts", "i", "purgeSessions, 3 h"], ["reminders.ts", "i", "sendReminders, 8 h"]]],
+      ["email", "src/email/", [["console.ts", "i", "ConsoleSender"], ["index.ts", "i", "getSender, choisi par EMAIL_PROVIDER"], ["main.ts", "i", "entrée du worker"], ["render.ts", "q", "gabarits, aucun fait"], ["resend.ts", "i", "ResendSender"], ["retry.spec.ts", "q", "test"], ["retry.ts", "i", "5 tentatives"], ["smtp.ts", "i", "SmtpSender, nodemailer"], ["types.ts", "i", "contrat EmailSender"], ["worker.ts", "i", "worker BullMQ"]]],
+      ["admin", "src/admin/", [["export.ts", "c", "GET /admin/export : requireUser, jamais requireAdmin (ligne 8)"]]],
+      ["shops", "src/workshops/", [["get.ts", "i", "GET /workshops/:id"], ["list.ts", "i", "GET /workshops"]]],
+      ["rev.", "src/reviews/", [["create.ts", "i", "POST /reviews, sans écran"]]],
+      ["imp.", "src/import/", [["csv.ts", "q", "importCsv : appelé nulle part"]]],
+      ["src", "src/", [["app.ts", "s", "cookieParser(SESSION_SECRET) : bibliothèque non lue"], ["config.ts", "c", "garde 30 min, le README dit 15 (ligne 3)"], ["db.ts", "i", "client Postgres, sans délai"], ["db/schema.ts", "i", "14 tables"], ["env.ts", "i", "11 variables"], ["health.ts", "i", "GET /healthz"], ["http.ts", "i", "HttpError"], ["logger.ts", "i", "pino"], ["queue.ts", "i", "Redis, sans délai"], ["server.ts", "i", "démarre l'API et les tâches"], ["stripe.ts", "i", "Stripe, 10 s, 2 reprises"], ["time.ts", "q", "aucun fait"]]],
+      ["web", "web/", [["src/App.tsx", "i", "routes de l'app"], ["src/api/auth.ts", "i", "appelle /auth/signup"], ["src/api/bookings.ts", "i", "appelle /bookings"], ["src/api/client.ts", "i", "client HTTP"], ["src/api/payments.ts", "i", "appelle POST /payments"], ["src/api/workshops.ts", "i", "appelle /workshops"], ["src/hooks/usePollBooking.ts", "i", "interroge GET /bookings/:id"], ["src/main.tsx", "i", "entrée"], ["src/pages/Checkout.tsx", "i", "paiement"], ["src/pages/Signup.tsx", "i", "inscription"], ["src/pages/Workshops.tsx", "i", "liste"], ["vite.config.ts", "i", "Vite"]]],
+      ["autres", "", [["scripts/migrate.ts", "i", "migrations"], ["vitest.config.ts", "q", "configuration des tests"]]]
+    ];
+    var folders = raw.map(function (d) {
+      return { name: d[0], count: String(d[2].length), tiles: d[2].map(function (f) {
+        var st = STATES[f[1]]; var path = d[1] + f[0];
+        return { cls: st[0] + (path === self.state.tip.path ? " vl-tile--focus" : ""), label: path + ", " + st[1], pick: function () { self.setState({ tip: { path: path, state: st[1], what: f[2] } }); } };
+      }) };
+    });
+    // 5 lectures (GET, barre basse ; GET /admin/export en rouge), puis 10 écritures (barre haute).
+    var methods = ["q","q","q","q","c","i","i","i","i","i","i","i","i","i","i"];
+    var routeBars = methods.map(function (m, k) { return { cls: m === "i" ? "" : m, style: "height: " + (k < 5 ? 45 : 100) + "%" }; });
+    var crit = "vl-att__icon vl-att__icon--critical";
+    return {
+      tip: this.state.tip,
+      folders: folders,
+      routeBars: routeBars,
+      forms: [
+        { idx: "01", form: "cookieParser(secret, options)", what: "remplit req.cookies ; signe si un secret est donné" },
+        { idx: "02", form: "req.cookies", what: "cookies non signés" },
+        { idx: "03", form: "req.signedCookies", what: "cookies signés, vérifiés avec le secret" },
+        { idx: "04", form: "cookieParser.signedCookie(str, secret)", what: "vérifie un cookie à la main" }
+      ],
+      attention: [
+        { iconCls: crit, icon: "M4 7.5h8v6H4zM5.8 7.5V5.2a2.2 2.2 0 0 1 4.4 0v2.3", title: "GET /admin/export derrière la seule connexion", sub: "Emails et téléphones des clients", dir: "admin/", file: "export.ts", line: "8", action: "Accès" },
+        { iconCls: crit, icon: "M8 2.5v4l2.5 1.5M13.5 8a5.5 5.5 0 1 1-2-4.2", title: "expireHolds peut annuler un paiement confirmé", sub: "Lit pending, écrit sans revérifier", dir: "jobs/", file: "expire.ts", line: "20", action: "Rejouer" },
+        { iconCls: crit, icon: "M8 2.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3.5 13.5c.6-2.3 2.3-3.5 4.5-3.5s3.9 1.2 4.5 3.5", title: "Le rôle admin n'est attribué nulle part", sub: "Exigé par POST /payments/:id/refund", dir: "payments/", file: "refund.ts", line: "12", action: "Accès" },
+        { iconCls: crit, icon: "M3 4h10M3 8h6M3 12h8", title: "Le README dit 15 min, le code garde 30", sub: "Règle déclarée contredite", dir: "src/", file: "config.ts", line: "3", action: "Comparer" },
+        { iconCls: crit, icon: "M3 3.5h10v9H3zM5.5 6.5h5M5.5 9.5h3", title: "Le mot de passe part dans les logs", sub: "Corps de l'inscription journalisé", dir: "auth/", file: "signup.ts", line: "19", action: "Données" }
+      ],
+      packs: ["express", "drizzle", "bullmq", "node-cron", "sdk", "stores", "logs", "zod-env", "docker", "fly", "vite"]
+    };
+  }
+}
+</script>
+</body>
+</html>

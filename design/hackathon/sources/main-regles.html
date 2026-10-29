@@ -1,0 +1,123 @@
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 24px; border-bottom: 1px solid var(--line); background: var(--surface)">
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted)">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2"/><path d="M6.5 2.5v11"/></svg>
+        <span>atelier-api</span><span aria-hidden="true">›</span><span style="color: var(--ink); font-weight: 500">Règles et décisions</span>
+      </div>
+      <span class="vl-pill"><i class="vl-dot vl-dot--live"></i>MAR. 20 OCT.<span class="vl-pill__sep"></span>21:48<span class="vl-pill__sep"></span>033e2af</span>
+    </header>
+
+    <div style="padding: 20px 24px 28px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px">
+        <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1 1 520px">
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+            <h1 style="font: 600 24px/30px var(--font-sans); letter-spacing: -.02em">Règles et décisions</h1>
+            <span class="vl-tag vl-tag--neutral">4 règles</span>
+            <span class="vl-tag vl-tag--critical">1 contredite</span>
+          </div>
+          <p style="color: var(--ink-2)">Les 4 règles métier écrites dans le README, confrontées au code : 2 tiennent, 1 tient en partie, 1 est contredite. Aucune autre règle n'a encore été déclarée par un agent.</p>
+        </div>
+        <button class="vl-btn vl-btn--secondary">Demander à Vigie</button>
+      </div>
+
+      <section aria-label="Règle contredite" style="display: flex; flex-wrap: wrap; background: var(--night); color: var(--on-night); border-radius: 12px; overflow: hidden">
+        <div style="flex: 999 1 440px; min-width: 0; padding: 20px 24px 22px; display: flex; flex-direction: column; gap: 14px">
+          <span class="vl-tag vl-tag--critical" style="align-self: flex-start">Contredite par le code</span>
+          <h2 style="font: 600 20px/27px var(--font-sans); letter-spacing: -.01em">Le README promet qu'une réservation non payée est libérée après 15 minutes. Le code la garde 30 minutes.</h2>
+          <div class="vs">
+            <div class="vbox"><span>Déclaré dans le README</span><big>15 min</big><small>README.md:24</small></div>
+            <div class="vsep">≠</div>
+            <div class="vbox vbox--code"><span>Lu dans le code</span><big>30 min</big><small>src/config.ts:3, HOLD_MINUTES</small></div>
+          </div>
+          <p style="color: var(--on-night-muted); font-size: 12.5px; line-height: 18px">Lequel est juste ? VisionLayer ne tranche pas. Ton choix devient une règle déclarée, ancrée sur <code class="mono" style="color: var(--on-night)">src/config.ts:3</code> et revérifiée à chaque analyse. L'écart qui reste, dans le README ou dans le code, va à l'agent du projet.</p>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px">
+            <button class="vl-btn vl-btn--light">C'est 30 minutes</button>
+            <button class="vl-btn vl-btn--ghost-night">C'est 15 minutes</button>
+          </div>
+        </div>
+        <div style="flex: 1 1 360px; min-width: 0; border-left: 1px solid var(--night-line); padding: 14px 0 8px; display: flex; flex-direction: column">
+          <span class="vl-label vl-label--night" style="padding: 0 20px 10px">Ce que fait le code, dans l'ordre</span>
+          <div class="np"><span class="step">1</span><div><p>La réservation est créée, gardée jusqu'à maintenant + 30 min</p><small>src/bookings/create.ts:34</small></div></div>
+          <div class="np"><span class="step">2</span><div><p>Avant ce délai, le paiement est accepté ; après, il est refusé en 410</p><small>src/payments/create.ts:22</small></div></div>
+          <div class="np"><span class="step">3</span><div><p>Chaque minute, expireHolds annule la réservation et rend sa place</p><small>src/jobs/expire.ts:15</small></div></div>
+          <p style="padding: 10px 20px 4px; border-top: 1px solid var(--night-line); font-size: 12.5px; line-height: 18px; color: var(--on-night-muted)">Concrètement, un client a entre 30 et 31 minutes pour payer, pas 15.</p>
+        </div>
+      </section>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start">
+        <section class="vl-card" aria-label="Règles" style="flex: 999 1 600px; min-width: 0; overflow: hidden">
+          <div class="vl-card__head">
+            <span class="vl-label">Règles métier du README</span>
+            <span style="font-size: 12px; color: var(--muted)">Choisir une règle montre ses preuves</span>
+          </div>
+          <div class="rl rl--h"><span class="vl-label">Déclaré</span><span class="vl-label">Dans le code</span><span class="vl-label">État</span></div>
+          <sc-for list="{{rules}}" as="r" hint-placeholder-count="4">
+            <div class="{{r.cls}}" onClick="{{r.pick}}">
+              <div><p>{{r.text}}</p><span class="vl-ref" style="margin-top: 6px; display: inline-flex">{{r.src}}</span></div>
+              <p class="sub" style="margin-top: 0">{{r.code}}</p>
+              <span class="{{r.sttCls}}">{{r.stt}}</span>
+            </div>
+          </sc-for>
+        </section>
+
+        <aside class="vl-card" aria-label="Preuves de la règle" style="flex: 1 1 340px; min-width: 0">
+          <div class="vl-card__head">
+            <span class="vl-label">Preuves</span>
+            <span class="{{sel.sttCls}}">{{sel.stt}}</span>
+          </div>
+          <p style="padding: 12px 16px; font: 600 14px/20px var(--font-sans)">{{sel.text}}</p>
+          <sc-for list="{{sel.ev}}" as="e" hint-placeholder-count="3">
+            <div class="evl">
+              <p>{{e.what}}</p>
+              <span class="vl-ref" style="align-self: flex-start">{{e.dir}}<b>{{e.file}}</b>:{{e.at}}</span>
+              <code>{{e.code}}</code>
+            </div>
+          </sc-for>
+          <p style="padding: 10px 16px 14px; border-top: 1px solid var(--line); font-size: 12px; line-height: 17px; color: var(--muted)">{{sel.note}}</p>
+        </aside>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":__H__}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { sel: 0 };
+  }
+  renderVals() {
+    var self = this;
+    function ev(what, path, at, code) { var i = path.lastIndexOf("/"); return { what: what, dir: path.slice(0, i + 1), file: path.slice(i + 1), at: at, code: code }; }
+    var STT = { cr: ["Contredite", "stt stt--cr"], sg: ["Tient en partie", "stt stt--sg"], ok: ["Tient", "stt stt--ok"] };
+    var R = [
+      { text: "Une réservation non payée est libérée après 15 minutes.", src: "README.md:24", code: "HOLD_MINUTES vaut 30 : la place est rendue après 30 minutes.", st: "cr",
+        ev: [ev("Le délai, écrit une fois", "src/config.ts", "3", "export const HOLD_MINUTES = 30;"),
+             ev("Utilisé à la création de la réservation", "src/bookings/create.ts", "34", "holdUntil: addMinutes(new Date(), HOLD_MINUTES),"),
+             ev("Libérée par la tâche de chaque minute", "src/jobs/expire.ts", "15", ".where(and(eq(bookings.status, \"pending\"), lt(bookings.holdUntil, new Date())));")],
+        note: "Déclaré dans un document, pas par un agent : le README n'a pas d'ancrage. Ton choix en fera une règle ancrée." },
+      { text: "Un client n'a qu'une réservation active par créneau.", src: "README.md:25", code: "Un index unique sur client et créneau, pour les réservations en attente ou confirmées ; sinon 409.", st: "ok",
+        ev: [ev("L'index, dans la base", "src/db/schema.ts", "55", "uniqueIndex(\"bookings_one_active\").on(t.userId, t.slotId).where(sql`status in ('pending', 'confirmed')`)"),
+             ev("Le refus, dans la route", "src/bookings/create.ts", "36", "if (!booking) throw new HttpError(409, \"already_booked\");")],
+        note: "Tenue par la base elle-même : elle vaut aussi pour un code qui écrirait sans passer par cette route." },
+      { text: "Un double clic sur « Payer » ne débite jamais deux fois.", src: "README.md:26", code: "La clé envoyée à Stripe est la réservation, pas la requête. Un test le vérifie.", st: "ok",
+        ev: [ev("La clé d'idempotence", "src/payments/create.ts", "36", "{ idempotencyKey: paymentKey(booking.id) },"),
+             ev("La clé ne dépend que de la réservation", "src/payments/keys.ts", "2", "export const paymentKey = (bookingId: string) => `booking-${bookingId}`;"),
+             ev("Le test", "src/payments/keys.spec.ts", "5", "it(\"donne la même clé pour deux clics sur la même réservation\", () => {")],
+        note: "Le test vérifie la clé, pas un vrai double clic contre Stripe." },
+      { text: "Les emails partent par la file : une panne du fournisseur ne bloque pas la réservation.", src: "README.md:27", code: "Vrai pour le fournisseur. Mais si Redis tombe, la mise en file échoue après l'écriture : le client reçoit une erreur, sa réservation existe.", st: "sg",
+        ev: [ev("La transaction se termine", "src/bookings/create.ts", "38", "}); // fin de la transaction"),
+             ev("La mise en file, hors transaction", "src/bookings/create.ts", "39", "await emailQueue.add(\"booking-received\", { template: \"booking-received\", bookingId: booking.id });")],
+        note: "La règle parle du fournisseur d'emails ; le code ajoute un cas qu'elle ne couvre pas, la file elle-même." }
+    ];
+    var sel = this.state.sel;
+    var s = R[sel];
+    return {
+      rules: R.map(function (r, i) { return { text: r.text, src: r.src, code: r.code, stt: STT[r.st][0], sttCls: STT[r.st][1], cls: "rl" + (i === sel ? " rl--on" : ""), pick: function () { self.setState({ sel: i }); } }; }),
+      sel: { text: s.text, stt: STT[s.st][0], sttCls: STT[s.st][1], ev: s.ev, note: s.note }
+    };
+  }
+}
+</script>
+</body>
+</html>

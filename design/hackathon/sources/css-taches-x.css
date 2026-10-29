@@ -1,0 +1,24 @@
+.day{padding:6px 16px 14px}
+.dh{display:grid;grid-template-columns:150px minmax(0,1fr);gap:12px;font:500 10.5px/14px var(--font-mono);color:#6c6a66;padding:6px 0}
+.ax{position:relative;height:14px}
+.ax span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.dr{display:grid;grid-template-columns:150px minmax(0,1fr);gap:12px;align-items:center;padding:8px 0;border-top:1px solid #efeeeb}
+.dr b{font:500 12.5px/16px var(--font-mono);display:block}
+.dr small{display:block;font-size:11.5px;line-height:15px;color:#6c6a66}
+.tr{position:relative;height:26px;background:repeating-linear-gradient(90deg,#f7f6f4 0,#f7f6f4 calc(25% - 1px),#e6e4e0 calc(25% - 1px),#e6e4e0 25%);border-radius:6px}
+.tr i{position:absolute;top:5px;bottom:5px;width:3px;border-radius:2px;background:#121211}
+.tr i.x2{width:7px;box-shadow:inset 3px 0 0 #121211,inset -3px 0 0 #121211;background:#fff}
+.tr i.ev{background:#c8c5bf}
+.tr .fill{position:absolute;left:0;right:0;top:9px;height:8px;border-radius:4px;background:repeating-linear-gradient(90deg,#121211 0,#121211 2px,transparent 2px,transparent 5px)}
+.tr em{position:absolute;top:4px;font:500 11px/18px var(--font-mono);font-style:normal;padding:0 6px;border-radius:5px;background:#121211;color:#f5f4f1;white-space:nowrap}
+.tr em.cr{background:#d23f2c}
+.lg{display:flex;flex-wrap:wrap;gap:16px;padding:10px 16px;border-top:1px solid #e6e4e0;font-size:12px;color:#6c6a66}
+.lg span{display:inline-flex;align-items:center;gap:6px}
+.lg i{display:inline-block;width:3px;height:14px;background:#121211;border-radius:2px}
+.lg i.ev{background:#c8c5bf}
+.tg{display:grid;grid-template-columns:130px 150px minmax(0,1.2fr) minmax(0,1fr) minmax(0,1.2fr);gap:12px;align-items:start;padding:10px 16px;border-top:1px solid #e6e4e0;font-size:12.5px;line-height:17px}
+.tg--h{border-top:0;background:#f7f6f4;font:500 10.5px/14px var(--font-mono);text-transform:uppercase;letter-spacing:.05em;color:#6c6a66;align-items:center}
+.tg--on{background:#f7f6f4;box-shadow:inset 3px 0 0 #121211}
+.tg code{font:500 12.5px/17px var(--font-mono);color:#121211}
+.ok{color:#1e7342;font-weight:500}
+.nsteps{display:flex;flex-direction:column}

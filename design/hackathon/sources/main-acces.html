@@ -1,0 +1,210 @@
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 24px; border-bottom: 1px solid var(--line); background: var(--surface)">
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted)">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2"/><path d="M6.5 2.5v11"/></svg>
+        <span>atelier-api</span><span aria-hidden="true">›</span><span style="color: var(--ink); font-weight: 500">Accès</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px">
+        <span class="vl-pill"><i class="vl-dot vl-dot--live"></i>MAR. 20 OCT.<span class="vl-pill__sep"></span>21:48<span class="vl-pill__sep"></span>033e2af</span>
+        <button class="vl-btn vl-btn--secondary" aria-label="Analyser de nouveau" style="width: 32px; padding: 0; justify-content: center"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.5-3.5M13 3v2.5h-2.5"/></svg></button>
+      </div>
+    </header>
+
+    <div style="padding: 20px 24px 28px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px">
+        <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1 1 520px">
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+            <h1 style="font: 600 24px/30px var(--font-sans); letter-spacing: -.02em">Accès</h1>
+            <span class="vl-tag vl-tag--neutral">15 points d'entrée</span>
+            <span class="vl-tag vl-tag--critical">1 constat</span>
+            <span class="vl-tag vl-tag--signal">1 à surveiller</span>
+          </div>
+          <p style="color: var(--ink-2)">6 routes sont publiques, 7 demandent une personne connectée, 1 demande le rôle admin, et Stripe signe son webhook. La personne se reconnaît par le cookie <code class="vl-code">sid</code>, vérifié en base, valable 30 jours.</p>
+        </div>
+        <button class="vl-btn vl-btn--secondary">Demander à Vigie</button>
+      </div>
+
+      <section aria-label="Constat" style="display: flex; flex-wrap: wrap; background: var(--night); color: var(--on-night); border-radius: 12px; overflow: hidden">
+        <div style="flex: 999 1 420px; min-width: 0; padding: 20px 24px 22px; display: flex; flex-direction: column; gap: 12px">
+          <span class="vl-tag vl-tag--critical" style="align-self: flex-start">Constat, lu dans le code</span>
+          <h2 style="font: 600 20px/27px var(--font-sans); letter-spacing: -.01em">Toute personne connectée peut télécharger l'email, le nom et le téléphone de tous les clients.</h2>
+          <p style="color: var(--on-night-muted); max-width: 580px"><code class="mono" style="color: var(--on-night)">GET /admin/export</code> n'exige qu'une session. L'auteur l'a écrit « pour la compta », mais rien ne réserve la route à la compta : aucune vérification de rôle avant la lecture de <code class="mono" style="color: var(--on-night)">users</code>.</p>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 4px">
+            <button class="vl-btn vl-btn--light">Demander à Vigie</button>
+            <button class="vl-btn vl-btn--ghost-night">Voir le déroulé</button>
+          </div>
+        </div>
+        <div style="flex: 1 1 380px; min-width: 0; border-left: 1px solid var(--night-line); padding: 14px 0 8px; display: flex; flex-direction: column">
+          <span class="vl-label vl-label--night" style="padding: 0 20px 10px">Un appel, du client au fichier</span>
+          <div class="np"><span class="step">1</span><div><p>Un client connecté appelle <code class="mono">GET /admin/export</code></p><small>src/app.ts:52</small></div></div>
+          <div class="np"><span class="step">2</span><div><p>requireUser trouve sa session : il passe</p><small>src/admin/export.ts:8</small></div></div>
+          <div class="np np--cr"><span class="step">3</span><div><p style="color: #f3a497">Aucune vérification du rôle admin</p><small>requireAdmin existe, src/auth/session.ts:33</small></div></div>
+          <div class="np"><span class="step">4</span><div><p>Lecture de tous les clients : email, nom, téléphone</p><small>src/admin/export.ts:9</small></div></div>
+          <div class="np"><span class="step">5</span><div><p>Le fichier CSV part au client</p><small>src/admin/export.ts:11</small></div></div>
+        </div>
+      </section>
+
+      <div class="vl-att vl-card" style="background: var(--surface)">
+        <span class="vl-att__icon vl-att__icon--signal"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 3v6M8 11.5v1.5"/></svg></span>
+        <div style="min-width: 0">
+          <p class="vl-att__title">Le rôle admin est exigé, mais aucun code ne l'attribue</p>
+          <p class="vl-att__sub">Déclaré dans <span class="vl-ref">src/db/<b>schema.ts</b>:15</span>, exigé par le remboursement <span class="vl-ref">src/payments/<b>refund.ts</b>:12</span>. Les inscriptions reçoivent <code class="vl-code">customer</code>. Il est donné hors du code, ou jamais.</p>
+        </div>
+        <span class="mk mk--sg">À surveiller</span>
+      </div>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start">
+        <section class="vl-card" aria-label="Points d'entrée et acteurs" style="flex: 999 1 600px; min-width: 0; overflow: hidden">
+          <div class="vl-card__head" style="padding: 8px 12px">
+            <div role="tablist" style="display: flex; gap: 2px">
+              <sc-for list="{{tabs}}" as="t" hint-placeholder-count="2">
+                <button role="tab" class="{{t.cls}}" onClick="{{t.pick}}">{{t.label}}<span class="vl-count">{{t.count}}</span></button>
+              </sc-for>
+            </div>
+            <span style="font-size: 12px; color: var(--muted)">Choisir une route ouvre son détail</span>
+          </div>
+
+          <sc-if value="{{onRoutes}}" hint-placeholder-val="{{true}}">
+            <div class="ep ep--h"><span class="vl-label">Point d'entrée</span><span class="vl-label">Qui passe</span><span class="vl-label">Décidé par</span><span class="vl-label">Donnée de l'appelant</span></div>
+            <sc-for list="{{groups}}" as="g" hint-placeholder-count="4">
+              <div class="grp">{{g.name}}</div>
+              <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="3">
+                <div class="{{r.cls}}" onClick="{{r.pick}}">
+                  <span class="route"><span class="{{r.mcls}}">{{r.m}}</span><code>{{r.path}}</code></span>
+                  <span class="{{r.whoCls}}">{{r.who}}</span>
+                  <span style="min-width: 0"><sc-if value="{{r.hasBy}}" hint-placeholder-val="{{true}}"><span class="vl-ref">{{r.bydir}}<b>{{r.byfile}}</b>:{{r.byat}}</span></sc-if><sc-if value="{{r.noBy}}" hint-placeholder-val="{{false}}"><span class="own own--q">aucune garde</span></sc-if></span>
+                  <span class="{{r.ownCls}}">{{r.own}}</span>
+                </div>
+              </sc-for>
+            </sc-for>
+          </sc-if>
+
+          <sc-if value="{{onActors}}" hint-placeholder-val="{{false}}">
+            <div class="act act--h"><span class="vl-label">Acteur</span><span class="vl-label">Se présente avec</span><span class="vl-label">Reconnu par</span><span class="vl-label">Atteint</span><span class="vl-label">À voir</span></div>
+            <sc-for list="{{actors}}" as="a" hint-placeholder-count="5">
+              <div class="act">
+                <span style="font-weight: 600">{{a.name}}</span>
+                <span>{{a.proof}}</span>
+                <span><sc-if value="{{a.hasRef}}" hint-placeholder-val="{{true}}"><span class="vl-ref">{{a.dir}}<b>{{a.file}}</b>:{{a.at}}</span></sc-if><sc-if value="{{a.noRef}}" hint-placeholder-val="{{false}}"><span class="own own--q">rien</span></sc-if></span>
+                <span class="mono" style="font-size: 12px">{{a.reach}}</span>
+                <span class="{{a.seeCls}}">{{a.see}}</span>
+              </div>
+            </sc-for>
+          </sc-if>
+        </section>
+
+        <aside class="vl-card" aria-label="Point d'entrée choisi" style="flex: 1 1 340px; min-width: 0">
+          <div class="vl-card__head">
+            <span class="vl-label">Point d'entrée choisi</span>
+            <span class="{{sel.whoCls}}">{{sel.who}}</span>
+          </div>
+          <div style="padding: 14px 16px 12px; display: flex; flex-direction: column; gap: 6px">
+            <span class="route"><span class="{{sel.mcls}}">{{sel.m}}</span><code style="font-size: 14px">{{sel.path}}</code></span>
+            <p style="font-size: 12.5px; line-height: 18px; color: var(--ink-2)">{{sel.line}}</p>
+          </div>
+          <div style="padding: 10px 16px 6px; border-top: 1px solid var(--line)"><span class="vl-label">Qui passe</span></div>
+          <sc-for list="{{sel.pass}}" as="p" hint-placeholder-count="3">
+            <div class="lay"><span>{{p.who}}</span><span class="{{p.cls}}">{{p.res}}</span></div>
+          </sc-for>
+          <div style="padding: 10px 16px 6px; border-top: 1px solid var(--line)"><span class="vl-label">Couches traversées</span></div>
+          <sc-for list="{{sel.layers}}" as="l" hint-placeholder-count="5">
+            <div class="lay"><span>{{l.name}}</span><span class="{{l.cls}}">{{l.state}}</span><small>{{l.note}}</small></div>
+          </sc-for>
+          <sc-if value="{{sel.hasCode}}" hint-placeholder-val="{{true}}">
+            <div style="padding: 10px 16px 6px; border-top: 1px solid var(--line); display: flex; justify-content: space-between"><span class="vl-label">Le code</span><span class="vl-ref">src/admin/<b>export.ts</b></span></div>
+            <div style="padding: 4px 0 10px">
+              <sc-for list="{{sel.code}}" as="c" hint-placeholder-count="6">
+                <div class="{{c.cls}}"><span>{{c.n}}</span><code>{{c.t}}</code></div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <div style="padding: 10px 16px 12px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px">
+            <span class="vl-label">Déclaré par l'équipe</span>
+            <p style="font-size: 12px; line-height: 17px; color: var(--muted)">{{sel.declared}}</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":__H__}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tab: "routes", sel: "GET /admin/export" };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state;
+    function ref(p) { if (!p) return { has: false }; var c = p.lastIndexOf(":"), s = p.lastIndexOf("/", c); return { has: true, dir: p.slice(0, s + 1), file: p.slice(s + 1, c), at: p.slice(c + 1) }; }
+    var WHO = { pub: ["Tout le monde", "who who--pub"], auth: ["Connecté", "who who--auth"], role: ["Rôle admin", "who who--role"], sig: ["Stripe, signé", "who who--sig"] };
+    var GROUPS = [
+      ["Compte", [["POST", "/auth/signup", "pub", null, "ouvre une session", ""], ["POST", "/auth/login", "pub", null, "ouvre une session", ""], ["POST", "/auth/reset", "pub", null, "sans objet", "q"]]],
+      ["Ateliers", [["GET", "/workshops", "pub", null, "catalogue public", "q"], ["GET", "/workshops/:id", "pub", null, "catalogue public", "q"]]],
+      ["Réservations", [["POST", "/bookings", "auth", "src/bookings/create.ts:15", "écrite à son nom", ""], ["GET", "/bookings/:id", "auth", "src/bookings/get.ts:9", "oui, ou admin (get.ts:12)", ""],
+        ["PATCH", "/bookings/:id", "auth", "src/bookings/update.ts:14", "oui (update.ts:17)", ""], ["POST", "/bookings/:id/transfer", "auth", "src/bookings/transfer.ts:13", "oui (transfer.ts:20)", ""]]],
+      ["Paiements", [["POST", "/payments", "auth", "src/payments/create.ts:14", "oui (create.ts:18)", ""], ["POST", "/payments/:id/refund", "role", "src/payments/refund.ts:12", "tous, rôle jamais attribué", "sg"],
+        ["POST", "/webhooks/stripe", "sig", "src/webhooks/stripe.ts:17", "sans objet", "q"]]],
+      ["Avis", [["POST", "/reviews", "auth", "src/reviews/create.ts:10", "écrit à son nom", ""]]],
+      ["Administration", [["GET", "/admin/export", "auth", "src/admin/export.ts:8", "non : tous les clients", "cr"]]],
+      ["Système", [["GET", "/healthz", "pub", null, "sans objet", "q"]]]
+    ];
+    var rows = {};
+    var groups = GROUPS.map(function (g) {
+      return { name: g[0], rows: g[1].map(function (r) {
+        var key = r[0] + " " + r[1], b = ref(r[3]);
+        var row = { key: key, m: r[0], path: r[1], level: r[2], by: r[3], own: r[4], who: WHO[r[2]][0], whoCls: WHO[r[2]][1],
+          mcls: r[0] === "GET" ? "vl-method vl-method--read" : "vl-method", hasBy: b.has, noBy: !b.has, bydir: b.dir ? b.dir.replace("src/", "") : "", byfile: b.file, byat: b.at,
+          ownCls: r[5] === "cr" ? "own own--cr" : r[5] === "q" ? "own own--q" : r[5] === "sg" ? "own" : "own",
+          cls: "ep" + (key === st.sel ? " ep--on" : "") + (r[5] === "cr" ? " ep--cr" : ""),
+          pick: function () { self.setState({ sel: key }); } };
+        rows[key] = row; return row; }) };
+    });
+    var s = rows[st.sel];
+    var PASS = {
+      pub: [["Visiteur", "passe", "yes"], ["Client connecté", "passe", "yes"], ["Stripe", "passe", "yes"]],
+      auth: [["Visiteur", "refusé, 401", "no"], ["Client connecté", "passe", "yes"], ["Admin", "passe", "yes"]],
+      role: [["Visiteur", "refusé, 401", "no"], ["Client connecté", "refusé, 403", "no"], ["Admin", "passe, mais aucun n'est attribué", "own own--q"]],
+      sig: [["Visiteur", "refusé, 400", "no"], ["Stripe, avec la bonne signature", "passe", "yes"]]
+    };
+    var LAYERS = {
+      pub: [["Fly.io, l'hébergeur", "non lu", "mk mk--nl", "rien de configuré devant l'API dans le dépôt"], ["La route Express", "lue", "mk mk--ok", "src/app.ts"], ["Aucune garde", "public", "mk mk--q", "la route ne demande rien"]],
+      auth: [["Fly.io, l'hébergeur", "non lu", "mk mk--nl", "rien de configuré devant l'API dans le dépôt"], ["Lecteur de cookies", "lu", "mk mk--ok", "src/app.ts:34, pack cookie-parser"], ["requireUser, session en base", "lu", "mk mk--ok", "src/auth/session.ts:21"], ["Vérification du rôle", "absente", "mk mk--cr", "requireAdmin n'est pas appelé"], ["Postgres, table users", "lu", "mk mk--ok", "src/admin/export.ts:9"]],
+      role: [["Fly.io, l'hébergeur", "non lu", "mk mk--nl", "rien de configuré devant l'API dans le dépôt"], ["Lecteur de cookies", "lu", "mk mk--ok", "src/app.ts:34, pack cookie-parser"], ["requireAdmin", "lu", "mk mk--ok", "src/auth/session.ts:33"]],
+      sig: [["Fly.io, l'hébergeur", "non lu", "mk mk--nl", "rien de configuré devant l'API dans le dépôt"], ["Corps brut, avant le lecteur de cookies", "lu", "mk mk--ok", "src/app.ts:31"], ["Signature Stripe", "lue", "mk mk--ok", "src/webhooks/stripe.ts:17"]]
+    };
+    var isExport = st.sel === "GET /admin/export";
+    var layers = (LAYERS[s.level] || LAYERS.pub).filter(function (l) { return isExport || s.level !== "auth" || (l[0] !== "Vérification du rôle" && l[0] !== "Postgres, table users"); });
+    if (s.level === "auth" && !isExport) layers.push(["La garde de la route", "lue", "mk mk--ok", s.by]);
+    var CODE = [["6", "/** Export CSV des clients, pour la compta. */", ""], ["7", "export async function exportUsers(req, res) {", ""], ["8", "  await requireUser(req);", "code-l code-l--cr"],
+      ["9", "  const rows = await db.select({ email, name, phone, createdAt }).from(users);", "code-l code-l--sg"], ["10", "  const csv = [\"email,name,phone,created_at\", …].join(\"\\n\");", ""], ["11", "  res.type(\"text/csv\").send(csv);", ""]];
+    var LINES = {
+      "GET /admin/export": "Écrit « pour la compta ». N'importe quel client connecté reçoit le fichier de tous les clients.",
+      "POST /payments/:id/refund": "Rembourse n'importe quel paiement. Réservé au rôle admin, que rien n'attribue dans le code.",
+      "POST /webhooks/stripe": "Stripe annonce un paiement ou un remboursement. Le corps brut est lu avant tout le reste pour vérifier la signature."
+    };
+    var A = [
+      ["Visiteur", "rien", null, "6 routes", "l'inscription écrit email, nom et mot de passe dans les logs (signup.ts:19)", "own own--cr"],
+      ["Client connecté", "le cookie sid", "src/auth/session.ts:21", "13 routes", "atteint l'export de tous les clients", "own own--cr"],
+      ["Admin", "le cookie sid et le rôle", "src/auth/session.ts:33", "14 routes", "rôle attribué nulle part dans le code", "own"],
+      ["Stripe", "sa signature", "src/webhooks/stripe.ts:17", "1 route", "rien", "own own--q"],
+      ["L'horloge", "rien, interne", null, "3 tâches", "chaque tâche tourne sur les 2 machines", "own"]
+    ];
+    return {
+      onRoutes: st.tab === "routes", onActors: st.tab === "actors",
+      tabs: [["routes", "Par point d'entrée", "15"], ["actors", "Par acteur", "5"]].map(function (t) { return { label: t[1], count: t[2], cls: t[0] === st.tab ? "tab tab--on" : "tab", pick: function () { self.setState({ tab: t[0] }); } }; }),
+      groups: groups,
+      actors: A.map(function (a) { var r = ref(a[2]); return { name: a[0], proof: a[1], hasRef: r.has, noRef: !r.has, dir: r.dir, file: r.file, at: r.at, reach: a[3], see: a[4], seeCls: a[5] }; }),
+      sel: { m: s.m, path: s.path, mcls: s.mcls, who: s.who, whoCls: s.whoCls,
+        line: LINES[s.key] || (s.level === "pub" ? "Ouverte à tous : aucune garde devant la route." : "Demande une personne connectée. " + (s.own ? "La donnée : " + s.own + "." : "")),
+        pass: (PASS[s.level] || PASS.pub).map(function (p) { return { who: p[0], res: p[1], cls: p[2] }; }),
+        layers: layers.map(function (l) { return { name: l[0], state: l[1], cls: l[2], note: l[3] }; }),
+        hasCode: isExport, code: CODE.map(function (c) { return { n: c[0], t: c[1], cls: c[2] || "code-l" }; }),
+        declared: isExport ? "Aucune affirmation sur cette route. La fiche manque : le prochain agent qui modifie ce code l'écrira. VisionLayer ne la remplit jamais." : "Aucune affirmation sur cette route." }
+    };
+  }
+}
+</script>
+</body>
+</html>

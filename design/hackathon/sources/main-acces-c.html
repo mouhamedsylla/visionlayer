@@ -1,0 +1,92 @@
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 24px; border-bottom: 1px solid var(--line); background: var(--surface)">
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted)"><span>marché en ligne</span><span aria-hidden="true">›</span><span style="color: var(--ink); font-weight: 500">Accès</span></div>
+      <span class="vl-tag vl-tag--neutral">Exemple de grand système</span>
+    </header>
+
+    <div style="padding: 24px 28px 36px; display: flex; flex-direction: column; gap: 18px">
+      <div style="display: flex; flex-direction: column; gap: 6px; max-width: 900px">
+        <h1 style="font: 600 26px/32px var(--font-sans); letter-spacing: -.02em">Qui peut entrer, et ce qu'il a le droit d'y faire</h1>
+        <p style="color: var(--ink-2); font-size: 14px; line-height: 21px">Même page qu'atelier-api, sur un système dix fois plus grand : six services derrière une passerelle, des boutiques séparées, un partenaire qui appelle par clé d'API. Seuls le repli et les filtres changent. Valeurs illustratives.</p>
+      </div>
+
+      <div class="tiles">
+        <div class="tile"><small>Qui peut appeler</small><b>214 points d'entrée</b><span>6 services, 11 ouverts à tous, 9 non lus</span></div>
+        <div class="tile"><small>Les acteurs</small><b>34 acteurs</b><span>7 personnes, 1 partenaire, 12 services, 5 extérieurs, 9 tâches</span></div>
+        <div class="tile"><small>Comment on prouve qui on est</small><b>5 mécanismes</b><span>jeton d'accès, rafraîchissement, clé d'API, jeton de service, signature</span></div>
+        <div class="tile tile--cr"><small>Isolement par boutique</small><b>139 requêtes sur 142</b><span>filtrent <code class="vl-code">shop_id</code> ; 3 ne filtrent rien</span></div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; align-items: start">
+        <section class="card">
+          <div class="tabs">
+            <button class="seg seg--on">Par acteur <span class="vl-count">34</span></button>
+            <button class="seg">Par point d'entrée <span class="vl-count">214</span></button>
+            <span class="note">3 groupes repliés</span>
+          </div>
+          <div class="ac ac--h"><span>Acteur</span><span>Sa preuve</span><span>Reconnu par</span><span>Atteints</span><span>Sur la donnée</span><span>À aller voir</span></div>
+
+          <div class="grp">Personnes <span>7</span></div>
+          <div class="ac"><span><b>Visiteur</b></span><span class="pf">aucune preuve</span><span class="q">rien</span><span class="reach"><i><b style="width: 5%"></b></i>11</span><span class="q">sans objet</span><span class="q">rien</span></div>
+          <div class="ac"><span><b>Client</b></span><span class="pf pf--k">jeton d'accès</span><span class="fn">verifyJwt()</span><span class="reach"><i><b style="width: 30%"></b></i>64</span><span class="own">si à lui, 41</span><span class="q">rien</span></div>
+          <div class="ac ac--on"><span><b>Vendeur, propriétaire</b><small>rôle seller_owner</small></span><span class="pf pf--k">jeton d'accès</span><span class="fn">requireRole()</span><span class="reach"><i><b style="width: 22%"></b></i>48</span><span class="own">sa boutique, 45</span><span class="see">3 requêtes sans shop_id</span></div>
+          <div class="ac"><span><b>Vendeur, équipe</b><small>rôle seller_staff</small></span><span class="pf pf--k">jeton d'accès</span><span class="fn">requireRole()</span><span class="reach"><i><b style="width: 14%"></b></i>31</span><span class="own">sa boutique, 28</span><span class="see">3 requêtes sans shop_id</span></div>
+          <div class="ac"><span><b>Support</b><small>rôle support</small></span><span class="pf pf--k">jeton d'accès</span><span class="fn">requireRole()</span><span class="reach"><i><b style="width: 10%"></b></i>22</span><span class="own">toutes</span><span class="see">rôle jamais attribué</span></div>
+          <div class="ac"><span><b>Finance</b><small>portée payouts:read</small></span><span class="pf pf--k">jeton d'accès</span><span class="fn">requireScope()</span><span class="reach"><i><b style="width: 4%"></b></i>9</span><span class="own">toutes</span><span class="q">rien</span></div>
+          <div class="ac"><span><b>Admin</b><small>rôle admin</small></span><span class="pf pf--k">jeton d'accès</span><span class="fn">requireRole()</span><span class="reach"><i><b style="width: 17%"></b></i>37</span><span class="own">toutes</span><span class="q">rien</span></div>
+
+          <div class="grp">Partenaire <span>1</span></div>
+          <div class="ac"><span><b>Partenaire</b><small>en-tête X-Api-Key</small></span><span class="pf pf--g">clé d'API</span><span class="fn">requireApiKey()</span><span class="reach"><i><b style="width: 7%"></b></i>14</span><span class="own">ses commandes</span><span class="see">clés sans expiration</span></div>
+
+          <div class="grp" style="font-weight: 400">Services du système, 12 <span>catalog, orders, payments et 9 autres, par jeton de service</span></div>
+          <div class="grp" style="font-weight: 400">Services extérieurs, 5 <span>Stripe, Shippo, Twilio, Google, Algolia, par signature</span></div>
+          <div class="grp" style="font-weight: 400">Le système lui-même, 9 <span>tâches et consommateurs de files, 1 à aller voir</span></div>
+          <div class="nr" style="margin: 12px 16px 14px"><span class="mk mk--nl">non lu</span><span>Le service reco est écrit en Go : ses 9 points d'entrée n'ont pas de garde lue. Ils ne sont jamais présentés comme ouverts.</span></div>
+        </section>
+
+        <aside style="display: flex; flex-direction: column; gap: 14px; min-width: 0">
+          <section class="night">
+            <div style="display: flex; flex-direction: column; gap: 4px">
+              <span class="lbl">Acteur choisi</span>
+              <h2>Vendeur, propriétaire</h2>
+              <p class="sub">rôle seller_owner, exigé par requireRole(), shared/auth.ts:18</p>
+            </div>
+            <div class="nst">
+              <div><b>48</b><span>points d'entrée</span></div>
+              <div><b>4</b><span>services</span></div>
+              <div><b>45</b><span>filtrés par boutique</span></div>
+            </div>
+            <span class="lbl">Sa preuve, de la naissance au retrait</span>
+            <div class="life">
+              <div><i></i><b>obtenue</b><p>POST /auth/token, mot de passe ou Google</p></div>
+              <div><i></i><b>présentée</b><p>en-tête Authorization, jeton de 15 min</p></div>
+              <div class="now"><i></i><b>vérifiée</b><p>par la passerelle (non lue), puis verifyJwt() dans chaque service</p></div>
+              <div><i></i><b>rafraîchie</b><p>POST /auth/refresh, 30 jours, renouvelé à chaque usage</p></div>
+              <div><i></i><b>retirée</b><p>POST /auth/logout l'inscrit dans revoked_tokens</p></div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="hd"><h2>Ce qu'il atteint</h2><span>48 sur 214</span></div>
+            <div class="res" style="background: #fdf5f3"><span class="fn">orders</span><span class="mk mk--cr">3 sans filtre</span><span class="reach"><i><b style="width: 42%; background: #d23f2c"></b></i></span><span>22 / 52</span></div>
+            <div class="res"><span class="fn">catalog</span><span></span><span class="reach"><i><b style="width: 30%"></b></i></span><span>18 / 61</span></div>
+            <div class="res"><span class="fn">payments</span><span class="mk mk--q">sa boutique</span><span class="reach"><i><b style="width: 15%"></b></i></span><span>6 / 40</span></div>
+            <div class="res"><span class="fn">shipping</span><span></span><span class="reach"><i><b style="width: 7%"></b></i></span><span>2 / 30</span></div>
+          </section>
+
+          <div class="decl decl--k">
+            <small>Déclaré par l'équipe, PR #412</small>
+            <p style="color: var(--ink); font-weight: 500">« Un vendeur ne voit que les données de sa boutique. »</p>
+            <p><span class="mk mk--cr">contredite par le code</span> 3 requêtes sans shop_id, dont orders/export.ts:22</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":__H__}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

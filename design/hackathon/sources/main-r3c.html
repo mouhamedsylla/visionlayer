@@ -1,0 +1,55 @@
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <div class="rbar">
+      <span class="kind" style="background: #2a2a27; color: #f5f4f1; box-shadow: none"><i class="gi gi--inc"></i>#027</span>
+      <span class="t">Les rappels de 18:00 arrivent deux fois</span>
+      <span style="margin-left: auto; font-size: 12.5px; color: var(--on-night-muted)">2 hypothèses écartées, 1 prouvée</span>
+      <button class="vl-btn vl-btn--light">Passer à la correction</button>
+    </div>
+
+    <div style="padding: 22px 24px 32px; display: flex; gap: 18px; align-items: flex-start; flex-wrap: wrap">
+      <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+        <section class="card" style="gap: 6px">
+          <span class="vl-label">Le signal d'origine, 19/09 à 18:04</span>
+          <p style="font-size: 15px; line-height: 22px; color: var(--ink)">« J'ai reçu deux fois le rappel pour mon cours de demain, c'est normal ? »</p>
+          <p style="font-size: 12.5px; color: var(--muted)">Tu as les journaux de 17:59 à 18:01, le code au commit 5e0d913 et fly.toml. Pas le code fautif : à toi de le trouver.</p>
+        </section>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
+          <div class="log"><b>machine a1</b>18:00:00 cron sendReminders start<br>18:00:00 12 rappels trouvés pour demain<br><span class="hl">18:00:01 12 jobs ajoutés à « emails »</span></div>
+          <div class="log"><b>machine b7</b>18:00:00 cron sendReminders start<br>18:00:00 12 rappels trouvés pour demain<br><span class="hl">18:00:01 12 jobs ajoutés à « emails »</span></div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <div style="display: flex; align-items: baseline; justify-content: space-between"><h2 style="font: 600 17px/22px var(--font-sans)">Tes hypothèses</h2><span style="font-size: 12.5px; color: var(--muted)">Une hypothèse se prouve en rejouant la scène, pas en la lisant</span></div>
+          <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+            <div class="hyp hyp--x"><span class="mk mk--q">écartée</span><b>Le cron est déclaré deux fois</b><p>Une seule déclaration, dans reminders.ts:12.</p></div>
+            <div class="hyp hyp--x"><span class="mk mk--q">écartée</span><b>BullMQ rejoue le job après un échec</b><p>Aucun échec dans les journaux, et 24 jobs distincts.</p></div>
+            <div class="hyp hyp--ok"><span class="mk mk--ok">prouvée</span><b>Chaque machine lance son propre cron</b><p>Le rejeu à 2 machines, comme fly.toml, reproduit le doublon.</p></div>
+          </div>
+        </div>
+        <section class="card" style="gap: 8px">
+          <h2>Rejouer 18:00 dans ta copie</h2>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
+            <div class="run run--ok" style="flex-direction: column; align-items: flex-start; gap: 2px"><b>1 machine</b>12 jobs ajoutés, 12 emails. Pas de doublon.</div>
+            <div class="run" style="flex-direction: column; align-items: flex-start; gap: 2px"><b>2 machines, comme fly.toml</b>24 jobs ajoutés, 24 emails. Le doublon est reproduit.</div>
+          </div>
+        </section>
+      </div>
+
+      <aside style="flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+        <div style="display: flex; align-items: center; gap: 12px">__ROBOT:questionne:64:l__<div><p style="font: 600 15px/20px var(--font-sans)">Vigie</p><p style="font-size: 12px; color: var(--muted)">ne voit pas le diagnostic de l'agent</p></div></div>
+        <div class="chat">
+          <p class="me">Avec 2 machines, c'est reproduit. Je peux corriger ?</p>
+          <p class="vg"><small>Vigie</small>Tu as prouvé que deux crons tournent. Avant de corriger : si tu passes à une seule machine, que deviennent les rappels le jour où elle redémarre à 17:59 ?</p>
+          <p class="me">Ils sautent. Donc plutôt un verrou partagé que réduire à une machine.</p>
+          <p class="vg"><small>Vigie</small>Note-le dans ton carnet : c'est exactement le genre de raison qu'on oublie six mois plus tard.</p>
+        </div>
+        <div class="ask"><span style="flex: 1">Demande à Vigie</span><button class="vl-btn vl-btn--primary vl-btn--sm">Envoyer</button></div>
+      </aside>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":__H__}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

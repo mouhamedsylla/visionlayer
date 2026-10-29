@@ -1,0 +1,60 @@
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <div class="rbar">
+      <span class="kind" style="background: #2a2a27; color: #f5f4f1; box-shadow: none"><i class="gi gi--bug"></i>#042</span>
+      <span class="t">Réservation confirmée, place rendue</span>
+      <span style="margin-left: auto; display: flex; align-items: center; gap: 10px"><span class="bar"><i style="width: 92%"></i></span><span class="mono" style="font-size: 12px; color: var(--on-night-muted)">12 tests sur 13</span></span>
+      <button class="vl-btn vl-btn--ghost-night">Relancer les tests</button>
+      <button class="vl-btn vl-btn--light">Soumettre</button>
+    </div>
+
+    <div style="padding: 22px 24px 32px; display: flex; gap: 18px; align-items: flex-start; flex-wrap: wrap">
+      <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px"><h2 style="font: 600 17px/22px var(--font-sans)">Ta copie</h2><span style="font-size: 12.5px; color: var(--muted)">Tu édites ici, ou dans VS Code</span></div>
+        <div class="ed">
+          <div class="edh"><span class="on">confirm.ts, modifié</span><span>expire.ts</span><span>booking-race.test.ts</span></div>
+          <div><span>45</span><span>export async function confirmBooking(intent) {</span></div>
+          <div><span>46</span><span>  const id = intent.metadata.bookingId;</span></div>
+          <div class="hl"><span>47</span><span>  await db.transaction(async (tx) => {</span></div>
+          <div class="hl"><span>48</span><span>    const [b] = await tx.select().from(bookings).where(eq(bookings.id, id));</span></div>
+          <div class="hl"><span>49</span><span>    if (b.status !== "pending") return;</span></div>
+          <div class="hl"><span>50</span><span>    await tx.update(bookings).set({ status: "confirmed" }).where(eq(bookings.id, id));</span></div>
+          <div class="hl"><span>51</span><span>  });</span></div>
+          <div><span>52</span><span>  await emails.add("booking-confirmed", { id });</span></div>
+          <div><span>53</span><span>}</span></div>
+        </div>
+        <div class="run">Ton dernier lancement : échoue encore 9 fois sur 50. C'était 31 avant ta transaction.</div>
+        <section class="card" style="gap: 6px">
+          <h2>Ce qui s'est passé, dans l'ordre</h2>
+          <p><b>1.</b> Ta transaction lit b-812 : <code class="vl-code">pending</code>. <b>2.</b> expireHolds écrit <code class="vl-code">cancelled</code> et rend la place. <b>3.</b> Ta transaction écrit <code class="vl-code">confirmed</code> par-dessus.</p>
+        </section>
+      </div>
+
+      <aside style="flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+        <div style="display: flex; align-items: center; gap: 12px">
+          __ROBOT:questionne:64:l__
+          <div><p style="font: 600 15px/20px var(--font-sans)">Vigie</p><p style="font-size: 12px; color: var(--muted)">ne voit pas la correction de l'agent</p></div>
+        </div>
+        <div class="chat">
+          <p class="me">J'ai mis la lecture et l'écriture dans une transaction. Ça échoue moins souvent, mais ça échoue encore.</p>
+          <p class="vg"><small>Vigie</small>Ta fenêtre est plus courte, pas fermée. Entre ta ligne 48 et ta ligne 50, qu'est-ce qui empêche expireHolds d'écrire ?</p>
+          <p class="me">Rien. Il faudrait que ma lecture réserve la ligne ?</p>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <span class="vl-label">Indices, 1 pris sur 3</span>
+          <div class="hints">
+            <div><span class="hn">1</span><span><b>Où regarder.</b> Entre confirm.ts:48 et :50, et ce que fait expire.ts pendant ce temps.</span><span></span></div>
+            <div><span class="hn hn--off">2</span><span style="color: var(--muted)">Ce qui cloche, sans nommer de solution</span><button class="vl-btn vl-btn--secondary vl-btn--sm">Ouvrir</button></div>
+            <div><span class="hn hn--off">3</span><span style="color: var(--muted)">La forme d'une réponse, jamais le code</span><button class="vl-btn vl-btn--secondary vl-btn--sm">Ouvrir</button></div>
+          </div>
+        </div>
+        <div class="ask"><span style="flex: 1">Demande à Vigie, ou colle une erreur</span><button class="vl-btn vl-btn--primary vl-btn--sm">Envoyer</button></div>
+      </aside>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":__H__}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

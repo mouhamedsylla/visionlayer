@@ -1,0 +1,61 @@
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 24px; border-bottom: 1px solid var(--line); background: var(--surface)">
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted)"><span>atelier-api</span><span aria-hidden="true">›</span><span>Replays</span><span aria-hidden="true">›</span><span style="color: var(--ink); font-weight: 500">#042</span></div>
+      <span class="vl-tag vl-tag--neutral">Données d'exemple</span>
+    </header>
+
+    <div style="padding: 28px 32px 40px; display: flex; flex-direction: column; gap: 22px; max-width: 1080px">
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <span class="kind"><i class="gi gi--bug"></i>Bug, rencontré le 30/09 par Claude Code</span>
+        <h1 style="font: 600 28px/34px var(--font-sans); letter-spacing: -.02em">Une réservation confirmée alors que sa place a été rendue</h1>
+        <p style="color: var(--ink-2); font-size: 14px; line-height: 21px; max-width: 700px">Le test réserve une place, laisse passer les 10 minutes de garde, puis la confirmation de Stripe arrive. La réservation finit <code class="vl-code">confirmed</code>, et le créneau compte une place libre de trop.</p>
+      </div>
+
+      <section style="background: var(--night); color: var(--on-night); border-radius: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 28px; padding: 24px 32px">
+        __ROBOT:questionne:130:d__
+        <div style="flex: 1 1 380px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+          <p class="bub">Je connais tout le contexte, sauf la réponse. Demande-moi un indice quand tu veux : il y en a trois, du plus vague au plus précis.</p>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center">
+            <button class="vl-btn vl-btn--light">Commencer le replay</button>
+            <span style="font-size: 12.5px; color: var(--on-night-muted)">Ta copie s'ouvre ici, dans VS Code ou dans un terminal. Ton projet n'est pas touché.</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Ce que l'agent a vécu</h2>
+        <div class="tl">
+          <div><i></i><small>10:02</small><b>Reçoit ATL-58</b><span>Confirmer le paiement d'une réservation</span></div>
+          <div><i></i><small>10:20</small><b>Écrit confirm.ts</b><span>le webhook passe la réservation à confirmed</span></div>
+          <div><i></i><small>10:41</small><b>Un test échoue</b><span>b-812 confirmed, créneau libre</span></div>
+          <div><i></i><small>10:55</small><b>Fausse piste</b><span>Stripe envoie deux fois ? Non.</span></div>
+          <div class="you"><i></i><small>81be715</small><b>À toi</b><span>le code est remis à cet instant</span></div>
+          <div class="off"><i></i><small>11:12</small><b>La suite</b><span>cachée jusqu'à ta solution</span></div>
+        </div>
+      </section>
+
+      <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px">
+        <section class="card">
+          <h2>Le test qui échoue</h2>
+          <p>Une confirmation tardive ne doit pas reprendre la place : confirmée, la place est prise ; annulée, elle est libre. Il ne dit pas qui doit gagner.</p>
+          <div class="run">Échoue 31 fois sur 50 : une course n'arrive pas à chaque coup.</div>
+        </section>
+        <section class="card">
+          <h2>Dans la boîte</h2>
+          <dl class="box">
+            <dt>Code</dt><dd>atelier-api au commit 81be715, juste avant la correction</dd>
+            <dt>Base</dt><dd>Postgres en Docker, remise à zéro à chaque lancement</dd>
+            <dt>Stripe</dt><dd>les 2 événements reçus ce jour-là, rejoués sans réseau</dd>
+            <dt>Tests</dt><dd>13, dont celui que l'agent a ajouté</dd>
+          </dl>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":__H__}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

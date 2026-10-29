@@ -45,7 +45,7 @@ Aucune connaissance préalable de VisionLayer n'est supposée. Une connaissance 
 | Niveau | Vue | Question | État |
 |---|---|---|---|
 | Système | [Vue d'ensemble](vues/vue-d-ensemble.md) | Quel est l'état du système, et qu'est-ce qui demande attention ? | codée |
-| Système | [Carte du système](vues/carte.md) | Quelles unités s'exécutent, et comment communiquent-elles ? | codée |
+| Système | [Carte du système](vues/carte.md) | Quelles unités s'exécutent, et comment communiquent-elles ? Que change un pack chargé ? | codée ; redessinée pour le hackathon (écran 03) |
 | Déployable | [Intérieur d'un bloc](vues/interieur-d-un-bloc.md) | Comment cette unité est-elle composée ? | maquettée |
 | Composant | [Composant](vues/composant.md) | Quelle responsabilité ce composant porte-t-il, et pour qui ? | maquettée |
 | Point d'entrée | [Points d'entrée et déroulés](vues/points-d-entree.md) | Que produit l'exécution de ce point d'entrée ? | codée, à enrichir |
@@ -65,6 +65,7 @@ Aucune connaissance préalable de VisionLayer n'est supposée. Une connaissance 
 | Suivi | [Connaissance](vues/connaissance.md) | Que sait-on que le code n'exprime pas, et est-ce encore vrai ? | maquettée |
 | Suivi | [Couverture](vues/couverture.md) | Jusqu'où la représentation est-elle fiable ? | codée |
 | Lecture | [Atelier de pack](vues/atelier-de-pack.md) | Ce pack lit-il bien sa technologie, et que change-t-il à la carte si on le charge ? | maquettée |
+| Transversal | [Vigie](vues/vigie.md) | Que dit le code, preuves à l'appui ? | maquettée (écran 05 du hackathon) |
 
 **IV. Diagnostic**
 

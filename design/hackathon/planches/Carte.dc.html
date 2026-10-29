@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Carte — atelier-api</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/visionlayerhackathon/components/bundle.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+:root{--canvas:#f3f2ef;--surface:#ffffff;--surface-sunken:#f7f6f4;--line:#e6e4e0;--line-strong:#d4d1cb;--ink:#121211;--ink-2:#3e3d3a;--muted:#6c6a66;--night:#141413;--night-2:#1f1f1d;--night-line:#34332f;--on-night:#f5f4f1;--on-night-muted:#a29f99;--tile-empty:#ebe9e5;--tile-quiet:#c8c5bf;--signal:#e2791d;--signal-ink:#9a4d0c;--signal-soft:#fbeee1;--critical:#d23f2c;--critical-ink:#a92f1f;--critical-soft:#fbe7e3;--live:#2c9a57;--live-ink:#1e7342;--live-soft:#e3f3e9;--radius-tile:3px;--radius-control:8px;--radius-card:12px;--radius-pill:999px;--shadow-card:0 1px 2px rgba(18,18,17,.04);--shadow-pop:0 8px 24px rgba(18,18,17,.16);--font-sans:"Geist","Inter",system-ui,sans-serif;--font-mono:"Geist Mono","JetBrains Mono",ui-monospace,monospace}
+body{margin:0;background:#f3f2ef}
+a{color:#121211}a:hover{color:#3e3d3a}
+.vl p,.vl h1,.vl h2{margin:0}
+.vl button{font-family:inherit}
+.mono{font-family:var(--font-mono)}
+.seg{height:30px;padding:0 12px;border:0;border-radius:7px;background:none;color:#6c6a66;font:500 12.5px/1 var(--font-sans);cursor:pointer;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.seg--on{background:#121211;color:#f5f4f1}
+.map{display:grid;grid-template-columns:160px minmax(138px,1fr) 218px minmax(96px,1fr) 176px;row-gap:0;align-items:center;padding:16px 20px 22px}
+.lane{grid-row:1;font:500 10.5px/14px var(--font-mono);letter-spacing:.07em;text-transform:uppercase;color:#6c6a66;padding-bottom:10px}
+.blk{background:#fff;border:1px solid #d4d1cb;border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:5px;cursor:pointer;text-align:left;font:inherit;color:inherit;min-width:0;align-self:stretch;justify-content:center;margin:6px 0}
+.blk--on{border:1.5px solid #121211;box-shadow:0 0 0 3px rgba(18,18,17,.07)}
+.blk--client{clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%);background:linear-gradient(225deg,transparent 9.2px,#d4d1cb 9.2px,#d4d1cb 10.4px,#fff 10.4px)}
+.blk--client.blk--on{background:linear-gradient(225deg,transparent 9px,#121211 9px,#121211 10.6px,#fff 10.6px)}
+.blk--far{border-color:#e6e4e0;box-shadow:none}
+.bh{display:flex;align-items:center;gap:8px;min-width:0}
+.bh b{font-weight:600;font-size:13px;line-height:17px}
+.bm{font:400 11px/15px var(--font-mono);color:#6c6a66}
+.mg{width:22px;height:22px;border-radius:6px;background:#121211;color:#fff;display:grid;place-items:center;font:600 9.5px/1 var(--font-mono);flex:none}
+.mk{display:inline-flex;align-self:flex-start;align-items:center;height:20px;padding:0 7px;border-radius:5px;font:500 11px/1 var(--font-mono);white-space:nowrap}
+.mk--pk{background:#e3f3e9;color:#1e7342}
+.mk--sg{background:#fbeee1;color:#9a4d0c}
+.mk--nl{background:#fbeee1;color:#9a4d0c;box-shadow:inset 0 0 0 1px #f2d3b4}
+.a{display:flex;flex-direction:column;justify-content:center;gap:3px;min-width:0;padding:0 6px}
+.a span{font:500 11px/14px var(--font-mono);color:#121211;text-align:center;white-space:nowrap}
+.a em{font:500 11px/14px var(--font-mono);font-style:normal;text-align:center;white-space:nowrap;align-self:center;padding:1px 6px;border-radius:4px}
+.a em.pk{background:#e3f3e9;color:#1e7342}.a em.nl{background:#fbeee1;color:#9a4d0c}
+.a i{display:flex;align-items:center}
+.a i::before{content:"";flex:1;border-top:1.5px solid #121211}
+.a i::after{content:"";flex:none;width:0;height:0;border-left:8px solid #121211;border-top:4.5px solid transparent;border-bottom:4.5px solid transparent}
+.a--w i::before{border-top-width:2.5px}
+.a--r span{color:#6c6a66}.a--r i::before{border-top:1px solid #6c6a66;margin-right:-1px}
+.a--r i::after{width:6px;height:6px;border:0;border-top:1px solid #6c6a66;border-right:1px solid #6c6a66;transform:rotate(45deg);margin-left:-6px}
+.a--q i::before{border-top-style:dashed}
+.a--back i{flex-direction:row-reverse}.a--back i::after{border-left:0;border-right:8px solid #121211}
+.a--off span,.a--off em{visibility:hidden}
+.a--off i::before{border-top-color:#d4d1cb}.a--off i::after{border-left-color:#d4d1cb;border-right-color:#d4d1cb}
+.a--off.a--r i::after{border-top-color:#d4d1cb;border-right-color:#d4d1cb}
+.vrow{display:grid;grid-template-columns:52px 10px minmax(0,1fr);align-items:stretch;column-gap:8px;min-height:34px}
+.v{display:flex;flex-direction:column;align-items:center}
+.v::before{content:"";flex:1;border-left:1.5px solid #121211;min-height:18px}
+.v::after{content:"";width:0;height:0;border-top:8px solid #121211;border-left:4.5px solid transparent;border-right:4.5px solid transparent}
+.v--q::before{border-left-style:dashed}
+.v--off::before{border-left-color:#d4d1cb}.v--off::after{border-top-color:#d4d1cb}
+.vl-lbl{align-self:center;font:500 11px/14px var(--font-mono);color:#121211;white-space:nowrap}
+.vl-lbl--off{visibility:hidden}
+.tg{font:500 10px/13px var(--font-mono);letter-spacing:.07em;text-transform:uppercase;color:#6c6a66;margin-top:6px}
+.tl{display:flex;flex-wrap:wrap;gap:4px}
+.tb{display:inline-flex;align-items:center;height:20px;padding:0 6px;border-radius:5px;border:1px solid #d4d1cb;background:#fff;font:400 11px/1 var(--font-mono);color:#3e3d3a}
+.tb--w{background:#121211;border-color:#121211;color:#f5f4f1}
+.tb--q{color:#6c6a66}
+.fx{display:inline-flex;align-items:center;height:18px;padding:0 6px;border-radius:4px;border:1px solid #d4d1cb;font:500 10.5px/1 var(--font-mono);text-transform:uppercase;letter-spacing:.04em;color:#3e3d3a;vertical-align:1px}
+.fx--w{background:#121211;border-color:#121211;color:#f5f4f1}
+.plus{font:400 14px/18px var(--font-mono);color:#1e7342}
+.lg{display:inline-flex;align-items:center;gap:7px}
+.sw{width:34px;padding:0}
+</style>
+</helmet>
+<div class="vl" style="display: flex; flex-wrap: wrap; min-height: 1430px; background: var(--canvas)">
+
+  <nav aria-label="Navigation" style="flex: 1 1 232px; max-width: 100%; box-sizing: border-box; background: var(--surface); border-right: 1px solid var(--line); padding: 14px 12px; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 2px 4px">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="8" fill="#121211"/><g fill="#f5f4f1"><circle cx="7.5" cy="9" r="1.4" opacity=".45"/><circle cx="7.5" cy="15" r="1.4" opacity=".7"/><circle cx="7.5" cy="21" r="1.4"/><circle cx="11.5" cy="9" r="1.4" opacity=".7"/><circle cx="11.5" cy="15" r="1.4"/><circle cx="11.5" cy="21" r="1.4"/><rect x="16" y="7.5" width="8" height="6" rx="1.5"/></g><rect x="16" y="16.5" width="8" height="6" rx="1.5" fill="#a29f99"/><path d="M20 13.5v3" stroke="#f5f4f1" stroke-width="1.2"/></svg>
+      <div style="display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1">
+        <span style="font-weight: 600; font-size: 14px; line-height: 18px">VisionLayer</span>
+        <span class="mono" style="font-size: 11px; line-height: 14px; color: var(--muted)">atelier-api, main</span>
+      </div>
+      <button aria-label="Replier la barre latérale" style="border: 0; background: none; color: var(--muted); padding: 4px; cursor: pointer"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2"/><path d="M6.5 2.5v11"/></svg></button>
+    </div>
+
+    <label style="display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 8px; border-radius: 8px; background: var(--surface-sunken); border: 1px solid var(--line); color: var(--muted)">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>
+      <input placeholder="Rechercher…" aria-label="Rechercher une route, une table, un fichier" style="border: 0; background: none; outline: none; font: 400 12.5px/1 var(--font-sans); color: var(--ink); flex: 1; min-width: 0">
+      <span class="vl-kbd">⌘K</span>
+    </label>
+
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span class="vl-label" style="padding: 6px 8px 4px">Système</span>
+      <a href="Main.dc.html" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="9" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="2.5" y="9" width="4.5" height="4.5" rx="1"/><rect x="9" y="9" width="4.5" height="4.5" rx="1"/></svg><span>Vue d'ensemble</span></a>
+      <a href="#" class="vl-nav vl-nav--active"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2" y="2.5" width="5" height="4" rx="1"/><rect x="9" y="9.5" width="5" height="4" rx="1"/><path d="M4.5 6.5v5H9"/></svg><span>Carte</span><span class="vl-count">3</span></a>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3.5" y="7" width="9" height="6.5" rx="1"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg><span>Accès</span><span class="vl-count vl-count--critical">2</span></a>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><ellipse cx="8" cy="4" rx="5" ry="1.8"/><path d="M3 4v8c0 1 2.2 1.8 5 1.8s5-.8 5-1.8V4M3 8c0 1 2.2 1.8 5 1.8S13 9 13 8"/></svg><span>Données</span><span class="vl-count">14</span></a>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3.2l2 1.3"/></svg><span>Tâches planifiées</span><span class="vl-count vl-count--signal">3</span></a>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span class="vl-label" style="padding: 6px 8px 4px">Connaissance</span>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 2.5h8v11l-4-2.5-4 2.5z"/></svg><span>Règles et décisions</span><span class="vl-count vl-count--critical">1</span></a>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="5" width="10" height="8" rx="2"/><path d="M8 2.5V5M6 9h.01M10 9h.01"/></svg><span>Sessions d'agents</span><span class="vl-count">0</span></a>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span class="vl-label" style="padding: 6px 8px 4px">Lecture</span>
+      <a href="Pack.dc.html" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m8 2 5.5 3v6L8 14l-5.5-3V5z"/><path d="M8 8v6M8 8l5.5-3M8 8 2.5 5"/></svg><span>Packs</span><span class="vl-count vl-count--signal">1</span></a>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="1.5"/><path d="M2.5 8h11M8 2.5v11" stroke-dasharray="2 1.5"/></svg><span>Couverture</span></a>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span class="vl-label" style="padding: 6px 8px 4px">Pratique</span>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M7 5.5 10 8l-3 2.5z"/></svg><span>Replays</span><span class="vl-count">1</span></a>
+    </div>
+
+    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px">
+      <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px; background: var(--night); color: var(--on-night); text-decoration: none">
+        <span style="width: 26px; height: 26px; border-radius: 7px; background: var(--night-2); border: 1px solid var(--night-line); display: grid; place-items: center"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#f5f4f1" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.5v2.5M8 12v2.5M1.5 8H4M12 8h2.5"/></svg></span>
+        <span style="flex: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-weight: 600; font-size: 13px; line-height: 16px">Demander à Vigie</span><span style="font-size: 11.5px; line-height: 14px; color: var(--on-night-muted)">Muse Spark, cite ses preuves</span></span>
+        <span class="vl-kbd" style="background: var(--night-2); color: var(--on-night-muted); border-color: var(--night-line)">⌘J</span>
+      </a>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="2"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"/></svg><span>Réglages</span></a>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 8px 6px 2px; border-top: 1px solid var(--line)">
+        <span style="width: 28px; height: 28px; border-radius: 50%; background: var(--surface-sunken); border: 1px solid var(--line-strong); display: grid; place-items: center; font: 600 11px/1 var(--font-sans)">MS</span>
+        <span style="display: flex; flex-direction: column; gap: 1px"><span style="font-weight: 600; font-size: 12.5px; line-height: 16px">Mouhamed Sylla</span><span style="font-size: 11.5px; line-height: 14px; color: var(--muted)">Ingénieur, Dakar</span></span>
+      </div>
+    </div>
+  </nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 24px; border-bottom: 1px solid var(--line); background: var(--surface)">
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted)">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2"/><path d="M6.5 2.5v11"/></svg>
+        <span>atelier-api</span><span aria-hidden="true">›</span><span style="color: var(--ink); font-weight: 500">Carte</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px">
+        <span class="vl-pill"><i class="vl-dot vl-dot--live"></i>MAR. 20 OCT.<span class="vl-pill__sep"></span>21:48<span class="vl-pill__sep"></span>033e2af</span>
+        <button class="vl-btn vl-btn--secondary" aria-label="Analyser de nouveau" style="width: 32px; padding: 0; justify-content: center"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.5-3.5M13 3v2.5h-2.5"/></svg></button>
+        <button class="vl-btn vl-btn--secondary" aria-label="Commentaires" style="width: 32px; padding: 0; justify-content: center"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2.5 3.5h11v7h-6l-3 2.5v-2.5h-2z"/></svg></button>
+      </div>
+    </header>
+
+    <div style="padding: 20px 24px 28px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px">
+        <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1 1 520px">
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+            <h1 style="font: 600 24px/30px var(--font-sans); letter-spacing: -.02em">Carte</h1>
+            <span class="vl-tag vl-tag--neutral">Client-serveur avec une file</span>
+            <span class="vl-tag vl-tag--live">Style confirmé</span>
+          </div>
+          <p style="color: var(--ink-2)">L'app web appelle l'API, qui écrit dans Postgres et confie les emails au worker par une file. 3 déployables, 2 ressources, 3 services extérieurs.</p>
+          <p style="font-size: 12px; line-height: 17px; color: var(--muted)">Pourquoi ce style : l'app web n'appelle que l'API <span class="vl-ref">web/src/api/<b>client.ts</b>:4</span>. L'API met en file <span class="vl-code">emails</span>, le worker la consomme <span class="vl-ref">src/email/<b>main.ts</b>:6</span></p>
+        </div>
+        <div role="group" aria-label="Comparer la carte avec et sans le pack" style="display: flex; flex-direction: column; gap: 6px; align-items: flex-end">
+          <span class="vl-label">Comparer avec le dernier pack</span>
+          <div style="display: inline-flex; gap: 2px; padding: 3px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px">
+            <button class="{{segOff}}" onClick="{{showWithout}}">Sans cookie-parser</button>
+            <button class="{{segOn}}" onClick="{{showWith}}">Avec cookie-parser</button>
+          </div>
+        </div>
+      </div>
+
+      <section aria-label="Dernier pack chargé" style="display: flex; flex-wrap: wrap; background: var(--night); color: var(--on-night); border-radius: 12px; overflow: hidden">
+        <div style="flex: 999 1 420px; min-width: 0; padding: 20px 24px 22px; display: flex; flex-direction: column; gap: 12px">
+          <span class="vl-tag vl-tag--night" style="align-self: flex-start">Pack chargé : cookie-parser 1.4.7</span>
+          <h2 style="font: 600 20px/27px var(--font-sans); letter-spacing: -.01em">La carte sait maintenant comment l'API reconnaît un client :<br>le cookie <code class="mono">sid</code>, vérifié en base à chaque route gardée.</h2>
+          <p style="color: var(--on-night-muted); max-width: 580px">Elle relève aussi un point : <code class="mono" style="color: var(--on-night)">SESSION_SECRET</code> est donné au lecteur de cookies, mais ne signe aucun cookie. Le webhook Stripe, déclaré avant le lecteur, n'en reçoit pas.</p>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 4px">
+            <button class="vl-btn vl-btn--light">Retirer le pack</button>
+            <button class="vl-btn vl-btn--ghost-night">Ouvrir dans l'atelier</button>
+          </div>
+        </div>
+        <div style="flex: 1 1 360px; min-width: 0; border-left: 1px solid var(--night-line); padding: 14px 0 6px; display: flex; flex-direction: column">
+          <span class="vl-label vl-label--night" style="padding: 0 20px 10px">Ce que le pack a changé</span>
+          <sc-for list="{{diff}}" as="d" hint-placeholder-count="4">
+            <div style="display: grid; grid-template-columns: 44px minmax(0, 1fr); align-items: baseline; gap: 12px; padding: 7px 20px; border-top: 1px solid var(--night-line)">
+              <span style="font: 600 20px/24px var(--font-sans); letter-spacing: -.02em; font-variant-numeric: tabular-nums; {{d.color}}">{{d.value}}</span>
+              <span style="font-size: 13px; line-height: 17px">{{d.label}}<span style="margin-left: 8px"></span><span style="font-size: 11.5px; color: var(--on-night-muted)">{{d.note}}</span></span>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start">
+        <section class="vl-card" aria-label="La carte" style="flex: 999 1 640px; min-width: 0; overflow: hidden">
+          <div class="vl-card__head">
+            <span class="vl-label">{{mapTitle}}</span>
+            <span style="font-size: 12px; color: var(--muted)">Choisir un bloc montre ses liens</span>
+          </div>
+          <p style="padding: 12px 20px 0; font-size: 12.5px; line-height: 18px; color: var(--ink-2)"><b style="font-weight: 600">Se lit :</b> de gauche à droite, de ce qui appelle à ce qui est touché. La file <span class="vl-code">emails</span> se lit de haut en bas, de l'API au worker.</p>
+
+          <div class="map">
+            <span class="lane" style="grid-column: 1">Ce qui appelle</span>
+            <span class="lane" style="grid-column: 3">Ce qui tourne</span>
+            <span class="lane" style="grid-column: 5">Ce qu'ils utilisent</span>
+
+            <button class="{{b.web}} blk--client" onClick="{{pick.web}}" style="grid-row: 2; grid-column: 1">
+              <span class="bh"><span class="mg">RE</span><b>App web</b></span>
+              <span class="bm">React, Vite</span>
+              <span class="bm">8 routes appelées</span>
+            </button>
+            <div class="{{a.webApi}}" style="grid-row: 2; grid-column: 2">
+              <span>8 appels</span><i></i>
+              <sc-if value="{{withPack}}" hint-placeholder-val="{{true}}"><em class="pk">+ cookie sid (4)</em></sc-if>
+              <sc-if value="{{withoutPack}}" hint-placeholder-val="{{false}}"><em class="nl">session non lue</em></sc-if>
+            </div>
+
+            <button class="{{b.stripe}}" onClick="{{pick.stripe}}" style="grid-row: 3; grid-column: 1; background: var(--surface-sunken)">
+              <span class="bh"><span class="mg" style="background: var(--ink-2)">ST</span><b>Stripe</b></span>
+              <span class="vl-tag vl-tag--neutral" style="align-self: flex-start">Extérieur</span>
+              <span class="bm">10 s, 2 reprises</span>
+              <span class="bm">webhook signé</span>
+            </button>
+            <div style="grid-row: 3; grid-column: 2; display: flex; flex-direction: column; gap: 10px">
+              <div class="{{a.stripeApi}}"><span>1 webhook</span><i></i></div>
+              <div class="{{a.apiStripe}}"><span>3 appels</span><i></i></div>
+            </div>
+
+            <button class="{{b.api}}" onClick="{{pick.api}}" style="grid-row: 2 / 4; grid-column: 3">
+              <span class="bh"><span class="mg">EX</span><b>API</b><span class="mono" style="font-size: 11px; color: var(--muted)">×2</span></span>
+              <span class="bm">Node.js, Express</span>
+              <span class="bm">15 routes, 8 gardées</span>
+              <span class="bm">3 tâches planifiées</span>
+              <sc-if value="{{withPack}}" hint-placeholder-val="{{true}}">
+                <span class="mk mk--pk">+ cookie-parser, 14 routes</span>
+                <span class="mk mk--sg">1 à surveiller</span>
+              </sc-if>
+              <sc-if value="{{withoutPack}}" hint-placeholder-val="{{false}}">
+                <span class="mk mk--nl">cookie-parser non lu</span>
+              </sc-if>
+            </button>
+            <div style="grid-row: 2 / 4; grid-column: 4; display: flex; flex-direction: column; justify-content: center; gap: 14px">
+              <div class="{{a.apiPgW}}"><span>21 écritures</span><i></i></div>
+              <div class="{{a.apiPgR}}"><span>17 lectures</span><i></i></div>
+            </div>
+
+            <div class="vrow" style="grid-row: 4; grid-column: 3"><span></span><span class="{{a.apiRedis}}"></span><span class="{{lbl.apiRedis}}">6 mises en file</span></div>
+
+            <button class="{{b.redis}}" onClick="{{pick.redis}}" style="grid-row: 5; grid-column: 3; border-radius: 8px">
+              <span class="bh"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#121211" stroke-width="1.5" aria-hidden="true"><path d="m3 4 3 4-3 4M8 4l3 4-3 4"/></svg><b>Redis</b><span class="mono" style="font-size: 11px; color: var(--muted)">BullMQ</span></span>
+              <span class="bm">file emails</span>
+            </button>
+
+            <div class="vrow" style="grid-row: 6; grid-column: 3"><span></span><span class="{{a.redisWorker}}"></span><span class="{{lbl.redisWorker}}">déclenche</span></div>
+
+            <button class="{{b.worker}}" onClick="{{pick.worker}}" style="grid-row: 7; grid-column: 3">
+              <span class="bh"><span class="mg">NO</span><b>Worker emails</b></span>
+              <span class="bm">Node.js, consomme emails</span>
+            </button>
+            <div style="grid-row: 7; grid-column: 4; display: flex; flex-direction: column; justify-content: center; gap: 14px">
+              <div class="{{a.workerPgW}}"><span>1 écriture</span><i></i></div>
+              <div class="{{a.workerPgR}}"><span>1 lecture</span><i></i></div>
+            </div>
+
+            <div class="vrow" style="grid-row: 8; grid-column: 3"><span></span><span class="{{a.workerMail}}"></span><span class="{{lbl.workerMail}}">envoie par l'un des 2</span></div>
+
+            <button class="{{b.mail}}" onClick="{{pick.mail}}" style="grid-row: 9; grid-column: 3; background: var(--surface-sunken)">
+              <span class="bh"><b>Resend, SMTP</b><span class="vl-tag vl-tag--neutral">Extérieur</span></span>
+              <span class="bm">choisi par EMAIL_PROVIDER</span>
+            </button>
+
+            <button class="{{b.postgres}}" onClick="{{pick.postgres}}" style="grid-row: 2 / 8; grid-column: 5; border-radius: 8px; justify-content: flex-start">
+              <span class="bh"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#121211" stroke-width="1.5" aria-hidden="true"><path d="M3 4h10M3 8h10M3 12h10"/></svg><b>Postgres</b><span class="mono" style="font-size: 11px; color: var(--muted)">14 tables</span></span>
+              <sc-for list="{{tableGroups}}" as="g" hint-placeholder-count="2">
+                <span class="tg">{{g.label}}</span>
+                <span class="tl">
+                  <sc-for list="{{g.tables}}" as="t" hint-placeholder-count="4"><span class="{{g.cls}}">{{t}}</span></sc-for>
+                </span>
+              </sc-for>
+            </button>
+          </div>
+
+          <div class="vl-card__foot" style="display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; font-size: 11.5px; color: var(--muted)">
+            <span class="lg"><span class="a sw"><i></i></span>appel</span>
+            <span class="lg"><span class="a a--w sw"><i></i></span>écriture</span>
+            <span class="lg"><span class="a a--r sw"><i></i></span>lecture</span>
+            <span class="lg"><span class="a a--q sw"><i></i></span>message en file</span>
+            <span class="lg"><span class="mk mk--pk">+ cookie-parser</span>ajouté par le pack</span>
+            <span class="lg"><span class="mk mk--nl">non lu</span>sans pack pour cette technologie</span>
+          </div>
+        </section>
+
+        <aside class="vl-card" aria-label="Bloc choisi" style="flex: 1 1 300px; min-width: 0">
+          <div class="vl-card__head">
+            <span class="vl-label">Bloc choisi</span>
+            <span class="mono" style="font-size: 11px; color: var(--muted)">{{sel.kind}}</span>
+          </div>
+          <div style="padding: 14px 16px 12px; display: flex; flex-direction: column; gap: 6px">
+            <p style="font: 600 17px/22px var(--font-sans)">{{sel.name}}</p>
+            <p style="font-size: 12.5px; line-height: 18px; color: var(--ink-2)">{{sel.line}}</p>
+            <span class="vl-ref" style="align-self: flex-start">{{sel.dir}}<b>{{sel.file}}</b>:{{sel.at}}</span>
+          </div>
+          <div style="padding: 10px 16px 6px; border-top: 1px solid var(--line)"><span class="vl-label">Liens</span></div>
+          <sc-for list="{{sel.links}}" as="l" hint-placeholder-count="5">
+            <div style="display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; padding: 8px 16px; border-top: 1px solid var(--line)">
+              <span style="font-size: 12.5px; line-height: 17px"><span class="{{l.cls}}">{{l.verb}}</span> {{l.what}}</span>
+              <span class="mono" style="font-size: 12px; line-height: 17px; font-weight: 500">{{l.count}}</span>
+              <span class="vl-ref" style="grid-column: 1 / 3; justify-self: start">{{l.dir}}<b>{{l.file}}</b>:{{l.at}}</span>
+            </div>
+          </sc-for>
+          <div style="padding: 10px 16px 6px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; gap: 8px">
+            <span class="vl-label">{{packTitle}}</span>
+            <span class="mono" style="font-size: 11px; color: var(--muted)">{{packCount}}</span>
+          </div>
+          <sc-if value="{{hasPackFacts}}" hint-placeholder-val="{{true}}">
+            <sc-for list="{{sel.facts}}" as="x" hint-placeholder-count="4">
+              <div style="display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 10px; padding: 10px 16px; border-top: 1px solid var(--line)">
+                <span class="{{plusCls}}">{{plusSign}}</span>
+                <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+                  <p style="font: 500 12px/16px var(--font-mono)">{{x.rel}}</p>
+                  <p style="font-size: 12px; line-height: 16px; color: var(--ink-2)">{{x.text}}</p>
+                  <span class="vl-ref" style="align-self: flex-start">{{x.dir}}<b>{{x.file}}</b>:{{x.at}}</span>
+                </div>
+              </div>
+            </sc-for>
+          </sc-if>
+          <sc-if value="{{noPackFacts}}" hint-placeholder-val="{{false}}">
+            <p style="padding: 10px 16px 14px; border-top: 1px solid var(--line); font-size: 12px; line-height: 17px; color: var(--muted)">{{noFactsText}}</p>
+          </sc-if>
+        </aside>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1430}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { sel: "api", pack: true };
+  }
+  renderVals() {
+    var self = this;
+    var sel = this.state.sel;
+    var pack = this.state.pack;
+    function ref(path, at) { var i = path.lastIndexOf("/"); return { dir: path.slice(0, i + 1), file: path.slice(i + 1), at: at }; }
+    function link(verb, kind, what, count, path, at) {
+      var r = ref(path, at);
+      return { verb: verb, what: what, count: count, cls: kind === "w" ? "fx fx--w" : "fx", dir: r.dir, file: r.file, at: r.at };
+    }
+    function fact(rel, text, path, at) { var r = ref(path, at); return { rel: rel, text: text, dir: r.dir, file: r.file, at: r.at }; }
+
+    var BLOCKS = {
+      web: { name: "App web", kind: "client", line: "Ce que les gens ouvrent. Toutes ses requêtes passent par un seul client, qui envoie les cookies.", path: "web/src/api/client.ts", at: "6",
+        links: [link("appelle", "c", "l'API", "8", "web/src/api/payments.ts", "12")],
+        facts: [fact("cookie sid, présenté", "4 appels vers des routes gardées : réserver, voir, annuler une réservation, payer", "src/auth/session.ts", "22"),
+                fact("cookie sid, reçu", "2 appels l'obtiennent : inscription et connexion, par openSession", "src/auth/session.ts", "17")] },
+      stripe: { name: "Stripe", kind: "extérieur", line: "Appelé par l'API pour les paiements, il la rappelle par un webhook signé.", path: "src/stripe.ts", at: "4",
+        links: [link("appelle", "c", "POST /webhooks/stripe", "1", "src/app.ts", "31"), link("reçoit", "c", "de l'API", "3", "src/payments/create.ts", "33")],
+        facts: [fact("hors du lecteur", "le webhook est déclaré avant cookieParser : il ne reçoit aucun cookie, sa preuve reste la signature", "src/app.ts", "31")] },
+      api: { name: "API", kind: "service ×2", line: "Express sur 2 machines. Elle expose 15 routes, dont 8 gardées, et lance 3 tâches planifiées sur chaque machine.", path: "fly.toml", at: "15",
+        links: [link("écrit", "w", "9 tables de Postgres", "21", "src/bookings/create.ts", "28"), link("lit", "r", "5 tables de Postgres", "17", "src/bookings/get.ts", "10"),
+                link("met en file", "c", "emails", "6", "src/bookings/create.ts", "39"), link("appelle", "c", "Stripe", "3", "src/payments/create.ts", "33")],
+        facts: [fact("cookie_reader", "cookieParser monté sur l'app, secret SESSION_SECRET (nom seulement), 14 routes sur 15", "src/app.ts", "34"),
+                fact("cookie_read, sid, non signé", "dans requireUser, la garde des 8 routes gardées", "src/auth/session.ts", "22"),
+                fact("cookie_set, sid, non signé", "httpOnly, sameSite lax, secure en production ; posé par openSession", "src/auth/session.ts", "17"),
+                fact("trust, cookie sid", "mécanisme de session des 8 routes gardées, vérifié en base dans sessions", "src/auth/session.ts", "28")] },
+      redis: { name: "Redis", kind: "ressource, file", line: "Porte la file emails, avec BullMQ. L'API y dépose, le worker y prend.", path: "src/queue.ts", at: "9",
+        links: [link("reçoit", "c", "de l'API", "6", "src/bookings/create.ts", "39"), link("déclenche", "c", "le worker", "1", "src/email/main.ts", "6")], facts: [] },
+      worker: { name: "Worker emails", kind: "worker", line: "Déployé à part. Il prend les emails de la file et les envoie par le fournisseur choisi.", path: "fly.toml", at: "8",
+        links: [link("écrit", "w", "email_jobs", "1", "src/email/worker.ts", "32"), link("lit", "r", "users", "1", "src/email/worker.ts", "24"),
+                link("envoie par", "c", "Resend ou SMTP", "1", "src/email/index.ts", "12")], facts: [] },
+      mail: { name: "Resend, SMTP", kind: "extérieurs", line: "Deux fournisseurs pour un même contrat, EmailSender. EMAIL_PROVIDER choisit lequel sert.", path: "src/email/index.ts", at: "12",
+        links: [link("reçoit", "c", "Resend, du worker", "1", "src/email/resend.ts", "11"), link("reçoit", "c", "SMTP, du worker", "1", "src/email/smtp.ts", "9")], facts: [] },
+      postgres: { name: "Postgres", kind: "ressource, base", line: "14 tables. L'API et le worker y accèdent ; l'app web jamais.", path: "src/db.ts", at: "6",
+        links: [link("écrite par", "w", "l'API, 9 tables", "21", "src/bookings/create.ts", "28"), link("lue par", "r", "l'API, 5 tables", "17", "src/bookings/get.ts", "10"),
+                link("écrite par", "w", "le worker, email_jobs", "1", "src/email/worker.ts", "32"), link("lue par", "r", "le worker, users", "1", "src/email/worker.ts", "24")], facts: [] }
+    };
+    var EDGES = {
+      webApi: ["web", "api", ""], stripeApi: ["stripe", "api", ""], apiStripe: ["api", "stripe", " a--back"],
+      apiPgW: ["api", "postgres", " a--w"], apiPgR: ["api", "postgres", " a--r"],
+      workerPgW: ["worker", "postgres", " a--w"], workerPgR: ["worker", "postgres", " a--r"]
+    };
+    var VEDGES = { apiRedis: ["api", "redis", " v--q"], redisWorker: ["redis", "worker", ""], workerMail: ["worker", "mail", ""] };
+    function on(e) { return e[0] === sel || e[1] === sel; }
+    var a = {}, lbl = {}, b = {}, pick = {};
+    Object.keys(EDGES).forEach(function (k) { a[k] = "a" + EDGES[k][2] + (on(EDGES[k]) ? "" : " a--off"); });
+    Object.keys(VEDGES).forEach(function (k) { a[k] = "v" + VEDGES[k][2] + (on(VEDGES[k]) ? "" : " v--off"); lbl[k] = on(VEDGES[k]) ? "vl-lbl" : "vl-lbl vl-lbl--off"; });
+    Object.keys(BLOCKS).forEach(function (k) {
+      var linked = Object.keys(EDGES).concat(Object.keys(VEDGES)).some(function (e) { var x = EDGES[e] || VEDGES[e]; return on(x) && (x[0] === k || x[1] === k); });
+      b[k] = "blk" + (k === sel ? " blk--on" : linked ? "" : " blk--far");
+      pick[k] = function () { self.setState({ sel: k }); };
+    });
+
+    var TABLES = {
+      api: [{ label: "Écrites par l'API", cls: "tb tb--w", tables: ["bookings", "payments", "refunds", "slots", "processed_events", "users", "sessions", "password_resets", "reviews"] },
+            { label: "Lues par l'API", cls: "tb", tables: ["bookings", "users", "payments", "slots", "workshops"] }],
+      worker: [{ label: "Écrite par le worker", cls: "tb tb--w", tables: ["email_jobs"] }, { label: "Lue par le worker", cls: "tb", tables: ["users"] }]
+    };
+    var s = BLOCKS[sel];
+    var r = ref(s.path, s.at);
+    var facts = pack ? s.facts : [];
+    return {
+      withPack: pack, withoutPack: !pack,
+      segOn: pack ? "seg seg--on" : "seg", segOff: pack ? "seg" : "seg seg--on",
+      showWith: function () { self.setState({ pack: true }); },
+      showWithout: function () { self.setState({ pack: false }); },
+      mapTitle: pack ? "Carte avec cookie-parser" : "Carte sans cookie-parser, recalculée",
+      a: a, lbl: lbl, b: b, pick: pick,
+      tableGroups: TABLES[sel] || [{ label: "Tables", cls: "tb tb--q", tables: ["bookings", "payments", "users", "sessions", "slots", "workshops", "…8 autres"] }],
+      diff: [
+        { value: "+4", label: "faits ajoutés", note: "lecteur, lecture, émission, session", color: "color: var(--on-night)" },
+        { value: "0", label: "fait retiré", note: "les autres packs ne bougent pas", color: "color: var(--on-night)" },
+        { value: "+1", label: "point à surveiller", note: "le secret ne signe aucun cookie", color: "color: var(--signal)" },
+        { value: "60", label: "fichiers lus sur 60", note: "58 sans lui : app.ts, session.ts", color: "color: var(--on-night)" },
+        { value: "=", label: "retrait vérifié", note: "sans lui, la carte d'avant, fait pour fait", color: "color: var(--live)" }
+      ],
+      sel: { name: s.name, kind: s.kind, line: s.line, dir: r.dir, file: r.file, at: r.at, links: s.links, facts: facts },
+      packDot: pack ? "vl-label__dot vl-label__dot--live" : "vl-label__dot vl-label__dot--signal",
+      packTitle: pack ? "Ajouté par cookie-parser" : "Sans cookie-parser",
+      packCount: pack && s.facts.length ? "+" + s.facts.length : "",
+      hasPackFacts: facts.length > 0, noPackFacts: facts.length === 0,
+      plusCls: "plus", plusSign: "+",
+      noFactsText: !pack && s.facts.length ? "Ces " + s.facts.length + " faits disparaissent : ce que la session lit et comment elle est vérifiée redevient « non lu »." : "cookie-parser n'ajoute rien à ce bloc."
+    };
+  }
+}
+</script>
+</body>
+</html>

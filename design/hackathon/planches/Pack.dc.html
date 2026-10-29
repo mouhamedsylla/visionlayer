@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Atelier de pack — cookie-parser</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/visionlayerhackathon/components/bundle.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+:root{--canvas:#f3f2ef;--surface:#ffffff;--surface-sunken:#f7f6f4;--line:#e6e4e0;--line-strong:#d4d1cb;--ink:#121211;--ink-2:#3e3d3a;--muted:#6c6a66;--night:#141413;--night-2:#1f1f1d;--night-line:#34332f;--on-night:#f5f4f1;--on-night-muted:#a29f99;--tile-empty:#ebe9e5;--tile-quiet:#c8c5bf;--signal:#e2791d;--signal-ink:#9a4d0c;--signal-soft:#fbeee1;--critical:#d23f2c;--critical-ink:#a92f1f;--critical-soft:#fbe7e3;--live:#2c9a57;--live-ink:#1e7342;--live-soft:#e3f3e9;--radius-tile:3px;--radius-control:8px;--radius-card:12px;--radius-pill:999px;--shadow-card:0 1px 2px rgba(18,18,17,.04);--shadow-pop:0 8px 24px rgba(18,18,17,.16);--font-sans:"Geist","Inter",system-ui,sans-serif;--font-mono:"Geist Mono","JetBrains Mono",ui-monospace,monospace}
+body{margin:0;background:#f3f2ef}
+a{color:#121211}a:hover{color:#3e3d3a}
+.vl p,.vl h1,.vl h2{margin:0}
+.vl button{font-family:inherit}
+.tab{height:30px;padding:0 10px;border:0;border-radius:8px;background:none;color:#6c6a66;font:500 12.5px/1 var(--font-sans);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.tab--on{background:#f7f6f4;color:#121211;box-shadow:inset 0 0 0 1px #e6e4e0}
+.row{display:grid;grid-template-columns:30px minmax(0,1.9fr) minmax(0,1.1fr) 64px minmax(0,1.1fr);gap:12px;align-items:center;padding:9px 16px;border-top:1px solid #e6e4e0}
+.check{width:18px;height:18px;border-radius:50%;display:inline-grid;place-items:center;background:#e3f3e9;color:#1e7342}
+</style>
+</helmet>
+<div class="vl" style="display: flex; flex-wrap: wrap; min-height: 1490px; background: var(--canvas)">
+
+  <nav aria-label="Navigation" style="flex: 1 1 232px; max-width: 100%; box-sizing: border-box; background: var(--surface); border-right: 1px solid var(--line); padding: 14px 12px; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 2px 4px">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="8" fill="#121211"/><g fill="#f5f4f1"><circle cx="7.5" cy="9" r="1.4" opacity=".45"/><circle cx="7.5" cy="15" r="1.4" opacity=".7"/><circle cx="7.5" cy="21" r="1.4"/><circle cx="11.5" cy="9" r="1.4" opacity=".7"/><circle cx="11.5" cy="15" r="1.4"/><circle cx="11.5" cy="21" r="1.4"/><rect x="16" y="7.5" width="8" height="6" rx="1.5"/></g><rect x="16" y="16.5" width="8" height="6" rx="1.5" fill="#a29f99"/><path d="M20 13.5v3" stroke="#f5f4f1" stroke-width="1.2"/></svg>
+      <div style="display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1">
+        <span style="font-weight: 600; font-size: 14px; line-height: 18px">VisionLayer</span>
+        <span class="mono" style="font-size: 11px; line-height: 14px; color: var(--muted)">atelier-api, main</span>
+      </div>
+      <button aria-label="Replier la barre latérale" style="border: 0; background: none; color: var(--muted); padding: 4px; cursor: pointer"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2"/><path d="M6.5 2.5v11"/></svg></button>
+    </div>
+
+    <label style="display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 8px; border-radius: 8px; background: var(--surface-sunken); border: 1px solid var(--line); color: var(--muted)">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>
+      <input placeholder="Rechercher…" aria-label="Rechercher une route, une table, un fichier" style="border: 0; background: none; outline: none; font: 400 12.5px/1 var(--font-sans); color: var(--ink); flex: 1; min-width: 0">
+      <span class="vl-kbd">⌘K</span>
+    </label>
+
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span class="vl-label" style="padding: 6px 8px 4px">Système</span>
+      <a href="Main.dc.html" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="9" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="2.5" y="9" width="4.5" height="4.5" rx="1"/><rect x="9" y="9" width="4.5" height="4.5" rx="1"/></svg><span>Vue d'ensemble</span></a>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2" y="2.5" width="5" height="4" rx="1"/><rect x="9" y="9.5" width="5" height="4" rx="1"/><path d="M4.5 6.5v5H9"/></svg><span>Carte</span><span class="vl-count">3</span></a>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3.5" y="7" width="9" height="6.5" rx="1"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg><span>Accès</span><span class="vl-count vl-count--critical">2</span></a>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><ellipse cx="8" cy="4" rx="5" ry="1.8"/><path d="M3 4v8c0 1 2.2 1.8 5 1.8s5-.8 5-1.8V4M3 8c0 1 2.2 1.8 5 1.8S13 9 13 8"/></svg><span>Données</span><span class="vl-count">14</span></a>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3.2l2 1.3"/></svg><span>Tâches planifiées</span><span class="vl-count vl-count--signal">3</span></a>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span class="vl-label" style="padding: 6px 8px 4px">Connaissance</span>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 2.5h8v11l-4-2.5-4 2.5z"/></svg><span>Règles et décisions</span><span class="vl-count vl-count--critical">1</span></a>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="5" width="10" height="8" rx="2"/><path d="M8 2.5V5M6 9h.01M10 9h.01"/></svg><span>Sessions d'agents</span><span class="vl-count">0</span></a>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span class="vl-label" style="padding: 6px 8px 4px">Lecture</span>
+      <a href="#" class="vl-nav vl-nav--active"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m8 2 5.5 3v6L8 14l-5.5-3V5z"/><path d="M8 8v6M8 8l5.5-3M8 8 2.5 5"/></svg><span>Packs</span><span class="vl-count vl-count--signal">1</span></a>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="1.5"/><path d="M2.5 8h11M8 2.5v11" stroke-dasharray="2 1.5"/></svg><span>Couverture</span></a>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span class="vl-label" style="padding: 6px 8px 4px">Pratique</span>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M7 5.5 10 8l-3 2.5z"/></svg><span>Replays</span><span class="vl-count">1</span></a>
+    </div>
+
+    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px">
+      <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px; background: var(--night); color: var(--on-night); text-decoration: none">
+        <span style="width: 26px; height: 26px; border-radius: 7px; background: var(--night-2); border: 1px solid var(--night-line); display: grid; place-items: center"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#f5f4f1" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.5v2.5M8 12v2.5M1.5 8H4M12 8h2.5"/></svg></span>
+        <span style="flex: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-weight: 600; font-size: 13px; line-height: 16px">Demander à Vigie</span><span style="font-size: 11.5px; line-height: 14px; color: var(--on-night-muted)">Muse Spark, cite ses preuves</span></span>
+        <span class="vl-kbd" style="background: var(--night-2); color: var(--on-night-muted); border-color: var(--night-line)">⌘J</span>
+      </a>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="2"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"/></svg><span>Réglages</span></a>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 8px 6px 2px; border-top: 1px solid var(--line)">
+        <span style="width: 28px; height: 28px; border-radius: 50%; background: var(--surface-sunken); border: 1px solid var(--line-strong); display: grid; place-items: center; font: 600 11px/1 var(--font-sans)">MS</span>
+        <span style="display: flex; flex-direction: column; gap: 1px"><span style="font-weight: 600; font-size: 12.5px; line-height: 16px">Mouhamed Sylla</span><span style="font-size: 11.5px; line-height: 14px; color: var(--muted)">Ingénieur, Dakar</span></span>
+      </div>
+    </div>
+  </nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 24px; border-bottom: 1px solid var(--line); background: var(--surface)">
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted)">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2"/><path d="M6.5 2.5v11"/></svg>
+        <span>atelier-api</span><span aria-hidden="true">›</span><span>Packs</span><span aria-hidden="true">›</span><span class="mono" style="color: var(--ink); font-weight: 500">cookie-parser</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px">
+        <span class="vl-pill"><i class="vl-dot vl-dot--live"></i>MAR. 20 OCT.<span class="vl-pill__sep"></span>21:48<span class="vl-pill__sep"></span>033e2af</span>
+        <button class="vl-btn vl-btn--secondary" aria-label="Analyser de nouveau" style="width: 32px; padding: 0; justify-content: center"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.5-3.5M13 3v2.5h-2.5"/></svg></button>
+        <button class="vl-btn vl-btn--secondary" aria-label="Commentaires" style="width: 32px; padding: 0; justify-content: center"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2.5 3.5h11v7h-6l-3 2.5v-2.5h-2z"/></svg></button>
+      </div>
+    </header>
+
+    <div style="padding: 20px 24px 28px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px">
+        <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0">
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+            <h1 style="font: 600 24px/30px var(--font-mono); letter-spacing: -.02em">cookie-parser</h1>
+            <span class="vl-tag vl-tag--signal">Proposé, domaine isolé</span>
+            <span class="vl-tag vl-tag--neutral">1.4.7 (lockfile)</span>
+          </div>
+          <p style="color: var(--muted)">Écrit par Muse Spark 1.3 (mode Standard) depuis le README de cookie-parser, ses types et la page <span class="vl-code">res.cookie</span> d'Express. <span style="color: var(--ink)">Fichiers d'atelier-api lus pour l'écrire : 0.</span></p>
+        </div>
+        <div style="display: flex; gap: 8px">
+          <button class="vl-btn vl-btn--secondary">Refuser</button>
+          <button class="vl-btn vl-btn--secondary">Demander une correction</button>
+        </div>
+      </div>
+
+      <ol aria-label="Étapes de la recette" style="list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden">
+        <sc-for list="{{steps}}" as="s" hint-placeholder-count="5">
+          <li style="{{s.cell}}">
+            <span style="{{s.dot}}"><sc-if value="{{s.done}}" hint-placeholder-val="{{true}}"><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="m3.5 8.5 3 3 6-7"/></svg></sc-if><sc-if value="{{s.todo}}" hint-placeholder-val="{{false}}">{{s.n}}</sc-if></span>
+            <span style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+              <span class="vl-label">{{s.label}}</span>
+              <span style="{{s.countStyle}}">{{s.count}}</span>
+            </span>
+          </li>
+        </sc-for>
+      </ol>
+
+      <section aria-label="Décision" style="display: flex; flex-wrap: wrap; background: var(--night); color: var(--on-night); border-radius: 12px; overflow: hidden">
+        <div style="flex: 999 1 420px; min-width: 0; padding: 20px 24px 22px; display: flex; flex-direction: column; gap: 12px">
+          <span class="vl-tag vl-tag--night" style="align-self: flex-start">À décider, rien n'est chargé</span>
+          <h2 style="font: 600 20px/27px var(--font-sans); letter-spacing: -.01em">Avec ce pack, VisionLayer lit les 60 fichiers d'atelier-api.<br>Il ajoute 4 faits, n'en retire aucun, et signale un point.</h2>
+          <p style="color: var(--on-night-muted); max-width: 560px"><code class="mono" style="color: var(--on-night)">SESSION_SECRET</code> est donné à cookie-parser, mais le cookie de session est posé sans <code class="mono" style="color: var(--on-night)">signed</code> et lu dans <code class="mono" style="color: var(--on-night)">req.cookies</code> : le secret ne signe rien. Le <code class="mono" style="color: var(--on-night)">sid</code>, aléatoire, reste vérifié en base.</p>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 4px">
+            <button class="vl-btn vl-btn--light"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m8 2 5.5 3v6L8 14l-5.5-3V5z"/><path d="M8 8v6M8 8l5.5-3M8 8 2.5 5"/></svg>Charger le pack</button>
+            <button class="vl-btn vl-btn--ghost-night">Voir la carte avec le pack</button>
+          </div>
+        </div>
+        <div style="flex: 1 1 320px; min-width: 0; border-left: 1px solid var(--night-line); padding: 16px 0 10px; display: flex; flex-direction: column">
+          <span class="vl-label vl-label--night" style="padding: 0 20px 10px">Différence sur atelier-api</span>
+          <sc-for list="{{diff}}" as="d" hint-placeholder-count="4">
+            <div style="display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: baseline; gap: 12px; padding: 9px 20px; border-top: 1px solid var(--night-line)">
+              <span style="font: 600 20px/24px var(--font-sans); letter-spacing: -.02em; font-variant-numeric: tabular-nums; {{d.color}}">{{d.value}}</span>
+              <span style="display: flex; flex-direction: column; gap: 1px"><span style="font-size: 13px; line-height: 17px">{{d.label}}</span><span style="font-size: 11.5px; line-height: 15px; color: var(--on-night-muted)">{{d.note}}</span></span>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start">
+        <section class="vl-card" aria-label="Le pack" style="flex: 999 1 560px; min-width: 0; overflow: hidden">
+          <div class="vl-card__head" style="padding: 8px 12px; flex-wrap: wrap">
+            <div role="tablist" style="display: flex; gap: 2px; flex-wrap: wrap">
+              <sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+                <button role="tab" class="{{t.cls}}" onClick="{{t.pick}}">{{t.label}}<span class="vl-count">{{t.count}}</span></button>
+              </sc-for>
+            </div>
+            <span class="mono" style="font-size: 11px; color: var(--muted)">.vision/packs/proposes/cookie-parser/</span>
+          </div>
+
+          <sc-if value="{{onForms}}" hint-placeholder-val="{{true}}">
+            <div style="overflow-x: auto">
+              <div style="min-width: 680px">
+                <div class="row" style="border-top: 0; background: var(--surface-sunken)">
+                  <span class="vl-label">#</span><span class="vl-label">Forme de l'API</span><span class="vl-label">Fait produit</span><span class="vl-label">Test</span><span class="vl-label">Dans atelier-api</span>
+                </div>
+                <sc-for list="{{groups}}" as="g" hint-placeholder-count="4">
+                  <div style="padding: 10px 16px 6px; border-top: 1px solid var(--line); display: flex; justify-content: space-between">
+                    <span style="font-weight: 600; font-size: 12.5px">{{g.name}}</span>
+                    <span class="mono" style="font-size: 11px; color: var(--muted)">{{g.source}}</span>
+                  </div>
+                  <sc-for list="{{g.forms}}" as="f" hint-placeholder-count="2">
+                    <div class="row">
+                      <span class="mono" style="font-size: 11px; color: var(--muted)">{{f.id}}</span>
+                      <code class="vl-code">{{f.form}}</code>
+                      <span style="font-size: 12px; color: var(--ink-2)">{{f.fact}}</span>
+                      <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--live-ink)"><span class="check"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="m3.5 8.5 3 3 6-7"/></svg></span>passe</span>
+                      <span style="{{f.whereStyle}}">{{f.where}}</span>
+                    </div>
+                  </sc-for>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{onRules}}" hint-placeholder-val="{{false}}">
+            <sc-for list="{{rules}}" as="r" hint-placeholder-count="3">
+              <div style="display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; padding: 12px 16px; border-top: 1px solid var(--line)">
+                <span class="mono" style="font-size: 11px; color: var(--muted); padding-top: 2px">{{r.id}}</span>
+                <div style="display: flex; flex-direction: column; gap: 4px">
+                  <p style="font-weight: 600">{{r.title}}</p>
+                  <code class="vl-code" style="color: var(--ink-2)">{{r.logic}}</code>
+                </div>
+              </div>
+            </sc-for>
+          </sc-if>
+
+          <sc-if value="{{onYaml}}" hint-placeholder-val="{{false}}">
+            <pre style="margin: 0; padding: 16px 20px; background: var(--night); color: var(--on-night); font: 400 12px/18px var(--font-mono); overflow-x: auto; white-space: pre">{{yaml}}</pre>
+          </sc-if>
+
+          <sc-if value="{{onBrief}}" hint-placeholder-val="{{false}}">
+            <sc-for list="{{brief}}" as="b" hint-placeholder-count="5">
+              <div style="display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; padding: 12px 16px; border-top: 1px solid var(--line)">
+                <span class="mono" style="font-size: 11px; color: var(--muted); padding-top: 2px">{{b.n}}</span>
+                <div style="display: flex; flex-direction: column; gap: 2px"><p style="font-weight: 600">{{b.title}}</p><p style="color: var(--muted)">{{b.text}}</p></div>
+              </div>
+            </sc-for>
+          </sc-if>
+        </section>
+
+        <div style="flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 12px">
+          <section class="vl-card" aria-label="Faits ajoutés">
+            <div class="vl-card__head">
+              <span class="vl-label">Faits ajoutés <span class="vl-count">4</span></span>
+              <span class="mono" style="font-size: 11px; color: var(--muted)">− 0 retiré</span>
+            </div>
+            <sc-for list="{{facts}}" as="x" hint-placeholder-count="4">
+              <div style="display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 10px; padding: 11px 16px; border-top: 1px solid var(--line)">
+                <span class="mono" style="font-size: 14px; line-height: 18px; color: var(--live-ink)">+</span>
+                <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+                  <p style="font: 500 12.5px/17px var(--font-mono)">{{x.rel}}</p>
+                  <p style="font-size: 12px; line-height: 16px; color: var(--ink-2)">{{x.text}}</p>
+                  <span class="vl-ref" style="align-self: flex-start">{{x.dir}}<b>{{x.file}}</b>:{{x.line}}</span>
+                </div>
+              </div>
+            </sc-for>
+            <div class="vl-att" style="background: var(--signal-soft)">
+              <span class="vl-att__icon vl-att__icon--signal" style="background: var(--surface)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 3v6M8 11.5v1.5"/></svg></span>
+              <div style="min-width: 0">
+                <p class="vl-att__title">Le secret ne signe aucun cookie</p>
+                <p class="vl-att__sub" style="color: var(--signal-ink)">Nouveau, à surveiller, déduit par la règle R2</p>
+              </div>
+              <button class="vl-btn vl-btn--secondary vl-btn--sm">Accès</button>
+            </div>
+          </section>
+
+          <section class="vl-card" aria-label="Vérifications">
+            <div class="vl-card__head">
+              <span class="vl-label">Vérifié par VisionLayer</span>
+              <span class="mono" style="font-size: 11px; color: var(--live-ink)">5 / 5</span>
+            </div>
+            <sc-for list="{{checks}}" as="c" hint-placeholder-count="5">
+              <div style="display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 10px; padding: 9px 16px; border-top: 1px solid var(--line); align-items: start">
+                <span class="check" style="margin-top: 1px"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="m3.5 8.5 3 3 6-7"/></svg></span>
+                <div style="display: flex; flex-direction: column; gap: 1px"><p style="font-size: 12.5px; line-height: 17px; font-weight: 500">{{c.title}}</p><p style="font-size: 11.5px; line-height: 15px; color: var(--muted)">{{c.note}}</p></div>
+              </div>
+            </sc-for>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1490}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tab: "forms" };
+  }
+  renderVals() {
+    var self = this;
+    var tab = this.state.tab;
+    var TABS = [["forms", "Formes", "8"], ["rules", "Règles", "3"], ["yaml", "YAML", "1"], ["brief", "Fiche de l'agent", "5"]];
+    var cell = "display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-left: 1px solid var(--line); margin-left: -1px";
+    var STEPS = [
+      ["1", "Inventaire", "8 formes", true], ["2", "Tests", "8 sur 8 passent", true], ["3", "Règles", "3 règles", true],
+      ["4", "Vérification", "5 sur 5", true], ["5", "Différence", "à décider", false]
+    ];
+    var quiet = "font-size: 11.5px; color: var(--muted)";
+    function form(id, f, fact, where) {
+      return { id: id, form: f, fact: fact, where: where || "absente du projet",
+        whereStyle: where ? "font: 400 11.5px/16px var(--font-mono); color: var(--ink)" : quiet };
+    }
+    return {
+      onForms: tab === "forms", onRules: tab === "rules", onYaml: tab === "yaml", onBrief: tab === "brief",
+      tabs: TABS.map(function (t) { return { label: t[1], count: t[2], cls: t[0] === tab ? "tab tab--on" : "tab", pick: function () { self.setState({ tab: t[0] }); } }; }),
+      steps: STEPS.map(function (s) {
+        return { n: s[0], label: s[1], count: s[2], done: s[3], todo: !s[3], cell: cell,
+          dot: "width: 24px; height: 24px; flex: none; border-radius: 50%; display: grid; place-items: center; font: 600 11px/1 var(--font-mono); " + (s[3] ? "background: var(--ink); color: var(--surface)" : "background: var(--signal-soft); color: var(--signal-ink); box-shadow: inset 0 0 0 1.5px var(--signal)"),
+          countStyle: s[3] ? "font-size: 13px; font-weight: 500" : "font-size: 13px; font-weight: 600; color: var(--signal-ink)" };
+      }),
+      diff: [
+        { value: "+4", label: "faits ajoutés", note: "lecteur, lecture, émission, mécanisme de session", color: "color: var(--on-night)" },
+        { value: "0", label: "fait retiré", note: "les faits des 11 autres packs ne bougent pas", color: "color: var(--on-night)" },
+        { value: "+1", label: "point à surveiller", note: "le secret ne signe rien", color: "color: var(--signal)" },
+        { value: "60", label: "fichiers lus sur 60", note: "58 aujourd'hui : app.ts et session.ts", color: "color: var(--on-night)" }
+      ],
+      groups: [
+        { name: "Monter le lecteur", source: "README : cookieParser(secret, options)", forms: [
+          form("F1", "app.use(cookieParser())", "lecteur, sans secret"),
+          form("F2", "cookieParser(secret)", "lecteur, secret nommé", "src/app.ts:34"),
+          form("F3", "cookieParser([s1, s2])", "lecteur, secrets en rotation") ] },
+        { name: "Lire un cookie", source: "README : req.cookies, req.signedCookies", forms: [
+          form("F4", "req.cookies.nom, req.cookies?.[NOM]", "lecture, non signée", "src/auth/session.ts:22"),
+          form("F5", "req.signedCookies.nom", "lecture, signée et vérifiée") ] },
+        { name: "Vérifier à la main", source: "README : fonctions exportées", forms: [
+          form("F6", "cookieParser.signedCookie(str, secret)", "vérification explicite"),
+          form("F7", "cookieParser.JSONCookie(str), JSONCookies(obj)", "cookie JSON (préfixe j:)") ] },
+        { name: "Poser un cookie", source: "Express : res.cookie, option signed", forms: [
+          form("F8", "res.cookie(nom, valeur, { signed })", "émission, signée ou non", "src/auth/session.ts:17") ] }
+      ],
+      rules: [
+        { id: "R1", title: "Un point d'entrée monté sous le lecteur reçoit ses cookies", logic: "cookie_reader(F, _, _), entrypoint_in_app(E, F) → cookies_available(E)" },
+        { id: "R2", title: "Un secret qui ne signe rien est à surveiller", logic: "cookie_reader(_, _, Secret), Secret ≠ \"\", cookie_set(_, _, N, unsigned), cookie_read(_, _, N, unsigned) → finding(secret_unused, N)" },
+        { id: "R3", title: "Un cookie lu par une garde est le mécanisme de session de ses points d'entrée", logic: "cookie_read(F, L, N, _), guard_fn(G, F), guarded_by(E, G) → trust(E, cookie, N)" }
+      ],
+      yaml: "id: cookie-parser\nname: cookie-parser\ntech: [cookie-parser]\nlanguages: [javascript, typescript]\nwhen: { imports: [cookie-parser, express] }\nrequires: [express]          # ADR 0019, proposé\nprovides: [cookie_reader, cookie_read, cookie_set]\nmodel: 2\nmatch:\n  - id: reader\n    query: |\n      (call_expression\n        function: (identifier) @fn\n        arguments: (arguments . (_)? @secret))\n    where:\n      fn: { import_of: cookie-parser }\n    emit: cookie_reader($file, $line, @secret:raw)\n  - id: read\n    query: |\n      (member_expression\n        object: (member_expression\n          property: (property_identifier) @bag)\n        property: (_) @name)\n    where:\n      bag: [cookies, signedCookies]\n    emit: cookie_read($file, $line, @name, @bag)\n  # … F3, F6, F7, F8 : 4 motifs de plus\nrules: |\n  # R1 à R3, voir l'onglet Règles",
+      brief: [
+        { n: "1", title: "La technologie, pas le projet", text: "cookie-parser 1.4.7 lu dans le lockfile ; seuls son README, ses types et la page res.cookie d'Express sont fournis. Aucun fichier d'atelier-api." },
+        { n: "2", title: "L'inventaire des formes", text: "Chaque forme documentée de l'API, rangée par usage, avec un exemple." },
+        { n: "3", title: "Un test par forme", text: "Un petit fichier d'exemple et le fait attendu, pour chacune des 8 formes." },
+        { n: "4", title: "Le pack, sans script", text: "Requêtes tree-sitter et règles ; sortie contrainte au schéma des packs." },
+        { n: "5", title: "Déposer, ne rien charger", text: "Dans .vision/packs/proposes/ ; VisionLayer vérifie, l'humain décide." }
+      ],
+      facts: [
+        { rel: "cookie_reader", text: "cookieParser monté sur l'app, secret SESSION_SECRET (nom seulement), 14 points d'entrée ; le webhook Stripe, déclaré avant (ligne 31), n'y passe pas", dir: "src/", file: "app.ts", line: "34" },
+        { rel: "cookie_read, sid, non signée", text: "dans requireUser, la garde de 8 points d'entrée", dir: "src/auth/", file: "session.ts", line: "22" },
+        { rel: "cookie_set, sid, non signé", text: "httpOnly, sameSite lax, secure en production ; posé par openSession (2 points d'entrée)", dir: "src/auth/", file: "session.ts", line: "17" },
+        { rel: "trust, cookie sid", text: "mécanisme de session des 8 points gardés, vérifié en base dans sessions", dir: "src/auth/", file: "session.ts", line: "28" }
+      ],
+      checks: [
+        { title: "Schéma strict du pack", note: "aucun champ inconnu" },
+        { title: "8 tests de forme sur 8", note: "un fichier d'exemple par forme, hors du projet" },
+        { title: "Le moteur ne connaît aucune pile", note: "aucun nom de technologie ajouté à vision/facts/" },
+        { title: "Déclarations sans cycle", note: "requires express (actif), provides 3 relations, préfixées" },
+        { title: "Charger puis retirer = jamais chargé", note: "sur atelier-api, carte identique à celle d'aujourd'hui" }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

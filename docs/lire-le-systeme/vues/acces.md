@@ -2,7 +2,7 @@
 
 | Question | Niveau | Objet du modèle | État |
 |---|---|---|---|
-| Qui peut entrer dans le système, et qu'a-t-il le droit d'y faire ? | lecture transversale | `Guard` de chaque point d'entrée (niveau, fonction qui la tient : `by`) ; déroulé de cette fonction (refus, lectures) ; écritures de ce qu'elle lit ; facette `trust` (à remplir) ; affirmations déclarées sur l'accès | codée en partie ; remaquettée le 11/10 (planches 26b à 26e), à recoder |
+| Qui peut entrer dans le système, et qu'a-t-il le droit d'y faire ? | lecture transversale | `Guard` de chaque point d'entrée (niveau, fonction qui la tient : `by`) ; déroulé de cette fonction (refus, lectures) ; écritures de ce qu'elle lit ; facette `trust` (à remplir) ; affirmations déclarées sur l'accès | codée en partie ; remaquettée le 11/10 (planches 26b à 26e) ; redessinée le 28/10 pour le hackathon (écran 04) |
 
 ## 1. Objet
 
@@ -98,3 +98,15 @@ Les comptes réels, les rôles réellement attribués et les secrets ne sont jam
 ## 9. Relations
 
 Vers [Points d'entrée](points-d-entree.md) pour le déroulé d'une route ; vers [Données](donnees.md) pour ce qu'une entrée atteint ; vers [Données personnelles](donnees-personnelles.md) pour ce qu'un acteur peut lire de personnel ; vers [Connaissance](connaissance.md) pour les affirmations déclarées.
+
+## 10. L'écran 04 du hackathon
+
+Le même contenu, dans la direction du hackathon, centré sur ce qui demande d'aller voir.
+
+- **En-tête :** la répartition des 15 points d'entrée d'atelier-api en une phrase : 6 publics, 7 pour une personne connectée, 1 pour le rôle admin, 1 webhook signé. La session vient du pack cookie-parser (écran 03) : le cookie `sid`, vérifié en base, 30 jours, purgé chaque nuit (`src/jobs/purge.ts:7`).
+- **Carte noire : le constat principal.** Toute personne connectée peut télécharger l'email, le nom et le téléphone de tous les clients. `GET /admin/export` n'exige que `requireUser` (`src/admin/export.ts:8`) puis lit `users` (`export.ts:9`). Le commentaire de l'auteur dit « pour la compta » (`export.ts:6`). À droite, le chemin d'un appel : qui passe, la garde, ce qui est lu, et la vérification qui manque (`requireAdmin`).
+- **Second point :** le rôle `admin` est déclaré (`src/db/schema.ts:15`) et exigé par le remboursement (`src/payments/refund.ts:12`), mais aucun code ne l'attribue. Les inscriptions reçoivent `customer` par défaut. La vue dit « attribué hors du code, ou jamais », sans trancher.
+- **Corps :**
+  - à gauche, deux onglets, « Par point d'entrée » (par défaut, groupé par ressource) et « Par acteur ». Chaque route dit qui passe, la ligne qui en décide, et si elle compare la donnée à l'appelant ;
+  - à droite, le panneau du point d'entrée choisi : qui passe et ce que reçoit chacun, les couches traversées de l'hébergeur à la base, le code indexé avec ses numéros, et les affirmations de l'équipe (aucune ici : fiche manquante).
+- **Ce qui vient de Vigie :** rien n'est écrit par le modèle. Le bouton « Demander à Vigie » ouvre l'écran 05 sur la question « Qui peut exporter les données clients ? ».

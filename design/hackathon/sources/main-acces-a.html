@@ -1,0 +1,86 @@
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 24px; border-bottom: 1px solid var(--line); background: var(--surface)">
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted)"><span>atelier-api</span><span aria-hidden="true">›</span><span style="color: var(--ink); font-weight: 500">Accès</span></div>
+      <span class="vl-pill"><i class="vl-dot vl-dot--live"></i>À jour, 09:12</span>
+    </header>
+
+    <div style="padding: 24px 28px 36px; display: flex; flex-direction: column; gap: 18px">
+      <div style="display: flex; flex-direction: column; gap: 6px; max-width: 860px">
+        <h1 style="font: 600 26px/32px var(--font-sans); letter-spacing: -.02em">Qui peut entrer, et ce qu'il a le droit d'y faire</h1>
+        <p style="color: var(--ink-2); font-size: 14px; line-height: 21px">Lu dans le code : qui appelle le système, comment chacun prouve qui il est, ce qu'il peut appeler et toucher. Les comptes réels et les rôles attribués en base ne sont pas lus.</p>
+      </div>
+
+      <div class="tiles">
+        <div class="tile"><small>Qui peut appeler</small><b>15 points d'entrée</b><span>6 ouverts à tous, 7 avec une session, 1 admin, 1 signé par Stripe</span></div>
+        <div class="tile"><small>Les acteurs</small><b>8 acteurs</b><span>3 personnes, Stripe et 4 tâches du système</span></div>
+        <div class="tile"><small>Comment on prouve qui on est</small><b>Une session en base</b><span>le cookie <code class="vl-code">sid</code>, valable 30 jours</span></div>
+        <div class="tile tile--cr"><small>Vérifié sur la donnée</small><b>4 routes sur 7</b><span>comparent la réservation à l'appelant ; l'export ne compare rien</span></div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; align-items: start">
+        <section class="card">
+          <div class="tabs">
+            <button class="seg seg--on">Par acteur <span class="vl-count">8</span></button>
+            <button class="seg">Par point d'entrée <span class="vl-count">15</span></button>
+            <span class="note">Deux façons de lire la même chose</span>
+          </div>
+          <div class="ac ac--h"><span>Acteur</span><span>Sa preuve</span><span>Reconnu par</span><span>Routes atteintes</span><span>Sur la donnée</span><span>À aller voir</span></div>
+
+          <div class="grp">Personnes <span>3</span></div>
+          <div class="ac"><span><b>Visiteur</b></span><span class="pf">aucune preuve</span><span class="q">rien</span><span class="reach"><i><b style="width: 40%"></b></i>6 / 15</span><span class="q">sans objet</span><span class="q">rien</span></div>
+          <div class="ac ac--on"><span><b>Personne connectée</b><small>rôle customer, donné à l'inscription</small></span><span class="pf pf--k">cookie sid</span><span class="fn">requireUser()</span><span class="reach"><i><b style="width: 87%"></b></i>13 / 15</span><span class="own">si à elle, 4 routes</span><span class="see">atteint l'export de tous les clients</span></div>
+          <div class="ac"><span><b>Admin</b><small>rôle admin</small></span><span class="pf pf--k">cookie sid</span><span class="fn">requireAdmin()</span><span class="reach"><i><b style="width: 93%"></b></i>14 / 15</span><span class="own">lit toutes les réservations</span><span class="see">aucun code n'attribue ce rôle</span></div>
+
+          <div class="grp">Service extérieur <span>1</span></div>
+          <div class="ac"><span><b>Stripe</b><small>annonce les paiements</small></span><span class="pf">signature</span><span class="fn">constructEvent()</span><span class="reach"><i><b style="width: 7%"></b></i>1 / 15</span><span class="q">sans objet</span><span class="q">rien</span></div>
+
+          <div class="grp">Le système lui-même <span>4, aucune preuve demandée, accès complet à la base</span></div>
+          <div class="ac"><span><b>expireHolds()</b><small>chaque minute</small></span><span class="pf">interne</span><span class="q">rien</span><span class="q">tâche</span><span class="q">toutes</span><span class="see">tourne sur les 2 machines</span></div>
+          <div class="ac"><span><b>sendReminders()</b><small>chaque jour à 8 h</small></span><span class="pf">interne</span><span class="q">rien</span><span class="q">tâche</span><span class="q">toutes</span><span class="see">tourne sur les 2 machines</span></div>
+          <div class="ac"><span><b>purgeSessions()</b><small>chaque jour à 3 h</small></span><span class="pf">interne</span><span class="q">rien</span><span class="q">tâche</span><span class="q">toutes</span><span class="q">rien</span></div>
+          <div class="ac"><span><b>Worker emails</b><small>lit la file emails</small></span><span class="pf">interne</span><span class="q">rien</span><span class="q">file</span><span class="q">toutes</span><span class="q">rien</span></div>
+          <div class="foot">Les tâches planifiées tournent dans le processus de l'API (jobs/index.ts:12), et fly.toml garde 2 machines allumées : chacune lance les siennes.</div>
+        </section>
+
+        <aside style="display: flex; flex-direction: column; gap: 14px; min-width: 0">
+          <section class="night">
+            <div style="display: flex; flex-direction: column; gap: 4px">
+              <span class="lbl">Acteur choisi</span>
+              <h2>Personne connectée</h2>
+              <p class="sub">reconnue par requireUser(), session.ts:21</p>
+            </div>
+            <div class="nst">
+              <div><b>13</b><span>routes atteintes</span></div>
+              <div><b>4</b><span>vérifiées sur sa donnée</span></div>
+              <div><b>30 j</b><span>durée de la session</span></div>
+            </div>
+            <span class="lbl">Sa preuve, de la naissance au retrait</span>
+            <div class="life">
+              <div><i></i><b>obtenue</b><p>POST /auth/login ou /auth/signup, par openSession()<code>session.ts:13</code></p></div>
+              <div><i></i><b>présentée</b><p>cookie sid, httpOnly, 24 octets aléatoires</p></div>
+              <div class="now"><i></i><b>relue</b><p>à chaque appel, en base ; 401 si absente ou expirée<code>session.ts:21</code></p></div>
+              <div><i></i><b>expire</b><p>après 30 jours<code>config.ts:4, SESSION_DAYS</code></p></div>
+              <div><i></i><b>retirée</b><p>purgeSessions(), chaque jour à 3 h<code>jobs/purge.ts:6</code></p></div>
+            </div>
+            <div class="warn">Aucune route de déconnexion : une session vit ses 30 jours. Et le lien de réinitialisation est créé (reset.ts:19), mais aucune route ne l'utilise.</div>
+          </section>
+
+          <section class="card">
+            <div class="hd"><h2>Ce qu'elle atteint</h2><span>13 sur 15</span></div>
+            <div class="res"><span class="fn">/bookings</span><span class="mk mk--q">si à elle, 3</span><span class="reach"><i><b style="width: 100%"></b></i></span><span>4 / 4</span></div>
+            <div class="res"><span class="fn">/payments</span><span class="mk mk--q">si à elle</span><span class="reach"><i><b style="width: 50%"></b></i></span><span>1 / 2</span></div>
+            <div class="res"><span class="fn">/reviews</span><span></span><span class="reach"><i><b style="width: 100%"></b></i></span><span>1 / 1</span></div>
+            <div class="res" style="background: #fdf5f3"><span class="fn">/admin/export</span><span class="mk mk--cr">sans rôle</span><span class="reach"><i><b style="width: 100%; background: #d23f2c"></b></i></span><span>1 / 1</span></div>
+            <div class="res"><span>ouvertes à tous</span><span></span><span class="reach"><i><b style="width: 100%"></b></i></span><span>6 / 6</span></div>
+          </section>
+        </aside>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":__H__}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

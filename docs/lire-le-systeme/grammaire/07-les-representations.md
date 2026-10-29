@@ -18,7 +18,8 @@ Une représentation qu'on ne comprend pas d'un regard rend l'écran inutile. Ava
 6. **Une tête de flèche de taille fixe.** 8 px, quelle que soit l'épaisseur du trait. L'épaisseur dit la nature du lien (écrire pèse plus que lire), jamais la taille de la tête.
 7. **Une couleur a toujours son mot.** Rouge ou orange viennent avec un libellé (« constat », « sans revérifier ») ou une légende visible.
 8. **La valeur, pas seulement l'action.** Quand une donnée change, on montre sa valeur avant et après (`pending` → `cancelled`), pas seulement « écrit ».
-9. **Vérifié sur une capture en pleine résolution** avant d'être montré : aucun texte coupé, aucune flèche qui mord, rien qui se chevauche.
+9. **Ni carré devant les étiquettes, ni « · » entre deux idées.** Ils décorent sans rien dire et hachent la lecture. On écrit une virgule, deux-points, des parenthèses ou une phrase : « 8 appels », « Pack chargé : cookie-parser 1.4.7 ». Règle posée le 28/10/2026.
+10. **Vérifié sur une capture en pleine résolution** avant d'être montré : aucun texte coupé, aucune flèche qui mord, rien qui se chevauche.
 
 ## 1. Le vocabulaire commun
 
@@ -141,7 +142,7 @@ Un style n'est jamais supposé. VisionLayer lit les points de contact dans le co
 | **Hexagonal** | des interfaces (ports) et plusieurs implémentations (adaptateurs) choisies à l'extérieur du domaine | le domaine au centre, les adaptateurs autour | le domaine importe-t-il un adaptateur ; les ports à plusieurs adaptateurs ; les adaptateurs sans port |
 | *Monorepo, bibliothèque, app mobile seule* | — | dessinés quand un projet de ce type sera ouvert | — |
 
-Exemple, atelier-api : client-serveur (l'app web appelle l'API Express, qui seule touche Postgres), avec une partie événementielle (la file `emails`, BullMQ, entre l'API et le worker). Son contrat `EmailSender` a trois adaptateurs choisis par `EMAIL_PROVIDER`. C'est un trait hexagonal local, montré par le Contrat (X3), pas par la disposition de la carte.
+Exemple, atelier-api : client-serveur (l'app web appelle l'API Express et ne touche jamais Postgres ; seuls l'API et le worker y accèdent), avec une partie événementielle (la file `emails`, BullMQ, entre l'API et le worker). Son contrat `EmailSender` a trois adaptateurs choisis par `EMAIL_PROVIDER`. C'est un trait hexagonal local, montré par le Contrat (X3), pas par la disposition de la carte.
 
 ## 4. Ce qui reste à dessiner
 

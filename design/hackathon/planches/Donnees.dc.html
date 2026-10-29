@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Données</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/visionlayerhackathon/components/bundle.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+:root{--canvas:#f3f2ef;--surface:#ffffff;--surface-sunken:#f7f6f4;--line:#e6e4e0;--line-strong:#d4d1cb;--ink:#121211;--ink-2:#3e3d3a;--muted:#6c6a66;--night:#141413;--night-2:#1f1f1d;--night-line:#34332f;--on-night:#f5f4f1;--on-night-muted:#a29f99;--tile-empty:#ebe9e5;--tile-quiet:#c8c5bf;--signal:#e2791d;--signal-ink:#9a4d0c;--signal-soft:#fbeee1;--critical:#d23f2c;--critical-ink:#a92f1f;--critical-soft:#fbe7e3;--live:#2c9a57;--live-ink:#1e7342;--live-soft:#e3f3e9;--radius-tile:3px;--radius-control:8px;--radius-card:12px;--radius-pill:999px;--shadow-card:0 1px 2px rgba(18,18,17,.04);--shadow-pop:0 8px 24px rgba(18,18,17,.16);--font-sans:"Geist","Inter",system-ui,sans-serif;--font-mono:"Geist Mono","JetBrains Mono",ui-monospace,monospace}
+body{margin:0;background:#f3f2ef}
+a{color:#121211}a:hover{color:#3e3d3a}
+.vl p,.vl h1,.vl h2{margin:0}
+.vl button{font-family:inherit}
+.mono{font-family:var(--font-mono)}
+.mono{font-family:var(--font-mono)}
+.seg{height:30px;padding:0 12px;border:0;border-radius:7px;background:none;color:#6c6a66;font:500 12.5px/1 var(--font-sans);cursor:pointer;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.seg--on{background:#121211;color:#f5f4f1}
+.tab{height:30px;padding:0 10px;border:0;border-radius:8px;background:none;color:#6c6a66;font:500 12.5px/1 var(--font-sans);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.tab--on{background:#f7f6f4;color:#121211;box-shadow:inset 0 0 0 1px #e6e4e0}
+.mk{display:inline-flex;align-self:flex-start;align-items:center;height:20px;padding:0 7px;border-radius:5px;font:500 11px/1 var(--font-mono);white-space:nowrap}
+.mk--pk{background:#e3f3e9;color:#1e7342}
+.mk--sg{background:#fbeee1;color:#9a4d0c}
+.mk--cr{background:#fbe7e3;color:#a92f1f}
+.mk--ok{background:#e3f3e9;color:#1e7342}
+.mk--q{background:#f7f6f4;color:#6c6a66;box-shadow:inset 0 0 0 1px #e6e4e0}
+.mk--nl{background:#fbeee1;color:#9a4d0c;box-shadow:inset 0 0 0 1px #f2d3b4}
+.step{width:22px;height:22px;border-radius:50%;background:#121211;color:#fff;display:inline-grid;place-items:center;font:600 11px/1 var(--font-mono);flex:none}
+.code-l{display:grid;grid-template-columns:34px minmax(0,1fr);font:400 12px/20px var(--font-mono)}
+.code-l>span:first-child{color:#a29f99;text-align:right;padding-right:10px;user-select:none}
+.code-l code{white-space:pre-wrap;color:#121211}
+.code-l--sg{background:#fbeee1}.code-l--cr{background:#fbe7e3}
+.gi{display:inline-block;width:15px;height:15px;background:currentColor;-webkit-mask:var(--m) center/contain no-repeat;mask:var(--m) center/contain no-repeat}
+.cp .gi{width:12px;height:12px}
+.gi--bug{--m:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%224.5%22%20y%3D%224.5%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221%22/%3E%3Cpath%20d%3D%22M6.5%202v2.5M9.5%202v2.5M6.5%2011.5V14M9.5%2011.5V14M2%206.5h2.5M2%209.5h2.5M11.5%206.5H14M11.5%209.5H14%22/%3E%3C/svg%3E")}
+.gi--integ{--m:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%221.5%22%20y%3D%225%22%20width%3D%225%22%20height%3D%226%22%20rx%3D%221%22/%3E%3Crect%20x%3D%229.5%22%20y%3D%225%22%20width%3D%225%22%20height%3D%226%22%20rx%3D%221%22/%3E%3Cpath%20d%3D%22M6.5%208h3%22/%3E%3C/svg%3E")}
+.gi--inc{--m:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M1.5%208h3l1.5-4%203%208%201.5-4h4%22/%3E%3C/svg%3E")}
+.gi--dec{--m:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%228%22%20cy%3D%223.5%22%20r%3D%221.5%22/%3E%3Ccircle%20cx%3D%224%22%20cy%3D%2212.5%22%20r%3D%221.5%22/%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212.5%22%20r%3D%221.5%22/%3E%3Cpath%20d%3D%22M8%205v3M8%208l-4%203M8%208l4%203%22/%3E%3C/svg%3E")}
+.gi--rev{--m:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M10.5%202.5l3%203-7.5%207.5H3v-3z%22/%3E%3C/svg%3E")}
+.gi--ref{--m:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5%202v12M5%2014l-2.5-2.5M5%2014l2.5-2.5M11%2014V2M11%202L8.5%204.5M11%202l2.5%202.5%22/%3E%3C/svg%3E")}
+.gi--code{--m:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M6%204L2%208l4%204M10%204l4%204-4%204%22/%3E%3C/svg%3E")}
+.gi--tests{--m:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%222%22%20y%3D%222%22%20width%3D%2212%22%20height%3D%2212%22%20rx%3D%222%22/%3E%3Cpath%20d%3D%22M5%208l2%202%204-4%22/%3E%3C/svg%3E")}
+.gi--data{--m:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cellipse%20cx%3D%228%22%20cy%3D%224%22%20rx%3D%225%22%20ry%3D%222%22/%3E%3Cpath%20d%3D%22M3%204v8c0%201.1%202.2%202%205%202s5-.9%205-2V4%22/%3E%3C/svg%3E")}
+.gi--logs{--m:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%222%22%20y%3D%222%22%20width%3D%2212%22%20height%3D%2212%22%20rx%3D%222%22/%3E%3Cpath%20d%3D%22M5%206h6M5%208.5h6M5%2011h4%22/%3E%3C/svg%3E")}
+.gi--ext{--m:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%221.5%22%20y%3D%225%22%20width%3D%225%22%20height%3D%226%22%20rx%3D%221%22/%3E%3Crect%20x%3D%229.5%22%20y%3D%225%22%20width%3D%225%22%20height%3D%226%22%20rx%3D%221%22/%3E%3Cpath%20d%3D%22M6.5%207h3M6.5%209h3%22/%3E%3C/svg%3E")}
+.card{background:#fff;border:1px solid #e6e4e0;border-radius:16px;min-width:0;overflow:hidden}
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.tile{background:#fff;border:1px solid #e6e4e0;border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.tile small{font:500 10.5px/14px var(--font-mono);text-transform:uppercase;letter-spacing:.05em;color:#6c6a66}
+.tile b{font:600 18px/24px var(--font-sans);letter-spacing:-.01em}
+.tile span{font-size:12.5px;line-height:17px;color:#3e3d3a}
+.tile--cr{border:1.5px solid #121211}
+.tabs{display:flex;align-items:center;gap:6px;padding:10px 12px;border-bottom:1px solid #e6e4e0;flex-wrap:wrap}
+.tabs .note{margin-left:auto;font-size:12px;color:#6c6a66}
+.tabs .vl-count{font:500 11px/1 var(--font-mono);color:#6c6a66}
+.tabs .seg--on .vl-count{color:#a29f99}
+.ac{display:grid;grid-template-columns:minmax(0,1.15fr) 104px 118px 118px minmax(0,.9fr) minmax(0,1.1fr);gap:12px;align-items:center;padding:11px 16px;border-top:1px solid #e6e4e0;font-size:13px;line-height:18px}
+.ac--h{border-top:0;background:#f7f6f4;font:500 10.5px/14px var(--font-mono);text-transform:uppercase;letter-spacing:.05em;color:#6c6a66;padding:9px 16px}
+.ac--on{background:#f7f6f4;box-shadow:inset 3px 0 0 #121211}
+.ac b{font-weight:600;display:block}
+.ac small{display:block;font-size:11.5px;line-height:15px;color:#6c6a66}
+.grp{padding:10px 16px;border-top:1px solid #e6e4e0;background:#fbfaf9;font-size:12.5px;font-weight:600;display:flex;gap:8px;align-items:baseline}
+.grp span{font-weight:400;color:#6c6a66}
+.pf{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:6px;font:500 11.5px/1 var(--font-sans);white-space:nowrap;justify-self:start;background:#fff;box-shadow:inset 0 0 0 1px #d4d1cb;color:#3e3d3a}
+.pf--k{background:#121211;color:#f5f4f1;box-shadow:none}
+.pf--g{background:#3e3d3a;color:#f5f4f1;box-shadow:none}
+.fn{font:400 12px/16px var(--font-mono);color:#121211;white-space:nowrap}
+.reach{display:flex;align-items:center;gap:8px;font:500 12px/1 var(--font-mono)}
+.reach i{flex:1;height:6px;border-radius:3px;background:#e6e4e0;overflow:hidden;display:block}
+.reach i b{display:block;height:100%;background:#121211;border-radius:3px}
+.own{font-size:12.5px;line-height:17px;color:#3e3d3a}
+.q{color:#6c6a66}
+.see{font-size:12.5px;line-height:17px;color:#a92f1f;font-weight:500}
+.foot{padding:10px 16px;border-top:1px solid #e6e4e0;font-size:12px;color:#6c6a66}
+.night{background:#141413;color:#f5f4f1;border-radius:16px;padding:20px 22px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.night h2{font:600 19px/25px var(--font-sans);letter-spacing:-.01em;margin:0}
+.night .sub{font-size:12.5px;line-height:18px;color:#a29f99}
+.night .lbl{font:500 10.5px/14px var(--font-mono);text-transform:uppercase;letter-spacing:.05em;color:#a29f99}
+.nst{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.nst div{background:#2a2a27;border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.nst b{font:600 20px/24px var(--font-sans)}
+.nst span{font-size:11.5px;line-height:15px;color:#a29f99}
+.life{display:flex;flex-direction:column}
+.life>div{display:grid;grid-template-columns:14px 84px minmax(0,1fr);gap:10px;position:relative;padding-bottom:12px}
+.life>div::before{content:"";position:absolute;left:6px;top:12px;bottom:-2px;border-left:1.5px solid #4a4945}
+.life>div:last-child::before{display:none}
+.life>div:last-child{padding-bottom:0}
+.life i{width:12px;height:12px;border-radius:50%;background:#f5f4f1;margin-top:3px;position:relative;z-index:1}
+.life .now i{background:#e2791d;box-shadow:0 0 0 4px #3a2a18}
+.life b{font-size:13px;line-height:18px;font-weight:600}
+.life p{font-size:12.5px;line-height:18px;color:#d8d5cf}
+.life code{font:400 11.5px/16px var(--font-mono);color:#a29f99;display:block}
+.warn{background:#2a2a27;border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:18px;color:#f5f4f1}
+.res{display:grid;grid-template-columns:minmax(0,1fr) auto 60px 54px;gap:10px;align-items:center;padding:9px 16px;border-top:1px solid #e6e4e0;font-size:12.5px}
+.res .fn{font-size:12.5px}
+.res .reach{gap:0}
+.res>span:last-child{font:500 12px/1 var(--font-mono);text-align:right;white-space:nowrap}
+.hd{padding:14px 16px 10px;display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.hd h2{font:600 15px/20px var(--font-sans);margin:0}
+.hd span{font-size:12px;color:#6c6a66}
+.mk--k{background:#121211;color:#f5f4f1}
+.ep{display:grid;grid-template-columns:minmax(0,1fr) 130px 108px 150px;gap:12px;align-items:center;padding:9px 16px;border-top:1px solid #e6e4e0;font-size:12.5px;line-height:17px}
+.ep--h{border-top:0;background:#f7f6f4;font:500 10.5px/14px var(--font-mono);text-transform:uppercase;letter-spacing:.05em;color:#6c6a66}
+.ep--on{background:#f7f6f4;box-shadow:inset 3px 0 0 #121211}
+.ep--dim{opacity:.38}
+.route{display:flex;align-items:center;gap:8px;min-width:0}
+.route code{font:500 12px/16px var(--font-mono);white-space:nowrap}
+.whos{display:flex;flex-wrap:wrap;gap:4px}
+.lay{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:4px 10px;align-items:start;padding:10px 0;border-top:1px solid #34332f}
+.lay:first-of-type{border-top:0}
+.lay .n{width:22px;height:22px;border-radius:6px;background:#f5f4f1;color:#141413;display:grid;place-items:center;font:600 11px/1 var(--font-mono)}
+.lay--cr .n{background:#d23f2c;color:#fff}
+.lay--nl .n{background:transparent;color:#a29f99;box-shadow:inset 0 0 0 1.5px #4a4945}
+.lay b{font-size:13px;line-height:18px}
+.lay p{grid-column:2/4;font-size:12.5px;line-height:17px;color:#a29f99}
+.lay .st{font:500 11px/1 var(--font-mono);padding:4px 7px;border-radius:5px;background:#2a2a27;color:#d8d5cf;white-space:nowrap}
+.lay--cr .st{background:#3a1a15;color:#f3a497}
+.lay--nl .st{background:transparent;box-shadow:inset 0 0 0 1px #4a4945;color:#a29f99}
+.ed{background:#1d1d1b;border-radius:10px;padding:8px 0;font:400 12px/20px var(--font-mono);overflow:hidden}
+.ed>div{display:grid;grid-template-columns:34px minmax(0,1fr);white-space:pre-wrap;overflow-wrap:anywhere}
+.ed>div>span:first-child{color:#6c6a66;text-align:right;padding-right:10px}
+.ed .hl{background:#3a1a15}
+.decl{border:1.5px dashed #c8c5bf;border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.decl small{font:500 10.5px/14px var(--font-mono);text-transform:uppercase;letter-spacing:.05em;color:#6c6a66}
+.decl p{font-size:12.5px;line-height:18px;color:#3e3d3a}
+.decl--k{border:1.5px solid #121211;background:#fff}
+.nr{display:flex;gap:12px;align-items:flex-start;background:#fbeee1;border-radius:12px;padding:12px 14px;font-size:12.5px;line-height:18px;color:#5c3207}
+.tb{display:grid;grid-template-columns:128px 98px 98px 58px minmax(0,1fr) minmax(0,1.25fr);gap:10px;align-items:center;padding:9px 16px;border-top:1px solid #e6e4e0;font-size:12.5px;line-height:17px}
+.tb--h{border-top:0;background:#f7f6f4;font:500 10.5px/14px var(--font-mono);text-transform:uppercase;letter-spacing:.05em;color:#6c6a66}
+.tb--on{background:#f7f6f4;box-shadow:inset 3px 0 0 #121211}
+.tb code{font:500 12.5px/16px var(--font-mono);color:#121211}
+.rw{display:flex;gap:4px}
+.rw i{font:500 11px/1 var(--font-mono);font-style:normal;padding:4px 6px;border-radius:5px;background:#f7f6f4;color:#3e3d3a;box-shadow:inset 0 0 0 1px #e6e4e0}
+.rw i.w{background:#121211;color:#f5f4f1;box-shadow:none}
+.ct{font:400 11.5px/15px var(--font-mono);color:#3e3d3a}
+.states{display:flex;flex-wrap:wrap;gap:6px}
+.states span{font:500 11.5px/1 var(--font-mono);padding:5px 8px;border-radius:6px;background:#2a2a27;color:#f5f4f1}
+.states span.off{background:transparent;color:#a29f99;box-shadow:inset 0 0 0 1px #4a4945;text-decoration:line-through}
+.race{background:#3a1a15;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.race p{font-size:12.5px;line-height:18px;color:#f3d2cb}
+.race b{color:#f5f4f1;font-size:13px}
+.wr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:9px 16px;border-top:1px solid #e6e4e0;font-size:12.5px;line-height:17px;align-items:center}
+.wr small{grid-column:1/3;font:400 11.5px/15px var(--font-mono);color:#6c6a66}
+</style>
+</helmet>
+<div class="vl" style="display: flex; flex-wrap: wrap; min-height: 1440px; background: var(--canvas)">
+
+  <nav aria-label="Navigation" style="flex: 1 1 232px; max-width: 100%; box-sizing: border-box; background: var(--surface); border-right: 1px solid var(--line); padding: 14px 12px; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 2px 4px">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="8" fill="#121211"/><g fill="#f5f4f1"><circle cx="7.5" cy="9" r="1.4" opacity=".45"/><circle cx="7.5" cy="15" r="1.4" opacity=".7"/><circle cx="7.5" cy="21" r="1.4"/><circle cx="11.5" cy="9" r="1.4" opacity=".7"/><circle cx="11.5" cy="15" r="1.4"/><circle cx="11.5" cy="21" r="1.4"/><rect x="16" y="7.5" width="8" height="6" rx="1.5"/></g><rect x="16" y="16.5" width="8" height="6" rx="1.5" fill="#a29f99"/><path d="M20 13.5v3" stroke="#f5f4f1" stroke-width="1.2"/></svg>
+      <div style="display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1">
+        <span style="font-weight: 600; font-size: 14px; line-height: 18px">VisionLayer</span>
+        <span class="mono" style="font-size: 11px; line-height: 14px; color: var(--muted)">atelier-api, main</span>
+      </div>
+      <button aria-label="Replier la barre latérale" style="border: 0; background: none; color: var(--muted); padding: 4px; cursor: pointer"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2"/><path d="M6.5 2.5v11"/></svg></button>
+    </div>
+
+    <label style="display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 8px; border-radius: 8px; background: var(--surface-sunken); border: 1px solid var(--line); color: var(--muted)">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>
+      <input placeholder="Rechercher…" aria-label="Rechercher une route, une table, un fichier" style="border: 0; background: none; outline: none; font: 400 12.5px/1 var(--font-sans); color: var(--ink); flex: 1; min-width: 0">
+      <span class="vl-kbd">⌘K</span>
+    </label>
+
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span class="vl-label" style="padding: 6px 8px 4px">Système</span>
+      <a href="Main.dc.html" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="9" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="2.5" y="9" width="4.5" height="4.5" rx="1"/><rect x="9" y="9" width="4.5" height="4.5" rx="1"/></svg><span>Vue d'ensemble</span></a>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2" y="2.5" width="5" height="4" rx="1"/><rect x="9" y="9.5" width="5" height="4" rx="1"/><path d="M4.5 6.5v5H9"/></svg><span>Carte</span><span class="vl-count">3</span></a>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3.5" y="7" width="9" height="6.5" rx="1"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg><span>Accès</span><span class="vl-count vl-count--critical">2</span></a>
+      <a href="#" class="vl-nav vl-nav--active"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><ellipse cx="8" cy="4" rx="5" ry="1.8"/><path d="M3 4v8c0 1 2.2 1.8 5 1.8s5-.8 5-1.8V4M3 8c0 1 2.2 1.8 5 1.8S13 9 13 8"/></svg><span>Données</span><span class="vl-count">14</span></a>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3.2l2 1.3"/></svg><span>Tâches planifiées</span><span class="vl-count vl-count--signal">3</span></a>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span class="vl-label" style="padding: 6px 8px 4px">Connaissance</span>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 2.5h8v11l-4-2.5-4 2.5z"/></svg><span>Règles et décisions</span><span class="vl-count vl-count--critical">1</span></a>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="5" width="10" height="8" rx="2"/><path d="M8 2.5V5M6 9h.01M10 9h.01"/></svg><span>Sessions d'agents</span><span class="vl-count">0</span></a>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span class="vl-label" style="padding: 6px 8px 4px">Lecture</span>
+      <a href="Pack.dc.html" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m8 2 5.5 3v6L8 14l-5.5-3V5z"/><path d="M8 8v6M8 8l5.5-3M8 8 2.5 5"/></svg><span>Packs</span><span class="vl-count vl-count--signal">1</span></a>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="1.5"/><path d="M2.5 8h11M8 2.5v11" stroke-dasharray="2 1.5"/></svg><span>Couverture</span></a>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span class="vl-label" style="padding: 6px 8px 4px">Pratique</span>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M7 5.5 10 8l-3 2.5z"/></svg><span>Replays</span><span class="vl-count">1</span></a>
+    </div>
+
+    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px">
+      <a href="#" style="display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px; background: var(--night); color: var(--on-night); text-decoration: none">
+        <span style="width: 26px; height: 26px; border-radius: 7px; background: var(--night-2); border: 1px solid var(--night-line); display: grid; place-items: center"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#f5f4f1" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.5v2.5M8 12v2.5M1.5 8H4M12 8h2.5"/></svg></span>
+        <span style="flex: 1; display: flex; flex-direction: column; gap: 1px"><span style="font-weight: 600; font-size: 13px; line-height: 16px">Demander à Vigie</span><span style="font-size: 11.5px; line-height: 14px; color: var(--on-night-muted)">Muse Spark, cite ses preuves</span></span>
+        <span class="vl-kbd" style="background: var(--night-2); color: var(--on-night-muted); border-color: var(--night-line)">⌘J</span>
+      </a>
+      <a href="#" class="vl-nav"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="2"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"/></svg><span>Réglages</span></a>
+      <div style="display: flex; align-items: center; gap: 10px; padding: 8px 6px 2px; border-top: 1px solid var(--line)">
+        <span style="width: 28px; height: 28px; border-radius: 50%; background: var(--surface-sunken); border: 1px solid var(--line-strong); display: grid; place-items: center; font: 600 11px/1 var(--font-sans)">MS</span>
+        <span style="display: flex; flex-direction: column; gap: 1px"><span style="font-weight: 600; font-size: 12.5px; line-height: 16px">Mouhamed Sylla</span><span style="font-size: 11.5px; line-height: 14px; color: var(--muted)">Ingénieur, Dakar</span></span>
+      </div>
+    </div>
+  </nav>
+
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 24px; border-bottom: 1px solid var(--line); background: var(--surface)">
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted)"><span>atelier-api</span><span aria-hidden="true">›</span><span>Données</span><span aria-hidden="true">›</span><span style="color: var(--ink); font-weight: 500">Postgres</span></div>
+      <span class="vl-pill"><i class="vl-dot vl-dot--live"></i>À jour, 09:12</span>
+    </header>
+
+    <div style="padding: 24px 28px 36px; display: flex; flex-direction: column; gap: 18px">
+      <div style="display: flex; flex-direction: column; gap: 6px; max-width: 880px">
+        <h1 style="font: 600 26px/32px var(--font-sans); letter-spacing: -.02em">Qui lit, qui écrit, et sous quel contrôle</h1>
+        <p style="color: var(--ink-2); font-size: 14px; line-height: 21px">Les 14 tables de Postgres, déclarées dans src/db/schema.ts, croisées avec le code qui les touche. Chaque case renvoie à sa ligne. Ce que contient la base en production n'est pas lu.</p>
+      </div>
+
+      <div class="tiles">
+        <div class="tile"><small>Les tables</small><b>14 tables</b><span>en 3 groupes : réservations et paiements, comptes, catalogue</span></div>
+        <div class="tile"><small>Qui les touche</small><b>3 parties du code</b><span>les routes de l'API, ses tâches planifiées, le worker emails ; et 1 déclencheur en base</span></div>
+        <div class="tile"><small>Contrôles en base</small><b>4 contraintes d'unicité</b><span>dont une seule réservation active par client et par créneau</span></div>
+        <div class="tile tile--cr"><small>Lue puis réécrite</small><b>bookings</b><span>expireHolds annule sans revérifier l'état qu'il a lu</span></div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; align-items: start">
+        <section class="card">
+          <div class="tabs">
+            <button class="seg seg--on">Postgres <span class="vl-count">14</span></button>
+            <button class="seg">Redis <span class="vl-count">1 file</span></button>
+            <span class="note" style="display: flex; gap: 6px; align-items: center"><span class="rw"><i>lit</i><i class="w">écrit</i></span></span>
+          </div>
+          <div class="tb tb--h"><span>Table</span><span>Routes de l'API</span><span>Tâches planifiées</span><span>Worker</span><span>Contrainte</span><span>À aller voir</span></div>
+
+          <div class="grp">Réservations et paiements <span>6</span></div>
+          <div class="tb tb--on"><code>bookings</code><span class="rw"><i>lit</i><i class="w">écrit</i></span><span class="rw"><i>lit</i><i class="w">écrit</i></span><span class="rw"><i>lit</i></span><span class="ct">1 active par créneau</span><span class="see">lue puis réécrite sans revérifier</span></div>
+          <div class="tb"><code>slots</code><span class="rw"><i>lit</i><i class="w">écrit</i></span><span class="rw"><i>lit</i><i class="w">écrit</i></span><span class="rw"><i>lit</i></span><span></span><span></span></div>
+          <div class="tb"><code>payments</code><span class="rw"><i>lit</i><i class="w">écrit</i></span><span></span><span></span><span class="ct">intent_id unique</span><span></span></div>
+          <div class="tb"><code>refunds</code><span class="rw"><i class="w">écrit</i></span><span></span><span></span><span class="ct">stripe_refund_id unique</span><span class="q">l'état failed n'est jamais écrit</span></div>
+          <div class="tb"><code>processed_events</code><span class="rw"><i class="w">écrit</i></span><span></span><span></span><span class="ct">un événement Stripe, une fois</span><span></span></div>
+          <div class="tb"><code>email_jobs</code><span></span><span></span><span class="rw"><i class="w">écrit</i></span><span></span><span></span></div>
+
+          <div class="grp">Comptes <span>3</span></div>
+          <div class="tb"><code>users</code><span class="rw"><i>lit</i><i class="w">écrit</i></span><span></span><span class="rw"><i>lit</i></span><span class="ct">email unique</span><span class="see">le rôle admin n'est jamais écrit</span></div>
+          <div class="tb"><code>sessions</code><span class="rw"><i>lit</i><i class="w">écrit</i></span><span class="rw"><i class="w">écrit</i></span><span></span><span></span><span></span></div>
+          <div class="tb"><code>password_resets</code><span class="rw"><i class="w">écrit</i></span><span></span><span></span><span></span><span class="see">écrite, jamais relue</span></div>
+
+          <div class="grp">Catalogue et le reste <span>5</span></div>
+          <div class="tb"><code>workshops</code><span class="rw"><i>lit</i></span><span></span><span class="rw"><i>lit</i></span><span></span><span class="q">écrite par importCsv, que rien n'appelle</span></div>
+          <div class="tb"><code>instructors</code><span class="rw"><i>lit</i></span><span></span><span></span><span></span><span class="q">rien ne l'écrit</span></div>
+          <div class="tb"><code>reviews</code><span class="rw"><i class="w">écrit</i></span><span></span><span></span><span></span><span class="q">écrite, jamais relue</span></div>
+          <div class="tb"><code>audit_log</code><span></span><span></span><span></span><span></span><span class="q">écrite par le déclencheur audit_bookings</span></div>
+          <div class="tb"><code>settings</code><span></span><span></span><span></span><span></span><span class="q">ni lue ni écrite</span></div>
+          <div class="foot">Les tâches planifiées tournent dans le processus de l'API ; elles ont leur colonne parce qu'elles écrivent sans qu'aucune requête n'arrive.</div>
+        </section>
+
+        <aside style="display: flex; flex-direction: column; gap: 14px; min-width: 0">
+          <section class="night">
+            <div style="display: flex; flex-direction: column; gap: 4px">
+              <span class="lbl">Table choisie</span>
+              <h2>bookings</h2>
+              <p class="sub">12 champs, déclarée à schema.ts:37</p>
+            </div>
+            <div class="nst">
+              <div><b>7</b><span>lignes qui l'écrivent</span></div>
+              <div><b>8</b><span>lignes qui la lisent</span></div>
+              <div><b>5</b><span>états possibles</span></div>
+            </div>
+            <span class="lbl">Ses états</span>
+            <div class="states"><span>pending</span><span>confirmed</span><span>cancelled</span><span>refunded</span><span class="off">on_hold</span></div>
+            <p class="sub">on_hold est déclaré, mais aucun code ne l'écrit.</p>
+            <div class="race">
+              <b>Lue puis réécrite sans revérifier</b>
+              <p>expireHolds lit les réservations encore pending (expire.ts:15), puis les annule par leur seul identifiant (expire.ts:21). Un paiement confirmé entre les deux est annulé quand même.</p>
+              <button class="vl-btn vl-btn--light vl-btn--sm" style="align-self: flex-start">Rejouer cette course</button>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="hd"><h2>Qui l'écrit</h2><span>7 lignes</span></div>
+            <div class="wr"><span><span class="vl-method">POST</span> <code class="vl-code">/bookings</code></span><span class="mk mk--q">crée</span><small>bookings/create.ts:28</small></div>
+            <div class="wr"><span><span class="vl-method">POST</span> <code class="vl-code">/webhooks/stripe</code></span><span class="mk mk--q">confirme</span><small>bookings/confirm.ts:28, webhooks/stripe.ts:53</small></div>
+            <div class="wr"><span><span class="vl-method">PATCH</span> <code class="vl-code">/bookings/:id</code></span><span class="mk mk--q">annule</span><small>bookings/update.ts:21</small></div>
+            <div class="wr"><span><span class="vl-method">POST</span> <code class="vl-code">/bookings/:id/transfer</code></span><span class="mk mk--q">cède</span><small>bookings/transfer.ts:24</small></div>
+            <div class="wr"><span><span class="vl-method">POST</span> <code class="vl-code">/payments/:id/refund</code></span><span class="mk mk--q">rembourse</span><small>payments/refund.ts:27</small></div>
+            <div class="wr" style="background: #fdf5f3"><span>expireHolds(), chaque minute</span><span class="mk mk--cr">annule</span><small>jobs/expire.ts:18</small></div>
+            <div class="foot">Ensuite, le déclencheur audit_bookings copie chaque changement d'état dans audit_log (0001_audit.sql:12).</div>
+          </section>
+
+          <div class="decl decl--k">
+            <small>Déclaré par l'équipe, README.md:24</small>
+            <p style="color: var(--ink); font-weight: 500">« Une réservation non payée est libérée après 15 minutes. »</p>
+            <p><span class="mk mk--cr">contredite par le code</span> HOLD_MINUTES vaut 30, config.ts:3</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1440}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

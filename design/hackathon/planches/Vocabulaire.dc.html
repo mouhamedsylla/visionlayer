@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Le vocabulaire commun</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="ds/visionlayerhackathon/components/bundle.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<style>
+:root{--canvas:#f3f2ef;--surface:#ffffff;--surface-sunken:#f7f6f4;--line:#e6e4e0;--line-strong:#d4d1cb;--ink:#121211;--ink-2:#3e3d3a;--muted:#6c6a66;--night:#141413;--night-2:#1f1f1d;--night-line:#34332f;--on-night:#f5f4f1;--on-night-muted:#a29f99;--tile-empty:#ebe9e5;--tile-quiet:#c8c5bf;--signal:#e2791d;--signal-ink:#9a4d0c;--signal-soft:#fbeee1;--critical:#d23f2c;--critical-ink:#a92f1f;--critical-soft:#fbe7e3;--live:#2c9a57;--live-ink:#1e7342;--live-soft:#e3f3e9;--radius-tile:3px;--radius-control:8px;--radius-card:12px;--radius-pill:999px;--shadow-card:0 1px 2px rgba(18,18,17,.04);--font-sans:"Geist","Inter",system-ui,sans-serif;--font-mono:"Geist Mono","JetBrains Mono",ui-monospace,monospace}
+body{margin:0;background:#f3f2ef}
+.vl p,.vl h1,.vl h2,.vl h3{margin:0}
+.cell{background:#fff;border:1px solid #e6e4e0;border-radius:12px;display:flex;flex-direction:column;overflow:hidden}
+.spec{flex:1;min-height:132px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;padding:18px;background:#f7f6f4;border-bottom:1px solid #e6e4e0}
+.cap{padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.cap h3{font:600 13px/18px var(--font-sans)}
+.cap p{font:400 12px/16px var(--font-sans);color:#6c6a66}
+.mono{font-family:var(--font-mono)}
+.mg{width:22px;height:22px;border-radius:6px;background:#121211;color:#fff;display:grid;place-items:center;font:600 9.5px/1 var(--font-mono);flex:none}
+.node{background:#fff;border:1px solid #d4d1cb;border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;min-width:150px}
+.chip{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 8px;border-radius:7px;background:#fff;border:1px solid #d4d1cb;font:500 12px/1 var(--font-mono);color:#121211}
+.chip svg{width:12px;height:12px}
+.state{display:inline-flex;align-items:center;height:26px;padding:0 11px;border-radius:999px;font:500 12px/1 var(--font-mono)}
+.row{display:grid;grid-template-columns:200px 190px minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:center;padding:12px 18px;border-top:1px solid #e6e4e0}
+.arr{display:flex;flex-direction:column;align-items:stretch;gap:2px;min-width:70px;padding:0 4px}
+.arr em{font:500 11px/14px var(--font-mono);font-style:normal;text-align:center;color:#a92f1f}
+.arr i{display:flex;align-items:center}.arr i::before{content:"";flex:1;border-top:1.5px solid #d23f2c}.arr i::after{content:"";border-left:8px solid #d23f2c;border-top:4.5px solid transparent;border-bottom:4.5px solid transparent}
+.varr{display:flex;flex-direction:column;align-items:center;height:28px}.varr::before{content:"";flex:1;border-left:1.5px solid #121211}.varr::after{content:"";border-top:8px solid #121211;border-left:4.5px solid transparent;border-right:4.5px solid transparent}
+.step{width:20px;height:20px;border-radius:50%;background:#121211;color:#fff;display:inline-grid;place-items:center;font:600 10.5px/1 var(--font-mono);flex:none}
+</style>
+</helmet>
+<div class="vl" style="width: 1440px; min-height: 2120px; box-sizing: border-box; padding: 56px; background: var(--canvas); display: flex; flex-direction: column; gap: 36px">
+
+  <header style="display: flex; flex-direction: column; gap: 8px; max-width: 860px">
+    <span class="vl-label">Langage visuel · 1 / 3</span>
+    <h1 style="font: 600 32px/38px var(--font-sans); letter-spacing: -.02em">Le vocabulaire commun</h1>
+    <p style="font-size: 15px; line-height: 22px; color: var(--ink-2)">Chaque objet du modèle neutre a une seule forme, sur tous les écrans. Écrire pèse plus que lire, et un lien n'apparaît que pour l'élément choisi. Exemples tirés d'atelier-api.</p>
+  </header>
+
+  <section style="display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; align-items: baseline; gap: 12px"><h2 style="font: 600 18px/24px var(--font-sans)">Les objets</h2><span class="vl-label">12 formes</span></div>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
+
+      <div class="cell"><div class="spec">
+        <div class="node"><div style="display: flex; align-items: center; gap: 8px"><span class="mg">EX</span><span style="font-weight: 600; flex: 1">API</span><span class="vl-tag vl-tag--neutral">× 2</span></div><span class="mono" style="font-size: 11px; color: var(--muted)">15 routes · 3 tâches · 14 tables</span></div>
+      </div><div class="cap"><h3>Déployable</h3><p>Carte blanche à filet : logo, nom, compteurs, nombre d'exemplaires.</p></div></div>
+
+      <div class="cell"><div class="spec">
+        <div class="node" style="clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%); border-color: var(--ink)"><div style="display: flex; align-items: center; gap: 8px"><span class="mg">RE</span><span style="font-weight: 600">App web</span></div><span class="mono" style="font-size: 11px; color: var(--muted)">appelle 8 routes</span></div>
+      </div><div class="cap"><h3>Client</h3><p>La même carte, coin supérieur coupé : ce que les gens ouvrent.</p></div></div>
+
+      <div class="cell"><div class="spec">
+        <div class="node" style="background: var(--surface-sunken)"><div style="display: flex; align-items: center; gap: 8px"><span class="mg" style="background: var(--ink-2)">ST</span><span style="font-weight: 600; flex: 1">Stripe</span><span class="vl-tag vl-tag--neutral">Extérieur</span></div><span class="mono" style="font-size: 11px; color: var(--muted)">10 s · 2 reprises</span></div>
+      </div><div class="cap"><h3>Service extérieur</h3><p>Fond en retrait, étiquette EXTÉRIEUR, et ce que le système en attend.</p></div></div>
+
+      <div class="cell"><div class="spec" style="flex-direction: column">
+        <div class="node" style="border-radius: 8px; flex-direction: row; align-items: center; padding: 8px 12px"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#121211" stroke-width="1.5" aria-hidden="true"><path d="M3 4h10M3 8h10M3 12h10"/></svg><span style="font-weight: 600">Postgres</span><span class="mono" style="font-size: 11px; color: var(--muted)">14 tables</span></div>
+        <div class="node" style="border-radius: 8px; flex-direction: row; align-items: center; padding: 8px 12px"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#121211" stroke-width="1.5" aria-hidden="true"><path d="m3 4 3 4-3 4M8 4l3 4-3 4"/></svg><span style="font-weight: 600">Redis</span><span class="mono" style="font-size: 11px; color: var(--muted)">file emails</span></div>
+      </div><div class="cap"><h3>Ressource gérée</h3><p>Carte basse au rayon 8, glyphe du genre : base, file, stockage.</p></div></div>
+
+      <div class="cell"><div class="spec">
+        <div style="border: 1.5px solid var(--ink); border-radius: 8px; background: #fff; padding: 7px 10px; font: 500 12px/1 var(--font-mono)">EmailSender</div>
+        <div style="border: 1.5px dashed var(--line-strong); border-radius: 8px; background: #fff; padding: 7px 10px; font: 500 12px/1 var(--font-mono)">auth/session</div>
+      </div><div class="cap"><h3>Composant</h3><p>Plein : un contrat lu dans le code. Pointillé : un composant calculé.</p></div></div>
+
+      <div class="cell"><div class="spec">
+        <span class="chip" style="background: var(--surface-sunken); border-color: var(--line)">createPayment</span>
+        <span class="chip" style="background: var(--surface-sunken); border-color: var(--line)">requireUser</span>
+      </div><div class="cap"><h3>Fonction</h3><p>Son nom en mono, puce en retrait ; appelants au survol.</p></div></div>
+
+      <div class="cell"><div class="spec" style="flex-direction: column">
+        <span style="display: inline-flex; align-items: center; gap: 8px"><span class="vl-method">POST</span><span class="mono" style="font-size: 12.5px">/payments</span><span class="vl-tag vl-tag--neutral">requireUser</span></span>
+        <span style="display: inline-flex; align-items: center; gap: 8px"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#121211" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3.2l2 1.3"/></svg><span class="mono" style="font-size: 12.5px">expireHolds</span><span class="mono" style="font-size: 11px; color: var(--muted)">* * * * *</span></span>
+      </div><div class="cap"><h3>Point d'entrée</h3><p>Méthode en badge et route, ou horloge et nom pour une tâche. Sa garde en marque.</p></div></div>
+
+      <div class="cell"><div class="spec">
+        <span class="chip"><svg viewBox="0 0 12 12" fill="none" stroke="#121211" stroke-width="1.3" aria-hidden="true"><rect x="1" y="1.5" width="10" height="9" rx="1.5"/><path d="M1 4.5h10M4.5 4.5v6"/></svg>bookings</span>
+        <span class="chip"><svg viewBox="0 0 12 12" fill="none" stroke="#121211" stroke-width="1.3" aria-hidden="true"><path d="m2 3 2.5 3L2 9M6.5 3 9 6 6.5 9"/></svg>emails</span>
+      </div><div class="cap"><h3>Entité, file</h3><p>Puce mono à glyphe : grille pour une table, chevrons pour une file ou un sujet.</p></div></div>
+
+      <div class="cell"><div class="spec">
+        <span style="display: inline-flex; flex-direction: column; align-items: center; gap: 6px"><span style="width: 34px; height: 34px; border-radius: 50%; background: #fff; border: 1px solid var(--line-strong); display: grid; place-items: center; font: 600 11px/1 var(--font-sans)">CL</span><span class="mono" style="font-size: 10.5px; color: var(--muted)">personne</span></span>
+        <span style="display: inline-flex; flex-direction: column; align-items: center; gap: 6px"><span style="width: 34px; height: 34px; border-radius: 50%; background: var(--ink); color: #fff; display: grid; place-items: center; font: 600 11px/1 var(--font-sans)">AD</span><span class="mono" style="font-size: 10.5px; color: var(--muted)">rôle</span></span>
+        <span style="display: inline-flex; flex-direction: column; align-items: center; gap: 6px"><span style="width: 34px; height: 34px; border-radius: 50%; background: var(--surface-sunken); border: 1px solid var(--line-strong); display: grid; place-items: center; font: 600 11px/1 var(--font-mono)">ST</span><span class="mono" style="font-size: 10.5px; color: var(--muted)">service</span></span>
+      </div><div class="cap"><h3>Acteur</h3><p>Un rond : personne, rôle (plein), service ou fournisseur (en retrait).</p></div></div>
+
+      <div class="cell"><div class="spec">
+        <span class="state" style="background: #fff; border: 1px solid var(--line-strong)">pending</span>
+        <span class="state" style="background: var(--ink); color: #fff">refunded</span>
+        <span class="state" style="border: 1.5px dashed var(--tile-quiet); color: var(--muted)">on_hold</span>
+      </div><div class="cap"><h3>État d'une donnée</h3><p>Pastille ; noire pour un état final ; pointillée pour une valeur jamais écrite.</p></div></div>
+
+      <div class="cell"><div class="spec">
+        <span class="vl-ref">src/jobs/<b>expire.ts</b>:20</span>
+      </div><div class="cap"><h3>Preuve</h3><p>Toujours <span class="mono">fichier:ligne</span>. Un clic ouvre le code sur place.</p></div></div>
+
+      <div class="cell"><div class="spec" style="flex-direction: column; align-items: stretch; padding: 22px">
+        <div style="display: flex; justify-content: space-between" class="mono"><span style="font-size: 11px; color: var(--muted)">00 h</span><span style="font-size: 11px; color: var(--muted)">12 h</span><span style="font-size: 11px; color: var(--muted)">24 h</span></div>
+        <div style="height: 1px; background: var(--line-strong); position: relative; margin-top: 8px"><i style="position: absolute; left: 12.5%; top: -4px; width: 8px; height: 8px; margin-left: -4px; border-radius: 2px; background: var(--ink)"></i><i style="position: absolute; left: 33.3%; top: -4px; width: 8px; height: 8px; margin-left: -4px; border-radius: 2px; background: var(--ink)"></i></div>
+        <div style="position: relative; height: 16px; margin-top: 8px" class="mono"><span style="position: absolute; left: 12.5%; transform: translateX(-50%); font-size: 11px; color: var(--ink)">03 h</span><span style="position: absolute; left: 33.3%; transform: translateX(-50%); font-size: 11px; color: var(--ink)">08 h</span></div>
+      </div><div class="cap"><h3>Temps</h3><p>Un axe horizontal, heures en mono ; chaque passage est une case.</p></div></div>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; align-items: baseline; gap: 12px"><h2 style="font: 600 18px/24px var(--font-sans)">Les liens</h2><span class="vl-label">Seulement pour l'élément choisi</span></div>
+    <div class="vl-card">
+      <div class="row" style="border-top: 0; background: var(--surface-sunken)"><span class="vl-label">Trait</span><span class="vl-label">Lien</span><span class="vl-label">Quand</span><span class="vl-label">Exemple</span></div>
+      <div class="row"><svg width="180" height="16" viewBox="0 0 180 16" aria-hidden="true"><path d="M2 8h166" stroke="#121211" stroke-width="1.5"/><path d="m166 3 9 5-9 5z" fill="#121211"/></svg><span style="font-weight: 600">Appel synchrone</span><span style="color: var(--ink-2)">une fonction ou un service en appelle un autre et attend</span><span class="mono" style="font-size: 12px">createPayment → Stripe</span></div>
+      <div class="row"><svg width="180" height="16" viewBox="0 0 180 16" aria-hidden="true"><path d="M2 8h166" stroke="#121211" stroke-width="2.5"/><path d="m164 2 11 6-11 6z" fill="#121211"/></svg><span style="font-weight: 600">Écriture</span><span style="color: var(--ink-2)">plus épaisse que tout le reste : c'est ce qui change le système</span><span class="mono" style="font-size: 12px">expireHolds → bookings</span></div>
+      <div class="row"><svg width="180" height="16" viewBox="0 0 180 16" aria-hidden="true"><path d="M2 8h170" stroke="#6c6a66" stroke-width="1"/><path d="m166 3 7 5-7 5" fill="none" stroke="#6c6a66" stroke-width="1.2"/></svg><span style="font-weight: 600">Lecture</span><span style="color: var(--ink-2)">grise, fine, flèche ouverte</span><span class="mono" style="font-size: 12px">requireUser ← sessions</span></div>
+      <div class="row"><svg width="180" height="20" viewBox="0 0 180 20" aria-hidden="true"><path d="M2 10h64M114 10h52" stroke="#121211" stroke-width="1.5" stroke-dasharray="4 3"/><rect x="68" y="2" width="44" height="16" rx="4" fill="#fff" stroke="#d4d1cb"/><path d="m80 6 4 4-4 4M88 6l4 4-4 4" fill="none" stroke="#121211" stroke-width="1.2"/><path d="m166 5 9 5-9 5z" fill="#121211"/></svg><span style="font-weight: 600">Message asynchrone</span><span style="color: var(--ink-2)">pointillé, coupé par la file qu'il traverse</span><span class="mono" style="font-size: 12px">confirmBooking ⇢ emails ⇢ worker</span></div>
+      <div class="row"><svg width="180" height="16" viewBox="0 0 180 16" aria-hidden="true"><path d="M2 8h170" stroke="#d4d1cb" stroke-width="1.5" stroke-dasharray="10 5"/><path d="m166 3 7 5-7 5" fill="none" stroke="#d4d1cb" stroke-width="1.5"/></svg><span style="font-weight: 600">Relation déclarée</span><span style="color: var(--ink-2)">pointillé long, avec qui l'a déclarée : un agent, ou l'équipe dans un document</span><span class="mono" style="font-size: 12px">README:24 · « libérée après 15 min »</span></div>
+      <div class="row"><svg width="180" height="16" viewBox="0 0 180 16" aria-hidden="true"><path d="M2 8h166" stroke="#d23f2c" stroke-width="2"/><path d="m166 3 9 5-9 5z" fill="#d23f2c"/></svg><span style="font-weight: 600">Chemin d'échec</span><span style="color: var(--ink-2)">rouge pour un constat, orange pour un point à surveiller</span><span class="mono" style="font-size: 12px">payment_failed → pending</span></div>
+    </div>
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; align-items: baseline; gap: 12px"><h2 style="font: 600 18px/24px var(--font-sans)">Les marques</h2><span class="vl-label">Accolées au fait qu'elles qualifient</span></div>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
+
+      <div class="cell" style="grid-column: span 2"><div class="spec" style="justify-content: flex-start">
+        <span class="vl-tag" style="background: var(--ink); color: #fff">Écrit payments</span>
+        <span class="vl-tag vl-tag--neutral" style="color: var(--ink)">Lit bookings</span>
+        <span class="vl-tag vl-tag--neutral" style="color: var(--ink)">Appelle Stripe</span>
+        <span class="vl-tag" style="background: #fff; color: var(--ink); border: 1px dashed var(--ink)">Met en file emails</span>
+        <span class="vl-tag vl-tag--critical">Refuse 409</span>
+      </div><div class="cap"><h3>Effet</h3><p>Ce qu'une étape fait au système. Écrire est plein, lire à filet, la mise en file pointillée, un refus porte son code.</p></div></div>
+
+      <div class="cell" style="grid-column: span 2"><div class="spec" style="justify-content: flex-start; align-items: stretch; gap: 16px">
+        <div style="display: flex; flex-direction: column; gap: 8px; justify-content: center">
+          <span style="display: flex; align-items: center; gap: 8px"><span class="step">1</span><span style="font-size: 12.5px">Exige un utilisateur</span></span>
+          <span style="display: flex; align-items: center; gap: 8px"><span class="step">2</span><span style="font-size: 12.5px">La réservation attend un paiement</span></span>
+        </div>
+        <div style="flex: 1; background: var(--night); border-radius: 8px; padding: 10px 12px; font: 400 11.5px/19px var(--font-mono); color: var(--on-night)">
+          <div style="display: flex; gap: 10px"><span class="step" style="width: 16px; height: 16px; font-size: 9px; background: var(--on-night); color: var(--ink)">1</span><span style="color: var(--on-night-muted)">14</span><span>const user = await requireUser(req);</span></div>
+          <div style="display: flex; gap: 10px"><span style="width: 16px"></span><span style="color: var(--on-night-muted)">17</span><span>const [b] = await db.select()…</span></div>
+          <div style="display: flex; gap: 10px"><span class="step" style="width: 16px; height: 16px; font-size: 9px; background: var(--on-night); color: var(--ink)">2</span><span style="color: var(--on-night-muted)">19</span><span>if (b.status !== "pending") throw …</span></div>
+        </div>
+      </div><div class="cap"><h3>Étape et code indexé</h3><p>Le même numéro dans le déroulé et en marge du code : choisir une étape surligne ses lignes.</p></div></div>
+
+      <div class="cell"><div class="spec" style="flex-direction: column; align-items: stretch">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: #fff; border: 1px solid var(--line); border-radius: 8px"><span class="vl-label">Vérifier</span><span class="mono" style="font-size: 11px; color: var(--muted)">3 étapes ▾</span></div>
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: #fff; border: 1px solid var(--line); border-radius: 8px"><span class="vl-label">Payer</span><span class="mono" style="font-size: 11px; color: var(--muted)">2 étapes ▸</span></div>
+      </div><div class="cap"><h3>Moment</h3><p>Un groupe d'étapes titré, qui se replie.</p></div></div>
+
+      <div class="cell"><div class="spec" style="flex-direction: column; align-items: flex-start; gap: 0">
+        <div style="display: flex; align-items: center"><span class="chip">status = pending ?</span><span class="arr arr--c"><em>non</em><i></i></span><span class="vl-tag vl-tag--critical">409</span></div>
+        <div style="display: flex; align-items: center; gap: 8px; padding-left: 22px"><span class="varr"></span><span class="mono" style="font-size: 11px; color: var(--muted)">oui</span></div>
+        <span class="chip" style="border-color: var(--ink)">crée le paiement</span>
+      </div><div class="cap"><h3>Aiguillage</h3><p>Une question par ligne : oui, la flèche descend ; non, elle part à droite vers le refus et son code.</p></div></div>
+
+      <div class="cell"><div class="spec">
+        <div style="border: 1.5px dashed var(--ink-2); border-radius: 10px; padding: 18px 10px 10px; position: relative; display: flex; flex-direction: column; gap: 6px">
+          <span class="vl-tag vl-tag--neutral" style="position: absolute; top: -10px; left: 10px; background: #fff">Transaction · verrou</span>
+          <span style="display: flex; align-items: center; gap: 8px"><span class="step">3</span><span style="font-size: 12px">Verrouille le créneau</span></span>
+          <span style="display: flex; align-items: center; gap: 8px"><span class="step">4</span><span style="font-size: 12px">Écrit la réservation</span></span>
+        </div>
+      </div><div class="cap"><h3>Cadre de cohérence</h3><p>Pointillé autour des étapes qu'il protège : transaction, verrou, clé d'idempotence.</p></div></div>
+
+      <div class="cell"><div class="spec">
+        <span class="chip" style="height: auto; padding: 6px 10px; font-family: var(--font-sans); font-weight: 400; gap: 8px"><span class="mg" style="width: 18px; height: 18px; font-size: 8px">ST</span><span><b style="font-weight: 600">Stripe</b> · rejoué tant qu'il n'est pas accepté</span></span>
+      </div><div class="cap"><h3>Qualification</h3><p>Ce que la technologie garantit, avec son logo ; le détail et sa documentation au survol.</p></div></div>
+
+      <div class="cell"><div class="spec" style="flex-direction: column; align-items: flex-start">
+        <span style="display: flex; align-items: center; gap: 8px"><i style="width: 36px; border-top: 1.5px solid var(--ink)"></i><span style="font-size: 12px">lu dans le code</span></span>
+        <span style="display: flex; align-items: center; gap: 8px"><i style="width: 36px; border-top: 1.5px dashed var(--line-strong)"></i><span style="font-size: 12px">déclaré · <b style="font-weight: 600">Claude Code</b></span></span>
+        <span style="display: flex; align-items: center; gap: 8px"><i style="width: 36px; border-top: 1.5px dashed var(--signal)"></i><span style="font-size: 12px">proposé · pack non chargé</span></span>
+        <span style="display: flex; align-items: center; gap: 8px"><i style="width: 36px; height: 8px; background: repeating-linear-gradient(135deg, var(--tile-quiet) 0 2px, transparent 2px 5px)"></i><span style="font-size: 12px; color: var(--signal-ink)">non lu</span></span>
+      </div><div class="cap"><h3>Provenance</h3><p>D'où vient un fait. Rien ne vient du modèle de langage.</p></div></div>
+
+      <div class="cell"><div class="spec" style="flex-direction: column; align-items: flex-start">
+        <span class="vl-tag vl-tag--critical">Constat</span>
+        <span class="vl-tag vl-tag--signal">À surveiller</span>
+        <span class="vl-tag vl-tag--live">Vérifié</span>
+      </div><div class="cap"><h3>Gravité</h3><p>Toujours un libellé, et la ligne vient en tête. La couleur seule ne dit rien.</p></div></div>
+
+      <div class="cell" style="grid-column: span 2"><div class="spec" style="justify-content: flex-start">
+        <span style="font-size: 13px; line-height: 22px; color: var(--ink-2)"><span class="vl-method vl-method--read">GET</span> <span class="mono" style="color: var(--ink)">/admin/export</span> lit <span class="chip" style="height: 20px; font-size: 11.5px">users</span> sous <span class="chip" style="height: 20px; font-size: 11.5px; background: var(--surface-sunken); border-color: var(--line)">requireUser</span>, configuré par <span class="mono" style="color: var(--ink)">SESSION_SECRET</span>, dans <span class="vl-ref">admin/<b>export.ts</b>:8</span></span>
+      </div><div class="cap"><h3>Marques techniques dans une phrase</h3><p>Route, table, fonction, variable et preuve gardent leur forme au milieu du texte.</p></div></div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2120}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

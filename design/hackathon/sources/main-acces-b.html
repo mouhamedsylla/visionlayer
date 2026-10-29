@@ -1,0 +1,82 @@
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 24px; border-bottom: 1px solid var(--line); background: var(--surface)">
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted)"><span>atelier-api</span><span aria-hidden="true">›</span><span style="color: var(--ink); font-weight: 500">Accès</span></div>
+      <span class="vl-pill"><i class="vl-dot vl-dot--live"></i>À jour, 09:12</span>
+    </header>
+
+    <div style="padding: 24px 28px 36px; display: flex; flex-direction: column; gap: 18px">
+      <div style="display: flex; flex-direction: column; gap: 6px; max-width: 860px">
+        <h1 style="font: 600 26px/32px var(--font-sans); letter-spacing: -.02em">Qui peut entrer, et ce qu'il a le droit d'y faire</h1>
+        <p style="color: var(--ink-2); font-size: 14px; line-height: 21px">Même page, lue par point d'entrée : pour chaque route, qui passe, quelle ligne le décide, et si elle vérifie que la donnée appartient à l'appelant.</p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 16px; align-items: start">
+        <section class="card">
+          <div class="tabs">
+            <button class="seg">Par acteur <span class="vl-count">8</span></button>
+            <button class="seg seg--on">Par point d'entrée <span class="vl-count">15</span></button>
+            <span class="note" style="display: flex; align-items: center; gap: 8px">pour <span class="pf pf--k">Personne connectée</span></span>
+          </div>
+          <div class="ep ep--h"><span>Point d'entrée</span><span>Qui passe</span><span>Décidé par</span><span>Sur la donnée</span></div>
+
+          <div class="grp">/auth <span>3</span></div>
+          <div class="ep"><span class="route"><span class="vl-method">POST</span><code>/auth/signup</code></span><span class="whos"><span class="pf">tous</span></span><span class="q">aucune garde</span><span class="q">ouvre une session</span></div>
+          <div class="ep"><span class="route"><span class="vl-method">POST</span><code>/auth/login</code></span><span class="whos"><span class="pf">tous</span></span><span class="q">aucune garde</span><span class="q">ouvre une session</span></div>
+          <div class="ep"><span class="route"><span class="vl-method">POST</span><code>/auth/reset</code></span><span class="whos"><span class="pf">tous</span></span><span class="q">aucune garde</span><span class="q">sans objet</span></div>
+          <div class="grp">/workshops <span>2</span></div>
+          <div class="ep"><span class="route"><span class="vl-method vl-method--read">GET</span><code>/workshops</code></span><span class="whos"><span class="pf">tous</span></span><span class="q">aucune garde</span><span class="q">catalogue public</span></div>
+          <div class="ep"><span class="route"><span class="vl-method vl-method--read">GET</span><code>/workshops/:id</code></span><span class="whos"><span class="pf">tous</span></span><span class="q">aucune garde</span><span class="q">catalogue public</span></div>
+          <div class="grp">/bookings <span>4</span></div>
+          <div class="ep"><span class="route"><span class="vl-method">POST</span><code>/bookings</code></span><span class="whos"><span class="pf pf--k">connectée</span></span><span class="fn">requireUser()</span><span class="own">écrite à son nom</span></div>
+          <div class="ep"><span class="route"><span class="vl-method vl-method--read">GET</span><code>/bookings/:id</code></span><span class="whos"><span class="pf pf--k">si à elle</span><span class="pf pf--g">admin</span></span><span class="fn">requireUser()</span><span class="own">refuse, 404</span></div>
+          <div class="ep"><span class="route"><span class="vl-method">PATCH</span><code>/bookings/:id</code></span><span class="whos"><span class="pf pf--k">si à elle</span></span><span class="fn">requireUser()</span><span class="own">refuse, 404</span></div>
+          <div class="ep"><span class="route"><span class="vl-method">POST</span><code>/bookings/:id/transfer</code></span><span class="whos"><span class="pf pf--k">si à elle</span></span><span class="fn">requireUser()</span><span class="own">refuse, 404</span></div>
+          <div class="grp">/payments <span>2</span></div>
+          <div class="ep"><span class="route"><span class="vl-method">POST</span><code>/payments</code></span><span class="whos"><span class="pf pf--k">si à elle</span></span><span class="fn">requireUser()</span><span class="own">refuse, 404</span></div>
+          <div class="ep ep--dim"><span class="route"><span class="vl-method">POST</span><code>/payments/:id/refund</code></span><span class="whos"><span class="pf pf--g">admin</span></span><span class="fn">requireAdmin()</span><span class="mk mk--sg">rôle jamais donné</span></div>
+          <div class="grp">/reviews, /admin, /webhooks, /healthz <span>4</span></div>
+          <div class="ep"><span class="route"><span class="vl-method">POST</span><code>/reviews</code></span><span class="whos"><span class="pf pf--k">connectée</span></span><span class="fn">requireUser()</span><span class="own">écrit à son nom</span></div>
+          <div class="ep ep--on"><span class="route"><span class="vl-method vl-method--read">GET</span><code>/admin/export</code></span><span class="whos"><span class="pf pf--k">connectée</span><span class="pf pf--g">admin</span></span><span class="fn">requireUser()</span><span class="mk mk--cr">tous les clients</span></div>
+          <div class="ep ep--dim"><span class="route"><span class="vl-method">POST</span><code>/webhooks/stripe</code></span><span class="whos"><span class="pf">Stripe, signé</span></span><span class="fn">constructEvent()</span><span class="q">sans objet</span></div>
+          <div class="ep"><span class="route"><span class="vl-method vl-method--read">GET</span><code>/healthz</code></span><span class="whos"><span class="pf">tous</span></span><span class="q">aucune garde</span><span class="q">sans objet</span></div>
+          <div class="grp" style="font-weight: 400; color: var(--muted)">Lancés par le système, 4 : aucune garde, accès complet</div>
+          <div class="foot">Estompé : ce que la personne connectée ne peut pas appeler. Gardé visible pour ne rien cacher.</div>
+        </section>
+
+        <aside style="display: flex; flex-direction: column; gap: 14px; min-width: 0">
+          <section class="night">
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <span class="lbl">Point d'entrée choisi</span>
+              <span class="route"><span class="vl-method vl-method--read" style="background: #f5f4f1; color: #141413">GET</span><code style="font-size: 15px; color: #f5f4f1">/admin/export</code></span>
+              <p class="sub">gardée par requireUser(), export.ts:8</p>
+            </div>
+            <p style="font-size: 14px; line-height: 21px">Écrite « pour la compta ». Toute personne connectée reçoit l'email, le nom et le téléphone de tous les clients.</p>
+            <span class="lbl">Ce que l'appel traverse</span>
+            <div style="display: flex; flex-direction: column">
+              <div class="lay lay--nl"><span class="n">1</span><b>Hébergeur</b><span class="st">non lu</span><p>Fly.io : rien devant l'API dans le dépôt</p></div>
+              <div class="lay"><span class="n">2</span><b>Entrée de l'application</b><span class="st">lu</span><p>cookie-parser lit le cookie sid, app.ts:34</p></div>
+              <div class="lay"><span class="n">3</span><b>Garde</b><span class="st">lu</span><p>requireUser() : 401 sans session valide</p></div>
+              <div class="lay lay--cr"><span class="n">4</span><b>Rôle</b><span class="st">à aller voir</span><p>aucun rôle exigé ; requireAdmin() existe, session.ts:33</p></div>
+              <div class="lay"><span class="n">5</span><b>Base</b><span class="st">lu</span><p>lit toute la table users, export.ts:9</p></div>
+            </div>
+            <div class="ed">
+              <div><span>7</span><span>export async function exportUsers(req, res) {</span></div>
+              <div class="hl"><span>8</span><span>  await requireUser(req);</span></div>
+              <div><span>9</span><span>  const rows = await db.select({ email, name, phone }).from(users);</span></div>
+            </div>
+          </section>
+          <div class="decl">
+            <small>Déclaré par l'équipe, rien encore</small>
+            <p>Pour qui est cet export, et qui doit pouvoir le lancer : s'écrit par l'agent qui modifie ce code, dans sa PR. VisionLayer ne le remplit jamais.</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":__H__}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

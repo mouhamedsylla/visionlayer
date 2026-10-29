@@ -1,0 +1,92 @@
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 24px; border-bottom: 1px solid var(--line); background: var(--surface)">
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted)"><span>atelier-api</span><span aria-hidden="true">›</span><span style="color: var(--ink); font-weight: 500">Sessions d'agents</span></div>
+      <span class="vl-tag vl-tag--neutral">Données d'exemple</span>
+    </header>
+
+    <div style="padding: 24px 28px 36px; display: flex; flex-direction: column; gap: 18px">
+      <div style="display: flex; flex-direction: column; gap: 6px; max-width: 900px">
+        <h1 style="font: 600 26px/32px var(--font-sans); letter-spacing: -.02em">Qui travaille sur le projet, sur quoi, et pour combien</h1>
+        <p style="color: var(--ink-2); font-size: 14px; line-height: 21px">Reçu des agents eux-mêmes : les fichiers modifiés, les lectures de la carte et les compteurs de tokens. Jamais un prompt, une commande ni le contenu d'un fichier. VisionLayer ne lance aucun agent.</p>
+      </div>
+
+      <div class="tiles">
+        <div class="tile"><small>Sessions cette semaine</small><b>5 sessions</b><span>3 agents : Muse Code, Claude Code, Codex</span></div>
+        <div class="tile"><small>Tokens</small><b>35,0 M</b><span>dont 92 % de contexte relu depuis le cache</span></div>
+        <div class="tile"><small>Carte lue avant d'écrire</small><b>3 sessions sur 4</b><span>celles qui ont modifié au moins un fichier</span></div>
+        <div class="tile tile--cr"><small>Chevauchement</small><b>jobs/expire.ts</b><span>modifié par 2 sessions, sur 2 branches</span></div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 16px; align-items: start">
+        <div style="display: flex; flex-direction: column; gap: 16px; min-width: 0">
+          <section class="card">
+            <div class="tabs">
+              <button class="seg seg--on">Sessions <span class="vl-count">5</span></button>
+              <button class="seg">Par feature</button>
+              <span class="note">les plus récentes d'abord</span>
+            </div>
+            <div class="ss ss--h"><span>Agent</span><span>Tâche</span><span>État</span><span>Tokens</span><span>Carte</span></div>
+            <div class="ss ss--on"><span class="who3"><span class="ag ag--m">MC</span><span><b>Muse Code</b><small>muse-spark-1.3</small></span></span><span class="task"><b>Ne rendre une place qu'une fois</b><small>ATL-12, jobs/expire.ts + 2</small></span><span class="st2"><b>PR #58 ouverte</b><small>3 fichiers</small></span><span class="tok">9,6 M</span><span class="mk mk--ok">lue avant</span></div>
+            <div class="ss"><span class="who3"><span class="ag">CX</span><span><b>Codex</b><small>Codex CLI</small></span></span><span class="task"><b>Expirer les réservations par lots</b><small>ATL-13, jobs/expire.ts</small></span><span class="st2"><b>en cours</b><small>1 fichier</small></span><span class="tok">6,8 M</span><span class="mk mk--cr">non lue</span></div>
+            <div class="ss"><span class="who3"><span class="ag">CC</span><span><b>Claude Code</b><small>claude-opus-5-5</small></span></span><span class="task"><b>Ignorer un échec reçu après un succès</b><small>ATL-11, webhooks/stripe.ts</small></span><span class="st2"><b>en cours</b><small>2 fichiers</small></span><span class="tok">4,1 M</span><span class="mk mk--ok">lue avant</span></div>
+            <div class="ss"><span class="who3"><span class="ag ag--m">MC</span><span><b>Muse Code</b><small>muse-spark-1.3</small></span></span><span class="task"><b>Changer son mot de passe par le lien</b><small>ATL-9, auth/reset.ts + 4</small></span><span class="st2"><b>fusionnée</b><small>5 fichiers, 3e41a09</small></span><span class="tok">12,2 M</span><span class="mk mk--ok">lue avant</span></div>
+            <div class="ss"><span class="who3"><span class="ag">CC</span><span><b>Claude Code</b><small>claude-opus-5-5</small></span></span><span class="task"><b>Exploration, questions</b><small>aucune tâche</small></span><span class="st2"><b>terminée</b><small>aucun fichier</small></span><span class="tok">2,3 M</span><span class="q">sans objet</span></div>
+            <div class="foot">Muse Code est relié comme les autres agents : ses crochets, ou à défaut son journal local, disent ce qu'il a touché.</div>
+          </section>
+
+          <section class="card">
+            <div class="hd"><h2>Où sont allés les tokens de cette session</h2><span>réparti par fichier modifié, puis par feature</span></div>
+            <div class="res"><span class="fn">expireHolds</span><span class="mk mk--q">jobs/expire.ts</span><span class="reach"><i><b style="width: 46%"></b></i></span><span>46 %</span></div>
+            <div class="res"><span class="fn">createBooking</span><span class="mk mk--q">bookings/create.ts</span><span class="reach"><i><b style="width: 22%"></b></i></span><span>22 %</span></div>
+            <div class="res"><span class="fn">Postgres, schéma</span><span class="mk mk--q">db/schema.ts</span><span class="reach"><i><b style="width: 12%"></b></i></span><span>12 %</span></div>
+            <div class="res"><span>hors carte</span><span class="mk mk--q">tests, scripts</span><span class="reach"><i><b style="width: 20%; background: #c8c5bf"></b></i></span><span>20 %</span></div>
+          </section>
+        </div>
+
+        <aside style="display: flex; flex-direction: column; gap: 14px; min-width: 0">
+          <section class="night">
+            <div style="display: flex; flex-direction: column; gap: 4px">
+              <span class="lbl">Session choisie</span>
+              <h2>Muse Code, ATL-12</h2>
+              <p class="sub">muse-spark-1.3, le 29/10, branche fix/expire-once</p>
+            </div>
+            <span class="lbl">Son parcours</span>
+            <div class="life">
+              <div><i></i><b>planifier</b><p>ticket Linear ATL-12</p></div>
+              <div><i></i><b>contexte</b><p>la carte lue par vision_context</p></div>
+              <div><i></i><b>construire</b><p>3 fichiers modifiés</p></div>
+              <div><i></i><b>vérifier</b><p>tests et diff, verts</p></div>
+              <div class="now"><i></i><b>revue</b><p>PR #58, en attente de l'équipe</p></div>
+            </div>
+            <span class="lbl">A-t-il lu la carte avant d'écrire ?</span>
+            <div class="mp">
+              <code>vision_context</code><span>1, avant la 1re écriture</span>
+              <code>vision_flow</code><span>2</span>
+              <code>vision_inspect, vision_source</code><span>3</span>
+            </div>
+            <span class="lbl">Tokens de la session, 9,6 M</span>
+            <div class="tkb"><i style="flex: 89; background: #f5f4f1"></i><i style="flex: 6; background: #a29f99"></i><i style="flex: 3; background: #e2791d"></i><i style="flex: 2; background: #4a4945"></i></div>
+            <div class="kv"><span><b>8,5 M</b>cache lu</span><span><b>0,6 M</b>cache écrit</span><span><b>0,3 M</b>sortie</span><span><b>0,2 M</b>entrée</span></div>
+            <div class="race">
+              <b>Chevauchement</b>
+              <p>Codex (ATL-13) modifie aussi jobs/expire.ts, sur une autre branche, et n'a pas lu la carte avant d'écrire.</p>
+            </div>
+          </section>
+
+          <div class="decl decl--k">
+            <small>Écrit par l'agent, dans la PR #58</small>
+            <p style="color: var(--ink); font-weight: 500">« expireHolds ne rend une place que si sa propre annulation a changé la ligne. »</p>
+            <p><span class="mk mk--ok">vérifiée</span> garantie ancrée sur jobs/expire.ts#expireHolds ; 2 autres notes sur la même fonction</p>
+            <button class="vl-btn vl-btn--secondary vl-btn--sm" style="align-self: flex-start">Voir dans Connaissance</button>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":__H__}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

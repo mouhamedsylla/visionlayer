@@ -1,0 +1,43 @@
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <div class="rbar">
+      <span class="kind" style="background: #2a2a27; color: #f5f4f1; box-shadow: none"><i class="gi gi--dec"></i>#031</span>
+      <span class="t">Envoyer l'email tout de suite, ou le mettre en file ?</span>
+      <span style="margin-left: auto; font-size: 12.5px; color: var(--on-night-muted)">Ton choix : B, argumenté à moitié</span>
+      <button class="vl-btn vl-btn--light">Valider mon choix</button>
+    </div>
+
+    <div style="padding: 22px 24px 32px; display: flex; gap: 18px; align-items: flex-start; flex-wrap: wrap">
+      <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+        <section class="card" style="gap: 8px">
+          <h2>Ce que l'agent savait le 18/09</h2>
+          <p>Le ticket ATL-49 : le client doit recevoir la confirmation même si le paiement arrive tard dans la nuit. Resend accepte 2 envois par seconde, au-delà il répond 429. 40 réservations par jour, dont 12 rappels qui partent tous à 18:00. Pas de Redis, pas de worker : une API Express et Postgres.</p>
+        </section>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+          <div class="opt"><h3><i>A</i>Envoyer dans la requête</h3><ul><li>1 fichier touché</li><li>le webhook attend Resend</li><li>un 429 fait échouer la confirmation</li><li>rien de neuf à déployer</li></ul></div>
+          <div class="opt opt--on"><h3><i>B</i>Mettre en file, avec relances</h3><ul><li>un nouveau bloc : Redis</li><li>un worker à déployer</li><li>le débit se règle sur la file</li><li>le webhook répond tout de suite</li></ul></div>
+          <div class="opt opt--new"><h3><i>C</i>Ta propre option</h3><p style="font-size: 12.5px; line-height: 18px; color: var(--muted)">Décris-la, Vigie te dira ce qu'elle toucherait dans le code de l'époque.</p><button class="vl-btn vl-btn--secondary vl-btn--sm" style="align-self: flex-start">Décrire une option</button></div>
+        </div>
+        <div class="ta"><small>Pourquoi tu choisis B</small>À 18:00, 12 rappels partent ensemble. Avec A, à 2 envois par seconde, le troisième client reçoit un 429 et sa confirmation échoue alors que son paiement est passé. La file absorbe le pic et relance.<span style="color: var(--muted)"><br><br>Ce qui te ferait changer d'avis : pas encore écrit.</span></div>
+        <div class="lock">__ROBOT:concentre:44:d__<div><p style="color: #f5f4f1; font-weight: 600">Le choix de l'agent, et ce qui s'est passé depuis</p><p>Révélé quand tu as validé ton choix. Tu verras aussi ce que le vrai projet a vécu après le 18/09.</p></div></div>
+      </div>
+
+      <aside style="flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+        <div style="display: flex; align-items: center; gap: 12px">__ROBOT:questionne:64:l__<div><p style="font: 600 15px/20px var(--font-sans)">Vigie</p><p style="font-size: 12px; color: var(--muted)">ne connaît pas la suite</p></div></div>
+        <div class="chat">
+          <p class="me">Je pars sur B. Le pic de 18:00 me fait peur avec la limite de Resend.</p>
+          <p class="vg"><small>Vigie</small>Le pic est réel. Mais B ajoute Redis et un worker à surveiller, pour 40 réservations par jour. Étaler les 12 rappels sur dix secondes ne suffirait pas, avec A ?</p>
+          <p class="me">Ça règle 18:00, pas un paiement qui tombe pendant une panne de Resend.</p>
+          <p class="vg"><small>Vigie</small>Bon argument, et il est dans le ticket : « même tard dans la nuit ». Mets-le dans ton texte.</p>
+        </div>
+        <p style="font-size: 12.5px; line-height: 18px; color: var(--muted)">Pas de test ici. Une décision se juge à ses raisons, puis à ce qui est arrivé ensuite.</p>
+        <div class="ask"><span style="flex: 1">Demande à Vigie</span><button class="vl-btn vl-btn--primary vl-btn--sm">Envoyer</button></div>
+      </aside>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":__H__}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

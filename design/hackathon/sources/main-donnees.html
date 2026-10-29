@@ -1,0 +1,99 @@
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 24px; border-bottom: 1px solid var(--line); background: var(--surface)">
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted)"><span>atelier-api</span><span aria-hidden="true">›</span><span>Données</span><span aria-hidden="true">›</span><span style="color: var(--ink); font-weight: 500">Postgres</span></div>
+      <span class="vl-pill"><i class="vl-dot vl-dot--live"></i>À jour, 09:12</span>
+    </header>
+
+    <div style="padding: 24px 28px 36px; display: flex; flex-direction: column; gap: 18px">
+      <div style="display: flex; flex-direction: column; gap: 6px; max-width: 880px">
+        <h1 style="font: 600 26px/32px var(--font-sans); letter-spacing: -.02em">Qui lit, qui écrit, et sous quel contrôle</h1>
+        <p style="color: var(--ink-2); font-size: 14px; line-height: 21px">Les 14 tables de Postgres, déclarées dans src/db/schema.ts, croisées avec le code qui les touche. Chaque case renvoie à sa ligne. Ce que contient la base en production n'est pas lu.</p>
+      </div>
+
+      <div class="tiles">
+        <div class="tile"><small>Les tables</small><b>14 tables</b><span>en 3 groupes : réservations et paiements, comptes, catalogue</span></div>
+        <div class="tile"><small>Qui les touche</small><b>3 parties du code</b><span>les routes de l'API, ses tâches planifiées, le worker emails ; et 1 déclencheur en base</span></div>
+        <div class="tile"><small>Contrôles en base</small><b>4 contraintes d'unicité</b><span>dont une seule réservation active par client et par créneau</span></div>
+        <div class="tile tile--cr"><small>Lue puis réécrite</small><b>bookings</b><span>expireHolds annule sans revérifier l'état qu'il a lu</span></div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; align-items: start">
+        <section class="card">
+          <div class="tabs">
+            <button class="seg seg--on">Postgres <span class="vl-count">14</span></button>
+            <button class="seg">Redis <span class="vl-count">1 file</span></button>
+            <span class="note" style="display: flex; gap: 6px; align-items: center"><span class="rw"><i>lit</i><i class="w">écrit</i></span></span>
+          </div>
+          <div class="tb tb--h"><span>Table</span><span>Routes de l'API</span><span>Tâches planifiées</span><span>Worker</span><span>Contrainte</span><span>À aller voir</span></div>
+
+          <div class="grp">Réservations et paiements <span>6</span></div>
+          <div class="tb tb--on"><code>bookings</code><span class="rw"><i>lit</i><i class="w">écrit</i></span><span class="rw"><i>lit</i><i class="w">écrit</i></span><span class="rw"><i>lit</i></span><span class="ct">1 active par créneau</span><span class="see">lue puis réécrite sans revérifier</span></div>
+          <div class="tb"><code>slots</code><span class="rw"><i>lit</i><i class="w">écrit</i></span><span class="rw"><i>lit</i><i class="w">écrit</i></span><span class="rw"><i>lit</i></span><span></span><span></span></div>
+          <div class="tb"><code>payments</code><span class="rw"><i>lit</i><i class="w">écrit</i></span><span></span><span></span><span class="ct">intent_id unique</span><span></span></div>
+          <div class="tb"><code>refunds</code><span class="rw"><i class="w">écrit</i></span><span></span><span></span><span class="ct">stripe_refund_id unique</span><span class="q">l'état failed n'est jamais écrit</span></div>
+          <div class="tb"><code>processed_events</code><span class="rw"><i class="w">écrit</i></span><span></span><span></span><span class="ct">un événement Stripe, une fois</span><span></span></div>
+          <div class="tb"><code>email_jobs</code><span></span><span></span><span class="rw"><i class="w">écrit</i></span><span></span><span></span></div>
+
+          <div class="grp">Comptes <span>3</span></div>
+          <div class="tb"><code>users</code><span class="rw"><i>lit</i><i class="w">écrit</i></span><span></span><span class="rw"><i>lit</i></span><span class="ct">email unique</span><span class="see">le rôle admin n'est jamais écrit</span></div>
+          <div class="tb"><code>sessions</code><span class="rw"><i>lit</i><i class="w">écrit</i></span><span class="rw"><i class="w">écrit</i></span><span></span><span></span><span></span></div>
+          <div class="tb"><code>password_resets</code><span class="rw"><i class="w">écrit</i></span><span></span><span></span><span></span><span class="see">écrite, jamais relue</span></div>
+
+          <div class="grp">Catalogue et le reste <span>5</span></div>
+          <div class="tb"><code>workshops</code><span class="rw"><i>lit</i></span><span></span><span class="rw"><i>lit</i></span><span></span><span class="q">écrite par importCsv, que rien n'appelle</span></div>
+          <div class="tb"><code>instructors</code><span class="rw"><i>lit</i></span><span></span><span></span><span></span><span class="q">rien ne l'écrit</span></div>
+          <div class="tb"><code>reviews</code><span class="rw"><i class="w">écrit</i></span><span></span><span></span><span></span><span class="q">écrite, jamais relue</span></div>
+          <div class="tb"><code>audit_log</code><span></span><span></span><span></span><span></span><span class="q">écrite par le déclencheur audit_bookings</span></div>
+          <div class="tb"><code>settings</code><span></span><span></span><span></span><span></span><span class="q">ni lue ni écrite</span></div>
+          <div class="foot">Les tâches planifiées tournent dans le processus de l'API ; elles ont leur colonne parce qu'elles écrivent sans qu'aucune requête n'arrive.</div>
+        </section>
+
+        <aside style="display: flex; flex-direction: column; gap: 14px; min-width: 0">
+          <section class="night">
+            <div style="display: flex; flex-direction: column; gap: 4px">
+              <span class="lbl">Table choisie</span>
+              <h2>bookings</h2>
+              <p class="sub">12 champs, déclarée à schema.ts:37</p>
+            </div>
+            <div class="nst">
+              <div><b>7</b><span>lignes qui l'écrivent</span></div>
+              <div><b>8</b><span>lignes qui la lisent</span></div>
+              <div><b>5</b><span>états possibles</span></div>
+            </div>
+            <span class="lbl">Ses états</span>
+            <div class="states"><span>pending</span><span>confirmed</span><span>cancelled</span><span>refunded</span><span class="off">on_hold</span></div>
+            <p class="sub">on_hold est déclaré, mais aucun code ne l'écrit.</p>
+            <div class="race">
+              <b>Lue puis réécrite sans revérifier</b>
+              <p>expireHolds lit les réservations encore pending (expire.ts:15), puis les annule par leur seul identifiant (expire.ts:21). Un paiement confirmé entre les deux est annulé quand même.</p>
+              <button class="vl-btn vl-btn--light vl-btn--sm" style="align-self: flex-start">Rejouer cette course</button>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="hd"><h2>Qui l'écrit</h2><span>7 lignes</span></div>
+            <div class="wr"><span><span class="vl-method">POST</span> <code class="vl-code">/bookings</code></span><span class="mk mk--q">crée</span><small>bookings/create.ts:28</small></div>
+            <div class="wr"><span><span class="vl-method">POST</span> <code class="vl-code">/webhooks/stripe</code></span><span class="mk mk--q">confirme</span><small>bookings/confirm.ts:28, webhooks/stripe.ts:53</small></div>
+            <div class="wr"><span><span class="vl-method">PATCH</span> <code class="vl-code">/bookings/:id</code></span><span class="mk mk--q">annule</span><small>bookings/update.ts:21</small></div>
+            <div class="wr"><span><span class="vl-method">POST</span> <code class="vl-code">/bookings/:id/transfer</code></span><span class="mk mk--q">cède</span><small>bookings/transfer.ts:24</small></div>
+            <div class="wr"><span><span class="vl-method">POST</span> <code class="vl-code">/payments/:id/refund</code></span><span class="mk mk--q">rembourse</span><small>payments/refund.ts:27</small></div>
+            <div class="wr" style="background: #fdf5f3"><span>expireHolds(), chaque minute</span><span class="mk mk--cr">annule</span><small>jobs/expire.ts:18</small></div>
+            <div class="foot">Ensuite, le déclencheur audit_bookings copie chaque changement d'état dans audit_log (0001_audit.sql:12).</div>
+          </section>
+
+          <div class="decl decl--k">
+            <small>Déclaré par l'équipe, README.md:24</small>
+            <p style="color: var(--ink); font-weight: 500">« Une réservation non payée est libérée après 15 minutes. »</p>
+            <p><span class="mk mk--cr">contredite par le code</span> HOLD_MINUTES vaut 30, config.ts:3</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":__H__}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

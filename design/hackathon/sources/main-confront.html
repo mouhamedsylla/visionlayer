@@ -1,0 +1,108 @@
+  <main style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 24px; border-bottom: 1px solid var(--line); background: var(--surface)">
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted)">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2"/><path d="M6.5 2.5v11"/></svg>
+        <span>atelier-api</span><span aria-hidden="true">›</span><span>Replays</span><span aria-hidden="true">›</span><span style="color: var(--ink); font-weight: 500">La place revendue après paiement</span>
+      </div>
+      <span class="vl-pill"><i class="vl-dot vl-dot--live"></i>Copie isolée<span class="vl-pill__sep"></span>.vision/replays/</span>
+    </header>
+
+    <div style="padding: 20px 24px 28px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px">
+        <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1 1 520px">
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+            <h1 style="font: 600 24px/30px var(--font-sans); letter-spacing: -.02em">Confrontation</h1>
+            <span class="vl-tag vl-tag--live">Test du Replay vert</span>
+            <span class="vl-tag vl-tag--neutral">Exemple de maquette</span>
+          </div>
+          <p style="color: var(--ink-2)">Ta correction et celle de l'agent, côte à côte. Il n'y a pas de gagnant : deux façons de fermer la même course, avec ce que chacune protège. Les deux correctifs montrés ici sont des exemples ; dans la démo, ce seront ceux écrits pendant le Replay.</p>
+        </div>
+        <button class="vl-btn vl-btn--secondary">Revenir au Replay</button>
+      </div>
+
+      <section aria-label="Ce qui compte" style="display: flex; flex-wrap: wrap; background: var(--night); color: var(--on-night); border-radius: 12px; overflow: hidden">
+        <div style="flex: 999 1 440px; min-width: 0; padding: 20px 24px 22px; display: flex; flex-direction: column; gap: 12px">
+          <span class="vl-tag vl-tag--night" style="align-self: flex-start">Ce que les deux corrigent</span>
+          <h2 style="font: 600 20px/27px var(--font-sans); letter-spacing: -.01em">Une réservation n'est annulée que si elle est encore en attente au moment d'écrire.</h2>
+          <p style="color: var(--on-night-muted)">L'étape 3 du déroulé ne peut plus écraser <code class="mono" style="color: var(--on-night)">confirmed</code>. Et quand les 2 machines lancent <code class="mono" style="color: var(--on-night)">expireHolds</code> à la même minute, la place n'est rendue qu'une fois.</p>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 4px">
+            <button class="vl-btn vl-btn--light">Proposer ma correction en PR</button>
+            <button class="vl-btn vl-btn--ghost-night">Garder la note dans mon carnet</button>
+          </div>
+        </div>
+        <div style="flex: 1 1 360px; min-width: 0; border-left: 1px solid var(--night-line); padding: 14px 0 8px; display: flex; flex-direction: column">
+          <span class="vl-label vl-label--night" style="padding: 0 20px 10px">Le test du Replay</span>
+          <div class="np"><span class="step">1</span><div><p>Sur ta correction : <span style="color: #7fd3a1">passe</span></p><small>attendu confirmed, obtenu confirmed</small></div></div>
+          <div class="np"><span class="step">2</span><div><p>Sur celle de l'agent : <span style="color: #7fd3a1">passe</span></p><small>attendu confirmed, obtenu confirmed</small></div></div>
+          <div class="np"><span class="step">3</span><div><p>Sur le code d'avant : <span style="color: #f3a497">échoue</span></p><small>attendu confirmed, obtenu cancelled</small></div></div>
+        </div>
+      </section>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start">
+        <section class="vl-card" aria-label="Ta correction" style="flex: 1 1 440px; min-width: 0; overflow: hidden">
+          <div class="vl-card__head"><span class="vl-label">Ta correction</span><span class="vl-ref">src/jobs/<b>expire.ts</b></span></div>
+          <p style="padding: 10px 16px 0; font-size: 12.5px; line-height: 18px; color: var(--ink-2)">La mise à jour exige encore <code class="vl-code">pending</code>, et la place n'est rendue que si une ligne a changé.</p>
+          <div class="diff">
+            <sc-for list="{{mine}}" as="d" hint-placeholder-count="8"><div class="{{d.cls}}"><span>{{d.n}}</span><span>{{d.s}}</span><span>{{d.t}}</span></div></sc-for>
+          </div>
+        </section>
+        <section class="vl-card" aria-label="La correction de l'agent" style="flex: 1 1 440px; min-width: 0; overflow: hidden">
+          <div class="vl-card__head"><span class="vl-label">La correction de l'agent</span><span class="vl-ref">src/jobs/<b>expire.ts</b></span></div>
+          <p style="padding: 10px 16px 0; font-size: 12.5px; line-height: 18px; color: var(--ink-2)">Une seule requête choisit et annule les réservations expirées, puis rend les places de celles-là seulement.</p>
+          <div class="diff">
+            <sc-for list="{{agent}}" as="d" hint-placeholder-count="8"><div class="{{d.cls}}"><span>{{d.n}}</span><span>{{d.s}}</span><span>{{d.t}}</span></div></sc-for>
+          </div>
+        </section>
+      </div>
+
+      <section class="vl-card" aria-label="Comparaison" style="overflow: hidden">
+        <div class="cmp cmp--h"><span class="vl-label">Ce qu'on regarde</span><span class="vl-label">Ta correction</span><span class="vl-label">Celle de l'agent</span></div>
+        <sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
+          <div class="cmp"><span>{{r.what}}</span><span class="{{r.aCls}}">{{r.a}}</span><span class="{{r.bCls}}">{{r.b}}</span></div>
+        </sc-for>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":__H__}}'>
+class Component extends DCLogic {
+  renderVals() {
+    function d(lines) { return lines.map(function (l) { return { n: l[0], s: l[1] === "+" ? "+" : l[1] === "-" ? "−" : "", t: l[2], cls: "dl" + (l[1] === "+" ? " dl--add" : l[1] === "-" ? " dl--del" : "") }; }); }
+    return {
+      mine: d([
+        ["17", "", "  for (const b of expired) {"],
+        ["18", "", "    const changed = await db"],
+        ["19", "", "      .update(bookings)"],
+        ["20", "", "      .set({ status: \"cancelled\", cancelledAt: new Date(), cancelReason: \"hold_expired\" })"],
+        ["21", "-", "      .where(eq(bookings.id, b.id));"],
+        ["21", "+", "      .where(and(eq(bookings.id, b.id), eq(bookings.status, \"pending\")))"],
+        ["22", "+", "      .returning({ id: bookings.id });"],
+        ["23", "+", "    if (changed.length === 0) continue;"],
+        ["24", "", "    await db.update(slots).set({ seatsTaken: sql`${slots.seatsTaken} - 1` }).where(eq(slots.id, b.slotId));"]
+      ]),
+      agent: d([
+        ["12", "-", "  const expired = await db"],
+        ["13", "-", "    .select({ id: bookings.id, slotId: bookings.slotId })"],
+        ["14", "-", "    .from(bookings)"],
+        ["12", "+", "  const expired = await db"],
+        ["13", "+", "    .update(bookings)"],
+        ["14", "+", "    .set({ status: \"cancelled\", cancelledAt: new Date(), cancelReason: \"hold_expired\" })"],
+        ["15", "", "    .where(and(eq(bookings.status, \"pending\"), lt(bookings.holdUntil, new Date())))"],
+        ["16", "+", "    .returning({ id: bookings.id, slotId: bookings.slotId });"],
+        ["18", "", "  for (const b of expired) {"],
+        ["19", "", "    await db.update(slots).set({ seatsTaken: sql`${slots.seatsTaken} - 1` }).where(eq(slots.id, b.slotId));"]
+      ]),
+      rows: [
+        { what: "Le test du Replay", a: "passe", aCls: "ok", b: "passe", bCls: "ok" },
+        { what: "Les 2 machines à la même minute", a: "chaque place rendue une fois", aCls: "", b: "chaque place rendue une fois", bCls: "" },
+        { what: "Requêtes pour n réservations expirées", a: "1 + 2n : lire, puis annuler et rendre chacune", aCls: "", b: "1 + n : annuler toutes, puis rendre chacune", bCls: "" },
+        { what: "Un paiement qui arrive après l'annulation", a: "encaissé, réservation laissée annulée (confirm.ts:22)", aCls: "", b: "encaissé, réservation laissée annulée (confirm.ts:22)", bCls: "" },
+        { what: "Ce qui reste hors de la correction", a: "annuler et rendre la place ne sont pas dans une transaction", aCls: "", b: "annuler et rendre la place ne sont pas dans une transaction", bCls: "" }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
