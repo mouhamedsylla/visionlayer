@@ -15,12 +15,20 @@ import { findBlock, formatArchModel, formatBlock, formatFlow, withoutPureCalls }
 import { readInfraModel } from "../../vision/infra/store.js";
 import { buildInfraModel } from "../../vision/infra/build.js";
 import type { SystemModel } from "../../vision/model/types.js";
+import { MapSource } from "../../vision/web/map-source.js";
+import { featureEntries } from "../../vision/web/knowledge-source.js";
+import { buildKnowledge } from "../../vision/knowledge/build.js";
+import { MapIndex } from "../../vision/slice/index.js";
+import { buildSummary } from "../../vision/slice/summary.js";
+import { buildSlice, formatSlice } from "../../vision/slice/build.js";
 
 /**
  * Serveur MCP RYPHA VisionLayer — MVP5.
  *
- * N'expose QUE des outils de lecture (vision_context, vision_inspect,
- * vision_source, vision_architecture, vision_flow). `vision update`/`vision diff`/`vision report` restent
+ * N'expose QUE des outils de lecture : vision_summary et vision_slice, qui
+ * lisent la carte des packs (docs : contexte-des-agents-solution), puis
+ * vision_context, vision_inspect, vision_source, vision_architecture et
+ * vision_flow, qui lisent encore l'ancien modèle. `vision update`/`vision diff`/`vision report` restent
  * volontairement CLI-only, jamais exposés à un agent — mvp-roadmap.md
  * (MVP5) l'exige explicitement : la lecture peut s'automatiser sans
  * risque, l'écriture du modèle doit garder une étape humaine tant que la
@@ -50,6 +58,63 @@ function errorResult(message: string) {
 }
 
 const server = new McpServer({ name: "rypha-vision", version: "0.1.0" });
+
+/**
+ * La carte des packs, gardée par racine pendant la vie du serveur. Chaque
+ * appel la rafraîchit : seuls les fichiers modifiés depuis l'appel précédent
+ * sont relus, si bien qu'un agent qui vient de modifier du code reçoit la
+ * carte de ce code-là.
+ */
+const maps = new Map<string, MapSource>();
+async function currentMap(root: string) {
+  const source = maps.get(root) ?? new MapSource(root);
+  maps.set(root, source);
+  const { model } = await source.refresh();
+  return { index: new MapIndex(model), knowledge: buildKnowledge(root, featureEntries(model)) };
+}
+
+server.registerTool(
+  "vision_summary",
+  {
+    title: "VisionLayer — Sommaire du système",
+    description:
+      "À appeler en premier, avant de chercher dans le code. Une ligne par élément du système, sans code : points d'entrée (routes, tâches planifiées, consommateurs de messages) avec leur fonction et leur garde, tables avec le nombre d'écritures et de lectures, files, constats, ce qui n'est pas lu. Choisis ce qui concerne ta tâche, puis appelle vision_slice avec les noms de la première colonne.",
+    inputSchema: {
+      block: z.string().optional().describe("Sur un grand système : ne donner que ce bloc (id de la première colonne de la liste des blocs)"),
+      root: z.string().optional().describe("Racine du dépôt (défaut : répertoire courant)"),
+    },
+  },
+  async ({ block, root }) => {
+    try {
+      const { index, knowledge } = await currentMap(resolve(root ?? "."));
+      return plainText(buildSummary(index, { block, knowledge }));
+    } catch (err) {
+      return errorResult(`vision_summary a échoué: ${(err as Error).message}`);
+    }
+  },
+);
+
+server.registerTool(
+  "vision_slice",
+  {
+    title: "VisionLayer — Tranche du système",
+    description:
+      "La partie du système reliée à ce que tu as choisi dans vision_summary : la fonction et la garde d'un point d'entrée, son déroulé, les autres endroits qui écrivent ou lisent les mêmes données (avec les valeurs écrites), qui traite ses messages, les constats et ce que les agents ont déclaré. Que des adresses fichier:ligne à lire ensuite, sans code, de la plus proche à la plus lointaine. Lis ces lignes avant de modifier.",
+    inputSchema: {
+      elements: z.array(z.string()).min(1).describe("Noms de la première colonne du sommaire : route (« POST /bookings »), fonction, table, file, constat (« code@fichier:ligne ») ou adresse « fichier:ligne »"),
+      max: z.number().int().positive().optional().describe("Nombre de lignes au plus (défaut 45) ; les plus lointaines sont coupées et comptées"),
+      root: z.string().optional().describe("Racine du dépôt (défaut : répertoire courant)"),
+    },
+  },
+  async ({ elements, max, root }) => {
+    try {
+      const { index, knowledge } = await currentMap(resolve(root ?? "."));
+      return plainText(formatSlice(buildSlice(index, elements, { knowledge, max }), elements));
+    } catch (err) {
+      return errorResult(`vision_slice a échoué: ${(err as Error).message}`);
+    }
+  },
+);
 
 server.registerTool(
   "vision_context",

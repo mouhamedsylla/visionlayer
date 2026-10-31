@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cpSync, mkdtempSync, rmSync } from "node:fs";
+import { cpSync, existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
@@ -50,14 +50,32 @@ function jsonContent(result: unknown): any {
   return JSON.parse(content[0]!.text);
 }
 
-test("serveur MCP: liste exactement les 5 outils en lecture attendus", async () => {
+test("serveur MCP: liste exactement les 7 outils en lecture attendus", async () => {
   await withClient(async (client) => {
     const { tools } = await client.listTools();
     assert.deepStrictEqual(
       tools.map((t) => t.name).sort(),
-      ["vision_architecture", "vision_context", "vision_flow", "vision_inspect", "vision_source"],
+      ["vision_architecture", "vision_context", "vision_flow", "vision_inspect", "vision_slice", "vision_source", "vision_summary"],
     );
   });
+});
+
+test("serveur MCP: vision_summary puis vision_slice lisent la carte des packs, sans rien écrire dans le dépôt", async () => {
+  const root = mkdtempSync(join(tmpdir(), "vision-mcp-atelier-"));
+  cpSync(join(import.meta.dirname, "corpus", "atelier-api"), root, { recursive: true });
+  try {
+    await withClient(async (client) => {
+      const summary = textContent(await client.callTool({ name: "vision_summary", arguments: { root } }));
+      assert.ok(summary.includes("expireHolds"));
+      assert.ok(summary.includes("race_read_then_write@src/jobs/expire.ts:13"));
+      const slice = textContent(await client.callTool({ name: "vision_slice", arguments: { root, elements: ["expireHolds"] } }));
+      assert.ok(slice.includes("src/bookings/confirm.ts:28"), slice);
+      assert.ok(slice.includes("status = confirmed"), slice);
+    });
+    assert.ok(!existsSync(join(root, ".vision")), "le serveur ne doit rien écrire dans le dépôt");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test("serveur MCP: vision_context renvoie un contexte structuré et fidèle à buildAgentContext", async () => {
