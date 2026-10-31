@@ -28,6 +28,8 @@ import { tableColumns } from "./drizzle-columns.js";
  * read_locked(Fichier, Ligne)                        … .for("update") : la lecture verrouille ses lignes
  * upd_at(Fichier, Table, Ligne)                      db.update(t) : à la ligne du update
  * upd_where(Fichier, Table, Colonne, Ligne)          … .where(eq(t.id, …)) : une colonne de la condition d'une mise à jour
+ * read_col(Fichier, Table, Colonne, Ligne)           db.select({ phone: users.phone }).from(users) : une colonne rendue, à la ligne du from (ou de la jointure)
+ * read_whole(Fichier, Table, Ligne)                  db.select().from(users) : toutes les colonnes de la table
  *
  * La requête qui définit une vue n'est pas une lecture : elle n'émet rien.
  */
@@ -195,6 +197,18 @@ const script: PackScript = ({ file, root, imports, fact }) => {
         const tv = unwrap(args(n)[0]);
         const at = (fn.childForFieldName("property")?.startPosition.row ?? 0) + 1;
         if (tv?.type === "identifier") out.push(fact("upd_at", [file.path, tv.text, at], at));
+      }
+      // Ce qu'une lecture rend : les colonnes nommées dans select({ … }), ou toute la ligne pour select() ; jointures comprises.
+      if (READ.has(op) && op !== "$count") {
+        const tv = unwrap(args(n)[0]);
+        const sel = chainOf(fn.childForFieldName("object")).find((c) => c.prop === "select" || c.prop === "selectDistinct");
+        if (tv?.type === "identifier" && sel) {
+          const shape = unwrap(args(sel.call)[0]);
+          // select() ou select({ user: users }) : la ligne entière de la table.
+          const whole = !shape || (shape.type === "object" && shape.namedChildren.some((p) => p.type === "pair" && unwrap(p.childForFieldName("value") ?? undefined)?.text === tv.text));
+          if (whole) out.push(fact("read_whole", [file.path, tv.text, line(n)], line(n)));
+          else for (const c of columnsOf(shape, tv.text)) out.push(fact("read_col", [file.path, tv.text, c, line(n)], line(n)));
+        }
       }
       const kind = WRITE.has(op) ? "write" : READ.has(op) ? "read" : undefined;
       const a = unwrap(args(n)[0]);

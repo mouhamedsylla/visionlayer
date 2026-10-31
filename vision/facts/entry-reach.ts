@@ -111,7 +111,7 @@ function owners(
 }
 
 /**
- * Le déployable et les points d'entrée de chaque écriture d'un champ d'entité.
+ * Le déployable et les points d'entrée de chaque écriture, et de chaque lecture, d'un champ d'entité.
  * L'écriture est dans une fonction : si c'est la fonction d'un point d'entrée,
  * c'est lui ; si d'autres fichiers l'importent, ce sont les points d'entrée de
  * ces fichiers (markRefunded, importée par le webhook) ; sinon, la règle des
@@ -120,7 +120,7 @@ function owners(
 export function attributeFieldWrites(nodes: ArchNode[], importers: (path: string, fn: string) => string[], owners: Owners): void {
   const runs = nodes.filter((n) => n.level === "deployable" && n.files?.length);
   for (const store of nodes) for (const entity of store.facets.data?.entities ?? []) for (const field of entity.fields ?? []) {
-    for (const w of field.writes ?? []) {
+    for (const w of [...(field.writes ?? []), ...(field.reads ?? [])]) {
       // Un fichier partagé par plusieurs déployables revient au premier dont un point d'entrée l'atteint.
       const found = runs.filter((n) => n.files!.includes(w.proof.path)).map((n) => {
         const entries = (n.facets.entrypoints ?? []).filter((e) => e.kind !== "main" && e.handler);

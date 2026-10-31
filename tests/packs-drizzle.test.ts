@@ -191,3 +191,32 @@ test("drizzle W1 à W4 : valeur par défaut, écriture littérale, écriture cal
   assert.deepEqual(field("paid_at").writes?.map((w) => `${w.value ?? "calculée"} ${w.fn}`), ["calculée pay"]);
   assert.deepEqual(field("id").writes?.map((w) => `${w.value ?? "calculée"} ${w.fn} :${w.proof.line}`), ["calculée open :4"]);
 });
+
+test("drizzle R1 à R5 : les colonnes que rend une lecture", async () => {
+  const m = await mapOf({ ...SERVER,
+    "schema.ts": [
+      `import { pgTable, text } from "drizzle-orm/pg-core";`,
+      `export const users = pgTable("users", { id: text("id"), email: text("email"), phone: text("phone") });`,
+      `export const sessions = pgTable("sessions", { id: text("id"), userId: text("user_id") });`,
+    ].join("\n"),
+    "server.ts": [
+      `import { drizzle } from "drizzle-orm/node-postgres";`,
+      `import { eq } from "drizzle-orm";`,
+      `import { users, sessions } from "./schema";`,
+      `const db = drizzle(process.env.DATABASE_URL!);`,
+      `export const r1 = () => db.select({ email: users.email, phone: users.phone }).from(users);`,
+      `export const r2 = () => db.select().from(users);`,
+      `export const r3 = () => db.select({ user: users }).from(sessions).innerJoin(users, eq(users.id, sessions.userId));`,
+      `export const r4 = () => db.select({ sid: sessions.id, email: users.email }).from(sessions).innerJoin(users, eq(users.id, sessions.userId));`,
+      `export const r5 = (id: string) => db.select({ uid: sessions.userId }).from(sessions).where(eq(sessions.id, id));`,
+    ].join("\n"),
+  });
+  const fields = m.nodes.flatMap((n) => n.facets.data?.entities ?? []).flatMap((t) => (t.fields ?? []).map((f) => ({ t: t.name, f })));
+  const reads = (t: string, f: string) => (fields.find((x) => x.t === t && x.f.name === f)?.f.reads ?? []).map((r) => `${r.proof.line}${r.whole ? "*" : ""}`).sort();
+  assert.deepEqual(reads("users", "phone"), ["5", "6*", "7*"]);
+  assert.deepEqual(reads("users", "email"), ["5", "6*", "7*", "8"]);
+  assert.deepEqual(reads("users", "id"), ["6*", "7*"]);
+  assert.deepEqual(reads("sessions", "id"), ["8"]);
+  // R5 : sessions.id n'est que dans la condition de r5 ; seul user_id est rendu.
+  assert.deepEqual(reads("sessions", "user_id"), ["9"]);
+});

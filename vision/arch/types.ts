@@ -240,8 +240,13 @@ export interface Field {
   default?: string;
   /** Les lignes du code qui écrivent ce champ. */
   writes?: FieldWrite[];
+  /** Les lignes du code qui lisent ce champ : nommé dans la lecture, ou rendu avec toute la ligne (`whole`). */
+  reads?: FieldRead[];
   proof?: Proof;
 }
+
+/** Une lecture d'un champ : `phone` rendu par `exportUsers`. */
+export type FieldRead = Omit<FieldWrite, "value"> & { whole?: boolean };
 
 /** Une écriture d'un champ : `status: "cancelled"` dans `expireHolds`. */
 export interface FieldWrite {

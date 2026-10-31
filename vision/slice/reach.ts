@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { at, type MapIndex } from "./index.js";
 import { buildSlice, formatSections, type Slice } from "./build.js";
+import { guardText } from "./summary.js";
 import type { KnowledgeReport } from "../knowledge/types.js";
 
 /** Les lignes changées d'un fichier, côté nouveau code. `null` : tout le fichier (fichier nouveau). */
@@ -32,6 +33,8 @@ export function changedLines(root: string): Changes {
 export interface Reach {
   /** Ce que chaque morceau changé est sur la carte. */
   touched: { at: string; what: string }[];
+  /** Pour chaque champ changé : qui le lit, depuis quel point d'entrée, derrière quelle garde. */
+  readers: { field: string; at: string; text: string }[];
   /** Les noms donnés à la tranche. */
   handles: string[];
   slice: Slice;
@@ -50,6 +53,7 @@ export function buildReach(index: MapIndex, changes: Changes, opts: { knowledge?
   const inRanges = (ranges: [number, number][] | null, line: number) => !ranges || ranges.some(([a, b]) => a <= line && line <= b);
 
   const untouchedFields = new Set<string>();
+  const readers: Reach["readers"] = [];
 
   for (const [path, ranges] of changes) {
     const inFile = index.functions.filter((f) => f.proof.path === path);
@@ -73,7 +77,16 @@ export function buildReach(index: MapIndex, changes: Changes, opts: { knowledge?
       if (!fields.length && !def) continue;
       handles.add(`${t.node}/${t.name}`);
       declared.filter((f) => !fields.includes(f)).forEach((f) => untouchedFields.add(at(f.proof!)));
-      for (const f of fields) touched.push({ at: at(f.proof!), what: `champ ${t.name}.${f.name}` });
+      for (const f of fields) {
+        touched.push({ at: at(f.proof!), what: `champ ${t.name}.${f.name}` });
+        for (const r of f.reads ?? []) {
+          // Les points d'entrée du lien à la même adresse, pour dire la même chose que la tranche.
+          const link = index.occurrences("read", { entity: t.name }).find((o) => at(o) === at(r.proof));
+          const entries = (link?.entrypoints ?? r.entrypoints ?? []).map((id) => index.entryById(id)).filter((e) => !!e);
+          const from = entries.map((e) => `${index.entryName(e)}${e.kind === "http" && e.access ? ` (garde : ${guardText(e.access)})` : ""}`);
+          readers.push({ field: `${t.name}.${f.name}`, at: at(r.proof), text: `${r.whole ? "toute la ligne" : f.name}${r.fn ? ` dans ${r.fn}` : ""}${from.length ? `, depuis ${from.join(", ")}` : ""}` });
+        }
+      }
       if (def && !fields.length) touched.push({ at: at(t.proof!), what: `table ${t.name}` });
     }
 
@@ -98,7 +111,7 @@ export function buildReach(index: MapIndex, changes: Changes, opts: { knowledge?
   const slice = names.length ? buildSlice(index, names, opts) : { items: [], unknown: [] };
   // Un constat posé sur un champ que la modification ne change pas ne la concerne pas.
   slice.items = slice.items.filter((i) => i.section !== "Constats" || !untouchedFields.has(i.at));
-  return { touched, handles: names, slice };
+  return { touched, readers, handles: names, slice };
 }
 
 export function formatReach(reach: Reach): string {
@@ -106,6 +119,10 @@ export function formatReach(reach: Reach): string {
   if (!reach.touched.length) return [...out, "Aucune ligne changée par rapport au dernier commit."].join("\n");
   out.push("Lignes changées");
   for (const t of reach.touched) out.push(`  ${t.at.padEnd(34)} ${t.what}`);
+  for (const field of new Set(reach.readers.map((r) => r.field))) {
+    out.push("", `Qui lit ${field}`);
+    for (const r of reach.readers.filter((r) => r.field === field)) out.push(`  ${r.at.padEnd(34)} ${r.text}`);
+  }
   out.push("", ...formatSections(reach.slice));
   if (reach.slice.items.some((i) => i.section === "Constats"))
     out.push("", "Pour chaque constat ci-dessus, dis dans ta réponse si ta modification le touche ou l'aggrave, et ce que tu en fais.");

@@ -66,6 +66,9 @@ const field = S({
   writes: z.array(S({
     value: z.string().optional(), fn: z.string().optional(), node: z.string().optional(), entrypoints: z.array(z.string()).optional(), proof,
   })).optional(),
+  reads: z.array(S({
+    whole: z.boolean().optional(), fn: z.string().optional(), node: z.string().optional(), entrypoints: z.array(z.string()).optional(), proof,
+  })).optional(),
   proof: proof.optional(),
 });
 

@@ -1,4 +1,4 @@
-import type { Constraint, Entity, Field, FieldWrite } from "../arch/types.js";
+import type { Constraint, Entity, Field, FieldRead, FieldWrite } from "../arch/types.js";
 import type { Database, Value } from "./datalog.js";
 
 /**
@@ -10,6 +10,7 @@ import type { Database, Value } from "./datalog.js";
  *   entity_ref(Tech, Entité, Champs, Entité visée)               une clé étrangère
  *   entity_default(Tech, Entité, Champ, Valeur)                  la valeur par défaut posée par la base
  *   entity_write(Tech, Entité, Champ, Valeur|"", Fichier, Ligne) une écriture du champ par le code ; "" quand la valeur est calculée
+ *   entity_read(Tech, Entité, Champ|"*", Fichier, Ligne)        une lecture du champ par le code ; "*" quand elle rend la ligne entière
  *   entity_trigger(Entité, Nom, Opérations)                      du code de la base qui s'exécute quand elle change
  *   trigger_writes(Nom, Entité)                                  ce que ce code écrit
  *
@@ -29,6 +30,7 @@ export function entityDetails(db: Database): (tech: string, entity: string) => E
 
   const defaults = new Map(db.get("entity_default").map((t) => [`${key(s(t.args[0]), s(t.args[1]))}\0${s(t.args[2])}`, s(t.args[3])]));
   const writes = fieldWrites(db);
+  const reads = fieldReads(db);
 
   const fields = new Map<string, Field[]>();
   for (const t of db.get("entity_field")) {
@@ -37,9 +39,10 @@ export function entityDetails(db: Database): (tech: string, entity: string) => E
     const vals = values.get(`${k}\0${name}`);
     const def = defaults.get(`${k}\0${name}`);
     const w = writes.get(`${k}\0${name}`);
+    const r = [...(reads.get(`${k}\0${name}`) ?? []), ...(reads.get(`${k}\0*`) ?? []).map((x) => ({ ...x, whole: true }))];
     const f: Field = {
       name, type: s(t.args[3]), nullable: s(t.args[4]) === "null", ...(vals ? { values: [...new Set(vals)] } : {}),
-      ...(def !== undefined ? { default: def } : {}), ...(w ? { writes: w } : {}), proof: t.proof[0]!,
+      ...(def !== undefined ? { default: def } : {}), ...(w ? { writes: w } : {}), ...(r.length ? { reads: r } : {}), proof: t.proof[0]!,
     };
     const own = list(fields, k);
     if (!own.some((x) => x.name === name)) own.push(f);
@@ -76,24 +79,43 @@ export function entityDetails(db: Database): (tech: string, entity: string) => E
   };
 }
 
+/** Les lectures de chaque champ ("*" : la ligne entière), à leur ligne, avec la fonction de premier niveau qui les contient. */
+function fieldReads(db: Database): Map<string, FieldRead[]> {
+  const out = new Map<string, FieldRead[]>();
+  for (const [k, list] of located(db, "entity_read", 3)) out.set(k, list.map(({ proof, fn }) => ({ ...(fn ? { fn } : {}), proof })));
+  return out;
+}
+
 /** Les écritures de chaque champ, à leur ligne, avec la fonction de premier niveau qui les contient. */
 function fieldWrites(db: Database): Map<string, FieldWrite[]> {
+  const out = new Map<string, FieldWrite[]>();
+  for (const [k, list] of located(db, "entity_write", 4)) out.set(k, list.map(({ proof, fn, extra }) => ({ ...(extra ? { value: extra } : {}), ...(fn ? { fn } : {}), proof })));
+  return out;
+}
+
+/**
+ * Les faits `(Tech, Entité, Champ, [Valeur,] Fichier, Ligne)` d'une relation, groupés par champ, sans doublon d'adresse,
+ * chacun avec la fonction de premier niveau qui contient sa ligne. `at` : la position du fichier dans les arguments.
+ */
+function located(db: Database, relation: string, at: number): Map<string, { proof: FieldWrite["proof"]; fn?: string; extra?: string }[]> {
   const s = (v: Value | undefined) => String(v);
   const spans = new Map<string, { name: string; from: number; to: number }[]>();
   for (const t of db.get("fn_span")) {
     const file = s(t.args[0]);
     (spans.get(file) ?? spans.set(file, []).get(file)!).push({ name: s(t.args[1]), from: Number(t.args[2]), to: Number(t.args[3]) });
   }
-  const out = new Map<string, FieldWrite[]>();
-  for (const t of db.get("entity_write")) {
-    const [tech, entity, field, value, path] = t.args.slice(0, 5).map(s) as [string, string, string, string, string];
-    const line = Number(t.args[5]);
+  const out = new Map<string, { proof: FieldWrite["proof"]; fn?: string; extra?: string }[]>();
+  for (const t of db.get(relation)) {
+    const [tech, entity, field] = t.args.slice(0, 3).map(s) as [string, string, string];
+    const extra = at > 3 ? s(t.args[3]) : undefined;
+    const path = s(t.args[at]);
+    const line = Number(t.args[at + 1]);
     const k = `${tech}\0${entity}\0${field}`;
     const own = out.get(k) ?? out.set(k, []).get(k)!;
     if (own.some((w) => w.proof.path === path && w.proof.line === line)) continue;
     const fn = spans.get(path)?.filter((f) => f.from <= line && line <= f.to).sort((a, b) => b.from - a.from)[0]?.name;
     const proof = t.proof.find((p) => p.path === path && p.line === line) ?? { path, line, source: "pack" as const };
-    own.push({ ...(value ? { value } : {}), ...(fn ? { fn } : {}), proof });
+    own.push({ proof, ...(fn ? { fn } : {}), ...(extra ? { extra } : {}) });
   }
   for (const list of out.values()) list.sort((a, b) => a.proof.path.localeCompare(b.proof.path) || a.proof.line - b.proof.line);
   return out;

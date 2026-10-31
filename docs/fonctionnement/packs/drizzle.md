@@ -59,6 +59,20 @@ Les mêmes écritures que E4 et E6, rendues en relations neutres : `entity_write
 | W5 | une écriture de la ligne entière | `.values(input)`, `.set({ ...patch })` | non : ses colonnes ne sont pas connues |
 | W6 | l'état d'où part une écriture | `if (booking.status !== "pending") throw …`, `.where(eq(t.status, "pending"))` | à faire : seule la valeur écrite est lue, pas la condition |
 
+## Où le code lit chaque colonne
+
+Ce qu'une lecture rend, colonne par colonne : `entity_read(Tech, Entité, Colonne, Fichier, Ligne)`, à la ligne du `from` ou de la jointure, la même que celle de l'accès. La colonne vaut `"*"` quand la lecture rend la ligne entière. Le modèle les porte sur chaque champ (`reads`, `whole` pour la ligne entière). La portée d'une modification en tire « qui lit ce champ, depuis quelle route, derrière quelle garde ».
+
+| # | Forme | Exemple | État |
+|---|---|---|---|
+| R1 | des colonnes nommées dans le select | `db.select({ email: users.email, phone: users.phone }).from(users)` | lu : chaque colonne |
+| R2 | la ligne entière | `db.select().from(users)` | lu : toutes les colonnes (`whole`) |
+| R3 | la table entière comme valeur du select | `db.select({ user: users }).from(sessions).innerJoin(users, …)` | lu : toutes les colonnes de `users` |
+| R4 | les colonnes d'une table jointe | `db.select({ name: users.name }).from(workshops).innerJoin(users, …)` | lu : les colonnes de la table jointe |
+| R5 | une colonne seulement dans la condition | `.where(eq(users.id, id))` | non : une condition n'est pas une donnée rendue (voir `read_filter`) |
+| R6 | l'API relationnelle | `db.query.users.findMany({ columns: { phone: true } })` | à faire : la lecture est vue, pas ses colonnes |
+| R7 | le SQL brut | `` sql`SELECT phone FROM users` `` | à faire : la lecture est vue, pas ses colonnes |
+
 ## Les valeurs permises d'une colonne (constat `unused_value`)
 
 | # | Forme | Exemple | État |

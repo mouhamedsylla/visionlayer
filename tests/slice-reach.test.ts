@@ -36,6 +36,8 @@ test("portée : une modification hors fonction et un champ rendent la route, ses
     assert.ok(reach.handles.includes("POST /auth/signup"), text);
     assert.ok(reach.handles.includes("postgres/users"), text);
     assert.ok(text.includes("champ users.phone"), text);
+    // Le champ changé, et qui le lit : l'export le rend à toute personne connectée.
+    assert.match(text, /Qui lit users\.phone\n(.*\n)*\s+src\/admin\/export\.ts:9\s+phone dans exportUsers, depuis GET \/admin\/export \(garde : connexion\)/, text);
     assert.ok(text.includes("drizzle/0002_phone.sql"), text);
     // Le corps de l'inscription, téléphone compris, part dans le journal ; l'export renvoie les utilisateurs à toute personne connectée.
     assert.ok(text.includes("personal_data_logged"), text);
@@ -48,5 +50,5 @@ test("portée : une modification hors fonction et un champ rendent la route, ses
 });
 
 test("portée : sans modification, elle le dit", () => {
-  assert.match(formatReach({ touched: [], handles: [], slice: { items: [], unknown: [] } }), /Aucune ligne changée/);
+  assert.match(formatReach({ touched: [], readers: [], handles: [], slice: { items: [], unknown: [] } }), /Aucune ligne changée/);
 });

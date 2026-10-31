@@ -77,10 +77,17 @@ export function buildSlice(index: MapIndex, handles: string[], opts: { knowledge
     const k = `${t.name}|${w.fn}`;
     values.set(k, [...(values.get(k) ?? []), `${f.name} = ${w.value}`]);
   }
-  /** `écrit bookings (status = confirmed) dans confirmBooking, depuis POST /webhooks/stripe` */
+  /** Les champs qu'une lecture rend, à son adresse : `email, name, phone`, ou la ligne entière. */
+  const readCols = new Map<string, string[]>();
+  for (const t of index.entities) for (const f of t.fields ?? []) for (const r of f.reads ?? []) {
+    const k = `${t.name}|${at(r.proof)}`;
+    readCols.set(k, [...(readCols.get(k) ?? []), r.whole ? "*" : f.name]);
+  }
+  /** `écrit bookings (status = confirmed) dans confirmBooking, depuis POST /webhooks/stripe` ; `lit users (email, phone) dans exportUsers` */
   const occurrenceText = (verb: string, entity: string, o: Occurrence) => {
     const fn = index.functionAt(o)?.name;
-    const written = [...new Set(values.get(`${entity}|${fn}`) ?? [])];
+    const cols = verb === "lit" ? [...new Set(readCols.get(`${entity}|${at(o)}`) ?? [])] : [];
+    const written = cols.includes("*") ? ["toute la ligne"] : cols.length ? cols : [...new Set(values.get(`${entity}|${fn}`) ?? [])];
     const from = entryNames(o.entrypoints);
     return `${verb} ${entity}${written.length ? ` (${written.join(", ")})` : ""}${fn ? ` dans ${fn}` : ""}${from.length ? `, depuis ${from.join(", ")}` : ""}`;
   };
