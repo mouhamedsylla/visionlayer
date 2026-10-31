@@ -12,11 +12,12 @@ Cette documentation décrit **le fonctionnement de VisionLayer lui-même** : ses
 | 4 | [Le moteur de règles](./04-le-moteur-de-regles.md) : syntaxe, évaluation, preuves | écrit |
 | 5 | [Le modèle neutre et l'assembleur](./05-le-modele-neutre.md) : du résultat des règles à la carte | écrit |
 | 6 | [Ce qu'on sait faire, et comment on le vérifie](./06-limites-et-verification.md) | écrit |
-| 7 | Les niveaux de lecture actuels : structure du code, technologies, infrastructure (la carte version 1 n'aura pas de chapitre : elle part avec l'interface actuelle) | à écrire |
-| 8 | Les déroulés de features et les contrats, refaits sur la base de faits | à écrire |
-| 9 | L'interface recodée depuis les maquettes : serveur local, lectures du modèle neutre, actions sur clic | à écrire |
-| 10 | Le serveur MCP et le contexte des agents | à écrire |
-| 11 | La connaissance déclarée et l'activité des agents | à écrire |
+| 7 | [L'écrivain de packs](./07-l-ecrivain-de-packs.md) | écrit |
+| 8 | Les niveaux de lecture actuels : structure du code, technologies, infrastructure (la carte version 1 n'aura pas de chapitre : elle part avec l'interface actuelle) | à écrire |
+| 9 | Les déroulés de features et les contrats, refaits sur la base de faits | à écrire |
+| 10 | L'interface recodée depuis les maquettes : serveur local, lectures du modèle neutre, actions sur clic | à écrire |
+| 11 | Le serveur MCP et le contexte des agents | à écrire |
+| 12 | La connaissance déclarée et l'activité des agents | à écrire |
 
 ## Règles d'écriture
 

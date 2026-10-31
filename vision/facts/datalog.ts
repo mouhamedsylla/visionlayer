@@ -73,7 +73,7 @@ function tokenize(src: string, origin: string): Token[] {
     if (num) { out.push({ t: "num", v: num[0], line }); i += num[0].length; continue; }
     const id = rest.match(IDENT);
     if (id) { out.push({ t: "id", v: id[0], line }); i += id[0].length; continue; }
-    throw new Error(`${origin}:${line} : caractère inattendu « ${c} »`);
+    throw new Error(`${origin}:${line} : caractère inattendu « ${c} » dans « ${src.split("\n")[line - 1]!.trim()} »${c === "-" ? " : un mot avec un tiret s'écrit entre guillemets" : ""}`);
   }
   return out;
 }

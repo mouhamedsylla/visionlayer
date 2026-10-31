@@ -1,0 +1,31 @@
+id: node-schedule
+name: node-schedule
+languages: [javascript, typescript]
+when: { imports: [node-schedule] }
+provides: [entrypoint]
+match:
+  - id: S1
+    query: |
+      (call_expression
+        function: (member_expression object: (identifier) @obj property: (property_identifier) @method)
+        arguments: (arguments . (string (string_fragment) @expr) . (identifier) @fn)) @call
+    where:
+      obj: { import_of: node-schedule }
+      method: [scheduleJob]
+    at: call
+    emit: entrypoint($file, schedule, @expr, @fn, @fn:line)
+tests:
+  - name: S1 une tâche par scheduleJob
+    files:
+      jobs.ts: |
+        import schedule from "node-schedule";
+        function sendDigest() {}
+        schedule.scheduleJob("0 8 * * *", sendDigest);
+    expect: ['entrypoint(jobs.ts, schedule, "0 8 * * *", sendDigest, _)']
+  - name: S2 un autre objet n'est pas une tâche
+    files:
+      jobs.ts: |
+        const schedule = { scheduleJob(_e: string, _f: () => void) {} };
+        function x() {}
+        schedule.scheduleJob("* * * * *", x);
+    absent: ['entrypoint(jobs.ts, schedule, _, _, _)']

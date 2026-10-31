@@ -1,0 +1,174 @@
+id: cookie-parser
+name: cookie-parser
+languages: [javascript, typescript]
+provides: [trust]
+match:
+  - id: cookies-dot
+    query: |
+      (member_expression object: (identifier) @root property: (property_identifier) @prop) @node
+    where:
+      root: [req, request]
+      prop: [cookies]
+    at: node
+    emit: trust($file, cookie, $line)
+  - id: signed-dot
+    query: |
+      (member_expression object: (identifier) @root property: (property_identifier) @prop) @node
+    where:
+      root: [req, request]
+      prop: [signedCookies]
+    at: node
+    emit: trust($file, signed-cookie, $line)
+  - id: cookies-subscript
+    query: |
+      (subscript_expression object: (identifier) @root index: (string (string_fragment) @key)) @node
+    where:
+      root: [req, request]
+      key: [cookies]
+    at: node
+    emit: trust($file, cookie, $line)
+  - id: signed-subscript
+    query: |
+      (subscript_expression object: (identifier) @root index: (string (string_fragment) @key)) @node
+    where:
+      root: [req, request]
+      key: [signedCookies]
+    at: node
+    emit: trust($file, signed-cookie, $line)
+  - id: cookies-destructure
+    query: |
+      (variable_declarator name: (object_pattern (shorthand_property_identifier_pattern) @prop) value: (identifier) @root) @decl
+    where:
+      root: [req, request]
+      prop: [cookies]
+    at: decl
+    emit: trust($file, cookie, $line)
+  - id: signed-destructure
+    query: |
+      (variable_declarator name: (object_pattern (shorthand_property_identifier_pattern) @prop) value: (identifier) @root) @decl
+    where:
+      root: [req, request]
+      prop: [signedCookies]
+    at: decl
+    emit: trust($file, signed-cookie, $line)
+  - id: cookies-destructure-pair
+    query: |
+      (variable_declarator name: (object_pattern (pair_pattern key: (property_identifier) @prop)) value: (identifier) @root) @decl
+    where:
+      root: [req, request]
+      prop: [cookies]
+    at: decl
+    emit: trust($file, cookie, $line)
+  - id: signed-destructure-pair
+    query: |
+      (variable_declarator name: (object_pattern (pair_pattern key: (property_identifier) @prop)) value: (identifier) @root) @decl
+    where:
+      root: [req, request]
+      prop: [signedCookies]
+    at: decl
+    emit: trust($file, signed-cookie, $line)
+  - id: signed-helper
+    query: |
+      (call_expression function: (member_expression object: (identifier) @obj property: (property_identifier) @method)) @call
+    where:
+      obj: { import_of: cookie-parser }
+      method: [signedCookie, signedCookies]
+    at: call
+    emit: trust($file, signed-cookie, $line)
+tests:
+  - name: C1 lecture req.cookies
+    files:
+      app.js: |
+        var cookieParser = require('cookie-parser');
+        var app = require('express')();
+        app.use(cookieParser());
+        app.get('/', function (req, res) {
+          console.log('Cookies: ', req.cookies);
+        });
+    expect: ['trust(app.js, cookie, _)']
+    absent: []
+  - name: C2 lecture req.signedCookies
+    files:
+      app.js: |
+        var cookieParser = require('cookie-parser');
+        var app = require('express')();
+        app.use(cookieParser('secret'));
+        app.get('/', function (req, res) {
+          console.log('Signed: ', req.signedCookies);
+        });
+    expect: ['trust(app.js, signed-cookie, _)']
+    absent: []
+  - name: C3 lectures point subscript et request
+    files:
+      route.js: |
+        function h(req, res) {
+          const a = req.cookies.sid;
+          const b = req.cookies["sid"];
+          const c = req["cookies"];
+          const d = request.cookies;
+          const e = request["cookies"];
+          const f = req["signedCookies"];
+          const g = req.signedCookies;
+        }
+    expect: ['trust(route.js, cookie, _)', 'trust(route.js, signed-cookie, _)']
+    absent: []
+  - name: C4 helper signedCookie verifie signature
+    files:
+      app.js: |
+        var cookieParser = require('cookie-parser');
+        var v = cookieParser.signedCookie("s:hello.abc", "secret");
+        var w = cookieParser.signedCookies({a: "s:hi.sig"}, "secret");
+    expect: ['trust(app.js, signed-cookie, _)']
+    absent: ['trust(app.js, cookie, _, _)']
+  - name: C5 montee sans lecture
+    files:
+      app.js: |
+        var cookieParser = require('cookie-parser');
+        var app = require('express')();
+        app.use(cookieParser());
+        app.use(cookieParser('secret'));
+        app.get('/', function (req, res) { res.send('ok'); });
+    expect: []
+    absent: ['trust(app.js, _, _)']
+  - name: C6 faux ami meme nom sans req
+    files:
+      app.js: |
+        const cookieParser = { signedCookie(s, x) { return s; }, signedCookies(c, x) { return c; } };
+        const v = cookieParser.signedCookie("s:hello.abc", "secret");
+        const o = { cookies: {} };
+        console.log(o.cookies);
+        const q = { signedCookies: {} };
+        console.log(q.signedCookies);
+    expect: []
+    absent: ['trust(app.js, _, _)']
+  - name: C7 destructuration et faux ami
+    files:
+      ok.js: |
+        function h(req, res) {
+          const { cookies } = req;
+          const { signedCookies: sc } = req;
+          const { cookies: c } = request;
+        }
+      ko.js: |
+        function h(other, res) {
+          const { cookies } = other;
+        }
+    expect: ['trust(ok.js, cookie, _)', 'trust(ok.js, signed-cookie, _)']
+    absent: ['trust(ko.js, _, _)']
+  - name: C8 helpers JSON ne sont pas une preuve
+    files:
+      app.js: |
+        var cookieParser = require('cookie-parser');
+        var a = cookieParser.JSONCookie("j:{}");
+        var b = cookieParser.JSONCookies({a: "1"});
+    expect: []
+    absent: ['trust(app.js, _, _)']
+  - name: C9 chaine optionnelle et typescript
+    files:
+      route.ts: |
+        function h(req: any, res: any) {
+          const a = req?.cookies;
+          const b = req?.signedCookies;
+        }
+    expect: ['trust(route.ts, cookie, _)', 'trust(route.ts, signed-cookie, _)']
+    absent: []

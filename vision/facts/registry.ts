@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { FactBase } from "./base.js";
 import { loadPackText, producedRelations, relationArities, type Pack } from "./packs.js";
-import type { Database } from "./datalog.js";
+import type { Database, Value } from "./datalog.js";
 import { assemble } from "./assemble.js";
 import { mapChanges } from "../web/changes.js";
 import type { MapChange } from "../web/types.js";
@@ -123,45 +123,71 @@ export class PackRegistry {
 
   /** Les vérifications 1 à 4, sans toucher la carte. */
   private async check(file: string, text: string, hash: string, keep = true): Promise<Entry> {
-    const fail = (id: string, reason: string, provides: string[] = []): Entry => ({ file, hash, state: { id, file, status: "failed", reason, provides } });
-    let pack: Pack;
-    try {
-      pack = await loadPackText(text, file, { allowScript: false });
-    } catch (e) {
-      return fail(file.split("/").pop()!.replace(/\.yaml$/, ""), (e as Error).message);
-    }
-    const produced = producedRelations(pack);
-    if (this.builtins.some((b) => b.id === pack.id)) return fail(pack.id, `l'identifiant ${pack.id} est celui d'un pack livré`, produced);
-    if (!pack.provides?.length) return fail(pack.id, "un pack local doit déclarer ce qu'il produit (provides)", produced);
-    const undeclared = produced.filter((r) => !pack.provides!.includes(r));
-    if (undeclared.length) return fail(pack.id, `produit sans le déclarer : ${undeclared.join(", ")}`, produced);
-
-    // L'arité d'une relation partagée doit être celle que les autres packs emploient : sinon, même nom, autre sens.
-    const others = [...this.builtins, ...[...this.good.entries()].filter(([f]) => f !== file).map(([, p]) => p)];
-    for (const [rel, n] of relationArities(pack)) {
-      const other = others.map((o) => [o.id, relationArities(o).get(rel)] as const).find(([, m]) => m !== undefined && m !== n);
-      if (other) return fail(pack.id, `${rel} a ${n} arguments ici, ${other[1]} dans le pack ${other[0]}`, produced);
-    }
-    for (const [, o] of this.good.entries()) {
-      if (o.id === pack.id) continue;
-      const a = (pack.requires ?? []).filter((r) => producedRelations(o).includes(r));
-      const b = (o.requires ?? []).filter((r) => produced.includes(r));
-      if (a.length && b.length) return fail(pack.id, `cycle avec le pack ${o.id} : ${pack.id} lit ${a.join(", ")}, ${o.id} lit ${b.join(", ")}`, produced);
-    }
-
-    const broken = await runPackTests(pack, this.builtins);
-    if (broken) return fail(pack.id, broken, produced);
-
-    if (keep) this.good.set(file, pack);
-    return { file, hash, pack, state: { id: pack.id, file, status: "active", provides: produced } };
+    const others = [...this.good.entries()].filter(([f]) => f !== file).map(([, p]) => p);
+    const r = await checkPack(text, this.builtins, others, file);
+    if (!r.pack || r.state.status === "failed") return { file, hash, state: r.state };
+    if (keep) this.good.set(file, r.pack);
+    return { file, hash, pack: r.pack, state: r.state };
   }
+}
+
+/** Ce qu'un test de pack a donné : réussi ou non, pourquoi, et les faits que le pack a produits sur ses fichiers. */
+export interface PackTestReport { name: string; ok: boolean; problems: string[]; produced: string[] }
+
+/**
+ * Les vérifications 1 à 4 d'un pack local, à partir de son texte, sans rien charger : schéma sans script,
+ * `provides`, arités, cycles avec `others` (les autres packs locaux), puis ses tests. Sert au registre,
+ * à l'aperçu, et à l'agent qui écrit un pack : `tests` lui dit ce que chaque test a produit.
+ */
+export async function checkPack(text: string, builtins: Pack[], others: Pack[] = [], file = "propose.yaml"): Promise<{ pack?: Pack; state: PackState; tests?: PackTestReport[] }> {
+  const fail = (id: string, reason: string, provides: string[] = [], pack?: Pack, tests?: PackTestReport[]) =>
+    ({ ...(pack ? { pack } : {}), state: { id, file, status: "failed" as const, reason, provides }, ...(tests ? { tests } : {}) });
+  let pack: Pack;
+  try {
+    pack = await loadPackText(text, file, { allowScript: false });
+  } catch (e) {
+    return fail(file.split("/").pop()!.replace(/\.yaml$/, ""), (e as Error).message);
+  }
+  const produced = producedRelations(pack);
+  if (builtins.some((b) => b.id === pack.id)) return fail(pack.id, `l'identifiant ${pack.id} est celui d'un pack livré`, produced);
+  if (!pack.provides?.length) return fail(pack.id, "un pack local doit déclarer ce qu'il produit (provides)", produced);
+  const undeclared = produced.filter((r) => !pack.provides!.includes(r));
+  if (undeclared.length) return fail(pack.id, `produit sans le déclarer : ${undeclared.join(", ")}`, produced);
+
+  // L'arité d'une relation partagée doit être celle que les autres packs emploient : sinon, même nom, autre sens.
+  for (const [rel, n] of relationArities(pack)) {
+    const other = [...builtins, ...others].map((o) => [o.id, relationArities(o).get(rel)] as const).find(([, m]) => m !== undefined && m !== n);
+    if (other) return fail(pack.id, `${rel} a ${n} arguments ici, ${other[1]} dans le pack ${other[0]}`, produced);
+  }
+  for (const o of others) {
+    if (o.id === pack.id) continue;
+    const a = (pack.requires ?? []).filter((r) => producedRelations(o).includes(r));
+    const b = (o.requires ?? []).filter((r) => produced.includes(r));
+    if (a.length && b.length) return fail(pack.id, `cycle avec le pack ${o.id} : ${pack.id} lit ${a.join(", ")}, ${o.id} lit ${b.join(", ")}`, produced);
+  }
+
+  const tests = await testPack(pack, builtins);
+  const bad = tests.find((t) => !t.ok);
+  if (!pack.tests?.length) return fail(pack.id, "un pack local doit apporter ses tests (tests), au moins un par forme", produced);
+  if (bad) return fail(pack.id, `test « ${bad.name} » : ${bad.problems[0]}`, produced, undefined, tests);
+  return { pack, state: { id: pack.id, file, status: "active", provides: produced }, tests };
 }
 
 /** Les tests déclarés par un pack, chacun dans un dossier à part avec les packs livrés. Rend la première erreur, ou rien. */
 export async function runPackTests(pack: Pack, builtins: Pack[]): Promise<string | undefined> {
   if (!pack.tests?.length) return "un pack local doit apporter ses tests (tests), au moins un par forme";
-  for (const t of pack.tests) {
+  const bad = (await testPack(pack, builtins)).find((t) => !t.ok);
+  return bad ? `test « ${bad.name} » : ${bad.problems[0]}` : undefined;
+}
+
+/** Chaque test, en entier : ce qui manque, ce qui sort à tort, et tout ce que le pack a produit. */
+export async function testPack(pack: Pack, builtins: Pack[]): Promise<PackTestReport[]> {
+  const out: PackTestReport[] = [];
+  const own = new Set(pack.provides ?? producedRelations(pack));
+  for (const t of pack.tests ?? []) {
     const dir = mkdtempSync(join(tmpdir(), `vision-pack-test-${pack.id}-`));
+    const problems: string[] = [];
+    let produced: string[] = [];
     try {
       for (const [p, content] of Object.entries(t.files)) {
         mkdirSync(dirname(join(dir, p)), { recursive: true });
@@ -170,17 +196,24 @@ export async function runPackTests(pack: Pack, builtins: Pack[]): Promise<string
       const base = new FactBase(dir, [...builtins, pack]);
       base.refresh();
       const db = base.database();
-      for (const e of t.expect) if (!matches(db, e)) return `test « ${t.name} » : ${e} attendu, absent`;
-      for (const e of t.absent) if (matches(db, e)) return `test « ${t.name} » : ${e} ne devait pas sortir`;
+      produced = [...own].flatMap((rel) => db.get(rel).map((f) => formatFact(rel, f.args)));
+      for (const e of t.expect) if (!matches(db, e)) problems.push(`${e} attendu, absent`);
+      for (const e of t.absent) if (matches(db, e)) problems.push(`${e} ne devait pas sortir`);
       const failed = db.get("pack_failed").find((f) => String(f.args[0]) === pack.id);
-      if (failed) return `test « ${t.name} » : le pack a échoué sur ${String(failed.args[1])} : ${String(failed.args[2])}`;
+      if (failed) problems.push(`le pack a échoué sur ${String(failed.args[1])} : ${String(failed.args[2])}`);
     } catch (e) {
-      return `test « ${t.name} » : ${(e as Error).message.split("\n")[0]}`;
+      problems.push((e as Error).message.split("\n")[0]!);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+    out.push({ name: t.name, ok: !problems.length, problems, produced });
   }
-  return undefined;
+  return out;
+}
+
+/** Un fait écrit comme les motifs des tests : `rel("a", 3)`. */
+export function formatFact(rel: string, args: readonly Value[]): string {
+  return `${rel}(${args.map((a) => (typeof a === "number" ? String(a) : JSON.stringify(String(a)))).join(", ")})`;
 }
 
 /** `rel(a, "b c", _)` : un fait de la base qui correspond, `_` valant n'importe quoi. */

@@ -18,6 +18,7 @@ function items(model: ArchModelV2): Map<string, { text: string; proof?: Proof }>
       if (e.kind !== "main") out.set(`entry:${e.id}`, { text: `${e.key} dans ${n.name}`, proof: e.proof });
     }
     for (const entity of n.facets.data?.entities ?? []) addEntity(out, n, entity);
+    for (const m of n.facets.trust?.mechanisms ?? []) out.set(`trust:${n.id}:${m.name}`, { text: `${n.name} reconnaît ses appelants par ${m.name}`, proof: m.proof });
   }
   for (const e of model.edges) {
     const target = e.target?.entity ?? e.target?.topic ?? e.target?.entrypoint;
@@ -40,7 +41,7 @@ function addEntity(out: Map<string, { text: string; proof?: Proof }>, node: Arch
   }
 }
 
-const ORDER = ["node", "entry", "entity", "field", "value", "edge", "finding"];
+const ORDER = ["node", "entry", "trust", "entity", "field", "value", "edge", "finding"];
 
 /**
  * Ce qui a changé d'une analyse à la suivante : ce qui est apparu, ce qui a

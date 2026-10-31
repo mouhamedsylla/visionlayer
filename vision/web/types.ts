@@ -44,7 +44,7 @@ export interface MapPayload {
 /** Un élément de la carte apparu ou disparu entre deux analyses : `+ POST /bookings/:id/transfer dans API`. */
 export interface MapChange {
   sign: "added" | "removed";
-  kind: "node" | "entry" | "entity" | "field" | "value" | "edge" | "finding";
+  kind: "node" | "entry" | "trust" | "entity" | "field" | "value" | "edge" | "finding";
   text: string;
   proof?: Proof;
 }

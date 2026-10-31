@@ -35,6 +35,7 @@ import type { Pack } from "./packs.js";
  *   channel_topic, publishes, subscribes              les canaux de messages
  *   external_pkg, client, calls_external              les services externes
  *   env(Fichier, Nom)                                 les variables, par leur nom
+ *   trust(Fichier, Mécanisme, Ligne)                  comment un appelant prouve qui il est, lu à cette ligne : cookie, signed-cookie, token…
  */
 
 /** Catégories du catalogue qui disent l'architecture (pas les outils de test ni de style). */
@@ -161,6 +162,10 @@ export function assemble(db: Database, opts: AssembleOptions): ArchModelV2 {
       return { proof: at(file, Number(t.args[1]), t.proof), required: [...new Set(req)].sort(), loadedBy: [...loadedBy].sort() };
     });
 
+    // Comment un appelant prouve qui il est : un mécanisme par nom, avec chaque ligne qui le lit.
+    const trust = new Map<string, Proof>();
+    for (const t of rows("trust")) if (files.includes(s(t.args[0])) && !trust.has(s(t.args[1]))) trust.set(s(t.args[1]), at(s(t.args[0]), Number(t.args[2]), t.proof));
+
     const instances = rows("unit_instances").find((t) => list.some((u) => u.name === s(t.args[1]) && u.proof.some((p) => p.path === s(t.args[0]))));
 
     const attributes = dedupeAttrs(rows("unit_attr").filter((t) => list.some((u) => u.name === s(t.args[1]) && u.proof.some((p) => p.path === s(t.args[0]))))
@@ -184,6 +189,7 @@ export function assemble(db: Database, opts: AssembleOptions): ArchModelV2 {
           env: [...env].sort(([a], [b]) => a.localeCompare(b)).map(([name, readAt]) => ({ name, readAt, ...(required.has(name) ? { required: required.get(name)! } : {}) })),
           ...(loadChecks.length ? { loadChecks } : {}),
         } } : {}),
+        ...(trust.size ? { trust: { mechanisms: [...trust].sort(([a], [b]) => a.localeCompare(b)).map(([name, proof]) => ({ name, proof })) } } : {}),
       },
     };
     if (!read.has(target)) coverageGaps.push({ kind: "language_not_read", subject: target, count: 1, proof: node.proof[0]! });

@@ -21,6 +21,7 @@
     "hook": "tsx cli/hook.ts",
     "cost": "tsx cli/cost.ts",
     "knowledge": "tsx cli/knowledge.ts",
+    "packs": "tsx cli/pack.ts",
     "mcp": "tsx integrations/agents/server.ts",
     "ui": "tsx cli/ui.ts",
     "ui:dev": "vite --config ui/vite.config.ts",
