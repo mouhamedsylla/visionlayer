@@ -21,11 +21,13 @@ import { buildKnowledge } from "../../vision/knowledge/build.js";
 import { MapIndex } from "../../vision/slice/index.js";
 import { buildSummary } from "../../vision/slice/summary.js";
 import { buildSlice, formatSlice } from "../../vision/slice/build.js";
+import { buildReach, changedLines, formatReach } from "../../vision/slice/reach.js";
 
 /**
  * Serveur MCP RYPHA VisionLayer — MVP5.
  *
- * N'expose QUE des outils de lecture : vision_summary et vision_slice, qui
+ * N'expose QUE des outils de lecture : vision_summary, vision_slice et
+ * vision_reach (la portée d'une modification en cours), qui
  * lisent la carte des packs (docs : contexte-des-agents-solution), puis
  * vision_context, vision_inspect, vision_source, vision_architecture et
  * vision_flow, qui lisent encore l'ancien modèle. `vision update`/`vision diff`/`vision report` restent
@@ -118,6 +120,27 @@ server.registerTool(
       return plainText(formatSlice(buildSlice(index, elements, { knowledge }), elements));
     } catch (err) {
       return errorResult(`vision_slice a échoué: ${(err as Error).message}`);
+    }
+  },
+);
+
+server.registerTool(
+  "vision_reach",
+  {
+    title: "VisionLayer — Portée de ta modification",
+    description:
+      "À appeler après avoir modifié le code, avant de conclure. Lit ce qui a changé depuis le dernier commit (git diff et fichiers nouveaux), retrouve sur la carte ce que chaque ligne touche (fonction, point d'entrée, champ de table), puis donne la tranche de tout cela : routes et tâches atteintes, autres lecteurs et écrivains des mêmes données, constats. Dis ensuite, pour chaque constat, si ta modification le touche ou l'aggrave.",
+    inputSchema: {
+      root: z.string().optional().describe("Racine du dépôt (défaut : le dossier d'où le serveur a été lancé)"),
+    },
+  },
+  async ({ root }) => {
+    try {
+      const dir = resolve(root ?? DEFAULT_ROOT);
+      const { index, knowledge } = await currentMap(dir);
+      return plainText(formatReach(buildReach(index, changedLines(dir), { knowledge })));
+    } catch (err) {
+      return errorResult(`vision_reach a échoué: ${(err as Error).message}`);
     }
   },
 );

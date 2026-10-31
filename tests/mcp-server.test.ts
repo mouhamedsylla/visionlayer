@@ -50,12 +50,12 @@ function jsonContent(result: unknown): any {
   return JSON.parse(content[0]!.text);
 }
 
-test("serveur MCP: liste exactement les 7 outils en lecture attendus", async () => {
+test("serveur MCP: liste exactement les 8 outils en lecture attendus", async () => {
   await withClient(async (client) => {
     const { tools } = await client.listTools();
     assert.deepStrictEqual(
       tools.map((t) => t.name).sort(),
-      ["vision_architecture", "vision_context", "vision_flow", "vision_inspect", "vision_slice", "vision_source", "vision_summary"],
+      ["vision_architecture", "vision_context", "vision_flow", "vision_inspect", "vision_reach", "vision_slice", "vision_source", "vision_summary"],
     );
   });
 });

@@ -237,12 +237,18 @@ export function buildSlice(index: MapIndex, handles: string[], opts: { knowledge
 export function formatSlice(slice: Slice, handles: string[]): string {
   const out: string[] = [`TRANCHE ${handles.join(", ")}`, "Lis ces lignes avant de modifier : rien ici ne remplace le code.", ""];
   if (slice.unknown.length) out.push(`Introuvable sur la carte : ${slice.unknown.join(", ")}. Reprends un nom du sommaire.`, "");
+  return [...out, ...formatSections(slice)].join("\n").trimEnd();
+}
+
+/** Les lignes d'une tranche, groupées par section. */
+export function formatSections(slice: Slice): string[] {
+  const out: string[] = [];
   const sections = [...new Set(slice.items.map((i) => i.section))];
   for (const s of sections) {
     out.push(s);
     for (const i of slice.items.filter((i) => i.section === s)) out.push(`  ${i.at.padEnd(34)} ${i.text}`);
     out.push("");
   }
-  return out.join("\n").trimEnd();
+  return out;
 }
 
