@@ -1,6 +1,6 @@
 # ADR 0019 — Des packs et des vues écrits par des agents, chargés et retirés à chaud
 
-**Statut :** Proposée le 02/10/2026. Étapes 1 à 4 codées le 31/10/2026 pour les packs (`vision/facts/registry.ts`) ; les vues, l'écran Packs et la fiche de l'agent restent à faire. S'appuie sur l'[ADR 0013](./0013-visionlayer-control-tower-and-agent-integration.md) (VisionLayer lance l'assistant installé, n'orchestre pas d'agents), l'[ADR 0017](./0017-modele-neutre.md) (modèle neutre) et l'[ADR 0018](./0018-nouvelle-interface.md) (nouvelle interface).
+**Statut :** Proposée le 02/10/2026. Étapes 1 à 4 et 6 codées le 31/10/2026 pour les packs (`vision/facts/registry.ts`, `vision/writer/`) ; les vues et l'écran Packs restent à faire. S'appuie sur l'[ADR 0013](./0013-visionlayer-control-tower-and-agent-integration.md) (VisionLayer lance l'assistant installé, n'orchestre pas d'agents), l'[ADR 0017](./0017-modele-neutre.md) (modèle neutre) et l'[ADR 0018](./0018-nouvelle-interface.md) (nouvelle interface).
 
 Référence : Shi, Zhang, Cui, *A Programming Paradigm for Spatiotemporal Composability*, Peking University et DeepSeek-AI, août 2026 ([arXiv 2608.25512](https://arxiv.org/abs/2608.25512), code : [Cordis](https://github.com/cordiverse/paper)). Les numéros de section entre parenthèses (§3.1…) renvoient à ce papier.
 
@@ -163,3 +163,15 @@ Le moteur de requêtes déclaratives (`match`), qu'aucun pack livré n'employait
 - Le papier laisse au composant la charge de fournir des inverses justes (§5.1.1) ; il ne les vérifie pas. Chez nous, la réalisation dérivée (recalculer depuis les faits) évite d'écrire des inverses. Elle coûte un recalcul des règles à chaque changement, à mesurer sur un gros dépôt.
 - Le bac à sable des vues (iframe) doit-il aussi servir aux scripts de packs relus, ou ceux-ci restent-ils dans le processus ?
 - Comment présenter la différence de faits pour qu'un humain la juge vite : en nombre par relation, ou en exemples suivis ?
+
+### Étape 6 : la fiche de l'agent (31/10/2026)
+
+| Pièce | Où | Vérifié par |
+|---|---|---|
+| La fiche : mission et gardes, format, vocabulaire de faits (arités vérifiées contre les packs livrés), un pack accepté en exemple, la documentation de la technologie ; du projet, seulement la version | `vision/writer/brief.ts`, `vision/writer/vocabulary.ts` | `tests/pack-writer.test.ts` : rien du code du projet n'entre dans la fiche |
+| Les outils de l'agent : `syntax_tree`, `check_pack` (le registre, et par test ce qui manque, ce qui sort, les faits produits), `submit_pack` | `vision/writer/tools.ts`, `checkPack` dans le registre | idem |
+| Muse Spark par la Responses API ; dépôt dans `.vision/packs/proposes/`, aperçu sur le projet, `accept` et `reject` | `vision/writer/spark.ts`, `cli/pack.ts` (`pnpm packs`) | l'essai cookie-parser : `examples/pack-writer/cookie-parser` |
+| La relation neutre `trust(Fichier, Mécanisme, Ligne)` : comment un appelant prouve qui il est, posée sur le bloc qui atteint le fichier | `vision/facts/assemble.ts`, `vision/web/changes.ts` | `tests/pack-writer.test.ts` |
+
+Essayée sur `cookie-parser` plutôt que sur W6 de Drizzle : c'est la seule bibliothèque d'atelier-api sans pack, celle que vise le hackathon. Le premier essai passait ses tests et se trompait sur le projet (le montage pris pour l'emploi) ; deux corrections de la fiche, aucune du pack, l'ont rendu juste sur atelier-api et à l'aveugle sur OpenArchiver.
+
