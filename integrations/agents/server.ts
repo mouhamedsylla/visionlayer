@@ -102,7 +102,7 @@ server.registerTool(
       "La partie du système reliée à ce que tu as choisi dans vision_summary : la fonction et la garde d'un point d'entrée, son déroulé, les autres endroits qui écrivent ou lisent les mêmes données (avec les valeurs écrites), qui traite ses messages, les constats et ce que les agents ont déclaré. Que des adresses fichier:ligne à lire ensuite, sans code, de la plus proche à la plus lointaine. Lis ces lignes avant de modifier.",
     inputSchema: {
       elements: z.array(z.string()).min(1).describe("Noms de la première colonne du sommaire : route (« POST /bookings »), fonction, table, file, constat (« code@fichier:ligne ») ou adresse « fichier:ligne »"),
-      max: z.number().int().positive().optional().describe("Nombre de lignes au plus (défaut 45) ; les plus lointaines sont coupées et comptées"),
+      max: z.number().int().positive().optional().describe("Nombre de lignes au plus (défaut 40, plus 15 par élément au-delà du premier, 80 au plus) ; les plus lointaines sont coupées et comptées"),
       root: z.string().optional().describe("Racine du dépôt (défaut : répertoire courant)"),
     },
   },

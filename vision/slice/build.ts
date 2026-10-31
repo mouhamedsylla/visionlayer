@@ -20,7 +20,8 @@ export interface Slice {
   dropped: number;
 }
 
-const DEFAULT_MAX = 45;
+/** Le budget par défaut grandit avec le nombre d'éléments choisis : chacun apporte sa propre zone. */
+const defaultMax = (starts: number) => Math.min(80, 40 + 15 * Math.max(0, starts - 1));
 
 function stepText(s: FlowStep): string | undefined {
   const target = s.target ? `${s.target.node}${s.target.entity ? "/" + s.target.entity : ""}${s.target.topic ? "/" + s.target.topic : ""}` : "";
@@ -196,7 +197,7 @@ export function buildSlice(index: MapIndex, handles: string[], opts: { knowledge
   for (const topic of sent) for (const e of index.entries.filter((e) => e.kind === "message" && e.key === topic)) addEntry(e, 1);
 
   // Constats et déclarations qui touchent une fonction de la tranche.
-  // Un constat sur le chemin du départ compte autant que lui ; un constat sur une fonction rencontrée plus loin (un autre lecteur), un cran de moins.
+  // Un constat sur une fonction rencontrée plus loin (un autre lecteur) compte moins que sur le chemin du départ.
   const within = (f: CodeFunction, p: { path: string; line: number }) => f.proof.path === p.path && f.proof.line <= p.line && p.line <= f.end;
   const far = new Map<string, CodeFunction>();
   for (const i of items.filter((i) => i.dist <= 1)) {
@@ -214,7 +215,8 @@ export function buildSlice(index: MapIndex, handles: string[], opts: { knowledge
     if (about.length && !about.some((id) => entriesIn.has(id) || related.has(id))) continue;
     const isFar = (p: { path: string; line: number }) => [...far.values()].some((g) => within(g, p));
     const shown = f.proof.find((p) => entriesIn.has(declaredAt.get(at(p)) ?? "")) ?? f.proof.find((p) => related.has(declaredAt.get(at(p)) ?? "")) ?? f.proof.find(near) ?? f.proof[0];
-    const dist = f.proof.some(near) || f.proof.some((p) => definitions.has(at(p))) ? 1 : f.proof.some(isFar) ? 2 : undefined;
+    // Un constat sur le chemin du départ passe avant tout le reste : c'est ce que la coupe doit garder en dernier.
+    const dist = f.proof.some(near) ? 0 : f.proof.some((p) => definitions.has(at(p))) ? 1 : f.proof.some(isFar) ? 2 : undefined;
     const also = f.proof.filter((p) => p !== shown).slice(0, 5).map(at);
     if (dist !== undefined) add(dist, "Constats", shown, `${f.code} : ${f.message}${also.length ? ` (aussi : ${also.join(", ")})` : ""}`);
   }
@@ -231,7 +233,7 @@ export function buildSlice(index: MapIndex, handles: string[], opts: { knowledge
     for (const p of where.filter((p) => paths.has(p.path))) add(1, "Non lu dans cette zone", p, `${g.kind} ${g.subject}`);
   }
 
-  const max = opts.max ?? DEFAULT_MAX;
+  const max = opts.max ?? defaultMax(handles.length);
   const order = items.map((item, i) => ({ item, i })).sort((a, b) => a.item.dist - b.item.dist || a.i - b.i);
   const kept = new Set(order.slice(0, max).map((o) => o.i));
   return { items: order.filter((o) => kept.has(o.i)).map((o) => o.item), unknown, dropped: items.length - kept.size };
