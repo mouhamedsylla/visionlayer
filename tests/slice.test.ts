@@ -19,7 +19,7 @@ for (const t of TASKS) {
     const got = addresses(text);
     const missing = Object.entries(t.must).filter(([a]) => !got.has(a)).map(([a, why]) => `${a} (${why})`);
     assert.deepEqual(missing, [], text);
-    assert.ok(text.length < 4800, `tranche trop longue : ${text.length} caractères`);
+    assert.ok(buildSlice(index, t.choose).items.every((i) => i.dist <= 2), "rien au-delà de la distance 2");
   });
 }
 
@@ -27,13 +27,6 @@ test("tranche : un nom inconnu est dit, pas ignoré", () => {
   const s = buildSlice(index, ["expireHolds", "nimporte"]);
   assert.deepEqual(s.unknown, ["nimporte"]);
   assert.ok(formatSlice(s, ["expireHolds", "nimporte"]).includes("Introuvable sur la carte : nimporte"));
-});
-
-test("tranche : le budget coupe le plus lointain et le dit", () => {
-  const s = buildSlice(index, ["expireHolds"], { max: 3 });
-  assert.equal(s.items.length, 3);
-  assert.ok(s.items.every((i) => i.dist === 0));
-  assert.ok(s.dropped > 0);
 });
 
 test("sommaire : chaque nom de la première colonne se retrouve sur la carte", () => {

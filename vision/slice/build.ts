@@ -16,12 +16,7 @@ export interface Slice {
   items: SliceItem[];
   /** Ce qui n'a pas pu être retrouvé sur la carte. */
   unknown: string[];
-  /** Les lignes coupées par le budget. */
-  dropped: number;
 }
-
-/** Le budget par défaut grandit avec le nombre d'éléments choisis : chacun apporte sa propre zone. */
-const defaultMax = (starts: number) => Math.min(80, 40 + 15 * Math.max(0, starts - 1));
 
 function stepText(s: FlowStep): string | undefined {
   const target = s.target ? `${s.target.node}${s.target.entity ? "/" + s.target.entity : ""}${s.target.topic ? "/" + s.target.topic : ""}` : "";
@@ -50,7 +45,7 @@ function stepText(s: FlowStep): string | undefined {
  * - s'y ajoutent les constats et les déclarations des agents qui touchent une fonction de la tranche,
  *   et ce qui n'est pas lu dans ses fichiers.
  */
-export function buildSlice(index: MapIndex, handles: string[], opts: { knowledge?: KnowledgeReport; max?: number } = {}): Slice {
+export function buildSlice(index: MapIndex, handles: string[], opts: { knowledge?: KnowledgeReport } = {}): Slice {
   const items: SliceItem[] = [];
   const seen = new Set<string>();
   const fns = new Map<string, CodeFunction>();
@@ -233,10 +228,9 @@ export function buildSlice(index: MapIndex, handles: string[], opts: { knowledge
     for (const p of where.filter((p) => paths.has(p.path))) add(1, "Non lu dans cette zone", p, `${g.kind} ${g.subject}`);
   }
 
-  const max = opts.max ?? defaultMax(handles.length);
+  // Aucune coupe : les règles de parcours bornent la tranche (distance 2 au plus), on ne fait que ranger du plus proche au plus lointain.
   const order = items.map((item, i) => ({ item, i })).sort((a, b) => a.item.dist - b.item.dist || a.i - b.i);
-  const kept = new Set(order.slice(0, max).map((o) => o.i));
-  return { items: order.filter((o) => kept.has(o.i)).map((o) => o.item), unknown, dropped: items.length - kept.size };
+  return { items: order.map((o) => o.item), unknown };
 }
 
 /** La tranche en texte : groupée par section, dans l'ordre où le parcours les a rencontrées. */
@@ -249,7 +243,6 @@ export function formatSlice(slice: Slice, handles: string[]): string {
     for (const i of slice.items.filter((i) => i.section === s)) out.push(`  ${i.at.padEnd(34)} ${i.text}`);
     out.push("");
   }
-  if (slice.dropped) out.push(`${slice.dropped} lignes de plus, plus lointaines : redemande avec max plus grand.`);
   return out.join("\n").trimEnd();
 }
 
