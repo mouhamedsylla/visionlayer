@@ -1,6 +1,7 @@
 import type { Guard } from "../arch/types.js";
 import type { KnowledgeReport } from "../knowledge/types.js";
 import { at, MapIndex } from "./index.js";
+import type { PackState } from "../facts/registry.js";
 
 export const GUARD_LABEL: Record<Guard["level"], string> = {
   public: "aucune garde",
@@ -26,7 +27,7 @@ const cols = (...parts: (string | undefined | false)[]) => `  ${parts.filter(Boo
  * ligne commence par le nom à donner à `vision_slice`. L'agent choisit selon
  * le sens de sa tâche ; la carte ne devine rien.
  */
-export function buildSummary(index: MapIndex, opts: { block?: string; knowledge?: KnowledgeReport; workspace?: string[] } = {}): string {
+export function buildSummary(index: MapIndex, opts: { block?: string; knowledge?: KnowledgeReport; workspace?: string[]; localPacks?: PackState[] } = {}): string {
   const { model } = index;
   const out: string[] = [`SOMMAIRE ${model.system.name}`, "Choisis ce qui concerne ta tâche, puis demande sa tranche à vision_slice avec les noms de la première colonne.", ""];
   const entries = index.entries.filter((e) => e.kind !== "main" && (!opts.block || e.node === opts.block));
@@ -107,9 +108,11 @@ export function buildSummary(index: MapIndex, opts: { block?: string; knowledge?
   }
 
   const gaps = model.coverage.flatMap((c) => c.gaps);
-  if (gaps.length) {
+  const idle = (opts.localPacks ?? []).filter((p) => p.status !== "active");
+  if (gaps.length || idle.length) {
     out.push("", "NON LU (rien de ce qui suit n'est dans la carte)");
     for (const g of gaps) out.push(`  ${g.kind} ${g.subject} (${g.count})${g.proof ? ` ${at(g.proof)}` : ""}`);
+    for (const p of idle) out.push(`  pack local ${p.id} ${p.status === "failed" ? "refusé" : "en attente"} : ${p.reason}`);
   }
   return out.join("\n");
 }

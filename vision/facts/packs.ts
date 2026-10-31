@@ -63,6 +63,17 @@ const PackFile = z.strictObject({
   match: z.array(Match).default([]),
   script: z.string().optional(),
   rules: z.string().optional(),
+  /** ADR 0019 : les relations qu'il produit (faits émis et têtes de règles) ; il ne peut rien produire d'autre. */
+  provides: z.array(z.string().regex(/^[a-z_][a-z0-9_]*$/)).optional(),
+  /** Les relations d'autres packs qu'il lit : sans elles, il reste inactif au lieu d'échouer. */
+  requires: z.array(z.string().regex(/^[a-z_][a-z0-9_]*$/)).optional(),
+  /** Ses tests, en données : un petit dépôt par forme, les faits attendus et ceux qui ne doivent pas sortir. */
+  tests: z.array(z.strictObject({
+    name: z.string(),
+    files: z.record(z.string(), z.string()),
+    expect: z.array(z.string()).default([]),
+    absent: z.array(z.string()).default([]),
+  })).optional(),
 });
 
 /** Ce qu'un script de pack reçoit pour un fichier, et ce qu'il renvoie. */
@@ -88,8 +99,29 @@ export interface Pack {
   matches: { id: string; query: string; where: Record<string, z.infer<typeof Where>>; at?: string; emit: Emit[] }[];
   script?: PackScript;
   rules: Rule[];
+  provides?: string[];
+  requires?: string[];
+  tests?: { name: string; files: Record<string, string>; expect: string[]; absent: string[] }[];
   /** Empreinte du pack : un pack modifié invalide les faits mis en cache. */
   hash: string;
+}
+
+/** Les relations qu'un pack produit : celles de ses émissions et les têtes de ses règles (un script peut en produire d'autres). */
+export function producedRelations(pack: Pack): string[] {
+  return [...new Set([...pack.matches.flatMap((m) => m.emit.map((e) => e.rel)), ...pack.rules.map((r) => r.head.rel)])].sort();
+}
+
+/** Les relations que ses règles lisent. */
+export function readRelations(pack: Pack): string[] {
+  return [...new Set(pack.rules.flatMap((r) => r.body.map((l) => ("rel" in l ? l.rel : undefined)).filter((x): x is string => !!x)))].sort();
+}
+
+/** L'arité de chaque relation qu'un pack écrit. */
+export function relationArities(pack: Pack): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const m of pack.matches) for (const e of m.emit) out.set(e.rel, e.args.length);
+  for (const r of pack.rules) out.set(r.head.rel, r.head.terms.length);
+  return out;
 }
 
 /* ----------------------------------------------------------------------- */
@@ -105,13 +137,21 @@ export async function loadPacks(dir = BUILTIN_PACKS): Promise<Pack[]> {
   return packs;
 }
 
-export async function loadPack(path: string): Promise<Pack> {
-  const text = readFileSync(path, "utf8");
+export async function loadPack(path: string, opts: { allowScript?: boolean } = {}): Promise<Pack> {
+  return loadPackText(readFileSync(path, "utf8"), path, opts);
+}
+
+/**
+ * Un pack depuis son texte. `allowScript: false` pour un pack écrit par un agent (ADR 0019) : il n'a droit
+ * qu'aux requêtes et aux règles, qui sont des données ; un script serait du code écrit par un modèle, exécuté ici.
+ */
+export async function loadPackText(text: string, path: string, opts: { allowScript?: boolean } = {}): Promise<Pack> {
   let raw: unknown;
   try { raw = parseYaml(text); } catch (e) { throw new Error(`${path} : ${(e as Error).message.split("\n")[0]}`); }
   const parsed = PackFile.safeParse(raw);
   if (!parsed.success) throw new Error(`${path} : ${parsed.error.issues.map((i) => `${i.path.join(".")} ${i.message}`).join(" ; ")}`);
   const p = parsed.data;
+  if (p.script && opts.allowScript === false) throw new Error(`${path} : un pack local n'a pas droit à un script, seulement à des requêtes et des règles`);
   let script: PackScript | undefined;
   let scriptText = "";
   if (p.script) {
@@ -137,6 +177,9 @@ export async function loadPack(path: string): Promise<Pack> {
     })),
     ...(script ? { script } : {}),
     rules: p.rules ? parseRules(p.rules, path) : [],
+    ...(p.provides ? { provides: p.provides } : {}),
+    ...(p.requires ? { requires: p.requires } : {}),
+    ...(p.tests ? { tests: p.tests } : {}),
     hash: hashText(text + scriptText),
   };
 }

@@ -82,8 +82,8 @@ const sentFor = (root: string) => sentLines.get(root) ?? sentLines.set(root, new
 async function currentMap(root: string) {
   const source = maps.get(root) ?? new MapSource(root);
   maps.set(root, source);
-  const { model } = await source.refresh();
-  return { index: new MapIndex(model), knowledge: buildKnowledge(root, featureEntries(model)) };
+  const { model, localPacks } = await source.refresh();
+  return { index: new MapIndex(model), knowledge: buildKnowledge(root, featureEntries(model)), localPacks };
 }
 
 server.registerTool(
@@ -100,8 +100,8 @@ server.registerTool(
   async ({ block, root }) => {
     try {
       const dir = resolve(root ?? DEFAULT_ROOT);
-      const { index, knowledge } = await currentMap(dir);
-      return plainText(buildSummary(index, { block, knowledge, workspace: workspaceLines(dir) }));
+      const { index, knowledge, localPacks } = await currentMap(dir);
+      return plainText(buildSummary(index, { block, knowledge, workspace: workspaceLines(dir), ...(localPacks ? { localPacks } : {}) }));
     } catch (err) {
       return errorResult(`vision_summary a échoué: ${(err as Error).message}`);
     }

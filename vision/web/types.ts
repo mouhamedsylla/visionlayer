@@ -1,3 +1,4 @@
+import type { PackState } from "../facts/registry.js";
 import type { ArchModelV2, Proof } from "../arch/types.js";
 import type { DeployModel } from "../deploy/types.js";
 import type { KnowledgeReport } from "../knowledge/types.js";
@@ -36,6 +37,8 @@ export interface MapPayload {
   tech: Record<string, TechLabel>;
   /** Ce qui a changé depuis l'analyse précédente ; absent tant qu'il n'y en a eu qu'une. */
   changes?: { since: string; items: MapChange[] };
+  /** Les packs locaux du projet (.vision/packs/) : actifs, inactifs faute de ce qu'ils lisent, ou refusés avec la raison. */
+  localPacks?: PackState[];
 }
 
 /** Un élément de la carte apparu ou disparu entre deux analyses : `+ POST /bookings/:id/transfer dans API`. */

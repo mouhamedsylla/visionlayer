@@ -1,6 +1,6 @@
 # ADR 0019 — Des packs et des vues écrits par des agents, chargés et retirés à chaud
 
-**Statut :** Proposée le 02/10/2026, rien n'est codé. S'appuie sur l'[ADR 0013](./0013-visionlayer-control-tower-and-agent-integration.md) (VisionLayer lance l'assistant installé, n'orchestre pas d'agents), l'[ADR 0017](./0017-modele-neutre.md) (modèle neutre) et l'[ADR 0018](./0018-nouvelle-interface.md) (nouvelle interface).
+**Statut :** Proposée le 02/10/2026. Étapes 1 à 4 codées le 31/10/2026 pour les packs (`vision/facts/registry.ts`) ; les vues, l'écran Packs et la fiche de l'agent restent à faire. S'appuie sur l'[ADR 0013](./0013-visionlayer-control-tower-and-agent-integration.md) (VisionLayer lance l'assistant installé, n'orchestre pas d'agents), l'[ADR 0017](./0017-modele-neutre.md) (modèle neutre) et l'[ADR 0018](./0018-nouvelle-interface.md) (nouvelle interface).
 
 Référence : Shi, Zhang, Cui, *A Programming Paradigm for Spatiotemporal Composability*, Peking University et DeepSeek-AI, août 2026 ([arXiv 2608.25512](https://arxiv.org/abs/2608.25512), code : [Cordis](https://github.com/cordiverse/paper)). Les numéros de section entre parenthèses (§3.1…) renvoient à ce papier.
 
@@ -141,7 +141,22 @@ On le tente, avec des libertés plus étroites que pour les packs.
 6. **Fiche de l'agent** « technologie → inventaire → tests → pack », essayée sur W6 de Drizzle.
 7. **Emplacements de l'interface, cadre isolé et premier essai** : la vue « flèches entre états » du cycle de vie.
 
-Faut-il employer Cordis tel quel, ou une version minimale à nous ? Cela se tranchera à l'étape 3. Nos composants sont d'abord des packs, des données plus que des services, et une version minimale suffit sans doute pour eux. Pour les vues, Cordis (v4 dans le papier, v3 dans Koishi) vaut d'être essayé tel quel. Nous n'avons pas encore lu son code.
+Faut-il employer Cordis tel quel, ou une version minimale à nous ? Tranché le 31/10 pour les packs : une version minimale (voir « Ce qui est construit »). Nos composants sont d'abord des packs, des données plus que des services, et une version minimale suffit sans doute pour eux. Pour les vues, Cordis (v4 dans le papier, v3 dans Koishi) vaut d'être essayé tel quel. Nous n'avons pas encore lu son code.
+
+## Ce qui est construit (31/10/2026)
+
+Une version minimale à nous, pas Cordis tel quel : nos composants sont des packs, c'est-à-dire des données, et le moteur recalcule déjà tout depuis les faits.
+
+| Étape | Où | Vérifié par |
+|---|---|---|
+| 1. Faits marqués par pack ; charger puis retirer = jamais chargé | `FactBase.setPacks` : un pack retiré perd ses faits, fichier par fichier ; un pack ajouté ne tourne que sur les fichiers qu'il concerne ; les règles sont recalculées | `tests/pack-hot.test.ts` : sur atelier-api, `node-cron` chargé à chaud donne la carte calculée avec lui (3 tâches planifiées), et retiré, la carte d'avant à l'identique |
+| 2. `requires` et `provides`, arités, cycles | schéma des packs ; `PackRegistry.check` : ce qu'un pack produit doit être déclaré, une relation partagée garde son arité, deux packs locaux qui se lisent l'un l'autre sont refusés avec leurs deux noms, un pack dont ce qu'il lit manque reste inactif | `tests/pack-registry.test.ts` |
+| 3. Packs locaux et rechargement transactionnel | `.vision/packs/<id>.yaml`, relu à chaque rafraîchissement de la carte (serveur MCP, interface) ; un pack local n'a pas droit à un script ; ses tests sont dans le pack (`tests` : fichiers, faits attendus, faits absents) et tournent dans un dossier à part ; le chargement se fait sur une copie de la base, adoptée seulement si tout passe ; sinon la version d'avant reste en place et le pack est `failed` avec la raison, que le sommaire donné aux agents affiche | idem, dont une version cassée refusée puis corrigée |
+| 4. Domaine isolé et différence | `PackRegistry.preview` : un pack proposé est vérifié puis essayé sur une copie ; rend les éléments de carte gagnés et perdus, sans toucher la carte acceptée | idem |
+
+Un pack qui plante sur un fichier, livré ou local, ne fait plus tomber la carte : l'échec devient un manque de couverture (`pack_failed`) qui nomme le pack, l'erreur et les fichiers.
+
+Le moteur de requêtes déclaratives (`match`), qu'aucun pack livré n'employait, sert maintenant aux packs locaux : le test l'exerce sur `node-schedule`, une bibliothèque que les packs livrés ne lisent pas.
 
 ## Questions ouvertes
 

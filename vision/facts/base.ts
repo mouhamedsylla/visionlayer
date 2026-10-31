@@ -41,6 +41,8 @@ export interface RefreshResult {
 
 const LINE_MAX = 200;
 
+const hashOf = (packs: readonly Pack[]) => packs.map((p) => `${p.id}:${p.hash}`).join(",");
+
 /** Des composants qui importent du code, sans pack qui les lise : ce qu'ils emploient n'est pas connu. */
 const UNREAD_IMPORTERS = /\.(svelte|vue|astro|mdx)$/;
 
@@ -53,7 +55,8 @@ function safely(pack: Pack, path: string, run: () => FileFact[], fact: (rel: str
     return run();
   } catch (e) {
     const message = ((e as Error)?.message ?? String(e)).split("\n")[0]!.slice(0, 200);
-    return [fact("pack_failed", [pack.id, path, message], 1)];
+    const f = fact("pack_failed", [pack.id, path, message], 1);
+    return [{ ...f, proof: { ...f.proof, pack: pack.id } }];
   }
 }
 
@@ -61,11 +64,55 @@ export class FactBase {
   private files: FactCache["files"] = {};
   /** Tous les fichiers du dépôt, lus ou non (un fichier Python existe même si aucun lecteur ne l'ouvre). */
   private listed: string[] = [];
-  private readonly packsHash: string;
+  private packsHash: string;
+  private current: Pack[];
 
-  constructor(readonly root: string, readonly packs: Pack[], cache?: FactCache) {
-    this.packsHash = packs.map((p) => `${p.id}:${p.hash}`).join(",");
+  constructor(readonly root: string, packs: Pack[], cache?: FactCache) {
+    this.current = packs;
+    this.packsHash = hashOf(packs);
     if (cache && cache.version === 2 && cache.packs === this.packsHash) this.files = { ...cache.files };
+  }
+
+  get packs(): readonly Pack[] { return this.current; }
+
+  /**
+   * Change l'ensemble des packs sans tout relire (ADR 0019, effet réversible) : un pack retiré ou modifié
+   * perd ses faits, fichier par fichier ; un pack ajouté ou modifié ne tourne que sur les fichiers qu'il
+   * concerne. Les règles étant recalculées depuis les faits, la carte qui en sort est celle qu'on aurait
+   * calculée en partant de ces packs.
+   */
+  setPacks(next: Pack[]): { removed: string[]; added: string[]; read: string[] } {
+    const before = new Map(this.current.map((p) => [p.id, p.hash]));
+    const after = new Map(next.map((p) => [p.id, p.hash]));
+    const gone = new Set([...before].filter(([id, h]) => after.get(id) !== h).map(([id]) => id));
+    const fresh = next.filter((p) => before.get(p.id) !== p.hash);
+    for (const entry of Object.values(this.files)) entry.facts = entry.facts.filter((f) => !f.proof.pack || !gone.has(f.proof.pack));
+    this.current = next;
+    this.packsHash = hashOf(next);
+    const read: string[] = [];
+    if (fresh.length) for (const path of this.listed) {
+      const language = languageFor(path);
+      const known = this.files[path];
+      // Un manifeste qu'aucun pack ne lisait encore n'est pas dans la base : il est lu en entier.
+      if (!known && (language || !fresh.some((p) => p.files && packApplies(p, { path, source: "" })))) continue;
+      if (known && !language && !fresh.some((p) => p.files && packApplies(p, { path, source: "" }))) continue;
+      let stat;
+      try { stat = lstatSync(join(this.root, path)); } catch { continue; }
+      const source = readFileSync(join(this.root, path), "utf8");
+      const file = { path, ...(language ? { language } : {}), source };
+      if (!known) this.files[path] = { mtime: stat.mtimeMs, size: stat.size, facts: this.readFile(file) };
+      else known.facts.push(...this.readFile(file, fresh, false));
+      read.push(path);
+    }
+    return { removed: [...gone], added: fresh.map((p) => p.id), read };
+  }
+
+  /** Une copie indépendante, pour essayer un pack dans un domaine à part sans toucher la carte acceptée. */
+  clone(): FactBase {
+    const copy = new FactBase(this.root, [...this.current]);
+    copy.listed = [...this.listed];
+    for (const [p, e] of Object.entries(this.files)) copy.files[p] = { ...e, facts: [...e.facts] };
+    return copy;
   }
 
   /** Relit ce qui a changé depuis le dernier rafraîchissement (ou depuis le cache). */
@@ -93,8 +140,8 @@ export class FactBase {
     return { read, reused, removed };
   }
 
-  /** Les faits d'un fichier : syntaxe générique, puis chaque pack qui s'applique. */
-  private readFile(file: FileInput): FileFact[] {
+  /** Les faits d'un fichier : syntaxe générique, puis chaque pack qui s'applique (ou seulement `packs`, sans la syntaxe). */
+  private readFile(file: FileInput, packs: readonly Pack[] = this.current, syntax = true): FileFact[] {
     const lines = file.source.split("\n");
     const fact = (rel: string, args: Value[], line: number): FileFact => {
       const text = (lines[line - 1] ?? "").trim();
@@ -107,10 +154,10 @@ export class FactBase {
       const root = tree.rootNode;
       const imports = new Map<string, { imported: string; raw: string }>();
       for (const n of root.namedChildren) for (const [k, v] of statementBindings(n)) imports.set(k, v);
-      out.push(...syntaxFacts(file.path, root, fact), ...flowFacts(file.path, root, fact), ...contractFacts(file.path, root, fact));
-      for (const pack of this.packs) if (packApplies(pack, file, imports)) out.push(...safely(pack, file.path, () => runPack(pack, { file, root, imports, fact }), fact));
+      if (syntax) out.push(...syntaxFacts(file.path, root, fact), ...flowFacts(file.path, root, fact), ...contractFacts(file.path, root, fact));
+      for (const pack of packs) if (packApplies(pack, file, imports)) out.push(...safely(pack, file.path, () => runPack(pack, { file, root, imports, fact }), fact));
     } else {
-      for (const pack of this.packs) if (packApplies(pack, file)) out.push(...safely(pack, file.path, () => runPack(pack, { file, fact }), fact));
+      for (const pack of packs) if (packApplies(pack, file)) out.push(...safely(pack, file.path, () => runPack(pack, { file, fact }), fact));
     }
     return out;
   }
