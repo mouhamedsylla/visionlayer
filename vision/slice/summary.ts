@@ -41,7 +41,18 @@ export function buildSummary(index: MapIndex, opts: { block?: string; knowledge?
     );
   }
 
-  if (opts.workspace?.length) out.push(...opts.workspace, "");
+  // Une même validation partagée par plusieurs services n'est dite qu'une fois.
+  const checks = [...model.nodes.flatMap((n) => (n.facets.config?.loadChecks ?? []).map((c) => ({ node: n.id, c })))
+    .reduce((m, { node, c }) => {
+      const had = m.get(at(c.proof));
+      return m.set(at(c.proof), { nodes: [...(had?.nodes ?? []), node], c: { ...c, loadedBy: [...new Set([...(had?.c.loadedBy ?? []), ...c.loadedBy])] } });
+    }, new Map<string, { nodes: string[]; c: { proof: { path: string; line: number }; required: string[]; loadedBy: string[] } }>()).values()];
+  if (opts.workspace?.length || checks.length) {
+    out.push(...(opts.workspace?.length ? opts.workspace : ["TRAVAILLER DANS CE DÉPÔT (lu dans ses fichiers)"]));
+    for (const { nodes, c } of checks)
+      out.push(`  environnement validé au chargement par ${at(c.proof)}, dans ${nodes.join(" et ")} (${c.required.join(", ")} exigées) : ${c.loadedBy.length} fichiers le chargent par leurs imports, et échouent à l'import sans ces variables`);
+    out.push("");
+  }
 
   if (!opts.block && entries.length > MAX_ENTRIES) {
     out.push("BLOCS (trop grand pour tout lister : relance vision_summary avec block)");

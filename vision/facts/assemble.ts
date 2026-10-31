@@ -145,6 +145,22 @@ export function assemble(db: Database, opts: AssembleOptions): ArchModelV2 {
       env.set(n, dedupe([...env.get(n)!, at(s(t.args[0]), Number(t.args[2]), t.proof)]));
     }
 
+    // Une validation de l'environnement au chargement, et les fichiers du déployable qui la chargent par leurs imports.
+    const loadChecks = rows("env_check_at_load").filter((t) => files.includes(s(t.args[0]))).map((t) => {
+      const file = s(t.args[0]);
+      const loadedBy = new Set<string>();
+      const queue = [file];
+      while (queue.length) {
+        const f = queue.pop()!;
+        for (const i of rows("imports")) if (s(i.args[2]) === f && files.includes(s(i.args[0])) && !loadedBy.has(s(i.args[0])) && s(i.args[0]) !== file) {
+          loadedBy.add(s(i.args[0]));
+          queue.push(s(i.args[0]));
+        }
+      }
+      const req = rows("env_required").filter((r) => s(r.args[0]) === file && s(r.args[2]) === "yes").map((r) => s(r.args[1]));
+      return { proof: at(file, Number(t.args[1]), t.proof), required: [...new Set(req)].sort(), loadedBy: [...loadedBy].sort() };
+    });
+
     const instances = rows("unit_instances").find((t) => list.some((u) => u.name === s(t.args[1]) && u.proof.some((p) => p.path === s(t.args[0]))));
 
     const attributes = dedupeAttrs(rows("unit_attr").filter((t) => list.some((u) => u.name === s(t.args[1]) && u.proof.some((p) => p.path === s(t.args[0]))))
@@ -164,7 +180,10 @@ export function assemble(db: Database, opts: AssembleOptions): ArchModelV2 {
       ...(attributes.length ? { attributes } : {}),
       facets: {
         ...(entrypoints.length ? { entrypoints } : {}),
-        ...(env.size ? { config: { env: [...env].sort(([a], [b]) => a.localeCompare(b)).map(([name, readAt]) => ({ name, readAt, ...(required.has(name) ? { required: required.get(name)! } : {}) })) } } : {}),
+        ...(env.size ? { config: {
+          env: [...env].sort(([a], [b]) => a.localeCompare(b)).map(([name, readAt]) => ({ name, readAt, ...(required.has(name) ? { required: required.get(name)! } : {}) })),
+          ...(loadChecks.length ? { loadChecks } : {}),
+        } } : {}),
       },
     };
     if (!read.has(target)) coverageGaps.push({ kind: "language_not_read", subject: target, count: 1, proof: node.proof[0]! });

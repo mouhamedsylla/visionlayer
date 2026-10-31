@@ -45,3 +45,17 @@ test("lecteur générique : une variable lue avec une valeur de repli est facult
   });
   assert.deepEqual(vars(m), ["LOG_LEVEL:false", "NODE_ENV:undefined", "PORT:false"]);
 });
+
+test("zod-env L1 L2 : une validation au chargement du module, et qui la charge par ses imports ; pas une validation dans une fonction", async () => {
+  const m = await mapOf({ ...SERVER,
+    "env.ts": `import { z } from "zod";\nexport const env = z.object({ DATABASE_URL: z.string(), PORT: z.string().optional() }).parse(process.env);\n`,
+    "lazy.ts": `import { z } from "zod";\nexport function readEnv() {\n  return z.object({ TOKEN: z.string() }).parse(process.env);\n}\n`,
+    "db.ts": `import { env } from "./env";\nexport const url = env.DATABASE_URL;\n`,
+    "user.ts": `import { url } from "./db";\nexport const who = () => url;\n`,
+    "main.ts": `import { who } from "./user";\nimport { readEnv } from "./lazy";\nconsole.log(who(), readEnv());\n`,
+  });
+  const checks = m.nodes.find((n) => n.id === "image")?.facets.config?.loadChecks ?? [];
+  assert.deepEqual(checks.map((c) => ({ at: `${c.proof.path}:${c.proof.line}`, required: c.required, loadedBy: c.loadedBy })), [
+    { at: "env.ts:2", required: ["DATABASE_URL"], loadedBy: ["db.ts", "main.ts", "user.ts"] },
+  ]);
+});

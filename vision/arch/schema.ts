@@ -127,6 +127,7 @@ const facets = S({
   config: S({
     env: z.array(S({ name: z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/), readAt: z.array(proof), required: z.boolean().optional() })),
     environments: z.array(z.string()).optional(),
+    loadChecks: z.array(S({ proof, required: z.array(z.string()), loadedBy: z.array(z.string()) })).optional(),
   }).optional(),
   trust: S({
     mechanisms: z.array(S({ name: z.string().min(1), proof })),

@@ -1,6 +1,6 @@
 import type { PackScript } from "../facts/packs.js";
 import type { FileFact } from "../facts/types.js";
-import { args, unwrap, walkAll, type Node } from "../arch/ast.js";
+import { args, isFunction, unwrap, walkAll, type Node } from "../arch/ast.js";
 import { packageName } from "../stack/build.js";
 
 /**
@@ -9,6 +9,7 @@ import { packageName } from "../stack/build.js";
  * env_key(Fichier, Schéma, Clé, "yes"|"no", Ligne)  une clé de premier niveau d'un objet Zod, obligatoire ou non
  * schema_uses(Fichier, Schéma, Autre)               base.extend(…), a.merge(b), z.object({ ...base.shape })
  * env_parse(Fichier, Schéma)                        schema.parse(process.env), safeParse, parseAsync ; import.meta.env, Bun.env
+ * env_check_at_load(Fichier, Ligne)                 cette validation, hors de toute fonction : elle s'exécute dès que le module est chargé
  *
  * Un schéma est nommé par sa variable, ou par sa ligne (`@12`) quand il est écrit là où il est validé.
  */
@@ -72,6 +73,9 @@ const script: PackScript = ({ file, root, imports, fact }) => {
     if (fn?.type !== "member_expression" || !PARSE.has(fn.childForFieldName("property")?.text ?? "")) return;
     if (!SOURCES.has(unwrap(args(n)[0])?.text ?? "")) return;
     const target = unwrap(fn.childForFieldName("object"));
+    let up: Node | null = n.parent;
+    while (up && !isFunction(up)) up = up.parent;
+    if (!up) out.push(fact("env_check_at_load", [file.path, line(n)], line(n)));
     if (target?.type === "identifier") { out.push(fact("env_parse", [file.path, target.text], line(n))); return; }
     const s = `@${line(n)}`;
     if (visit(target, s)) out.push(fact("env_parse", [file.path, s], line(n)));

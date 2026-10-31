@@ -235,6 +235,18 @@ export function buildSlice(index: MapIndex, handles: string[], opts: { knowledge
     for (const p of where.filter((p) => paths.has(p.path))) add(1, "Non lu dans cette zone", p, `${g.kind} ${g.subject}`);
   }
 
+  // Les fichiers les plus proches qui ne se chargent pas sans leur environnement : un test qui les importe échoue avant de commencer.
+  const nearFiles = new Set(items.filter((i) => i.dist === 0 && i.at).map((i) => i.at.split(":")[0]!));
+  const checks = new Map<string, { proof: Occurrence; required: string[]; loadedBy: string[] }>();
+  for (const n of index.model.nodes) for (const c of n.facets.config?.loadChecks ?? []) {
+    const k = at(c.proof), had = checks.get(k);
+    checks.set(k, { ...c, loadedBy: [...new Set([...(had?.loadedBy ?? []), ...c.loadedBy])] });
+  }
+  for (const c of checks.values()) {
+    const loaders = [...nearFiles].filter((f) => c.loadedBy.includes(f) || f === c.proof.path);
+    if (loaders.length) add(0, "Au chargement", c.proof, `valide l'environnement dès l'import (${c.required.join(", ")} exigées) ; ${loaders.join(", ")} le ${loaders.length > 1 ? "chargent" : "charge"} : un test qui ${loaders.length > 1 ? "les " : "l'"}importe échoue sans ces variables`);
+  }
+
   // Aucune coupe : les règles de parcours bornent la tranche (distance 2 au plus), on ne fait que ranger du plus proche au plus lointain.
   const order = items.map((item, i) => ({ item, i })).sort((a, b) => a.item.dist - b.item.dist || a.i - b.i);
   return { items: order.map((o) => o.item), unknown };

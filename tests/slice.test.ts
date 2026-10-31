@@ -41,3 +41,8 @@ test("sommaire : chaque nom de la première colonne se retrouve sur la carte", (
   assert.deepEqual(names.filter((n) => !buildSlice(index, [n]).items.length), []);
   assert.ok(text.length < 7000, `sommaire trop long : ${text.length}`);
 });
+
+test("tranche : un fichier qui ne se charge pas sans son environnement est signalé", () => {
+  const text = formatSlice(buildSlice(index, ["POST /auth/signup"]), ["POST /auth/signup"]);
+  assert.match(text, /Au chargement\n\s+src\/env\.ts:16\s+valide l'environnement dès l'import \(DATABASE_URL, .*\) ; .*src\/auth\/signup\.ts.* le chargent/, text);
+});

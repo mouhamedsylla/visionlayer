@@ -336,6 +336,11 @@ export interface ConfigFacet {
   /** Noms seulement : la valeur n'est jamais lue. */
   env: { name: string; readAt: Proof[]; required?: boolean }[];
   environments?: string[];
+  /**
+   * Une validation de l'environnement qui s'exécute au chargement du module : tout fichier qui le charge,
+   * directement ou par ses imports (`loadedBy`), échoue à l'import quand une variable exigée manque, en test comme ailleurs.
+   */
+  loadChecks?: { proof: Proof; required: string[]; loadedBy: string[] }[];
 }
 
 export interface TrustFacet {

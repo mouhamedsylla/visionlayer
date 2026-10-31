@@ -28,6 +28,15 @@ Un schéma Zod qui valide l'environnement donne les noms des variables du déplo
 | R2 | une valeur par défaut | `.default("3000")`, `.catch("info")`, `.prefault(…)` | lu : non obligatoire |
 | R3 | une conversion | `z.coerce.number()`, `z.string().transform(Number)` | lu : obligatoire, sauf si R1 ou R2 s'ajoute |
 
+## Quand la validation s'exécute
+
+Une validation écrite hors de toute fonction s'exécute dès que son module est chargé. Tout fichier qui la charge par ses imports, même de loin, échoue alors à l'import quand une variable exigée manque, en test comme en production. Le modèle le porte sur la facette de configuration du déployable (`loadChecks` : la ligne, les variables exigées, les fichiers qui la chargent). La tranche le signale sur les fichiers de la tâche : c'est souvent ce qui fait échouer le premier test qu'un agent écrit.
+
+| # | Forme | Exemple | État |
+|---|---|---|---|
+| L1 | au chargement | `export const env = Env.parse(process.env)` au premier niveau du module | lu : `env_check_at_load`, et les fichiers qui le chargent |
+| L2 | dans une fonction | `function readEnv() { return Env.parse(process.env) }` | lu : rien n'est signalé, la validation n'a lieu qu'à l'appel |
+
 ## Ce que le pack ne prend pas pour une variable
 
 | Forme | Pourquoi |
