@@ -253,7 +253,7 @@ export function formatSections(slice: Slice): string[] {
   const sections = [...new Set(slice.items.map((i) => i.section))];
   for (const s of sections) {
     out.push(s);
-    for (const i of slice.items.filter((i) => i.section === s)) out.push(`  ${i.at.padEnd(34)} ${i.text}`);
+    for (const i of slice.items.filter((i) => i.section === s)) out.push(`  ${i.at}  ${i.text}`);
     out.push("");
   }
   return out;

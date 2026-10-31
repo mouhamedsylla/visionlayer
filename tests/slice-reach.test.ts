@@ -6,7 +6,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { MapSource } from "../vision/web/map-source.js";
 import { MapIndex } from "../vision/slice/index.js";
-import { buildReach, changedLines, formatReach } from "../vision/slice/reach.js";
+import { buildReach, changedLines, formatReach, itemKey } from "../vision/slice/reach.js";
+import { buildSlice } from "../vision/slice/build.js";
 
 /** Une copie d'atelier-api sous git, puis la modification qu'un agent ferait pour rendre le téléphone obligatoire. */
 function editedCopy() {
@@ -37,18 +38,35 @@ test("portée : une modification hors fonction et un champ rendent la route, ses
     assert.ok(reach.handles.includes("postgres/users"), text);
     assert.ok(text.includes("champ users.phone"), text);
     // Le champ changé, et qui le lit : l'export le rend à toute personne connectée.
-    assert.match(text, /Qui lit users\.phone\n(.*\n)*\s+src\/admin\/export\.ts:9\s+phone dans exportUsers, depuis GET \/admin\/export \(garde : connexion\)/, text);
+    assert.match(text, /Qui lit users\.phone\n(.*\n)*\s+src\/admin\/export\.ts:9\s+phone dans exportUsers, depuis GET \/admin\/export \(connexion\)/, text);
     assert.ok(text.includes("drizzle/0002_phone.sql"), text);
     // Le corps de l'inscription, téléphone compris, part dans le journal ; l'export renvoie les utilisateurs à toute personne connectée.
     assert.ok(text.includes("personal_data_logged"), text);
     assert.ok(text.includes("unguarded_route"), text);
     // Le champ role n'est pas touché : son constat ne concerne pas cette modification.
     assert.ok(!text.includes("unused_value"), text);
+
+    // Ce que la tranche a déjà donné n'est pas répété, sauf les constats, sur lesquels l'agent doit se prononcer.
+    const sent = new Set(buildSlice(index, ["POST /auth/signup", "postgres/users"]).items.map(itemKey));
+    const again = buildReach(index, changedLines(root), { sent });
+    assert.ok(again.omitted > 0);
+    assert.ok(again.slice.items.every((i) => i.section === "Constats" || !sent.has(itemKey(i))));
+    assert.ok(formatReach(again).includes("personal_data_logged"));
+    assert.ok(formatReach(again).length < text.length);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
 });
 
 test("portée : sans modification, elle le dit", () => {
-  assert.match(formatReach({ touched: [], readers: [], handles: [], slice: { items: [], unknown: [] } }), /Aucune ligne changée/);
+  assert.match(formatReach({ touched: [], readers: [], omitted: 0, handles: [], slice: { items: [], unknown: [] } }), /Aucune ligne changée/);
+});
+
+test("sommaire : comment travailler dans le dépôt, lu dans ses fichiers", async () => {
+  const { workspaceLines } = await import("../vision/slice/workspace.js");
+  const lines = workspaceLines(join(import.meta.dirname, "corpus", "atelier-api")).join("\n");
+  assert.match(lines, /test = vitest run/);
+  assert.match(lines, /« pnpm <nom> »/);
+  assert.match(lines, /tests : 2 fichiers \*\.spec\.\*, par exemple src\/email\/retry\.spec\.ts, src\/payments\/keys\.spec\.ts ; configuration vitest\.config\.ts/);
+  assert.match(lines, /migrations SQL : drizzle\/, 2 fichiers, la dernière drizzle\/0001_audit\.sql ; appliquées par scripts\/migrate\.ts/);
 });

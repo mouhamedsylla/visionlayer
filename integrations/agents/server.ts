@@ -20,8 +20,9 @@ import { featureEntries } from "../../vision/web/knowledge-source.js";
 import { buildKnowledge } from "../../vision/knowledge/build.js";
 import { MapIndex } from "../../vision/slice/index.js";
 import { buildSummary } from "../../vision/slice/summary.js";
+import { workspaceLines } from "../../vision/slice/workspace.js";
 import { buildSlice, formatSlice } from "../../vision/slice/build.js";
-import { buildReach, changedLines, formatReach } from "../../vision/slice/reach.js";
+import { buildReach, changedLines, formatReach, itemKey } from "../../vision/slice/reach.js";
 
 /**
  * Serveur MCP RYPHA VisionLayer — MVP5.
@@ -75,6 +76,9 @@ const server = new McpServer({ name: "rypha-vision", version: "0.1.0" });
  * carte de ce code-là.
  */
 const maps = new Map<string, MapSource>();
+/** Les lignes de tranche déjà données à l'agent, par racine, pour que la portée ne les répète pas (un serveur = une session d'agent). */
+const sentLines = new Map<string, Set<string>>();
+const sentFor = (root: string) => sentLines.get(root) ?? sentLines.set(root, new Set()).get(root)!;
 async function currentMap(root: string) {
   const source = maps.get(root) ?? new MapSource(root);
   maps.set(root, source);
@@ -95,8 +99,9 @@ server.registerTool(
   },
   async ({ block, root }) => {
     try {
-      const { index, knowledge } = await currentMap(resolve(root ?? DEFAULT_ROOT));
-      return plainText(buildSummary(index, { block, knowledge }));
+      const dir = resolve(root ?? DEFAULT_ROOT);
+      const { index, knowledge } = await currentMap(dir);
+      return plainText(buildSummary(index, { block, knowledge, workspace: workspaceLines(dir) }));
     } catch (err) {
       return errorResult(`vision_summary a échoué: ${(err as Error).message}`);
     }
@@ -117,7 +122,10 @@ server.registerTool(
   async ({ elements, root }) => {
     try {
       const { index, knowledge } = await currentMap(resolve(root ?? DEFAULT_ROOT));
-      return plainText(formatSlice(buildSlice(index, elements, { knowledge }), elements));
+      const dir = resolve(root ?? DEFAULT_ROOT);
+      const slice = buildSlice(index, elements, { knowledge });
+      for (const i of slice.items) sentFor(dir).add(itemKey(i));
+      return plainText(formatSlice(slice, elements));
     } catch (err) {
       return errorResult(`vision_slice a échoué: ${(err as Error).message}`);
     }
@@ -138,7 +146,9 @@ server.registerTool(
     try {
       const dir = resolve(root ?? DEFAULT_ROOT);
       const { index, knowledge } = await currentMap(dir);
-      return plainText(formatReach(buildReach(index, changedLines(dir), { knowledge })));
+      const reach = buildReach(index, changedLines(dir), { knowledge, sent: sentFor(dir) });
+      for (const i of reach.slice.items) sentFor(dir).add(itemKey(i));
+      return plainText(formatReach(reach));
     } catch (err) {
       return errorResult(`vision_reach a échoué: ${(err as Error).message}`);
     }
