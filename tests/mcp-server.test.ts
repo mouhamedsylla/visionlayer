@@ -60,6 +60,22 @@ test("serveur MCP: liste exactement les 7 outils en lecture attendus", async () 
   });
 });
 
+test("serveur MCP: lancé comme dans le README (pnpm --dir), sans root, il lit le dépôt de l'agent, pas VisionLayer", async () => {
+  const root = mkdtempSync(join(tmpdir(), "vision-mcp-cwd-"));
+  cpSync(join(import.meta.dirname, "corpus", "atelier-api"), root, { recursive: true });
+  const transport = new StdioClientTransport({ command: "pnpm", args: ["-s", "--dir", WORKFLOW_ROOT, "mcp"], cwd: root, env: { ...process.env, INIT_CWD: "" } as Record<string, string> });
+  const client = new Client({ name: "test-client", version: "0.0.0" });
+  await client.connect(transport);
+  try {
+    const summary = textContent(await client.callTool({ name: "vision_summary", arguments: {} }));
+    assert.ok(summary.startsWith(`SOMMAIRE ${root.split("/").pop()}`), summary.slice(0, 200));
+    assert.ok(summary.includes("src/jobs/expire.ts:11"), "les adresses sont relatives au dépôt de l'agent");
+  } finally {
+    await client.close();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("serveur MCP: vision_summary puis vision_slice lisent la carte des packs, sans rien écrire dans le dépôt", async () => {
   const root = mkdtempSync(join(tmpdir(), "vision-mcp-atelier-"));
   cpSync(join(import.meta.dirname, "corpus", "atelier-api"), root, { recursive: true });

@@ -57,6 +57,13 @@ function errorResult(message: string) {
   return { content: [{ type: "text" as const, text: message }], isError: true };
 }
 
+/**
+ * Le dépôt lu quand l'agent ne donne pas `root` : celui d'où il a lancé le
+ * serveur. `pnpm --dir <visionlayer> mcp` change le dossier courant vers
+ * VisionLayer ; pnpm garde le dossier de départ dans INIT_CWD.
+ */
+const DEFAULT_ROOT = process.env.VISION_ROOT || process.env.INIT_CWD || process.cwd();
+
 const server = new McpServer({ name: "rypha-vision", version: "0.1.0" });
 
 /**
@@ -81,12 +88,12 @@ server.registerTool(
       "À appeler en premier, avant de chercher dans le code. Une ligne par élément du système, sans code : points d'entrée (routes, tâches planifiées, consommateurs de messages) avec leur fonction et leur garde, tables avec le nombre d'écritures et de lectures, files, constats, ce qui n'est pas lu. Choisis ce qui concerne ta tâche, puis appelle vision_slice avec les noms de la première colonne.",
     inputSchema: {
       block: z.string().optional().describe("Sur un grand système : ne donner que ce bloc (id de la première colonne de la liste des blocs)"),
-      root: z.string().optional().describe("Racine du dépôt (défaut : répertoire courant)"),
+      root: z.string().optional().describe("Racine du dépôt (défaut : le dossier d'où le serveur a été lancé)"),
     },
   },
   async ({ block, root }) => {
     try {
-      const { index, knowledge } = await currentMap(resolve(root ?? "."));
+      const { index, knowledge } = await currentMap(resolve(root ?? DEFAULT_ROOT));
       return plainText(buildSummary(index, { block, knowledge }));
     } catch (err) {
       return errorResult(`vision_summary a échoué: ${(err as Error).message}`);
@@ -103,12 +110,12 @@ server.registerTool(
     inputSchema: {
       elements: z.array(z.string()).min(1).describe("Noms de la première colonne du sommaire : route (« POST /bookings »), fonction, table, file, constat (« code@fichier:ligne ») ou adresse « fichier:ligne »"),
       max: z.number().int().positive().optional().describe("Nombre de lignes au plus (défaut 40, plus 15 par élément au-delà du premier, 80 au plus) ; les plus lointaines sont coupées et comptées"),
-      root: z.string().optional().describe("Racine du dépôt (défaut : répertoire courant)"),
+      root: z.string().optional().describe("Racine du dépôt (défaut : le dossier d'où le serveur a été lancé)"),
     },
   },
   async ({ elements, max, root }) => {
     try {
-      const { index, knowledge } = await currentMap(resolve(root ?? "."));
+      const { index, knowledge } = await currentMap(resolve(root ?? DEFAULT_ROOT));
       return plainText(formatSlice(buildSlice(index, elements, { knowledge, max }), elements));
     } catch (err) {
       return errorResult(`vision_slice a échoué: ${(err as Error).message}`);
@@ -133,7 +140,7 @@ server.registerTool(
   },
   async ({ task, detail, root }) => {
     try {
-      const target = resolve(root ?? ".");
+      const target = resolve(root ?? DEFAULT_ROOT);
       const model = readModel(target);
       const ctx = buildAgentContext(model, task);
       if (detail) return textResult(ctx);
@@ -166,7 +173,7 @@ server.registerTool(
   },
   async ({ query, root }) => {
     try {
-      const target = resolve(root ?? ".");
+      const target = resolve(root ?? DEFAULT_ROOT);
       const model = readModel(target);
       return textResult(buildInspectResult(model, target, query));
     } catch (err) {
@@ -187,7 +194,7 @@ server.registerTool(
   },
   async ({ name, root }) => {
     try {
-      const target = resolve(root ?? ".");
+      const target = resolve(root ?? DEFAULT_ROOT);
       const model = readModel(target);
       const outcome = resolveSymbol(model, name);
       if (outcome.kind === "found") {
@@ -213,7 +220,7 @@ server.registerTool(
   },
   async ({ block, root }) => {
     try {
-      const target = resolve(root ?? ".");
+      const target = resolve(root ?? DEFAULT_ROOT);
       const arch = loadArch(target, readModel(target));
       if (!block) return plainText(formatArchModel(arch));
       const b = findBlock(arch, block);
@@ -239,7 +246,7 @@ server.registerTool(
   },
   async ({ feature, full, root }) => {
     try {
-      const target = resolve(root ?? ".");
+      const target = resolve(root ?? DEFAULT_ROOT);
       const model = readModel(target);
       const arch = loadArch(target, model);
       const entry = arch.entries.find((e) => e.name === feature || e.id === feature);
