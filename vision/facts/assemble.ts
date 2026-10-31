@@ -556,6 +556,9 @@ export function assemble(db: Database, opts: AssembleOptions): ArchModelV2 {
         ...[...byExt].sort().map(([ext, count]) => ({ kind: "language_not_read" as const, subject: `fichiers ${ext}`, count, where: unread.filter((f) => f.endsWith(ext)).sort().map((path) => ({ path, line: 0, source: "syntax" as const })) })),
         ...[...missing].sort(([a], [b]) => a.localeCompare(b)).map(([name, m]) => ({ kind: "pack_missing" as const, subject: name, count: m.count, proof: m.proof, where: dedupe(m.where) })),
         ...unresolvedGaps(rows("unresolved")),
+        // Un pack qui a échoué sur des fichiers : ce qu'il aurait lu là manque, et la carte le dit au lieu de tomber.
+        ...[...rows("pack_failed").reduce((m, t) => m.set(s(t.args[0]), [...(m.get(s(t.args[0])) ?? []), t]), new Map<string, ReturnType<typeof rows>>())]
+          .map(([pack, ts]) => ({ kind: "pack_failed" as const, subject: `${pack} : ${s(ts[0]!.args[2])}`, count: ts.length, proof: ts[0]!.proof[0]!, where: dedupe(ts.map((t) => t.proof[0]!)) })),
       ],
     },
   ];

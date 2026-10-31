@@ -206,7 +206,7 @@ const coverage = S({
   read: z.number().int().nonnegative(),
   total: z.number().int().nonnegative(),
   gaps: z.array(S({
-    kind: z.enum(["language_not_read", "pack_missing", "target_unknown", "path_dynamic", "manifest_unknown"]),
+    kind: z.enum(["language_not_read", "pack_missing", "pack_failed", "target_unknown", "path_dynamic", "manifest_unknown"]),
     subject: z.string().min(1),
     count: z.number().int().nonnegative(),
     proof: proof.optional(),

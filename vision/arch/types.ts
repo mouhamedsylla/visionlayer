@@ -461,7 +461,7 @@ export interface Finding {
   source: Source;
 }
 
-export type GapKind = "language_not_read" | "pack_missing" | "target_unknown" | "path_dynamic" | "manifest_unknown";
+export type GapKind = "language_not_read" | "pack_missing" | "pack_failed" | "target_unknown" | "path_dynamic" | "manifest_unknown";
 
 export interface Coverage {
   level: Level;

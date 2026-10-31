@@ -44,6 +44,19 @@ const LINE_MAX = 200;
 /** Des composants qui importent du code, sans pack qui les lise : ce qu'ils emploient n'est pas connu. */
 const UNREAD_IMPORTERS = /\.(svelte|vue|astro|mdx)$/;
 
+/**
+ * Un pack qui échoue sur un fichier (une forme de code qu'il n'attendait pas) ne fait pas tomber la carte :
+ * ses faits pour ce fichier sont perdus, et l'échec est rendu comme un fait, que la carte montre comme non lu.
+ */
+function safely(pack: Pack, path: string, run: () => FileFact[], fact: (rel: string, args: Value[], line: number) => FileFact): FileFact[] {
+  try {
+    return run();
+  } catch (e) {
+    const message = ((e as Error)?.message ?? String(e)).split("\n")[0]!.slice(0, 200);
+    return [fact("pack_failed", [pack.id, path, message], 1)];
+  }
+}
+
 export class FactBase {
   private files: FactCache["files"] = {};
   /** Tous les fichiers du dépôt, lus ou non (un fichier Python existe même si aucun lecteur ne l'ouvre). */
@@ -95,9 +108,9 @@ export class FactBase {
       const imports = new Map<string, { imported: string; raw: string }>();
       for (const n of root.namedChildren) for (const [k, v] of statementBindings(n)) imports.set(k, v);
       out.push(...syntaxFacts(file.path, root, fact), ...flowFacts(file.path, root, fact), ...contractFacts(file.path, root, fact));
-      for (const pack of this.packs) if (packApplies(pack, file, imports)) out.push(...runPack(pack, { file, root, imports, fact }));
+      for (const pack of this.packs) if (packApplies(pack, file, imports)) out.push(...safely(pack, file.path, () => runPack(pack, { file, root, imports, fact }), fact));
     } else {
-      for (const pack of this.packs) if (packApplies(pack, file)) out.push(...runPack(pack, { file, fact }));
+      for (const pack of this.packs) if (packApplies(pack, file)) out.push(...safely(pack, file.path, () => runPack(pack, { file, fact }), fact));
     }
     return out;
   }
@@ -118,6 +131,7 @@ export class FactBase {
    *   imports_pkg(Fichier, Local, Paquet, Importé)   import d'un paquet
    *   depends(Fichier, Cible)                        le fichier importe la cible
    *   pkg_of(Fichier, Dossier)                       le paquet du fichier : le dossier du package.json le plus proche ("" à la racine)
+   *   pack_failed(Pack, Fichier, Erreur)            un pack qui a échoué sur ce fichier (venu des faits du fichier) : le reste de la carte est fait sans lui
    *   unread_importer(Fichier)                       un composant (.svelte, .vue, .astro, .mdx) qu'aucun pack ne lit, mais qui importe du code
    */
   database(): Database {
