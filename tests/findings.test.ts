@@ -197,3 +197,19 @@ test("race_read_then_write : lire filtré, mettre à jour sans refiltrer, alors 
   assert.deepEqual(found(m, "race_read_then_write").map((s) => s.split(" [")[0]), ["main.ts:6 main.ts:9 main.ts:13 main.ts:17 main.ts:20"]);
   assert.deepEqual(messages(m, "race_read_then_write"), ["`expire` lit des lignes de orders filtrées sur `status`, puis les met à jour sans revérifier `status`, alors qu'un autre code écrit `status` entre-temps"]);
 });
+
+test("dead_code : rien n'est affirmé dans un paquet dont des composants non lus (.svelte, .vue) importent du code", async () => {
+  const m = await mapOf({
+    Dockerfile: `FROM node:20\nCOPY . .\nCMD ["node", "api/main.ts"]\n`,
+    "api/package.json": `{"name": "api"}`,
+    "api/main.ts": `import { used } from "./lib";\nused();\n`,
+    "api/lib.ts": `export function used() {}\nexport function unused() {}\n`,
+    "web/package.json": `{"name": "web"}`,
+    "web/Dockerfile": `FROM node:20\nCOPY . .\nCMD ["node", "src/main.ts"]\n`,
+    "web/src/main.ts": `import { other } from "./lib/state";\nother();\n`,
+    "web/src/lib/state.ts": `export function other() {}\nexport function setAlert() {}\n`,
+    "web/src/lib/Alert.svelte": `<script>import { setAlert } from "./state";</script>\n`,
+  });
+  // Seul le paquet sans composant non lu garde son constat.
+  assert.deepEqual(found(m, "dead_code").map((f) => f.split(" ")[0]), ["api/lib.ts:2"]);
+});

@@ -44,6 +44,9 @@ rules: |
   in_scope(F) :- reached(F).
   in_scope(F) :- export_fn(F, _, _), top_dir(F, D), reached_top(D), not config_file(F).
   outside(F) :- export_fn(F, _, _), not in_scope(F).
+  % Un paquet où des composants non lus (.svelte, .vue…) importent du code : ce qu'ils emploient n'est pas connu, rien n'est affirmé.
+  opaque_pkg(D) :- unread_importer(G), pkg_of(G, D).
+  outside(F) :- export_fn(F, _, _), pkg_of(F, D), opaque_pkg(D).
   finding(dead_code, N, "fn", F, L) :- export_fn(F, N, L), not outside(F), not fn_used(F, N), not launched(F), not test_file(F).
 
   % Constat write_then_enqueue : dans une même fonction, une écriture puis une publication, sans transaction commune.

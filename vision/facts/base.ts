@@ -41,6 +41,9 @@ export interface RefreshResult {
 
 const LINE_MAX = 200;
 
+/** Des composants qui importent du code, sans pack qui les lise : ce qu'ils emploient n'est pas connu. */
+const UNREAD_IMPORTERS = /\.(svelte|vue|astro|mdx)$/;
+
 export class FactBase {
   private files: FactCache["files"] = {};
   /** Tous les fichiers du dépôt, lus ou non (un fichier Python existe même si aucun lecteur ne l'ouvre). */
@@ -114,6 +117,8 @@ export class FactBase {
    *   imports(Fichier, Local, Cible, Importé)        import résolu vers un fichier du dépôt
    *   imports_pkg(Fichier, Local, Paquet, Importé)   import d'un paquet
    *   depends(Fichier, Cible)                        le fichier importe la cible
+   *   pkg_of(Fichier, Dossier)                       le paquet du fichier : le dossier du package.json le plus proche ("" à la racine)
+   *   unread_importer(Fichier)                       un composant (.svelte, .vue, .astro, .mdx) qu'aucun pack ne lit, mais qui importe du code
    */
   database(): Database {
     const db = new Database();
@@ -121,6 +126,13 @@ export class FactBase {
     const aliases = createAliasResolver(this.root, known);
     for (const p of this.listed) db.add("present", [p]);
     for (const p of this.paths()) db.add("file", [p]);
+    const pkgDirs = new Set(this.listed.filter((p) => p === "package.json" || p.endsWith("/package.json")).map((p) => (p.includes("/") ? p.slice(0, p.lastIndexOf("/")) : "")));
+    for (const p of this.listed) {
+      let d = p.includes("/") ? p.slice(0, p.lastIndexOf("/")) : "";
+      while (d && !pkgDirs.has(d)) d = d.includes("/") ? d.slice(0, d.lastIndexOf("/")) : "";
+      if (pkgDirs.has(d)) db.add("pkg_of", [p, d]);
+      if (UNREAD_IMPORTERS.test(p) && !known.has(p)) db.add("unread_importer", [p]);
+    }
     for (const f of this.facts()) {
       db.add(f.rel, f.args, [f.proof]);
       if (f.rel !== "import_raw") continue;

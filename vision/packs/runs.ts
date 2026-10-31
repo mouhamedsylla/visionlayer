@@ -46,12 +46,13 @@ export function codeFileCandidates(p: string): string[] {
   return [...new Set([p, `${stem}.ts`, `${stem}.mts`, `${stem}.js`, `${stem}.mjs`])];
 }
 
-/** Le code compilé et sa source possible : `dist/server.js` → `src/server.ts`, `src/server.tsx`… (les règles gardent ce qui existe). */
+/** Le code compilé et sa source possible : `dist/server.js` → `src/server.ts`, `server.ts`… (les règles gardent ce qui existe). */
 export function sourceCandidates(rel: string): string[] {
   const out = new Set<string>();
   const bases = [rel];
   const m = rel.match(/^(?:(.*)\/)?(lib|dist|build|out)\/(.*)$/);
-  if (m) bases.push(`${m[1] ? `${m[1]}/` : ""}src/${m[3]}`);
+  // La source sous src/, ou à la place du dossier compilé (tsc sans rootDir : dist/index.js vient de index.ts).
+  if (m) bases.push(`${m[1] ? `${m[1]}/` : ""}src/${m[3]}`, `${m[1] ? `${m[1]}/` : ""}${m[3]}`);
   for (const b of bases) {
     const stem = b.replace(/\.(c|m)?js$/, "");
     if (stem === b) continue;

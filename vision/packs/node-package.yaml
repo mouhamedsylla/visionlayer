@@ -9,3 +9,8 @@ rules: |
   pkg_has_src(D) :- pkg_src_at(D, _).
   pkg_runs(D, C) :- pkg_src_at(D, C).
   pkg_runs(D, C) :- pkg_main(D, C), present(C), not pkg_has_src(D).
+
+  % Un script qui en appelle un autre lance ce que lance l'autre (S3 à S6) ; la boucle s'arrête sur ce qui est déjà connu.
+  pkg_script(K, S, T) :- pkg_calls(K, S, S2), pkg_script(K, S2, T).
+  pkg_script(K, S, T) :- pkg_calls_named(K, S, N, S2), pkg_name(K2, N), pkg_script(K2, S2, T).
+  pkg_script(K, S, T) :- pkg_calls_file(K, S, K2, S2), pkg_script(K2, S2, T).
