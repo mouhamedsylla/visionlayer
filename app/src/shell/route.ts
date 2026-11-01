@@ -7,7 +7,7 @@ export const SCREENS: { id: Screen; label: string; group: string; built?: boolea
   { id: "vue", label: "Vue d'ensemble", group: "Système", built: true },
   { id: "carte", label: "Carte", group: "Système", built: true },
   { id: "acces", label: "Accès", group: "Système", built: true },
-  { id: "donnees", label: "Données", group: "Système" },
+  { id: "donnees", label: "Données", group: "Système", built: true },
   { id: "taches", label: "Tâches planifiées", group: "Système" },
   { id: "regles", label: "Règles et décisions", group: "Connaissance" },
   { id: "agents", label: "Sessions d'agents", group: "Connaissance" },

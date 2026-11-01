@@ -4,6 +4,7 @@ import { Overview } from "../screens/overview/Overview";
 import { MapScreen } from "../screens/map/MapScreen";
 import { PacksScreen } from "../screens/packs/PacksScreen";
 import { AccessScreen } from "../screens/access/AccessScreen";
+import { DataScreen } from "../screens/data/DataScreen";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { SCREENS, useRoute } from "./route";
@@ -22,6 +23,7 @@ export function App() {
             : !data.map ? <p className="state">Lecture du dépôt…</p>
             : screen === "carte" ? <MapScreen map={data.map} selected={item} select={(id) => go("carte", id)} />
             : screen === "acces" ? <AccessScreen map={data.map} />
+            : screen === "donnees" ? <DataScreen map={data.map} item={item} open={(id) => go("donnees", id)} />
             : screen === "packs" ? <PacksScreen map={data.map} item={item} open={(id) => go("packs", id)} onChanged={data.refresh} />
             : <Overview map={data.map} project={data.project} claims={data.claims} go={go} />}
         </main>
