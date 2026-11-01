@@ -2,8 +2,8 @@
 
 ## Ce qui est affirmé au 01/10/2026
 
-- **atelier-api** ([tests/corpus/atelier-api](../../tests/corpus/atelier-api)) est entièrement lu par les règles : 9 nœuds sur 9, 21 points d'entrée sur 21 avec la ligne de leur code, 14 tables, 30 liens sur 30 de l'oracle. 14 des 16 constats attendus sont produits (5 routes sans appel, les tâches planifiées sur deux machines, les deux connexions sans délai, le corps de l'inscription écrit dans le journal, la fonction d'import jamais appelée, la valeur `on_hold` que rien n'écrit, l'export d'administration gardé par une simple connexion, la réservation écrite puis mise en file hors transaction, l'expiration qui annule sans revérifier l'état). En plus, vrais et relus à la main, que l'oracle n'avait pas : 2 fonctions de l'app web jamais importées, 3 valeurs permises jamais écrites (`users.role` : `admin`, `instructor` ; `refunds.status` : `failed`), la demande de nouveau mot de passe qui écrit puis publie sans transaction commune. Les 2 constats restants (une hypothèse d'ordre contraire à un commentaire, le README contredit par le code) demandent de comprendre un texte : ils reviennent à un agent ([Les constats](constats.md)). Ces détecteurs ont été construits avec atelier-api sous les yeux : ce score dit qu'ils trouvent ce qu'ils visent ici, pas encore ce qu'ils valent sur un projet inconnu (RYP-224).
-- **Nafar** est encore lu par la carte version 1, que l'interface actuelle affiche ; les deux partiront ensemble ([Vue d'ensemble](01-vue-d-ensemble.md#la-carte-darchitecture-et-le-code-qui-part)). Sous le nouveau moteur, sa couverture dit ce qui manque : le pack Firebase, en pause (189 fichiers), et 28 fichiers Python.
+- **atelier-api** ([tests/corpus/atelier-api](../../tests/corpus/atelier-api)) est entièrement lu par les règles : 9 nœuds sur 9, 21 points d'entrée sur 21 avec la ligne de leur code, 14 tables, 30 liens sur 30 de l'oracle. 14 des 16 constats attendus sont produits (5 routes sans appel, les tâches planifiées sur deux machines, les deux connexions sans délai, le corps de l'inscription écrit dans le journal, la fonction d'import jamais appelée, la valeur `on_hold` que rien n'écrit, l'export d'administration gardé par une simple connexion, la réservation écrite puis mise en file hors transaction, l'expiration qui annule sans revérifier l'état). En plus, vrais et relus à la main, que l'oracle n'avait pas : 2 fonctions de l'app web jamais importées, 3 valeurs permises jamais écrites (`users.role` : `admin`, `instructor` ; `refunds.status` : `failed`), la demande de nouveau mot de passe qui écrit puis publie sans transaction commune. Les 2 constats restants (une hypothèse d'ordre contraire à un commentaire, le README contredit par le code) demandent de comprendre un texte : ils reviennent à un agent ([Les constats](constats.md)). Ces détecteurs ont été construits avec atelier-api sous les yeux : ce score dit qu'ils trouvent ce qu'ils visent ici, pas encore ce qu'ils valent sur un projet inconnu.
+- **Une app Firebase** est encore lue par la carte version 1, que l'interface actuelle affiche ; les deux partiront ensemble ([Vue d'ensemble](01-vue-d-ensemble.md#la-carte-darchitecture-et-le-code-qui-part)). Sous le nouveau moteur, sa couverture dit ce qui manque : le pack Firebase, en pause (189 fichiers), et 28 fichiers Python.
 - **Sur trois projets jamais vus** (le corpus de contrôle, 02/10/2026), le résultat est mauvais, et il est publié tel quel. Le tableau est juste après.
 - **Rien d'autre n'est affirmé.**
 
@@ -29,7 +29,7 @@ Ces trois projets ont maintenant servi : une forme corrigée grâce à eux les f
 
 ## Ce que vise VisionLayer
 
-atelier-api, puis Nafar, sont des projets de référence : ils servent à construire et à tester. La cible, c'est un projet que nous n'avons jamais vu, et dont VisionLayer doit étaler le système avec le même niveau de détail.
+atelier-api est un projet de référence : il sert à construire et à tester. La cible, c'est un projet que nous n'avons jamais vu, et dont VisionLayer doit étaler le système avec le même niveau de détail.
 
 C'est possible parce qu'un pack ne décrit pas un projet : il décrit **une technologie**. Les projets diffèrent par leurs données, leurs responsabilités, leurs décisions métier ; les outils qu'ils emploient sont les mêmes. Deux projets Express déclarent leurs routes avec la même API d'Express. Une fois cette API écrite dans le pack, n'importe quel projet Express est lu, quel que soit son domaine.
 
@@ -54,7 +54,7 @@ flowchart LR
   C -. "raté puis corrigé :<br/>passe dans l'apprentissage" .-> A
 ```
 
-1. **Le corpus d'apprentissage** sert à construire : atelier-api, Nafar, puis une app Next.js avec Prisma et un service Python. On y ajuste les packs autant qu'il faut. Le rangement et la règle sont dans [tests/corpus/README.md](../../tests/corpus/README.md).
+1. **Le corpus d'apprentissage** sert à construire : atelier-api, puis une app Next.js avec Prisma et un service Python. On y ajuste les packs autant qu'il faut. Le rangement et la règle sont dans [tests/corpus/README.md](../../tests/corpus/README.md).
 2. **Le corpus de contrôle** sert à juger. Ce sont des projets que les packs n'ont jamais vus. L'oracle est écrit avant de lancer VisionLayer, et aucun pack n'est modifié pour le faire passer. Quand un projet de contrôle échoue et qu'on corrige un pack, il passe dans l'apprentissage ; il faut alors un nouveau projet de contrôle.
 3. **Les dépôts réels** : des projets open source de toutes tailles, des projets anciens, des bibliothèques, choisis pour être différents de ce qu'on connaît, relus à la main. Le résultat est publié, bon ou mauvais.
 
@@ -81,8 +81,8 @@ Exemple sur atelier-api, au 02/10/2026 : 122 éléments trouvés sur 124, 0 non 
 |---|---|---|
 | Client-serveur | atelier-api | lu par les règles |
 | Files de messages | atelier-api | BullMQ seulement |
-| Événementiel (Pub/Sub, Kafka) | Nafar en partie | pas encore |
-| Serverless | Nafar | pack Firebase en cours |
+| Événementiel (Pub/Sub, Kafka) | un projet réel en partie | pas encore |
+| Serverless | un projet réel | pack Firebase en cours |
 | Microservices | aucun | jamais testé |
 | Monolithe ancien | aucun | jamais testé |
 | Bibliothèque | aucun | jamais testé |

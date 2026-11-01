@@ -130,7 +130,7 @@ test("carte neutre d'atelier-api : produite par des règles, au niveau de l'orac
   const oracle = JSON.parse(readFileSync(join(ATELIER, "expected.arch.json"), "utf8")) as ArchModelV2;
   const lines = score(model, oracle);
   for (const l of lines) {
-    if (l.what === "constats") { assert.equal(l.found, FINDINGS_FOUND, `constats : manque ${l.missing.join(" ; ")}`); continue; } // RYP-210 à RYP-213, détecteur par détecteur
+    if (l.what === "constats") { assert.equal(l.found, FINDINGS_FOUND, `constats : manque ${l.missing.join(" ; ")}`); continue; } //  à , détecteur par détecteur
     assert.equal(l.found, l.expected, `${l.what} : manque ${l.missing.join(" ; ")}`);
   }
   // Rien de montré que l'oracle n'a pas, sauf ce qui a été relu et trouvé vrai.

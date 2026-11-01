@@ -3,7 +3,7 @@ import type { Language } from "../model/types.js";
 import type { Value } from "./datalog.js";
 
 /**
- * Base de faits (doc 07 §4.2, RYP-190). Un fait est atomique, neutre, et
+ * Base de faits (doc 07 §4.2). Un fait est atomique, neutre, et
  * rattaché au fichier qui le prouve : un fichier modifié ne recalcule que ses
  * faits.
  */

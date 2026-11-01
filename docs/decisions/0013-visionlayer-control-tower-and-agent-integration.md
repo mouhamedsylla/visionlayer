@@ -9,7 +9,7 @@ La maquette de toutes les interfaces (22 écrans, design system « Calque / Plan
 - un journal de session d'agent refait à l'identique : Claude Code et Codex en ont déjà un ;
 - un historique qui doublait Git.
 
-Or [vision-layer-concept.md §3.2](../vision-layer-concept.md) dit déjà ce que VisionLayer n'est pas : ni un IDE, ni Git, ni Linear, ni un agent, ni une CI. Le premier utilisateur l'a formulé ainsi : VisionLayer est fait pour l'humain (le développeur, et d'autres devs avec lui). Il doit exploiter les vraies capacités des agents sans piétiner les autres outils du workflow : c'est une **tour de contrôle**.
+Or la conception de départ dit déjà ce que VisionLayer n'est pas : ni un IDE, ni Git, ni Linear, ni un agent, ni une CI. Le premier utilisateur l'a formulé ainsi : VisionLayer est fait pour l'humain (le développeur, et d'autres devs avec lui). Il doit exploiter les vraies capacités des agents sans piétiner les autres outils du workflow : c'est une **tour de contrôle**.
 
 ## Décision
 
@@ -40,10 +40,10 @@ Or [vision-layer-concept.md §3.2](../vision-layer-concept.md) dit déjà ce que
 | Parler à une session en cours | *channels* (aperçu de recherche) | `codex app-server` (JSON-RPC) | **pas maintenant** : c'est le rôle du harness |
 | Travail ponctuel | `claude -p --output-format json` | `codex exec --json` | **pas maintenant** ; plus tard, sur demande humaine seulement (par exemple rédiger une fiche manquante dans une PR) |
 
-Les trois premières lignes forment un **paquet d'intégration par agent**, installable en une commande : un plugin Claude Code (serveur MCP, hooks et consigne), et une configuration Codex équivalente. Le journal reçu par les hooks n'altère jamais la carte. Il ne contient que des chemins de fichiers et des noms d'outils, jamais le contenu d'un prompt ni celui d'un fichier `.env` (gouvernance §4).
+Les trois premières lignes forment un **paquet d'intégration par agent**, installable en une commande : un plugin Claude Code (serveur MCP, hooks et consigne), et une configuration Codex équivalente. Le journal reçu par les hooks n'altère jamais la carte. Il ne contient que des chemins de fichiers et des noms d'outils, jamais le contenu d'un prompt ni celui d'un fichier `.env`.
 
 ### Économiser le contexte des agents (livré)
-Chaque caractère renvoyé par le serveur MCP est payé en tokens par l'agent, à chaque appel. Mesures sur Nafar (≈ 3,6 caractères par token, estimation) :
+Chaque caractère renvoyé par le serveur MCP est payé en tokens par l'agent, à chaque appel. Mesures sur un projet réel (≈ 3,6 caractères par token, estimation) :
 
 | Appel | Avant | Maintenant |
 |---|---|---|

@@ -16,7 +16,7 @@ import { contractFacts } from "./syntax-contract.js";
 import type { FileFact, FileInput } from "./types.js";
 
 /**
- * La base de faits d'un dépôt (RYP-190). Chaque fichier garde ses faits ; au
+ * La base de faits d'un dépôt. Chaque fichier garde ses faits ; au
  * rafraîchissement, seul un fichier dont la date ou la taille a changé est
  * relu. Puis les faits de tous les fichiers sont joints par les règles des
  * packs. Mêmes fichiers, mêmes packs : même résultat, dans le même ordre.

@@ -57,7 +57,7 @@ La même vue doit tenir pour un petit projet et pour un grand. Ce qui change, c'
 | Projet | Ce qu'on y voit | Exemple |
 |---|---|---|
 | Petit, un service | deux ou trois acteurs, une session, une garde, quelques routes publiques | atelier-api : visiteur, personne connectée, admin, Stripe ; `requireUser` et `requireAdmin` |
-| Moyen, une app et ses fonctions | des rôles, une vérification dans le code et une dans la base | Nafar : élève, élève avec accès, admin, Cloud Tasks ; contrôles dans les fonctions et règles Firestore |
+| Moyen, une app et ses fonctions | des rôles, une vérification dans le code et une dans la base | une app de cours : élève, élève avec accès, admin, Cloud Tasks ; contrôles dans les fonctions et règles Firestore |
 | Grand, plusieurs services | des dizaines d'acteurs (dont des services entre eux), plusieurs fournisseurs d'identité, des clients séparés | une passerelle qui vérifie un jeton, des services qui se font confiance, chaque requête filtrée par client |
 
 Sur un grand système, les groupes se replient (sauf celui de la sélection et ceux qui portent un constat), une recherche et le filtre « pour » apparaissent, et « constats d'abord » range en tête les lignes à aller voir. La vue dit ce qu'elle ne voit pas : une passerelle configurée hors du dépôt n'est pas lue, un service écrit dans un langage non lu n'a pas de garde lue, et les deux sont signalés comme tels.

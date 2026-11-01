@@ -22,7 +22,7 @@ function parseRaw(source: string, language: Language): Parser.Tree {
   parser.setLanguage(LANGUAGE_GRAMMARS[language]);
   // Le binding Node de tree-sitter lit la source par tampon de 32 Kio et
   // échoue (« Invalid argument ») sur tout fichier plus gros si on ne lui
-  // donne pas un tampon à la taille du fichier — trouvé en scannant Nafar
+  // donne pas un tampon à la taille du fichier — trouvé en scannant un projet réel
   // (videoCourses.ts, 328 Ko).
   const bytes = Buffer.byteLength(source, "utf-8");
   return parser.parse(source, undefined, { bufferSize: Math.max(DEFAULT_BUFFER_SIZE, bytes + 1) });
@@ -32,7 +32,7 @@ function parseRaw(source: string, language: Language): Parser.Tree {
  * Analyse un fichier. Seule exception à « une erreur = pas de faits »
  * (ADR 0004) : la grammaire tree-sitter refuse un `&` nu dans du texte JSX
  * (`<div>Crédits & sources</div>`), que TypeScript et Babel acceptent — 9
- * fichiers de Nafar étaient écartés pour ça. Un tel `&` ne porte aucun fait
+ * fichiers d'un projet réel étaient écartés pour ça. Un tel `&` ne porte aucun fait
  * (ni symbole ni import) : il est remplacé par une espace, octet pour octet,
  * donc toutes les positions restent exactes, et le fichier est ré-analysé.
  * Le résultat n'est accepté que si l'arbre est alors entièrement valide.

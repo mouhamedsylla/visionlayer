@@ -81,7 +81,7 @@ export function extractFile(
   }
 
   // `import('./x')` (routes paresseuses : `lazy(() => import(...))`) : une dépendance comme une autre,
-  // sinon tout ce qu'une app charge à la demande disparaît de son code (constaté sur Nafar).
+  // sinon tout ce qu'une app charge à la demande disparaît de son code (constaté sur un projet réel).
   const seen = new Set(dependencies.map((d) => d.raw));
   collectDynamicImports(tree.rootNode, (raw) => {
     if (seen.has(raw)) return;

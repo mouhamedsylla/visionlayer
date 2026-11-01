@@ -31,7 +31,7 @@ test("parse: gère le TSX sans planter (grammaire tree-sitter-typescript/tsx)", 
   assert.equal(hasSyntaxError(tree), false);
 });
 
-test("parse: un fichier de plus de 32 Kio ne fait pas échouer le binding (cas Nafar, videoCourses.ts)", () => {
+test("parse: un fichier de plus de 32 Kio ne fait pas échouer le binding (cas réel, un fichier de cours)", () => {
   const entry = 'export const v = [\n' + '  { id: "x", title: "Un titre assez long pour peser", url: "https://example.invalid/a/b/c" },\n'.repeat(4000) + "];\n";
   assert.ok(Buffer.byteLength(entry) > 300_000);
   const tree = parse(entry, "typescript");
@@ -39,7 +39,7 @@ test("parse: un fichier de plus de 32 Kio ne fait pas échouer le binding (cas N
   assert.equal(hasSyntaxError(tree), false);
 });
 
-test("parse: un `&` nu dans du texte ou un attribut JSX n'écarte plus le fichier (Nafar : « Crédits & sources »)", () => {
+test("parse: un `&` nu dans du texte ou un attribut JSX n'écarte plus le fichier (cas réel : « Crédits & sources »)", () => {
   const src = [
     'import { x } from "./x";',
     "export function Page() {",

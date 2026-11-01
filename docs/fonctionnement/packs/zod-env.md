@@ -50,4 +50,4 @@ Une validation écrite hors de toute fonction s'exécute dès que son module est
 |---|---|
 | `createEnv({ server: {…}, client: {…}, runtimeEnv: process.env })` (`@t3-oss/env-core`, `@t3-oss/env-nextjs`) | une autre bibliothèque construite sur Zod : un autre pack, utile pour Next.js |
 | lire une variable par déstructuration : `const { PORT } = env` | à faire : le lecteur relève `env.PORT`, pas encore la déstructuration |
-| un schéma construit dans une boucle ou par une fonction | doit apparaître comme non lu (RYP-224) |
+| un schéma construit dans une boucle ou par une fonction | doit apparaître comme non lu |

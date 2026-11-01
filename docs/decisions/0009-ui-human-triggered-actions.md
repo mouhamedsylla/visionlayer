@@ -18,7 +18,7 @@ Deuxième point clarifié : les boutons « Ouvrir dans l'éditeur » (`vscode://
 6. **Échelle** : le graphe affiche une *frontière* et jamais le repository entier — sous-modules repliés du périmètre courant, fichiers directs, blocs voisins touchés, externes regroupés en un nœud. Le niveau Fichiers refuse de se déplier au-delà de 60 fichiers. Le Diff ne montre que les fichiers touchés et leurs voisins à un saut. Décision prise au premier contact avec Nafar (589 fichiers) : la vue à plat de l'ADR 0008 y était inutilisable.
 
 ## Rationale
-- La gouvernance distingue *qui* déclenche (humain vs agent), pas *par quel canal* (terminal vs bouton). Séparer les surfaces (UI = humain, MCP = agent) rend la règle vérifiable par le code, pas par la discipline.
+- La règle distingue *qui* déclenche (humain vs agent), pas *par quel canal* (terminal vs bouton). Séparer les surfaces (UI = humain, MCP = agent) rend la règle vérifiable par le code, pas par la discipline.
 - Un `POST` sur clic, avec confirmation, laisse une trace claire de l'intention ; un `GET` ou un déclenchement automatique ne le ferait pas.
 - Montrer la portion de code sur place est ce qui différencie VisionLayer d'un IDE ; c'est aussi ce qui rend la revue possible depuis une vue architecture sans changer d'outil.
 

@@ -4,7 +4,7 @@ import { envsOf, isEnvVarName, src } from "../common.js";
 
 /**
  * `.env.example`, `.env.production`… : NOMS des variables uniquement. Les
- * valeurs ne sont jamais lues au-delà du `=` (gouvernance §4). L'environnement
+ * valeurs ne sont jamais lues au-delà du `=`. L'environnement
  * vient du suffixe du fichier ; `.env.example`/`.env.sample` valent pour tous.
  */
 export function extractDotenv(path: string, content: string, environment: string | undefined): ExtractedFacts {

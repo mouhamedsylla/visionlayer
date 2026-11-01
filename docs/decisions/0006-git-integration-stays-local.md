@@ -9,8 +9,8 @@ mvp-roadmap.md — MVP3 posait la question sans la trancher : *"si `integrations
 `vision update`/`vision diff` n'utilisent Git que pour lire le commit courant (`git rev-parse HEAD`) sur le dépôt **local**, via `execFileSync` (jamais un shell, jamais de concatenation de chaîne — pas d'injection possible). **Aucun accès réseau, aucun remote, aucun token.** Le "before/after" comparé par `vision diff` n'est pas "avant/après un commit Git" mais "avant/après le dernier `vision update`" — deux snapshots du modèle VisionLayer lui-même, stockés localement dans `.vision/`.
 
 ## Rationale
-- Résout la question posée par le roadmap en l'évitant : puisqu'aucun secret n'est nécessaire, ce chemin de code reste LOW/MEDIUM (gouvernance §6), pas HIGH.
-- Suffisant pour la valeur recherchée par MVP3 (comparer l'architecture avant/après un changement) sans attendre l'intégration Linear/CI (étapes 12-13 de la roadmap technique).
+- Résout la question posée par le roadmap en l'évitant : puisqu'aucun secret n'est nécessaire, ce chemin de code reste LOW/MEDIUM, pas HIGH.
+- Suffisant pour la valeur recherchée par MVP3 (comparer l'architecture avant/après un changement) sans attendre une intégration CI (étapes 12-13 de la roadmap technique).
 - `execFileSync("git", [...])` avec un tableau d'arguments fixe, jamais interpolé dans une chaîne shell, respecte la pratique NIST SSDF PW de codage défensif — même si l'entrée ici (le chemin racine) est déjà interne et non fournie par un tiers non fiable.
 
 ## Conséquences

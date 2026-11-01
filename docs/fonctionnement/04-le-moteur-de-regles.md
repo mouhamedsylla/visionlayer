@@ -1,6 +1,6 @@
 # 4. Le moteur de règles
 
-Code : [vision/facts/datalog.ts](../../vision/facts/datalog.ts), règles communes dans [vision/packs/core.yaml](../../vision/packs/core.yaml). Décision : doc 07 §4.4, RYP-190.
+Code : [vision/facts/datalog.ts](../../vision/facts/datalog.ts), règles communes dans [vision/packs/core.yaml](../../vision/packs/core.yaml). Décision : doc 07 §4.4.
 
 ## Le concept
 
@@ -78,4 +78,4 @@ Les packs ajoutent leurs propres règles (chapitre 3) ; toutes sont évaluées e
 
 - Une chaîne fabriquée par `cat` de plus de 1000 caractères est abandonnée : une règle récursive mal bornée s'arrête au lieu de tourner sans fin.
 - Pas d'agrégat (compter, sommer) : quand il faut compter, par exemple « une interface implémentée au moins deux fois », l'assembleur le fait (chapitre 5).
-- Pas de calcul incrémental des règles : un fichier modifié n'est relu que lui, mais les règles sont réévaluées en entier. Sur Nafar, elles prennent 375 ms. Un moteur existant ne sera pris que si la taille l'exige, mesure à l'appui (RYP-173).
+- Pas de calcul incrémental des règles : un fichier modifié n'est relu que lui, mais les règles sont réévaluées en entier. Sur un projet réel, elles prennent 375 ms. Un moteur existant ne sera pris que si la taille l'exige, mesure à l'appui.

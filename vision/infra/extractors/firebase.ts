@@ -9,7 +9,7 @@ const asStr = (v: unknown): string | undefined => (typeof v === "string" ? v : u
 
 /**
  * `.firebaserc` : alias de projets (`dev` → id GCP) et cibles d'hébergement
- * (cible `prep` → site `nafar-app` dans tel projet). C'est lui qui dit quel
+ * (cible `prep` → site `mon-app` dans tel projet). C'est lui qui dit quel
  * environnement correspond à quel projet — aucun autre fichier ne le dit.
  */
 export interface FirebaseProjects {

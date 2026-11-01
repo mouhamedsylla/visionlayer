@@ -11,7 +11,7 @@ Le pipeline VisionLayer (`vision-layer-concept.md` §7) nécessite un parser/AST
 ## Rationale
 - `tree-sitter` fournit des grammaires multi-langages déjà matures et maintenues (utilisé notamment par GitHub, Neovim, Zed), avec parsing incrémental.
 - Application directe du principe NIST SSDF (groupe PW) : *réutiliser du logiciel existant et déjà bien sécurisé plutôt que de dupliquer la fonctionnalité soi-même* — voir [architecture.md §4.1](../architecture.md#41-vis-à-vis-de-nist-ssdf).
-- Évite à RYPHA de porter la maintenance de parsers dont la correctness est critique (les "faits" de VisionLayer doivent être fiables — cf. gouvernance, distinction faits/interprétations).
+- Évite à RYPHA de porter la maintenance de parsers dont la correctness est critique (les "faits" de VisionLayer doivent être fiables — distinction faits/interprétations).
 
 ## Conséquences
 - `vision/parsers/` devient une couche d'adaptation autour des bindings `tree-sitter` (une grammaire par langage supporté), pas une implémentation de parsing.

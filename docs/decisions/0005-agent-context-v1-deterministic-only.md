@@ -10,7 +10,7 @@ La v1 de `vision context --task` ne produit **que des faits déterministes** : s
 
 ## Rationale
 - Correspond au principe "Deterministic-first" ([vision-layer-concept.md §35](../vision-layer-concept.md)) : utiliser les faits calculables avant d'introduire une interprétation LLM.
-- Évite d'introduire une dépendance à un fournisseur LLM (clé API, coût, latence, gestion de secret — cf. gouvernance §4) avant d'avoir prouvé que la sélection déterministe seule apporte déjà de la valeur (test comparatif prévu en [vision-layer-concept.md §39](../vision-layer-concept.md)).
+- Évite d'introduire une dépendance à un fournisseur LLM (clé API, coût, latence, gestion de secret) avant d'avoir prouvé que la sélection déterministe seule apporte déjà de la valeur (test comparatif prévu en [vision-layer-concept.md §39](../vision-layer-concept.md)).
 - Une future version pourra ajouter une couche d'interprétation sémantique **au-dessus**, mais elle devra être visuellement et structurellement distincte des faits (ex. un champ `interpretation` séparé, jamais mélangé dans la même liste) — pas une modification de cette version.
 
 ## Conséquences

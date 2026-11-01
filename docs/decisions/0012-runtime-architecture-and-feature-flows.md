@@ -3,11 +3,11 @@
 **Statut :** Accepté (phase 1 livrée ; phases 2 et 3 planifiées ci-dessous)
 
 ## Contexte
-Retour du premier utilisateur, sur Nafar : l'écran « Architecture » n'était **pas une architecture**, seulement l'arborescence des dossiers avec les imports entre fichiers — « c'est comme si on ouvrait VS Code et on regardait les fichiers ». Ce qu'on attend d'une architecture :
+Retour du premier utilisateur, sur un projet réel : l'écran « Architecture » n'était **pas une architecture**, seulement l'arborescence des dossiers avec les imports entre fichiers — « c'est comme si on ouvrait VS Code et on regardait les fichiers ». Ce qu'on attend d'une architecture :
 - **ce qui s'exécute** (apps, fonctions, conteneurs), **où**, et **qui parle à qui** (appels, lectures, écritures, déclencheurs, files, services externes) ;
 - des **blocs dans lesquels on entre** : ce qu'il y a vraiment dans Firestore, dans la couche IA, dans un service ;
 - la **logique algorithmique des features**, pour lire vite une base de code en revue humaine ;
-- pour **n'importe quel projet**, pas seulement Nafar ;
+- pour **n'importe quel projet**, pas seulement celui qui l'a révélé ;
 - et, puisqu'on code avec des agents, que **les agents enrichissent** cette description de ce qu'ils construisent.
 
 ## Décision
@@ -30,8 +30,8 @@ Retour du premier utilisateur, sur Nafar : l'écran « Architecture » n'était 
 - **Interface** : le niveau « Architecture » est cette carte (niveau par défaut) ; l'ancien écran devient « **Structure du code** ». Clic sur un bloc → ses liens et points d'entrée ; clic sur une flèche → les lignes qui la prouvent ; « Entrer » → l'intérieur ; une feature → son algorithme, avec le code de la fonction à droite, lignes des étapes marquées. CLI : `vision archi [chemin]`, `vision archi --feature <nom>`.
 - **Persistance** : `.vision/architecture.json` écrit par `scan`/`update` (archivé en `architecture.previous.json`) ; les parcours sont calculés à la demande (`/api/flow`), fichiers analysés une fois et gardés tant que le modèle ne change pas. Lecture de fichiers bornée aux fichiers cités par la carte (`/api/arch-file`), jamais un `.env`.
 
-### Corrections du modèle, révélées par Nafar (profitent à tous les niveaux)
-- **Alias d'import** ([model/aliases.ts](../../vision/model/aliases.ts)) : `paths` du tsconfig le plus proche et paquets du workspace (`@nafar/firebase`). 340 imports internes de Nafar passaient pour des paquets externes.
+### Corrections du modèle, révélées par un projet réel (profitent à tous les niveaux)
+- **Alias d'import** ([model/aliases.ts](../../vision/model/aliases.ts)) : `paths` du tsconfig le plus proche et paquets du workspace (`@app/firebase`). 340 imports internes d'un projet réel passaient pour des paquets externes.
 - **`import()` dynamique** (routes paresseuses `lazy(() => import(…))`) : une dépendance comme une autre. Sans elle, 4 fonctions appelées par l'app n'étaient reliées à rien.
 
 ### Phase 2 — fiches rédigées par les agents (à faire)
@@ -46,9 +46,9 @@ Routes Express/Fastify/Hono/Next.js (API routes, Server Actions), schémas Prism
 ## Rationale
 - Une architecture qu'on ne peut pas vérifier serait une interprétation de plus : chaque bloc, lien et étape renvoie à une ligne lisible sur place.
 - L'algorithme est lu dans l'arbre syntaxique, pas résumé par un modèle : ce qu'on relit est ce qui s'exécute. Le « pourquoi » relève des fiches (phase 2), étiquetées comme telles.
-- Des détecteurs sur l'arbre et une résolution des indirections (variables, utilitaires, transactions) : sur Nafar, un repérage par motifs aurait manqué la moitié des accès Firestore.
+- Des détecteurs sur l'arbre et une résolution des indirections (variables, utilitaires, transactions) : sur un projet réel, un repérage par motifs aurait manqué la moitié des accès Firestore.
 
 ## Conséquences
-- Sur Nafar : 10 blocs, 21 liens, 21 points d'entrée, 32 collections (27 avec leur règle), 4 fournisseurs d'IA et 6 modèles cités ; `exoFeedback` et `exoFeedbackQuota` déployées mais appelées par aucun client ; la cible de la file de rendu à déclarer.
-- Limites connues : seuls les fichiers JS/TS sont analysés (le rendu Python de Nafar est un bloc sans intérieur) ; un chemin Firestore construit dynamiquement reste signalé, pas deviné ; les méthodes appelées sur un objet reçu en paramètre (`provider.turn()`) ne sont pas suivies — l'IA est alors vue à l'endroit où le fournisseur est obtenu ; `LessonWriter.tsx` (limite de grammaire, ADR 0011) manque encore à la fermeture de l'app studio.
+- Sur un projet réel : 10 blocs, 21 liens, 21 points d'entrée, 32 collections (27 avec leur règle), 4 fournisseurs d'IA et 6 modèles cités ; `exoFeedback` et `exoFeedbackQuota` déployées mais appelées par aucun client ; la cible de la file de rendu à déclarer.
+- Limites connues : seuls les fichiers JS/TS sont analysés (le rendu Python d'un projet réel est un bloc sans intérieur) ; un chemin Firestore construit dynamiquement reste signalé, pas deviné ; les méthodes appelées sur un objet reçu en paramètre (`provider.turn()`) ne sont pas suivies — l'IA est alors vue à l'endroit où le fournisseur est obtenu ; `LessonWriter.tsx` (limite de grammaire, ADR 0011) manque encore à la fermeture de l'app studio.
 - Tests : [tests/arch.test.ts](../../tests/arch.test.ts) sur [tests/arch-fixtures/shop](../../tests/arch-fixtures/shop) (alias, `import()` dynamique, utilitaire de chemin, transaction, déclencheur, IA, Cloud Tasks, conteneur, règles).

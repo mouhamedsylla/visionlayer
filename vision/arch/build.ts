@@ -339,7 +339,7 @@ export function buildArchModel(root: string, model: SystemModel, infra: InfraMod
 }
 
 /**
- * Dossiers qui forment un module IA (Nafar : `functions/src/ai/`) : au moins
+ * Dossiers qui forment un module IA (par exemple `functions/src/ai/`) : au moins
  * deux fichiers y construisent un client d'IA, et ils pèsent au moins un
  * quart du dossier. Un dossier partagé (`functions/src/`) n'en est pas un :
  * seul le fichier qui construit le client compte alors.

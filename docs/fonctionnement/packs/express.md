@@ -59,6 +59,6 @@ Nécessaire au constat `unguarded_route` ([Les constats](../constats.md)). Une *
 
 | Forme | Pourquoi |
 |---|---|
-| une route construite dans une boucle (`for (const r of routes) app[r.method](r.path, r.h)`) | le chemin n'existe qu'à l'exécution : elle doit apparaître comme non lue (RYP-224), pas être devinée |
+| une route construite dans une boucle (`for (const r of routes) app[r.method](r.path, r.h)`) | le chemin n'existe qu'à l'exécution : elle doit apparaître comme non lue, pas être devinée |
 | `app.param("id", fn)`, un gestionnaire d'erreurs `(err, req, res, next)` | ce ne sont pas des routes |
 | les surcouches (NestJS, express-zod-api, tsoa…) | une autre API : un autre pack |

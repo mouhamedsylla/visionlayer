@@ -99,4 +99,4 @@ Ce qu'une lecture rend, colonne par colonne : `entity_read(Tech, Entité, Colonn
 |---|---|
 | les fichiers de migration `drizzle/*.sql` | du SQL hors du code : lus par le pack [Migrations SQL](sql-migrations.md) (les déclencheurs) |
 | `drizzle.config.ts` (chemin du schéma, dialecte) | la base est déjà donnée par la fonction de table (`pgTable` → PostgreSQL) |
-| une table dont le nom est calculé à l'exécution | doit apparaître comme non lue (RYP-224) |
+| une table dont le nom est calculé à l'exécution | doit apparaître comme non lue |

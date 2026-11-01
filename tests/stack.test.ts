@@ -148,7 +148,7 @@ test("fichiers du projet : .gitignore respecté, lien symbolique en boucle jamai
   writeFileSync(join(root, "ressources", "notes.ts"), "export const n = 1;\n");
   symlinkSync(".", join(root, "ressources", "ressources"));
 
-  // Hors git : parcours du disque, sans suivre le lien (Nafar : ressources/ressources → .).
+  // Hors git : parcours du disque, sans suivre le lien (cas réel : ressources/ressources → .).
   assert.deepStrictEqual(listProjectFiles(root).map((f) => f.path), ["ressources/notes.ts", "src/a.ts"]);
 
   // Dans git : ce que .gitignore exclut n'appartient pas au projet.

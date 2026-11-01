@@ -10,7 +10,7 @@ import { cliArgs } from "../vision/cli/args.js";
 
 /**
  * vision facts [chemin] [--json] [--score] [--oracle fichier]
- * La carte neutre (ADR 0017) produite par la base de faits et les packs (RYP-190).
+ * La carte neutre (ADR 0017) produite par la base de faits et les packs.
  * Les faits de chaque fichier sont gardés dans .vision/facts.json si .vision/ existe :
  * au passage suivant, seul un fichier modifié est relu.
  */

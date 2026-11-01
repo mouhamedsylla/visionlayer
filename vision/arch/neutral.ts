@@ -7,7 +7,7 @@ import type {
  * Conversion de la carte v1 vers le modèle neutre v2 (ADR 0017, migration
  * étape 1). Elle ne lit aucun fichier et n'invente rien : chaque nœud, lien,
  * point d'entrée et constat vient d'un élément de la v1, avec sa preuve.
- * Elle disparaît quand l'extraction produit directement la v2 (RYP-190).
+ * Elle disparaît quand l'extraction produit directement la v2.
  */
 
 export interface ToV2Options {
@@ -160,7 +160,7 @@ function entrypointOf(e: EntryPoint, calledBy?: Set<string>): Entrypoint {
  * Ce que la v1 sait de ce qu'elle n'a pas lu : ses avertissements. Les fichiers
  * comptés sont ceux que l'analyse a ouverts ; un fichier qu'aucun bloc
  * n'exécute (script, maquette) a été lu, il n'est pas un trou. Les langages
- * non lus arrivent avec la base de faits (RYP-190).
+ * non lus arrivent avec la base de faits.
  */
 function coverageOf(v1: ArchModel, opts: ToV2Options): Coverage[] {
   const gaps: Coverage["gaps"] = [];

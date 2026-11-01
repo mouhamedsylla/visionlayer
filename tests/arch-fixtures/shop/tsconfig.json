@@ -1,4 +1,4 @@
 {
-  // alias comme dans Nafar
+  // alias de chemins
   "compilerOptions": { "paths": { "@/*": ["./*"] } },
 }

@@ -1,14 +1,14 @@
 /**
  * Niveau Infrastructure (MVP7) : comment le système est déployé et exposé.
  *
- * Deux origines, toujours distinguées (gouvernance §6) :
+ * Deux origines, toujours distinguées :
  *  - faits extraits d'un fichier du repository (`source.kind === "extracted"`,
  *    avec chemin et ligne) ;
  *  - faits déclarés à la main dans `.vision/infra.yaml` (`source.kind ===
  *    "declared"`), pour ce qu'aucun fichier ne dit (CDN, hébergeur…).
  *
  * Les variables d'environnement sont extraites par NOM uniquement — jamais
- * une valeur (gouvernance §4).
+ * une valeur.
  */
 
 export type ComponentKind =

@@ -9,7 +9,7 @@ Le System Model de VisionLayer (faits + interprétations, `vision-layer-concept.
 **Fichiers JSON locaux** (`.vision/model.json`, `.vision/graph.mmd`, `.vision/metadata.json`), pas de base de graphe pour le MVP.
 
 ## Rationale
-- Suffisant pour la taille de repository actuelle (Nafar, pilote unique) et pour valider si VisionLayer apporte une valeur réelle (le test comparatif de `vision-layer-concept.md` §39) avant d'investir dans une infrastructure de stockage dédiée.
+- Suffisant pour la taille de repository actuelle (un seul projet pilote) et pour valider si VisionLayer apporte une valeur réelle (le test comparatif de `vision-layer-concept.md` §39) avant d'investir dans une infrastructure de stockage dédiée.
 - Cohérent avec le principe "incremental" du document conceptuel (§35) : ajouter une capacité après validation de la précédente, pas avant.
 - Une base de graphe reste une migration possible plus tard si le volume de données ou les besoins de requêtage le justifient — le format JSON ne doit pas empêcher cette évolution (voir Conséquences).
 

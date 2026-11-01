@@ -41,4 +41,4 @@ Ces formes viennent du langage, pas de node-cron ; le lecteur générique les su
 | Forme | Pourquoi |
 |---|---|
 | `new CronJob(e, fn)` du paquet `cron` | une autre bibliothèque, une autre API : un autre pack |
-| une expression calculée à l'exécution | doit apparaître comme non lue (RYP-224) |
+| une expression calculée à l'exécution | doit apparaître comme non lue |

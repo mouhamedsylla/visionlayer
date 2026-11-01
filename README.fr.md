@@ -81,11 +81,11 @@ VisionLayer se construit en public pendant le hackathon. Cette section dit ce qu
 
 | Partie | État |
 |---|---|
-| Moteur de lecture, packs, modèle neutre, constats | Marche aujourd'hui, couvert par 336 tests |
+| Moteur de lecture, packs, modèle neutre, constats | Marche aujourd'hui, couvert par 255 tests |
 | Serveur MCP pour les agents, crochets d'activité | Marche aujourd'hui |
 | Couche de connaissance : notes ancrées au code, vérifiées à chaque changement | Marche aujourd'hui |
-| Interface locale (`pnpm ui`) | Marche aujourd'hui, en français ; en cours de refonte |
-| Écrivain de packs avec Muse Spark | En construction |
+| Interface locale | En construction : l'ancienne est retirée, `pnpm ui` sert l'API de la carte |
+| Écrivain de packs avec Muse Spark | Marche aujourd'hui (`pnpm packs`) |
 | Vigie sur la Model API et sur Baseten | En construction |
 | Replays avec Vigie en entraîneur | En construction |
 
@@ -116,20 +116,19 @@ flowchart LR
 ```bash
 git clone https://github.com/mouhamedsylla/visionlayer && cd visionlayer
 pnpm install
-pnpm ui:build
 ```
 
-Ouvrir l'exemple fourni, puis votre propre projet :
+Lire l'exemple fourni, puis votre propre projet :
 
 ```bash
-pnpm ui tests/corpus/atelier-api
+pnpm facts tests/corpus/atelier-api
 ```
 
 ```bash
 pnpm ui /chemin/vers/votre/projet
 ```
 
-L'interface s'ouvre sur `http://127.0.0.1:4173`. Les tests se lancent avec `pnpm test`.
+`pnpm ui` sert l'API de la carte sur `http://127.0.0.1:4173` ; la nouvelle interface est en construction. Les tests se lancent avec `pnpm test`.
 
 ### Relier vos agents de code
 
@@ -139,7 +138,7 @@ Donnez-leur la carte par MCP, en ajoutant ce serveur à la configuration de votr
 { "mcpServers": { "visionlayer": { "command": "pnpm", "args": ["--dir", "/chemin/vers/visionlayer", "mcp"] } } }
 ```
 
-Les outils sont `vision_context`, `vision_flow`, `vision_architecture`, `vision_inspect` et `vision_source`. Les crochets d'activité pour Claude Code et Codex sont décrits dans [docs/cli.fr.md](docs/cli.fr.md).
+Les outils sont `vision_summary`, `vision_slice`, `vision_reach` et `vision_source`.
 
 ## Construit avant et pendant le hackathon
 
@@ -170,9 +169,7 @@ VisionLayer est construit pour le Meta AI Developer Hackathon, parcours Startup,
 cli/            les commandes : ui, scan, inspect, context, knowledge, hook, mcp
 vision/         le moteur : analyseurs, base de faits, packs, règles, modèle neutre, connaissance, serveur web
 integrations/   le serveur MCP pour les agents de code
-ui/             l'interface
-tests/          336 tests, les fixtures, et atelier-api, l'application d'exemple
-design/         les écrans du hackathon, le robot Bolt, et les outils qui contrôlent chaque écran
+tests/          les tests, les fixtures, et atelier-api, l'application d'exemple
 docs/           le fonctionnement de VisionLayer, les décisions (ADR), comment lire chaque écran
 ```
 

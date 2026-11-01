@@ -85,7 +85,7 @@ La syntaxe seule en donne le détail ([vision/facts/syntax-contract.ts](../../vi
 
 Exemple, l'envoi d'emails d'atelier-api : `EmailSender.send` reçoit un `EmailMessage` de 7 champs (« Même clé = même email : un job rejoué n'envoie pas deux fois ») et rend un `SendResult`. `ResendSender` appelle `client.emails.send`, `SmtpSender` `transport.sendMail`, `ConsoleSender` `console.log`. `getSender` prend `SmtpSender` pour `smtp`, `ConsoleSender` pour `console`, `ResendSender` sinon. `resend` et `nodemailer` ne sont importés nulle part ailleurs.
 
-Même lecture sur la couche IA de Nafar : `AiProvider.turn` et ses trois adaptateurs, l'appel de Gemini étant fait dans la fonction passée à `withNetworkRetry`, et un import de `@google/genai` hors du module signalé.
+Même lecture sur la couche IA d'un projet réel : `AiProvider.turn` et ses trois adaptateurs, l'appel de Gemini étant fait dans la fonction passée à `withNetworkRetry`, et un import de `@google/genai` hors du module signalé.
 
 Limites : un type écrit ailleurs que dans une interface ou un type objet (une classe, un schéma Zod) ne donne pas ses champs ; une valeur de choix calculée n'est pas reprise.
 

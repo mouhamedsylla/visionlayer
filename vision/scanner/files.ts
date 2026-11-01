@@ -21,7 +21,7 @@ export interface ProjectFile {
  *
  * Dans les deux cas, un lien symbolique n'est jamais suivi : un lien qui
  * pointe vers son propre dossier ferait boucler le parcours (constaté sur
- * Nafar, `ressources/ressources → .`).
+ * un projet réel, `ressources/ressources → .`).
  */
 export function listProjectFiles(root: string): ProjectFile[] {
   const fromGit = gitFiles(root);

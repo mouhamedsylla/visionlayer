@@ -15,8 +15,8 @@ interface PathsConfig {
 
 /**
  * Imports internes écrits comme des paquets : alias `paths` des tsconfig
- * (`@/src/x`, `@/curriculum/y`) et paquets du workspace (`@nafar/firebase`).
- * Sans eux, 340 imports internes de Nafar passaient pour des dépendances
+ * (`@/src/x`, `@/curriculum/y`) et paquets du workspace (`@app/firebase`).
+ * Sans eux, 340 imports internes d'un projet réel passaient pour des dépendances
  * externes et tous les niveaux perdaient ces liens (ADR 0012).
  *
  * Déterministe, limité : `paths`/`baseUrl` du tsconfig le plus proche (sans

@@ -120,7 +120,7 @@ Un pack peut créer les relations qu'il veut. Pour apparaître dans la carte, il
 
 | Pack | Ce qu'il reconnaît | Vérifié sur |
 |---|---|---|
-| `core` | règles communes, sans pile (chapitre 4) | atelier-api, Nafar |
+| `core` | règles communes, sans pile (chapitre 4) | atelier-api |
 | `express` | routes HTTP, routeurs montés sous un préfixe (d'un fichier à l'autre), routes chaînées, fichiers servis, le code de chaque route ; [inventaire](packs/express.md) | atelier-api, et un exemple par forme |
 | `node-cron` | tâches planifiées (`schedule`, `createTask`, expression écrite ou en constante importée), tâches en arrière-plan dans un fichier, le code derrière une enveloppe ou une méthode ; une expression calculée reste non lue ; [inventaire](packs/node-cron.md) | atelier-api, et un exemple par forme |
 | `bullmq` | files (nom écrit ou en constante importée), mises en file, tâches répétées, planificateurs, flux parent-enfant, travailleurs et processeurs isolés dans un fichier ; [inventaire](packs/bullmq.md) | atelier-api, et un exemple par forme |
@@ -129,18 +129,18 @@ Un pack peut créer les relations qu'il veut. Pour apparaître dans la carte, il
 | `sdk` | clients de Stripe, Resend et nodemailer (créés avec `new`, en appelant le module, par une fabrique), leurs appels d'un fichier à l'autre, y compris par une fonction qui rend le client ; webhooks Stripe dont la signature est vérifiée, qui ne comptent pas comme une requête ; [inventaire](packs/sdk.md) | atelier-api, et un exemple par forme |
 | `zod-env` | noms des variables d'environnement validées avec Zod, obligatoires ou non (schéma écrit sur place, dans une variable, dans un autre fichier, enrichi ou composé) ; un schéma qui ne valide pas l'environnement ne compte pas ; [inventaire](packs/zod-env.md) | atelier-api, et un exemple par forme |
 | `http-client` | `fetch` (options dans une variable, `Request`, `new URL`), axios (verbes, configuration, instances et le chemin de leur base, d'un fichier à l'autre), enveloppes (méthode écrite, fixée ou en paramètre, enveloppe d'enveloppe) ; la base devant le chemin, la requête et l'ancre sont retirées ; [inventaire](packs/http-client.md) | atelier-api, et un exemple par forme |
-| `stores` | stockages reconnus par leur image de conteneur, ou par la ligne où le code ouvre une connexion (pg, Postgres.js, MySQL2, MongoDB, Mongoose, ioredis, node-redis) ; une requête SQL ou une collection nommée est une lecture ou une écriture ; [inventaire](packs/stores.md) | atelier-api, Nafar, et un exemple par forme |
-| `logs` | journaux (console, pino, winston) : ce qu'ils écrivent, pour le constat « données personnelles dans les journaux » ; [inventaire](packs/logs.md) | atelier-api, Nafar, et un exemple par forme |
-| `docker` | ce que lance une image : commande et point d'entrée, script du paquet (`npm start`), code compilé ramené à sa source ; le fichier lancé suit `WORKDIR`, `COPY`, les variables et les étapes (`COPY --from`, `FROM étape`) ; un nom par Dockerfile ; [inventaire](packs/docker.md) | atelier-api, Nafar, et un exemple par forme |
+| `stores` | stockages reconnus par leur image de conteneur, ou par la ligne où le code ouvre une connexion (pg, Postgres.js, MySQL2, MongoDB, Mongoose, ioredis, node-redis) ; une requête SQL ou une collection nommée est une lecture ou une écriture ; [inventaire](packs/stores.md) | atelier-api, et un exemple par forme |
+| `logs` | journaux (console, pino, winston) : ce qu'ils écrivent, pour le constat « données personnelles dans les journaux » ; [inventaire](packs/logs.md) | atelier-api, et un exemple par forme |
+| `docker` | ce que lance une image : commande et point d'entrée, script du paquet (`npm start`), code compilé ramené à sa source ; le fichier lancé suit `WORKDIR`, `COPY`, les variables et les étapes (`COPY --from`, `FROM étape`) ; un nom par Dockerfile ; [inventaire](packs/docker.md) | atelier-api, et un exemple par forme |
 | `compose` | services : images connues (stockages), builds avec leur contexte et leur Dockerfile nommé (`unit_ctx`, `unit_dockerfile`, que lit le pack Docker), commande et point d'entrée propres, copies (`replicas`, `scale`), fragments `<<: *x` ; un Dockerfile construit par la composition n'est pas un déployable de plus ; [inventaire](packs/compose.md) | atelier-api, et un exemple par forme |
 | `fly` | une app Fly : son Dockerfile (nommé ou par défaut, contexte du dossier de `fly.toml`), ses groupes de processus, ou l'app elle-même sous son nom ; minimum de machines (`[http_service]`, `[[services]]`) ; noms de `[env]` ; [inventaire](packs/fly.md) | atelier-api, et un exemple par forme |
-| `html`, `vite` | une page qui charge un module (attributs dans n'importe quel ordre, module écrit dans la page) est une app ; elle est faite avec Vite si elle est dans la racine d'une configuration de Vite (`unit_tech`) ; [inventaire](packs/vite-react.md) | atelier-api, Nafar, et un exemple par forme |
-| `node-package` | le fichier que lance un paquet Node (`main`), sa source plutôt que le compilé ; le fichier que lance chaque script (`pkg_script`) | Nafar |
-| `node-http` | les routes d'un serveur `node:http` écrites à la main, avec leur méthode quand elle est comparée | Nafar |
-| `firebase` | `firebase.json` : codebases de Cloud Functions, Firestore, Storage, Realtime Database, leurs fichiers de règles, l'hébergement et ses réécritures | Nafar |
-| `firestore` | lectures et écritures Firestore, API modulaire et Admin : le chemin suivi à travers variables, gabarits, transactions, et les fonctions d'un autre fichier qui fabriquent un chemin ou la base ; un accès dont le chemin n'est pas écrit dans le code devient « chemin calculé », un trou de couverture | Nafar |
-| `firestore-rules` | chaque collection de `firestore.rules` et la ligne de sa règle d'accès | Nafar |
-| `firebase-functions` | les fonctions exportées, API v1 et v2 : appelables, HTTP, planifiées, files de tâches, Pub/Sub, et les déclencheurs Firestore, Storage, Realtime Database, Authentication | Nafar |
+| `html`, `vite` | une page qui charge un module (attributs dans n'importe quel ordre, module écrit dans la page) est une app ; elle est faite avec Vite si elle est dans la racine d'une configuration de Vite (`unit_tech`) ; [inventaire](packs/vite-react.md) | atelier-api, et un exemple par forme |
+| `node-package` | le fichier que lance un paquet Node (`main`), sa source plutôt que le compilé ; le fichier que lance chaque script (`pkg_script`) | un projet réel |
+| `node-http` | les routes d'un serveur `node:http` écrites à la main, avec leur méthode quand elle est comparée | un projet réel |
+| `firebase` | `firebase.json` : codebases de Cloud Functions, Firestore, Storage, Realtime Database, leurs fichiers de règles, l'hébergement et ses réécritures | un projet réel |
+| `firestore` | lectures et écritures Firestore, API modulaire et Admin : le chemin suivi à travers variables, gabarits, transactions, et les fonctions d'un autre fichier qui fabriquent un chemin ou la base ; un accès dont le chemin n'est pas écrit dans le code devient « chemin calculé », un trou de couverture | un projet réel |
+| `firestore-rules` | chaque collection de `firestore.rules` et la ligne de sa règle d'accès | un projet réel |
+| `firebase-functions` | les fonctions exportées, API v1 et v2 : appelables, HTTP, planifiées, files de tâches, Pub/Sub, et les déclencheurs Firestore, Storage, Realtime Database, Authentication | un projet réel |
 
 « Vérifié sur » dit sur quels projets le pack a été testé de bout en bout. Ces projets n'emploient qu'une partie de l'API de chaque technologie ; les autres formes sont testées une à une, et celles qui ne sont pas encore couvertes sont listées ci-dessous (chapitre 6).
 
@@ -154,7 +154,7 @@ Des formes de l'API des technologies déjà prises en charge, que les packs livr
 | des décorateurs (`@Post()`, NestJS) | pas vus : il faut un autre pack |
 | `this.client.emails.send()` | le service externe est vu là où le client est créé, pas à chaque appel |
 | `userRef(uid).collection("x")`, quand `userRef` vient d'un autre fichier | compté comme chemin calculé : le moteur ne sait pas encore coller deux morceaux de chemin |
-| Storage et Authentication côté code (`uploadBytes`, `signInWith…`) | pas encore lus : pack en cours (RYP-191) |
+| Storage et Authentication côté code (`uploadBytes`, `signInWith…`) | pas encore lus : pack en cours |
 | `httpsCallable(functions, "x")`, `getFunctions().taskQueue("x").enqueue()` | l'appel d'une fonction et la mise en file pas encore lus : pack en cours |
 | `export * as admin from "./admin"` (groupe de fonctions, déployées `admin-x`) | le préfixe du groupe n'est pas ajouté au nom |
 | un site d'hébergement relié à la page qu'il sert | le site est lu, pas encore relié à l'app (le lien passe par la configuration du build) |

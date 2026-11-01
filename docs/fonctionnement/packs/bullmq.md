@@ -35,4 +35,4 @@ Une file est un canal ; mettre une tâche en file est un lien `message` vers ce 
 | le code qui répartit par nom de tâche (`switch (job.name)`) | la file suffit pour la carte ; le détail par tâche viendra avec les déroulés de features |
 | une file gardée dans une propriété de classe (`this.queue.add(…)`) | à faire : le lecteur ne suit pas encore `this` |
 | Bull, l'ancienne bibliothèque (`queue.process(fn)`) | une autre API : un autre pack |
-| un nom de file calculé à l'exécution | doit apparaître comme non lu (RYP-224) |
+| un nom de file calculé à l'exécution | doit apparaître comme non lu |

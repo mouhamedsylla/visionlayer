@@ -53,7 +53,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 
 resource "aws_route53_record" "www" {
   zone_id = var.zone_id
-  name    = "reference.rypha.io"
+  name    = "reference.example.com"
   type    = "A"
   alias {
     name    = aws_cloudfront_distribution.cdn.domain_name

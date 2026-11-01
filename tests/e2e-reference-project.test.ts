@@ -10,16 +10,12 @@ import { readModel, writeModel } from "../vision/model/store.js";
 import { archiveCurrentAsPrevious, readPreviousModel } from "../vision/model/history.js";
 import { diffModels } from "../vision/diff/diff.js";
 import { formatDiff } from "../vision/diff/format.js";
-import { buildChangeReport } from "../vision/report/build.js";
-import { formatChangeReport } from "../vision/report/format.js";
-import { loadRiskPolicy } from "../vision/policy/riskClassifier.js";
 import { buildAgentContext } from "../vision/context/build.js";
 import { buildInspectResult } from "../vision/inspect/build.js";
 import { resolveSymbol } from "../vision/model/query.js";
 
 const WORKFLOW_ROOT = join(import.meta.dirname, "..");
 const REFERENCE_PROJECT = join(WORKFLOW_ROOT, "examples", "reference-project");
-const POLICY_PATH = join(WORKFLOW_ROOT, "policies", "high-risk-paths.yaml");
 
 function tempCopyOfReferenceProject(): string {
   const root = mkdtempSync(join(tmpdir(), "vision-e2e-"));
@@ -29,11 +25,11 @@ function tempCopyOfReferenceProject(): string {
 
 /**
  * Test global : rejoue le scénario "implémenter l'expiration d'une
- * invitation" (vision-layer-concept.md §32) sur une copie temporaire du
- * projet de référence, en enchaînant MVP0 à MVP4 exactement comme un
+ * invitation" sur une copie temporaire du
+ * projet de référence, en enchaînant MVP0 à MVP3 exactement comme un
  * ingénieur (ou un agent) le ferait — pas des modules testés isolément.
  */
-test("test global : implémenter l'expiration d'une invitation, de bout en bout (MVP0-4)", () => {
+test("test global : implémenter l'expiration d'une invitation, de bout en bout (MVP0-3)", () => {
   const root = tempCopyOfReferenceProject();
   try {
     // MVP0 — premier scan, état "avant"
@@ -105,21 +101,6 @@ test("test global : implémenter l'expiration d'une invitation, de bout en bout 
     );
     assert.match(formatDiff(diff), /\+ src\/auth\/invitations\/expiration\.ts/);
 
-    // MVP4 — Change Report, lié à la vraie politique de gouvernance
-    const policy = loadRiskPolicy(POLICY_PATH);
-    const report = buildChangeReport({
-      task: "Implémenter l'expiration d'une invitation",
-      intent: "Ajouter l'expiration au cycle de vie de l'invitation",
-      before,
-      after,
-      policy,
-    });
-
-    // src/auth/** est un chemin HIGH : même un ajout en apparence anodin
-    // dans ce dossier déclenche l'approbation humaine explicite.
-    assert.equal(report.riskLevel, "high");
-    assert.equal(report.requiresHumanApproval, true);
-    assert.match(formatChangeReport(report), /Approbation humaine requise/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

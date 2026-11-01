@@ -8,7 +8,7 @@
 <p align="center">
   <a href="LICENSE"><img alt="License: Apache 2.0" src="https://img.shields.io/badge/license-Apache%202.0-121211?style=flat-square"></a>
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-121211?style=flat-square&logo=typescript&logoColor=white">
-  <img alt="336 tests passing" src="https://img.shields.io/badge/tests-336%20passing-2c9a57?style=flat-square">
+  <img alt="255 tests passing" src="https://img.shields.io/badge/tests-255%20passing-2c9a57?style=flat-square">
   <img alt="Built with Meta Muse" src="https://img.shields.io/badge/built%20with-Meta%20Muse-e2791d?style=flat-square">
   <img alt="Local first" src="https://img.shields.io/badge/local-first-121211?style=flat-square">
 </p>
@@ -99,11 +99,11 @@ VisionLayer is being built in the open during the hackathon. This section says w
 
 | Part | Status |
 |---|---|
-| Reading engine, packs, neutral model, findings | Works today, covered by 336 tests |
+| Reading engine, packs, neutral model, findings | Works today, covered by 255 tests |
 | MCP server for coding agents, activity hooks | Works today |
 | Knowledge layer: notes anchored to code, checked on every change | Works today |
-| Local interface (`pnpm ui`) | Works today, in French; being redesigned |
-| Pack writer with Muse Spark | Being built |
+| Local interface | Being built: the previous one is removed, `pnpm ui` serves the map API |
+| Pack writer with Muse Spark | Works today (`pnpm packs`) |
 | Vigie on the Model API and on Baseten | Being built |
 | Replays with Vigie as coach | Being built |
 
@@ -134,20 +134,19 @@ flowchart LR
 ```bash
 git clone https://github.com/mouhamedsylla/visionlayer && cd visionlayer
 pnpm install
-pnpm ui:build
 ```
 
-Open the bundled example, then your own project:
+Read the bundled example, then your own project:
 
 ```bash
-pnpm ui tests/corpus/atelier-api
+pnpm facts tests/corpus/atelier-api
 ```
 
 ```bash
 pnpm ui /path/to/your/project
 ```
 
-The interface opens on `http://127.0.0.1:4173`. Run the tests with `pnpm test`.
+`pnpm ui` serves the map API on `http://127.0.0.1:4173`; the new interface is being built. Run the tests with `pnpm test`.
 
 ### Connect your coding agents
 
@@ -157,7 +156,7 @@ Give them the map over MCP, by adding this server to your agent's configuration:
 { "mcpServers": { "visionlayer": { "command": "pnpm", "args": ["--dir", "/path/to/visionlayer", "mcp"] } } }
 ```
 
-The tools are `vision_context`, `vision_flow`, `vision_architecture`, `vision_inspect` and `vision_source`. Activity hooks for Claude Code and Codex are described in [docs/cli.fr.md](docs/cli.fr.md).
+The tools are `vision_summary`, `vision_slice`, `vision_reach` and `vision_source`.
 
 ## Built before and during the hackathon
 
@@ -188,10 +187,8 @@ VisionLayer is built for the Meta AI Developer Hackathon, Startup track, on top 
 cli/            command-line entry points: ui, scan, inspect, context, knowledge, hook, mcp
 vision/         the engine: parsers, fact base, packs, rules, neutral model, knowledge, web server
 integrations/   the MCP server for coding agents
-ui/             the interface
-tests/          336 tests, fixtures, and atelier-api, the example application
-design/         the hackathon screens, the robot Bolt, and the tools that check each screen
-docs/           how VisionLayer works, decisions (ADRs), how to read each screen (in French)
+tests/          tests, fixtures, and atelier-api, the example application
+docs/           how VisionLayer works, decisions (ADRs), how to read each view (in French)
 ```
 
 ## License

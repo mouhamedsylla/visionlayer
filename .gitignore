@@ -2,8 +2,6 @@ node_modules/
 dist/
 build/
 coverage/
-# l'écran Couverture de l'interface n'est pas un rapport de tests
-!ui/src/**/coverage/
 .env
 .env.*
 !.env.example

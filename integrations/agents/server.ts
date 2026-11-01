@@ -14,7 +14,7 @@ import { buildReach, changedLines, formatReach, itemKey } from "../../vision/sli
 import { DeclarationIndex, formatSource } from "../../vision/slice/source.js";
 
 /**
- * Serveur MCP RYPHA VisionLayer — MVP5.
+ * Serveur MCP de VisionLayer.
  *
  * N'expose QUE des outils de lecture, tous sur la carte des packs : vision_summary,
  * vision_slice, vision_reach (la portée d'une modification en cours) et vision_source
@@ -41,7 +41,7 @@ function errorResult(message: string) {
  */
 const DEFAULT_ROOT = process.env.VISION_ROOT || process.env.INIT_CWD || process.cwd();
 
-const server = new McpServer({ name: "rypha-vision", version: "0.1.0" });
+const server = new McpServer({ name: "visionlayer", version: "0.1.0" });
 
 /**
  * La carte des packs, gardée par racine pendant la vie du serveur. Chaque

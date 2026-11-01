@@ -58,7 +58,7 @@ Importer un pilote ne suffit pas : `import type { Pool } from "pg"` ne connecte 
 | les modèles Mongoose (`mongoose.model("User", schema)`, `User.find()`) | à faire : le nom de la collection est dérivé du modèle (pluriel, minuscules) |
 | une connexion gardée dans une propriété de classe (`this.pool = new Pool()`) | à faire : le lecteur ne suit pas encore `this` |
 | une connexion rendue par une fonction (`getPool().query(…)`) | à faire |
-| une requête dont le texte est construit à l'exécution | doit apparaître comme non lu (RYP-224) |
+| une requête dont le texte est construit à l'exécution | doit apparaître comme non lu |
 | la connexion ouverte par un ORM (`drizzle(url)`, Prisma, TypeORM) | relève du pack de l'ORM : Drizzle déclare ses tables, et leur technologie |
 | un `Dockerfile` qui part de `postgres` (`FROM postgres:16`) | à faire : une image construite sur une base de stockage |
 | SQLite, DynamoDB, Cassandra, Neo4j… | d'autres technologies : à ajouter forme par forme |

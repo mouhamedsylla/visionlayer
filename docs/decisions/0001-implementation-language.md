@@ -3,7 +3,7 @@
 **Statut :** Accepté
 
 ## Contexte
-VisionLayer (scanner, parser/extracteur, modèle, CLI) doit être écrit dans un langage cohérent avec le reste de la stack RYPHA/Nafar, et avec un bon écosystème pour l'analyse de code multi-langage.
+VisionLayer (scanner, parser/extracteur, modèle, CLI) doit être écrit dans un langage cohérent avec le reste de nos projets, et avec un bon écosystème pour l'analyse de code multi-langage.
 
 ## Décision
 **TypeScript.**

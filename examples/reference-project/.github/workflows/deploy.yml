@@ -25,8 +25,8 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - run: docker build -t ghcr.io/rypha/reference-api:${GITHUB_SHA::7} .
-      - run: docker push ghcr.io/rypha/reference-api:${GITHUB_SHA::7}
+      - run: docker build -t ghcr.io/example/reference-api:${GITHUB_SHA::7} .
+      - run: docker push ghcr.io/example/reference-api:${GITHUB_SHA::7}
       - uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}

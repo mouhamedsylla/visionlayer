@@ -1,6 +1,6 @@
 # 2. La base de faits
 
-Code : [vision/facts/base.ts](../../vision/facts/base.ts), [vision/facts/syntax.ts](../../vision/facts/syntax.ts), [vision/facts/types.ts](../../vision/facts/types.ts). Décision : RYP-190, doc 07 §4.2.
+Code : [vision/facts/base.ts](../../vision/facts/base.ts), [vision/facts/syntax.ts](../../vision/facts/syntax.ts), [vision/facts/types.ts](../../vision/facts/types.ts). Décision : doc 07 §4.2.
 
 ## Le concept
 
@@ -79,7 +79,7 @@ La base garde, pour chaque fichier, sa date de modification, sa taille et ses fa
 
 Le cache est écrit dans `.vision/facts.json`. Il porte l'empreinte des packs : si un pack change, tous les fichiers sont relus, puisque les faits qu'il produit peuvent changer.
 
-Mesures du 01/10/2026 : sur Nafar, 671 fichiers lus en 8,8 s au premier passage, aucun relu au suivant. Le test `base de faits : un fichier modifié est le seul relu` le vérifie sur une copie d'atelier-api.
+Mesures du 01/10/2026 : sur un projet réel, 671 fichiers lus en 8,8 s au premier passage, aucun relu au suivant. Le test `base de faits : un fichier modifié est le seul relu` le vérifie sur une copie d'atelier-api.
 
 ## Les faits qui demandent tout le dépôt
 

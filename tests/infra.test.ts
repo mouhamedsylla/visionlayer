@@ -11,7 +11,7 @@ import type { InfraModel } from "../vision/infra/types.js";
 const FIXTURES = join(import.meta.dirname, "infra-fixtures");
 const REFERENCE = join(import.meta.dirname, "..", "examples", "reference-project");
 
-/** Le modèle ne doit contenir aucune VALEUR d'un fichier .env — seulement des noms (gouvernance §4). */
+/** Le modèle ne doit contenir aucune VALEUR d'un fichier .env — seulement des noms. */
 function assertNoDotenvValue(root: string, infra: InfraModel): void {
   const serialized = JSON.stringify(infra);
   for (const s of infra.sources) {
@@ -48,7 +48,7 @@ test("reference-project : base + surcharge prod fusionnées, différences dev/pr
   assert.equal(api.source.kind, "extracted");
   assert.equal((api.source as { path: string }).path, "docker-compose.yml");
   assert.equal(api.attrs.build, ". (Dockerfile)");
-  assert.equal(api.perEnv?.prod?.image, "ghcr.io/rypha/reference-api:1.4.0");
+  assert.equal(api.perEnv?.prod?.image, "ghcr.io/example/reference-api:1.4.0");
   assert.equal(api.perEnv?.prod?.replicas, "2");
 
   // `db` n'a pas d'image dans la surcharge : il doit rester la base de données, pas devenir un second composant.
@@ -58,14 +58,14 @@ test("reference-project : base + surcharge prod fusionnées, différences dev/pr
   const nginx = infra.components.find((c) => c.id === "proxy:nginx")!;
   assert.equal(nginx.attrs.tls, "non");
   assert.equal(nginx.perEnv?.prod?.tls, "oui");
-  assert.equal(nginx.perEnv?.prod?.domains, "reference.rypha.io");
+  assert.equal(nginx.perEnv?.prod?.domains, "reference.example.com");
 
   const resend = infra.components.find((c) => c.name === "Resend")!;
   assert.equal(resend.source.kind, "declared");
   assert.deepStrictEqual(resend.environments, ["prod"]);
   assert.ok(infra.links.some((l) => l.from === "service:api" && l.to === "platform:resend" && l.source.kind === "declared"));
 
-  assert.ok(infra.links.some((l) => l.from === "proxy:nginx" && l.to === "service:api" && l.kind === "routes_to" && l.label === "reference.rypha.io/api/" && l.environments.includes("prod")));
+  assert.ok(infra.links.some((l) => l.from === "proxy:nginx" && l.to === "service:api" && l.kind === "routes_to" && l.label === "reference.example.com/api/" && l.environments.includes("prod")));
   assert.ok(infra.links.some((l) => l.from === "image:Dockerfile" && l.to === "service:api" && l.kind === "builds"));
   assert.ok(infra.links.some((l) => l.kind === "deploys" && l.to === "env:prod"));
   assert.ok(infra.links.some((l) => l.from === "tf:aws_cloudfront_distribution.cdn" && l.to === "tf:aws_instance.app"));

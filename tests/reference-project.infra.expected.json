@@ -129,7 +129,7 @@
           "ports": "80:80, 443:443",
           "volumes": "./infra/nginx/nginx.prod.conf, /etc/letsencrypt",
           "restart": "always",
-          "domains": "reference.rypha.io",
+          "domains": "reference.example.com",
           "listen": "80, 443",
           "tls": "oui"
         }
@@ -155,7 +155,7 @@
       },
       "perEnv": {
         "prod": {
-          "image": "ghcr.io/rypha/reference-api:1.4.0",
+          "image": "ghcr.io/example/reference-api:1.4.0",
           "restart": "always",
           "replicas": "2"
         }
@@ -227,7 +227,7 @@
       ],
       "attrs": {
         "type": "aws_route53_record",
-        "name": "reference.rypha.io"
+        "name": "reference.example.com"
       }
     },
     {
@@ -349,7 +349,7 @@
       "environments": [
         "prod"
       ],
-      "label": "reference.rypha.io/api/"
+      "label": "reference.example.com/api/"
     },
     {
       "from": "proxy:nginx",

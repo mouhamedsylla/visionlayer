@@ -8,7 +8,7 @@ L'ADR 0013 dit que VisionLayer ne lance jamais d'agent : c'est le rôle du board
 
 Or VisionLayer doit pouvoir s'ouvrir sur n'importe quel projet existant, y compris chez d'autres équipes. La carte (blocs, points d'entrée, appels, données) se calcule déjà sur tout projet. Le sens, lui, ne se calcule pas : le but des features, les règles, les décisions, ce que veut dire un état. Il est éparpillé dans le code, l'historique Git et les docs. Il faut des agents pour le rassembler, et un humain pour le vérifier ([knowledge/06](../knowledge/06-demarrer-un-projet.md)).
 
-Laisser l'humain lancer ces agents à la main, lot par lot, rend le démarrage trop lourd pour un produit. Sur Nafar, cette connaissance a été écrite à la main pendant le prototype : c'est exactement ce qu'il faut remplacer.
+Laisser l'humain lancer ces agents à la main, lot par lot, rend le démarrage trop lourd pour un produit. Sur un projet réel, cette connaissance a été écrite à la main pendant le prototype : c'est exactement ce qu'il faut remplacer.
 
 ## Décision
 
@@ -37,6 +37,6 @@ Le reste de l'ADR 0013 ne change pas :
   - le démarrage en cours ;
   - les questions à l'humain ;
   - la revue et la couverture.
-- Le format des affirmations gagne une **source** et un état **« à confirmer par un humain »** (avec RYP-177).
+- Le format des affirmations gagne une **source** et un état **« à confirmer par un humain »** (avec ).
 - La règle « VisionLayer n'écrit dans `.vision/` que sur un geste humain » ([ADR 0009](./0009-ui-human-triggered-actions.md)) est respectée : le démarrage part d'un clic, et ce qu'il écrit passe par une branche et une PR.
-- Le démarrage de Nafar remplace la connaissance écrite à la main pendant le prototype. C'est son premier test réel.
+- Le démarrage d'un projet réel remplace la connaissance écrite à la main pendant le prototype. C'est son premier test réel.

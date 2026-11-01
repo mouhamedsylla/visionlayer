@@ -4,7 +4,7 @@
 
 ## Contexte
 
-L'ancienne interface (`ui/` et son serveur `vision/ui/server.ts`) lisait la carte version 1, née sur Nafar. Elle avait grandi écran par écran, et certains fichiers dépassaient 500 lignes. La passer au modèle neutre aurait demandé de toucher presque chaque fichier. Les oublis auraient été inévitables : un ancien style, un ancien champ, un écran à moitié migré.
+L'ancienne interface (`ui/` et son serveur `vision/ui/server.ts`) lisait la carte version 1, née sur un projet réel. Elle avait grandi écran par écran, et certains fichiers dépassaient 500 lignes. La passer au modèle neutre aurait demandé de toucher presque chaque fichier. Les oublis auraient été inévitables : un ancien style, un ancien champ, un écran à moitié migré.
 
 Les écrans à construire existent déjà. Ce sont les maquettes du canevas « VisionLayer — tous les écrans », refaites le 30/09 pour n'importe quel projet, sur l'exemple d'atelier-api.
 
@@ -28,6 +28,6 @@ Les écrans à construire existent déjà. Ce sont les maquettes du canevas « V
 
 ## Conséquences
 
-- L'interface n'a pour l'instant qu'un écran, Architecture. Les autres suivent l'ordre des maquettes (RYP-198).
+- L'interface n'a pour l'instant qu'un écran, Architecture. Les autres suivent l'ordre des maquettes.
 - Les écrans qui dépendaient des actions de l'ancien serveur (scan, connaissance, activité des agents, création de projet) reviendront avec leurs propres routes, chacune dans son fichier de `vision/web/`.
 - `vision scan`, `archi`, `cost` et `knowledge` lisent encore la carte version 1. Ils partent à l'étape 5 de l'ADR 0017.

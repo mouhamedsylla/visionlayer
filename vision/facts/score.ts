@@ -3,7 +3,7 @@ import type { ArchModelV2, ArchNode, Proof } from "../arch/types.js";
 /**
  * Compare une carte produite à l'oracle d'un projet du corpus, écrit à la
  * main (`expected.arch.json`). Ce n'est pas un bench : c'est le contrôle de
- * la construction, et sur le corpus de contrôle, la mesure (RYP-224).
+ * la construction, et sur le corpus de contrôle, la mesure.
  *
  * Les nœuds sont appariés par ce qu'ils contiennent, jamais par leur nom :
  * un déployable par ses points d'entrée ou ses preuves, un stockage ou un

@@ -118,7 +118,7 @@ test("serveur MCP: n'expose aucun outil d'écriture (update/diff/report)", async
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name);
     for (const forbidden of ["vision_update", "vision_diff", "vision_report"]) {
-      assert.ok(!names.includes(forbidden), `${forbidden} ne doit jamais être exposé à un agent (MVP5, gouvernance AI RMF)`);
+      assert.ok(!names.includes(forbidden), `${forbidden} ne doit jamais être exposé à un agent (MVP5)`);
     }
   });
 });

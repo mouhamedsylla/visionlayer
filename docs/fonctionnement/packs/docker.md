@@ -44,4 +44,4 @@ Un Dockerfile construit une image. Le pack cherche le fichier du dépôt que l'i
 | `RUN`, `USER`, `LABEL`, `VOLUME` | ce que fait le build ne dit pas ce que l'image lance |
 | choisir une étape au build (`--target`, `target:` dans Compose) | à faire : aujourd'hui, c'est toujours la dernière étape |
 | `.dockerignore`, la syntaxe heredoc | n'ont pas d'effet sur ce que lance l'image dans les formes lues |
-| une commande dont le fichier est calculé (`CMD node $ENTRY`) sans valeur écrite | doit apparaître comme non lue (RYP-224) |
+| une commande dont le fichier est calculé (`CMD node $ENTRY`) sans valeur écrite | doit apparaître comme non lue |

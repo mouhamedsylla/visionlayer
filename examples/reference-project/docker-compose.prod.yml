@@ -1,7 +1,7 @@
 # Surcharge production : `docker compose -f docker-compose.yml -f docker-compose.prod.yml up`.
 services:
   api:
-    image: ghcr.io/rypha/reference-api:1.4.0
+    image: ghcr.io/example/reference-api:1.4.0
     restart: always
     deploy:
       replicas: 2
