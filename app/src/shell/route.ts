@@ -6,7 +6,7 @@ export type Screen = "vue" | "carte" | "acces" | "donnees" | "taches" | "regles"
 export const SCREENS: { id: Screen; label: string; group: string; built?: boolean }[] = [
   { id: "vue", label: "Vue d'ensemble", group: "Système", built: true },
   { id: "carte", label: "Carte", group: "Système", built: true },
-  { id: "acces", label: "Accès", group: "Système" },
+  { id: "acces", label: "Accès", group: "Système", built: true },
   { id: "donnees", label: "Données", group: "Système" },
   { id: "taches", label: "Tâches planifiées", group: "Système" },
   { id: "regles", label: "Règles et décisions", group: "Connaissance" },
