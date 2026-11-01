@@ -60,7 +60,10 @@ export class MapIndex {
 
   /** Le nom qu'un humain ou un agent emploie pour un point d'entrée : la route, sinon sa fonction, sinon sa clé. */
   entryName(e: Entrypoint): string {
-    return e.kind === "http" || e.kind === "main" ? e.key : e.handler?.name ? `${e.handler.name}` : e.key;
+    if (e.kind === "http" || e.kind === "main" || !e.handler?.name) return e.key;
+    // Deux workers qui nomment tous deux leur fonction `processor` : la file ou la clé les distingue.
+    const shared = this.entries.filter((o) => o.kind !== "http" && o.kind !== "main" && o.handler?.name === e.handler!.name).length > 1;
+    return shared ? `${e.handler.name} (${e.key})` : e.handler.name;
   }
 
   entryById(id: string): IndexedEntry | undefined {

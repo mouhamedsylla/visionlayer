@@ -1,5 +1,5 @@
 import type { Value } from "./datalog.js";
-import { literal, statementBindings, topLevelFunctions, walkAll, type Node } from "../arch/ast.js";
+import { isFunction, literal, statementBindings, topLevelFunctions, walkAll, type Node } from "../arch/ast.js";
 import type { FileFact } from "./types.js";
 
 /**
@@ -65,6 +65,11 @@ export function syntaxFacts(path: string, root: Node, fact: (rel: string, args: 
     const isExport = stmt.type === "export_statement";
     const decl = isExport ? stmt.childForFieldName("declaration") ?? stmt.namedChildren[0] : stmt;
     if (!decl) continue;
+    // export default async (job) => { … } : une fonction sans nom, que ses importateurs appellent par le nom qu'ils lui donnent.
+    if (isExport && stmt.text.startsWith("export default") && isFunction(decl) && !decl.childForFieldName("name")) {
+      out.push(fact("defines", [path, "default", line(decl)], line(decl)));
+      continue;
+    }
     if (decl.type === "function_declaration" || decl.type === "class_declaration" || decl.type === "abstract_class_declaration" || decl.type === "interface_declaration") {
       const name = decl.childForFieldName("name")?.text;
       if (name) out.push(fact("defines", [path, name, line(decl)], line(decl)));

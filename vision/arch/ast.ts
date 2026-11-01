@@ -102,6 +102,11 @@ export function topLevelFunctions(root: Node, wrapped = false): Map<string, Node
   for (const stmt of root.namedChildren) {
     const decl = stmt.type === "export_statement" ? stmt.childForFieldName("declaration") ?? stmt.namedChildren[0] : stmt;
     if (!decl) continue;
+    // export default async (job) => { … } : la fonction sans nom s'appelle « default », comme dans `defines`.
+    if (stmt.type === "export_statement" && stmt.text.startsWith("export default") && isFunction(decl) && !decl.childForFieldName("name")) {
+      out.set("default", decl);
+      continue;
+    }
     if (decl.type === "function_declaration") {
       const name = decl.childForFieldName("name")?.text;
       if (name) out.set(name, decl);
