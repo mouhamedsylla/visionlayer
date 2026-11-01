@@ -466,8 +466,15 @@ export type GapKind = "language_not_read" | "pack_missing" | "pack_failed" | "ta
 export interface Coverage {
   level: Level;
   unit: "files" | "manifests" | "deployables" | "calls";
+  /** Analysés : le lecteur de syntaxe les a ouverts. */
   read: number;
   total: number;
+  /**
+   * Compris (fichiers seulement) : exécutés par un programme dont le lancement est lu. Un fichier analysé mais
+   * rattaché à aucun programme (un test, une configuration, le code d'une app dont le framework n'a pas de pack)
+   * n'est pas compris : la carte ne dit rien de ce qu'il fait.
+   */
+  understood?: number;
   /** `proof` : le premier endroit ; `where` : tous, pour dire de chaque élément manquant s'il est non lu. */
   gaps: { kind: GapKind; subject: string; count: number; proof?: Proof; where?: Proof[] }[];
 }

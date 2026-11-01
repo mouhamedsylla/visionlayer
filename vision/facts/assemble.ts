@@ -4,6 +4,7 @@ import { attributeFunctions } from "./functions.js";
 import { fnGraph } from "./fn-graph.js";
 import { attributeComponents } from "./components.js";
 import { entityDetails } from "./entity-detail.js";
+import { addUnread, shortName } from "./unread.js";
 import { contractDetails } from "./contract-detail.js";
 import type {
   ArchEdge, ArchModelV2, ArchNode, Coverage, EdgeKind, Entrypoint, EntrypointKind, Finding, Occurrence, Proof,
@@ -43,7 +44,7 @@ const TECH_CATEGORIES = new Set(["framework", "backend", "database", "ai", "clou
 const UNIT_PRIORITY = ["service", "function", "process", "page", "image"];
 const KIND_ORDER: EntrypointKind[] = ["main", "http", "rpc", "event", "message", "schedule", "cli"];
 /** Extensions de code qu'aucun lecteur n'ouvre encore : un trou « langage non lu », jamais un « rien ». */
-const UNREAD_CODE = /\.(py|go|rb|java|kt|rs|php|cs|swift|c|cc|cpp|h|hpp|scala|ex|exs|dart)$/;
+const UNREAD_CODE = /\.(py|go|rb|java|kt|rs|php|cs|swift|c|cc|cpp|h|hpp|scala|ex|exs|dart|svelte|vue|astro)$/;
 
 export interface AssembleOptions {
   name: string;
@@ -85,6 +86,8 @@ export function assemble(db: Database, opts: AssembleOptions): ArchModelV2 {
   const nodeIdOf = new Map<string, string>();
   const usedIds = new Set<string>();
   const coverageGaps: Coverage["gaps"] = [];
+  /** Les programmes nommés d'après un Dockerfile seul : son dossier (`docker`) ne dit pas ce qui tourne. */
+  const fromImage = new Set<string>();
 
   for (const [target, list] of [...units].sort(([a], [b]) => a.localeCompare(b))) {
     const best = [...list].sort((a, b) => UNIT_PRIORITY.indexOf(a.kind) - UNIT_PRIORITY.indexOf(b.kind))[0]!;
@@ -194,15 +197,20 @@ export function assemble(db: Database, opts: AssembleOptions): ArchModelV2 {
     };
     if (!read.has(target)) coverageGaps.push({ kind: "language_not_read", subject: target, count: 1, proof: node.proof[0]! });
     nodes.push(node);
+    if (best.kind === "image") fromImage.add(id);
   }
 
-  // Plusieurs programmes lancés par un même manifeste portent son nom : chacun reçoit en plus le fichier qu'il lance.
+  // Un programme lancé par une image prend le nom que lui donne son paquet : le script qui le lance (`start:ingestion-worker`),
+  // ou le nom du paquet pour son script principal. Plusieurs programmes d'un même manifeste qui gardent le même nom
+  // reçoivent en plus le fichier qu'ils lancent.
   const deployables = nodes.filter((n) => n.level === "deployable");
-  const short = (x: ArchNode) => x.subtitle!.split(" · ")[0]!.split("/").pop()!.replace(/\.[cm]?[jt]sx?$/, "");
+  const targetOf = (x: ArchNode) => x.subtitle!.split(" · ")[0]!;
+  for (const n of deployables) if (fromImage.has(n.id)) n.name = packageName(rows, targetOf(n)) ?? n.name;
+  const short = (x: ArchNode) => targetOf(x).split("/").pop()!.replace(/\.[cm]?[jt]sx?$/, "");
   const renamed = deployables.map((n) => {
     const twins = deployables.filter((o) => o.name === n.name);
     if (twins.length < 2) return n.name;
-    return `${n.name} (${twins.filter((o) => short(o) === short(n)).length > 1 ? n.subtitle!.split(" · ")[0]! : short(n)})`;
+    return `${n.name} (${twins.filter((o) => short(o) === short(n)).length > 1 ? targetOf(n) : short(n)})`;
   });
   deployables.forEach((n, i) => { n.name = renamed[i]!; });
 
@@ -318,6 +326,14 @@ export function assemble(db: Database, opts: AssembleOptions): ArchModelV2 {
     e.count++;
     if (e.occurrences.length < 60) e.occurrences.push(occ);
   };
+
+  // Ce que le dépôt contient sans qu'un pack le lise : sur la carte, marqué « non lu » (unread.ts).
+  const unreadGaps = addUnread({
+    db, present, nodes, usedIds, edge,
+    reached: new Set([...reachOf.values()].flat()),
+    packTech: new Set(opts.packs.flatMap((p) => p.tech)),
+    deployablesOf: (file) => deployableOf(file).map((r) => nodeIdOf.get(r)!),
+  });
 
   for (const t of rows("accesses")) {
     const [file, op, tech, entity] = t.args.map(s) as [string, "read" | "write", string, string];
@@ -567,10 +583,12 @@ export function assemble(db: Database, opts: AssembleOptions): ArchModelV2 {
       level: "component",
       unit: "files",
       read: [...present].filter((f) => read.has(f) && !manifests.has(f)).length,
+      understood: [...new Set([...reachOf.values()].flat())].filter((f) => present.has(f) && read.has(f) && !manifests.has(f)).length,
       total: [...present].filter((f) => (read.has(f) && !manifests.has(f)) || UNREAD_CODE.test(f)).length,
       gaps: [
         ...[...byExt].sort().map(([ext, count]) => ({ kind: "language_not_read" as const, subject: `fichiers ${ext}`, count, where: unread.filter((f) => f.endsWith(ext)).sort().map((path) => ({ path, line: 0, source: "syntax" as const })) })),
         ...[...missing].sort(([a], [b]) => a.localeCompare(b)).map(([name, m]) => ({ kind: "pack_missing" as const, subject: name, count: m.count, proof: m.proof, where: dedupe(m.where) })),
+        ...unreadGaps,
         ...unresolvedGaps(rows("unresolved")),
         // Un pack qui a échoué sur des fichiers : ce qu'il aurait lu là manque, et la carte le dit au lieu de tomber.
         ...[...rows("pack_failed").reduce((m, t) => m.set(s(t.args[0]), [...(m.get(s(t.args[0])) ?? []), t]), new Map<string, ReturnType<typeof rows>>())]
@@ -587,6 +605,23 @@ export function assemble(db: Database, opts: AssembleOptions): ArchModelV2 {
     findings,
     coverage,
   };
+}
+
+/**
+ * Le nom qu'un paquet donne au programme qui lance ce fichier : le script du paquet le plus proche qui le lance,
+ * sans `start:` ni `:dev` (`start:ingestion-worker:dev` → `ingestion-worker`), ou le nom du paquet pour son script
+ * principal (`start`, `dev`, `serve`).
+ */
+function packageName(rows: (rel: string) => readonly { args: readonly Value[] }[], target: string): string | undefined {
+  const names = new Map(rows("pkg_name").map((t) => [String(t.args[0]), String(t.args[1])]));
+  const dirOf = (k: string) => (k.includes("/") ? k.slice(0, k.lastIndexOf("/") + 1) : "");
+  const scripts = rows("pkg_script").filter((t) => String(t.args[2]) === target && target.startsWith(dirOf(String(t.args[0]))))
+    .sort((a, b) => dirOf(String(b.args[0])).length - dirOf(String(a.args[0])).length);
+  const nearest = scripts.filter((t) => dirOf(String(t.args[0])) === dirOf(String(scripts[0]?.args[0] ?? "")));
+  if (!nearest.length) return undefined;
+  const clean = nearest.map((t) => String(t.args[1]).replace(/^(start|run|serve):/, "").replace(/:(dev|prod|watch)$/, ""));
+  const own = clean.find((c) => !/^(start|dev|serve|main|prod|watch)$/.test(c));
+  return own ?? (shortName(names.get(String(nearest[0]!.args[0])) ?? "") || undefined);
 }
 
 /** Le texte d'un constat établi par les règles : son code, le détail que la règle donne, le nom de ce qu'il concerne. */

@@ -205,6 +205,7 @@ const coverage = S({
   unit: z.enum(["files", "manifests", "deployables", "calls"]),
   read: z.number().int().nonnegative(),
   total: z.number().int().nonnegative(),
+  understood: z.number().int().nonnegative().optional(),
   gaps: z.array(S({
     kind: z.enum(["language_not_read", "pack_missing", "pack_failed", "target_unknown", "path_dynamic", "manifest_unknown"]),
     subject: z.string().min(1),

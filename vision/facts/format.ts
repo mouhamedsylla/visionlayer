@@ -30,7 +30,7 @@ export function formatNeutral(m: ArchModelV2): string {
   }
   out.push("", "Couverture");
   for (const c of m.coverage) {
-    out.push(`  ${c.level} : ${c.read} / ${c.total} ${c.unit === "files" ? "fichiers" : c.unit === "manifests" ? "manifestes" : c.unit} lus`);
+    out.push(`  ${c.level} : ${c.read} / ${c.total} ${c.unit === "files" ? "fichiers analysés" : c.unit === "manifests" ? "manifestes lus" : c.unit}${c.understood !== undefined ? `, dont ${c.understood} compris (exécutés par un programme lu)` : ""}`);
     for (const g of c.gaps) out.push(`    ${g.kind === "language_not_read" ? "non lu" : g.kind === "pack_missing" ? "pack manquant" : g.kind} : ${g.subject} (${g.count})`);
   }
   return out.join("\n") + "\n";

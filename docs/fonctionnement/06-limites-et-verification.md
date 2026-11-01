@@ -45,6 +45,28 @@ D'où la façon d'écrire un pack : partir de l'API de la technologie, telle que
 
 Ce que VisionLayer ne reconnaît pas doit apparaître comme **non lu**, jamais disparaître. C'est vrai aujourd'hui pour un langage non lu et pour une technologie sans pack. Ce n'est pas encore vrai pour une construction inconnue dans un fichier lu, par exemple une route écrite d'une façon qu'aucun pack ne connaît : la carte peut encore se taire sans le dire. Le contrôle à l'aveugle du 02/10 le mesure : 422 éléments manqués sans le dire sur 500 attendus. C'est le premier chantier.
 
+### Ce qui tourne sans être lu est sur la carte (01/11/2026)
+
+Code : [vision/facts/unread.ts](../../vision/facts/unread.ts). Trois sortes d'éléments disparaissaient de la carte. Ils y sont maintenant, marqués « non lu », avec leur technologie et la ligne qui les prouve, sans point d'entrée ni lien inventé :
+
+| Élément | Comment il est reconnu | Exemple |
+|---|---|---|
+| une app faite avec un framework sans pack | un paquet dont le code importe un framework du catalogue qu'aucun pack ne lit, et dont aucun programme lu n'exécute le code ; nommée par le service qui construit son dossier, sinon par son paquet | une boutique Next.js lancée par `node server.js`, un fichier produit par la compilation : l'app `web`, « Next.js : non lu » |
+| un serveur lancé par son image | une image qu'un manifeste fait tourner sans la construire, qu'aucun pack ne reconnaît, et qui n'est pas celle que le dépôt publie lui-même | `getmeili/meilisearch` : un stockage `search`, « image meilisearch : non lue » |
+| un service appelé par sa bibliothèque | un paquet du catalogue de famille cloud ou IA, ou un serveur de données qui a sa propre image, importé par le code d'un programme ; relié à ce programme par un lien `use`, un par import | `@aws-sdk/client-s3` importé par le serveur : AWS, extérieur, non lu |
+
+La couverture des fichiers donne deux nombres :
+- **Analysés** : le lecteur de syntaxe les a ouverts.
+- **Compris** : un programme dont le lancement est lu les exécute.
+
+Un test, une configuration ou le code d'une app sans pack sont analysés sans être compris. Sur la boutique Next.js : 223 fichiers analysés, 0 compris. Les composants `.svelte`, `.vue` et `.astro` comptent comme un langage non lu.
+
+Un programme lancé par une image prend le nom que lui donne son paquet :
+- le script qui le lance, sans `start:` ni `:dev` : `start:ingestion-worker` donne `ingestion-worker` ;
+- ou le nom du paquet, pour son script principal : `@open-archiver/backend` donne `backend`.
+
+Avant, il prenait le nom du dossier du Dockerfile (`docker`).
+
 ## Comment on vérifie
 
 ```mermaid
