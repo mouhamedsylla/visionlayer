@@ -26,6 +26,11 @@ export class MapSource {
 
   constructor(private readonly root: string) {}
 
+  /** La base de faits de la dernière carte calculée (les appels, pour `vision_source`). */
+  database() {
+    return this.base?.database();
+  }
+
   async get(): Promise<MapPayload> {
     return this.current ?? this.refresh();
   }

@@ -50,12 +50,12 @@ function jsonContent(result: unknown): any {
   return JSON.parse(content[0]!.text);
 }
 
-test("serveur MCP: liste exactement les 8 outils en lecture attendus", async () => {
+test("serveur MCP: liste exactement les 4 outils en lecture attendus, tous sur la carte des packs", async () => {
   await withClient(async (client) => {
     const { tools } = await client.listTools();
     assert.deepStrictEqual(
       tools.map((t) => t.name).sort(),
-      ["vision_architecture", "vision_context", "vision_flow", "vision_inspect", "vision_reach", "vision_slice", "vision_source", "vision_summary"],
+      ["vision_reach", "vision_slice", "vision_source", "vision_summary"],
     );
   });
 });
@@ -94,55 +94,19 @@ test("serveur MCP: vision_summary puis vision_slice lisent la carte des packs, s
   }
 });
 
-test("serveur MCP: vision_context renvoie un contexte structuré et fidèle à buildAgentContext", async () => {
-  const root = preparedFixture("simple-dependency");
+test("serveur MCP: vision_source dit où un nom est déclaré, méthode de classe comprise, et qui l'appelle", async () => {
+  const root = mkdtempSync(join(tmpdir(), "vision-mcp-source-"));
+  cpSync(join(import.meta.dirname, "corpus", "atelier-api"), root, { recursive: true });
   try {
     await withClient(async (client) => {
-      const result = await client.callTool({
-        name: "vision_context",
-        arguments: { task: "greet function", root },
-      });
-      const data = jsonContent(result);
-      assert.deepStrictEqual(data.matchedFiles.map((f: { path: string }) => f.path), ["src/a.ts"]);
-      assert.equal(data.semanticInterpretationApplied, false);
-      assert.equal(data.matchedFiles[0].allSymbols, undefined, "liste complète des symboles omise par défaut (économie de tokens)");
-      const detailed = jsonContent(await client.callTool({ name: "vision_context", arguments: { task: "greet function", root, detail: true } }));
-      assert.ok(Array.isArray(detailed.matchedFiles[0].allSymbols));
-    });
-  } finally {
-    rmSync(root, { recursive: true, force: true });
-  }
-});
-
-test("serveur MCP: vision_inspect résout un fichier par chemin", async () => {
-  const root = preparedFixture("simple-dependency");
-  try {
-    await withClient(async (client) => {
-      const result = await client.callTool({
-        name: "vision_inspect",
-        arguments: { query: "src/a.ts", root },
-      });
-      const data = jsonContent(result);
-      assert.equal(data.kind, "file");
-      assert.equal(data.file.path, "src/a.ts");
-    });
-  } finally {
-    rmSync(root, { recursive: true, force: true });
-  }
-});
-
-test("serveur MCP: vision_source suit une chaîne de ré-export jusqu'à la déclaration réelle", async () => {
-  const root = preparedFixture("re-export");
-  try {
-    await withClient(async (client) => {
-      const result = await client.callTool({
-        name: "vision_source",
-        arguments: { name: "generateToken", root },
-      });
-      const data = jsonContent(result);
-      assert.equal(data.kind, "found");
-      assert.equal(data.result.file.path, "src/auth/token.ts");
-      assert.equal(data.result.symbol.name, "generate");
+      const fn = textContent(await client.callTool({ name: "vision_source", arguments: { root, name: "requireUser" } }));
+      assert.match(fn, /déclaré : function requireUser  src\/auth\/session\.ts:21-/);
+      assert.match(fn, /src\/bookings\/get\.ts:9  requireUser\(…\)/);
+      const method = textContent(await client.callTool({ name: "vision_source", arguments: { root, name: "SmtpSender.send" } }));
+      assert.match(method, /déclaré : method SmtpSender\.send  src\/email\/smtp\.ts:12-/);
+      assert.doesNotMatch(method, /ResendSender/);
+      const none = textContent(await client.callTool({ name: "vision_source", arguments: { root, name: "nothingLikeThis" } }));
+      assert.match(none, /aucune déclaration de ce nom/);
     });
   } finally {
     rmSync(root, { recursive: true, force: true });
@@ -159,39 +123,3 @@ test("serveur MCP: n'expose aucun outil d'écriture (update/diff/report)", async
   });
 });
 
-test("serveur MCP: vision_architecture donne la carte, ou un seul bloc et son voisinage", async () => {
-  const root = preparedShop();
-  try {
-    await withClient(async (client) => {
-      const whole = textContent(await client.callTool({ name: "vision_architecture", arguments: { root } }));
-      assert.match(whole, /BLOCS \(/);
-      assert.match(whole, /Cloud Functions/);
-      const block = textContent(await client.callTool({ name: "vision_architecture", arguments: { root, block: "firestore" } }));
-      assert.match(block, /^BLOC — Firestore/);
-      assert.match(block, /COLLECTIONS \(/);
-      assert.ok(block.length < whole.length, "un bloc coûte moins cher que la carte entière");
-      const missing = await client.callTool({ name: "vision_architecture", arguments: { root, block: "inexistant" } });
-      assert.equal((missing as { isError?: boolean }).isError, true);
-    });
-  } finally {
-    rmSync(root, { recursive: true, force: true });
-  }
-});
-
-test("serveur MCP: vision_flow donne l'algorithme d'une feature, sans les calculs purs par défaut", async () => {
-  const root = preparedShop();
-  try {
-    await withClient(async (client) => {
-      const compact = textContent(await client.callTool({ name: "vision_flow", arguments: { root, feature: "placeOrder" } }));
-      assert.match(compact, /^FEATURE — placeOrder/);
-      assert.match(compact, /APPELÉE PAR/);
-      assert.match(compact, /ÉTAPES/);
-      const full = textContent(await client.callTool({ name: "vision_flow", arguments: { root, feature: "placeOrder", full: true } }));
-      assert.ok(full.length >= compact.length);
-      const missing = await client.callTool({ name: "vision_flow", arguments: { root, feature: "nExistePas" } });
-      assert.equal((missing as { isError?: boolean }).isError, true);
-    });
-  } finally {
-    rmSync(root, { recursive: true, force: true });
-  }
-});
