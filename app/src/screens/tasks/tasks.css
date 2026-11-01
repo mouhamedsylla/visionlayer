@@ -1,0 +1,36 @@
+/* Repris de la planche 06 (Tâches planifiées) ; l'axe s'appelle .tk__axis, .ax étant pris par Accès. */
+.tk { padding: 24px 28px 36px; gap: 18px; }
+.tk__intro { display: flex; flex-direction: column; gap: 6px; max-width: 880px; }
+.tk__title { font: 600 26px/32px var(--font-sans); letter-spacing: -.02em; }
+.tk__lead { color: var(--ink-2); font-size: 14px; line-height: 21px; }
+.tk__body { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; align-items: start; }
+.tk__main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.tk__side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.tk__day { padding: 6px 16px 14px; }
+.tk__dh { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 12px; font: 500 10.5px/14px var(--font-mono); color: var(--muted); padding: 6px 0; }
+.tk__axis { position: relative; height: 14px; }
+.tk__axis span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+.tk__dr { width: 100%; display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 12px; align-items: center; padding: 8px 0; border: 0; border-top: 1px solid #efeeeb; background: none; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.tk__dr b { font: 500 12.5px/16px var(--font-mono); display: block; overflow: hidden; text-overflow: ellipsis; }
+.tk__dr small { display: block; font-size: 11.5px; line-height: 15px; color: var(--muted); }
+.tk__tr { position: relative; height: 26px; background: repeating-linear-gradient(90deg, var(--surface-sunken) 0, var(--surface-sunken) calc(25% - 1px), var(--line) calc(25% - 1px), var(--line) 25%); border-radius: 6px; }
+.tk__tr i { position: absolute; top: 5px; bottom: 5px; width: 3px; border-radius: 2px; background: var(--ink); }
+.tk__tr i.x2 { width: 7px; box-shadow: inset 3px 0 0 var(--ink), inset -3px 0 0 var(--ink); background: #fff; }
+.tk__fill { position: absolute; left: 0; right: 0; top: 9px; height: 8px; border-radius: 4px; background: repeating-linear-gradient(90deg, var(--ink) 0, var(--ink) 2px, transparent 2px, transparent 5px); }
+.tk__tr em { position: absolute; top: 4px; font: 500 11px/18px var(--font-mono); font-style: normal; padding: 0 6px; border-radius: 5px; background: var(--ink); color: var(--on-night); white-space: nowrap; }
+.tk__tr em.cr { background: var(--critical); }
+.tk__ondemand { position: absolute; left: 8px; top: 5px; font: 500 11px/16px var(--font-mono); color: var(--muted); }
+.lg { display: flex; flex-wrap: wrap; gap: 16px; padding: 10px 16px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+.lg span { display: inline-flex; align-items: center; gap: 6px; }
+.lg i { display: inline-block; width: 3px; height: 14px; background: var(--ink); border-radius: 2px; }
+.lg i.ev { background: var(--tile-quiet); }
+.trg { display: grid; grid-template-columns: 130px 150px minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1.2fr); gap: 12px; align-items: start; padding: 10px 16px; border-top: 1px solid var(--line); font-size: 12.5px; line-height: 17px; }
+.trg--row { width: 100%; border: 0; border-top: 1px solid var(--line); background: none; text-align: left; font: inherit; font-size: 12.5px; color: inherit; cursor: pointer; }
+.trg--h { border-top: 0; background: var(--surface-sunken); font: 500 10.5px/14px var(--font-mono); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); align-items: center; }
+.trg--on { background: var(--surface-sunken); box-shadow: inset 3px 0 0 var(--ink); }
+.trg code { font: 500 12.5px/17px var(--font-mono); color: var(--ink); overflow: hidden; text-overflow: ellipsis; }
+.ed { background: #1d1d1b; border-radius: 10px; padding: 8px 0; font: 400 12px/20px var(--font-mono); overflow: hidden; }
+.ed > div { display: grid; grid-template-columns: 34px minmax(0, 1fr); white-space: pre-wrap; overflow-wrap: anywhere; }
+.ed > div > span:first-child { color: var(--muted); text-align: right; padding-right: 10px; }
+.ed .hl { background: #3a1a15; }
+.tk__how { padding: 0 16px 16px; font-size: 12.5px; line-height: 18px; color: var(--ink-2); }
