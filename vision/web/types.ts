@@ -5,7 +5,7 @@ import type { KnowledgeReport } from "../knowledge/types.js";
 import type { StackModel } from "../stack/types.js";
 
 /**
- * Ce que le serveur local donne à l'interface. Partagé tel quel avec `ui/`
+ * Ce que le serveur local donne à l'interface. Partagé tel quel avec `app/`
  * (import de type seulement) : un seul endroit décrit le contrat HTTP.
  */
 
@@ -16,6 +16,8 @@ export interface ProjectInfo {
   commit?: string;
   /** Le dernier commit qui a touché ce dossier, et la première ligne de son message. */
   lastChange?: { commit: string; subject: string };
+  /** La personne qui ouvre l'interface, d'après la configuration de Git (`user.name`). */
+  user?: string;
 }
 
 export interface TechLabel {
@@ -39,6 +41,10 @@ export interface MapPayload {
   changes?: { since: string; items: MapChange[] };
   /** Les packs locaux du projet (.vision/packs/) : actifs, inactifs faute de ce qu'ils lisent, ou refusés avec la raison. */
   localPacks?: PackState[];
+  /** Les fichiers de code analysés, pour la grille de couverture : chaque fichier y a sa case. */
+  files: string[];
+  /** Les packs dont au moins un fait est sur la carte. */
+  packs: string[];
 }
 
 /** Un élément de la carte apparu ou disparu entre deux analyses : `+ POST /bookings/:id/transfer dans API`. */

@@ -185,7 +185,8 @@ export class FactBase {
     const db = new Database();
     const known = new Set(this.paths());
     const aliases = createAliasResolver(this.root, known);
-    for (const p of this.listed) db.add("present", [p]);
+    // Le fichier lui-même, ligne 1, prouve sa présence : un fait déduit de la seule présence (une page rangée par convention) a ainsi une preuve.
+    for (const p of this.listed) db.add("present", [p], [{ path: p, line: 1, source: "syntax" }]);
     for (const p of this.paths()) db.add("file", [p]);
     const pkgDirs = new Set(this.listed.filter((p) => p === "package.json" || p.endsWith("/package.json")).map((p) => (p.includes("/") ? p.slice(0, p.lastIndexOf("/")) : "")));
     for (const p of this.listed) {

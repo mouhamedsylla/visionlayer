@@ -1,0 +1,8 @@
+.code { position: fixed; right: 16px; top: 64px; bottom: 16px; width: min(640px, calc(100vw - 280px)); z-index: 20; background: var(--night); color: var(--on-night); border-radius: var(--radius-card); box-shadow: var(--shadow-pop); display: flex; flex-direction: column; overflow: hidden; }
+.code__head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--night-line); font-size: 12px; color: var(--on-night-muted); }
+.code__head b { color: var(--on-night); font-weight: 500; }
+.code__body { margin: 0; padding: 10px 0; overflow: auto; font: 400 12px/19px var(--font-mono); }
+.code__line { padding: 0 14px 0 0; white-space: pre; }
+.code__line--on { background: var(--night-2); box-shadow: inset 3px 0 0 var(--signal); }
+.code__n { display: inline-block; width: 52px; padding-right: 14px; text-align: right; color: var(--on-night-muted); user-select: none; }
+.code__err { padding: 14px; color: var(--on-night-muted); }

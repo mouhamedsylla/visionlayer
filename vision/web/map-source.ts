@@ -46,7 +46,17 @@ export class MapSource {
     const before = this.current;
     const changes = before ? { since: before.builtAt, items: mapChanges(before.model, model) } : undefined;
     const localPacks = this.registry.states();
-    this.current = { model, builtAt: new Date().toISOString(), reread: r.read.length, tech: techLabels(model), ...(changes ? { changes } : {}), ...(localPacks.length ? { localPacks } : {}) };
+    const files = this.base.database().get("file").map((t) => String(t.args[0])).sort();
+    const used = new Set<string>();
+    const walk = (v: unknown): void => {
+      if (Array.isArray(v)) { v.forEach(walk); return; }
+      if (!v || typeof v !== "object") return;
+      const o = v as Record<string, unknown>;
+      if (typeof o.pack === "string") used.add(o.pack);
+      Object.values(o).forEach(walk);
+    };
+    walk(model);
+    this.current = { model, builtAt: new Date().toISOString(), reread: r.read.length, tech: techLabels(model), files, packs: [...used].sort(), ...(changes ? { changes } : {}), ...(localPacks.length ? { localPacks } : {}) };
     return this.current;
   }
 }

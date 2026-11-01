@@ -14,9 +14,9 @@ if (!existsSync(root)) {
   process.exit(1);
 }
 
-const dist = join(import.meta.dirname, "..", "ui", "dist");
+const dist = join(import.meta.dirname, "..", "app", "dist");
 const staticDir = existsSync(dist) ? dist : undefined;
 createWebServer({ root, staticDir }).listen(port, "127.0.0.1", () => {
   console.log(`VisionLayer — ${root}`);
-  console.log(`http://127.0.0.1:${port}${staticDir ? "" : "  (API seule : pnpm run ui:dev pour l'interface)"}`);
+  console.log(`http://127.0.0.1:${port}${staticDir ? "" : "  (API seule : pnpm app:dev pour l'interface)"}`);
 });

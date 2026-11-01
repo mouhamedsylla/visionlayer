@@ -11,7 +11,7 @@ import { StackSource } from "./stack-source.js";
 export interface WebServerOptions {
   /** Le dépôt lu. */
   root: string;
-  /** Le build de l'interface (`ui/dist`). Absent en développement : Vite sert l'interface. */
+  /** Le build de l'interface (`app/dist`). Absent en développement : Vite sert l'interface. */
   staticDir?: string;
 }
 

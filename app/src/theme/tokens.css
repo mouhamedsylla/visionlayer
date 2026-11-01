@@ -1,0 +1,15 @@
+/* Les jetons du design système « VisionLayer Hackathon » : fond gris chaud, cartes blanches, une seule carte noire par écran. Clair seulement. */
+:root {
+  --canvas: #f3f2ef; --surface: #ffffff; --surface-sunken: #f7f6f4;
+  --line: #e6e4e0; --line-strong: #d4d1cb;
+  --ink: #121211; --ink-2: #3e3d3a; --muted: #6c6a66;
+  --night: #141413; --night-2: #1f1f1d; --night-line: #34332f; --on-night: #f5f4f1; --on-night-muted: #a29f99;
+  --tile-empty: #ebe9e5; --tile-quiet: #c8c5bf;
+  --signal: #e2791d; --signal-ink: #9a4d0c; --signal-soft: #fbeee1;
+  --critical: #d23f2c; --critical-ink: #a92f1f; --critical-soft: #fbe7e3;
+  --live: #2c9a57; --live-ink: #1e7342; --live-soft: #e3f3e9;
+  --radius-tile: 3px; --radius-control: 8px; --radius-card: 12px; --radius-pill: 999px;
+  --shadow-card: 0 1px 2px rgba(18, 18, 17, .04); --shadow-pop: 0 8px 24px rgba(18, 18, 17, .16);
+  --font-sans: "Geist", "Inter", system-ui, sans-serif;
+  --font-mono: "Geist Mono", "JetBrains Mono", ui-monospace, monospace;
+}

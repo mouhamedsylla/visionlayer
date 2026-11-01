@@ -19,6 +19,7 @@
     "tests/fixtures",
     "tests/stack-fixtures",
     "tests/arch-fixtures",
-    "tests/corpus"
+    "tests/corpus",
+    "tests/app-*.test.ts"
   ]
 }
