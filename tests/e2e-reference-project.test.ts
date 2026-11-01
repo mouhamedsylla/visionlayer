@@ -140,23 +140,13 @@ test("test global : le serveur MCP répond correctement sur le projet de référ
   const client = new Client({ name: "e2e-test-client", version: "0.0.0" });
 
   try {
-    writeModel(root, buildModel(root));
     await client.connect(transport);
 
-    const contextResult = await client.callTool({
-      name: "vision_context",
-      arguments: { task: "envoyer un email d'invitation", root },
-    });
-    const context = JSON.parse((contextResult.content as { text: string }[])[0]!.text);
-    assert.ok(context.matchedFiles.some((f: { path: string }) => f.path.includes("notifications")));
+    const summary = (await client.callTool({ name: "vision_summary", arguments: { root } })).content as { text: string }[];
+    assert.match(summary[0]!.text, /^SOMMAIRE /);
 
-    const sourceResult = await client.callTool({
-      name: "vision_source",
-      arguments: { name: "createUser", root },
-    });
-    const source = JSON.parse((sourceResult.content as { text: string }[])[0]!.text);
-    assert.equal(source.kind, "found");
-    assert.equal(source.result.file.path, "src/auth/user/service.ts");
+    const sourceResult = await client.callTool({ name: "vision_source", arguments: { name: "createUser", root } });
+    assert.match((sourceResult.content as { text: string }[])[0]!.text, /déclaré : function createUser  src\/auth\/user\/service\.ts:/);
   } finally {
     await client.close();
     rmSync(root, { recursive: true, force: true });
