@@ -22,7 +22,7 @@ Relations rendues : `pkg_main(Dossier, Fichier)`, `pkg_src(Dossier, Fichier)`, `
 | S4 | plusieurs commandes | `a && b`, `a & b`, `concurrently "pnpm a" "node b.js"`, `run-p a b`, `npm-run-all --parallel a b` | lu : chaque commande, chaque nom de `run-p` et `npm-run-all` |
 | S5 | le script d'un autre paquet, par son nom | `pnpm --filter @app/web start`, `pnpm -F web start`, `yarn workspace web start`, `npm run start -w web` | lu : le paquet de ce nom dans le dépôt |
 | S6 | le script d'un autre paquet, par son dossier | `pnpm --filter ./apps/web start`, `npm run start --workspace=apps/web` | lu : le `package.json` de ce dossier |
-| S7 | plusieurs paquets à la fois | `pnpm --filter "./packages/*" dev`, `pnpm -r dev` | non : le motif n'est pas déplié |
+| S7 | plusieurs paquets à la fois | `pnpm --filter "./packages/*" dev`, `pnpm --filter "@app/*" start`, `pnpm -r dev`, `--filter "!./packages/enterprise"`, plusieurs `--filter` | lu : les paquets du dépôt que désigne chaque motif (dossier `x/*` ou `x/**`, nom `@scope/*` ou exact), moins ceux qu'une exclusion de la même commande retire ; les sélecteurs de graphe (`foo...`, `[origin/main]`) ne sont pas lus |
 | S8 | l'exécutable d'un cadre | `next start`, `vite`, `nest start` | hors pack : le pack du cadre sait où est son entrée |
 
 Un script qui s'appelle lui-même, directement ou en boucle, ne lance rien de plus : la règle s'arrête sur ce qui est déjà connu.
