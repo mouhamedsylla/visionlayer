@@ -7,6 +7,7 @@ import { readExcerpt, SourceError } from "./source.js";
 import { DeploySource } from "./deploy-source.js";
 import { KnowledgeSource } from "./knowledge-source.js";
 import { StackSource } from "./stack-source.js";
+import { PacksSource } from "./packs-source.js";
 
 export interface WebServerOptions {
   /** Le dépôt lu. */
@@ -28,6 +29,8 @@ export function createWebServer(opts: WebServerOptions): Server {
   const stack = new StackSource(root);
   const deploy = new DeploySource(root);
   const knowledge = new KnowledgeSource(root);
+  const packs = new PacksSource(root);
+  const param = (req: IncomingMessage, name: string) => new URL(req.url ?? "/", "http://localhost").searchParams.get(name) ?? "";
   const routes: Record<string, Handler> = {
     "GET /api/project": (_req, res) => sendJson(res, 200, projectInfo(root)),
     "GET /api/map": async (_req, res) => sendJson(res, 200, await map.get()),
@@ -38,6 +41,11 @@ export function createWebServer(opts: WebServerOptions): Server {
       sendJson(res, 200, knowledge.get(model, builtAt));
     },
     "POST /api/map/refresh": async (_req, res) => sendJson(res, 200, await map.refresh()),
+    "GET /api/packs": async (_req, res) => sendJson(res, 200, await packs.get((await map.get()).packs)),
+    // Les gestes humains de l'écran Packs : accepter recharge la carte avec le pack, refuser la laisse telle quelle.
+    "POST /api/packs/accept": async (req, res) => { packs.accept(param(req, "id")); await map.refresh(); sendJson(res, 200, await packs.get((await map.get()).packs)); },
+    "POST /api/packs/reject": async (req, res) => { packs.reject(param(req, "id")); sendJson(res, 200, await packs.get((await map.get()).packs)); },
+    "POST /api/packs/write": async (req, res) => sendJson(res, 200, packs.write(param(req, "pkg"))),
     "GET /api/source": async (req, res) => {
       const q = new URL(req.url ?? "/", "http://localhost").searchParams;
       const path = q.get("path");

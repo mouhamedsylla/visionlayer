@@ -2,6 +2,7 @@ import { useData } from "../api/useData";
 import { CodeProvider } from "../ui/code";
 import { Overview } from "../screens/overview/Overview";
 import { MapScreen } from "../screens/map/MapScreen";
+import { PacksScreen } from "../screens/packs/PacksScreen";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { SCREENS, useRoute } from "./route";
@@ -19,6 +20,7 @@ export function App() {
           {data.error ? <p className="state">La carte n'a pas pu être lue : {data.error}</p>
             : !data.map ? <p className="state">Lecture du dépôt…</p>
             : screen === "carte" ? <MapScreen map={data.map} selected={item} select={(id) => go("carte", id)} />
+            : screen === "packs" ? <PacksScreen map={data.map} item={item} open={(id) => go("packs", id)} onChanged={data.refresh} />
             : <Overview map={data.map} project={data.project} claims={data.claims} go={go} />}
         </main>
       </div>

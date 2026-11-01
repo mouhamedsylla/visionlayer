@@ -89,3 +89,34 @@ export interface SourceExcerpt {
   /** Les lignes, une valeur qui ressemble à un secret masquée. */
   lines: string[];
 }
+
+/** Une proposition de l'écrivain de packs : tout ce qu'il a déposé dans .vision/packs/proposes/. */
+export interface PackProposal {
+  id: string;
+  name: string;
+  /** Le pack, tel qu'écrit. */
+  yaml: string;
+  /** Sa page de documentation : les formes de l'API, lues ou non lues. */
+  doc: string;
+  /** La fiche que l'écrivain a reçue. */
+  fiche: string;
+  provides: string[];
+  rules: string[];
+  tests: string[];
+  /** Le nombre de motifs de syntaxe qu'il reconnaît. */
+  matches: number;
+  /** L'essai à part sur le projet : l'état du pack et ce qu'il changerait sur la carte. */
+  preview?: { state: PackState; changes: MapChange[] };
+  usage?: { input: number; output: number; cost: number; turns: number; seconds: number };
+}
+
+/** L'écrivain lancé depuis l'interface : ce qu'il affiche, et s'il a fini. */
+export interface WriterJob { pkg: string; lines: string[]; done: boolean; ok?: boolean; started: string }
+
+export interface PacksPayload {
+  builtins: { id: string; name: string; tech: string[]; used: boolean }[];
+  /** Les packs acceptés dans .vision/packs/. */
+  local: string[];
+  proposals: PackProposal[];
+  job?: WriterJob;
+}

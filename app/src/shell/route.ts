@@ -11,7 +11,7 @@ export const SCREENS: { id: Screen; label: string; group: string; built?: boolea
   { id: "taches", label: "Tâches planifiées", group: "Système" },
   { id: "regles", label: "Règles et décisions", group: "Connaissance" },
   { id: "agents", label: "Sessions d'agents", group: "Connaissance" },
-  { id: "packs", label: "Packs", group: "Lecture" },
+  { id: "packs", label: "Packs", group: "Lecture", built: true },
   { id: "couverture", label: "Couverture", group: "Lecture" },
   { id: "replays", label: "Replays", group: "Pratique" },
 ];

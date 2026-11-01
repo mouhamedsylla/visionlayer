@@ -15,7 +15,7 @@ export function HeroCard({ hero, onMap }: { hero: Hero; onMap: () => void }) {
         </h2>
         {hero.text && <p className="ovh__text"><Rich text={hero.text} /></p>}
         <div className="ovh__actions">
-          {hero.kind === "unread" && <button className="vl-btn vl-btn--light" disabled title="L'écran Packs arrive ; en ligne de commande : pnpm packs write">{Icon.packs}Écrire le pack avec Muse</button>}
+          {hero.kind === "unread" && <a className="vl-btn vl-btn--light" href="#/packs">{Icon.packs}Écrire le pack avec Muse</a>}
           <button className="vl-btn vl-btn--ghost-night" onClick={onMap}>{hero.kind === "unread" ? "Voir ce qui n'est pas lu" : "Voir sur la carte"}</button>
         </div>
       </div>
