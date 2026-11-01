@@ -80,7 +80,7 @@ Chaque représentation a un code. Les fiches de vue le citent (« le déroulé, 
 | Code | Représentation | Question | Forme | À l'échelle | Écrans |
 |---|---|---|---|---|---|
 | S1 | **Carte par style** | De quoi le système est-il fait ? | les déployables rangés selon le style reconnu (§ 3) ; les liens de l'élément choisi seulement | blocs groupés par domaine, puis repliés | Carte |
-| S2 | **Intérieur d'un bloc** | Comment ce déployable est-il composé ? | trois colonnes : propres, partagés, socle ; les appels vont toujours vers la droite | composants groupés par dossier | Intérieur d'un bloc |
+| S2 | **Intérieur d'un bloc** | Comment ce déployable est-il composé ? | les modules (dossiers), rangés de gauche à droite par usage, chacun avec ses couches ; les appels vont vers la droite | modules groupés par dossier parent | Intérieur d'un bloc |
 | S3 | **Fonctions offertes** | Que fournit ce composant, et à qui ? | une ligne par fonction, rangée par nombre d'appelants ; les fonctions internes en retrait | 5 lignes puis « voir les N autres » | Composant |
 | S4 | **Grille de couverture** | Qu'est-ce qui est lu ? | une case par fichier, une colonne par dossier | dossiers repliés en « + N » | Vue d'ensemble, Couverture |
 | S5 | **Familles de technologies** | De quoi le système dépend-il ? | tuiles à logo groupées par famille | familles repliées | Technologies |

@@ -144,7 +144,7 @@ const facets = S({
     calls: z.array(S({ name: z.string().min(1), local: z.boolean(), proof, to: z.string().optional() })).optional(),
   })).optional(),
   component: S({
-    grouping: z.enum(["calls", "contract"]),
+    grouping: z.enum(["folder", "calls", "contract"]),
     reach: z.enum(["own", "shared", "base"]),
     entrypoints: z.array(z.string()),
     functions: z.number().int().nonnegative(),
@@ -156,6 +156,7 @@ const facets = S({
       count: z.number().int().positive(),
       proof: z.array(proof),
     })),
+    layers: z.record(z.string(), z.enum(["entry", "logic", "data", "external"])).optional(),
   }).optional(),
 });
 

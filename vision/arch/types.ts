@@ -369,8 +369,8 @@ export interface Facets {
  * contrat, lu dans le code, qui reçoit cette facette en plus.
  */
 export interface ComponentFacet {
-  /** Comment ses fichiers ont été réunis : `calls` = ils s'appellent et servent les mêmes points d'entrée ; `contract` = le module d'un contrat. */
-  grouping: "calls" | "contract";
+  /** Comment ses fichiers ont été réunis : `folder` = le dossier où l'équipe les a rangés ; `contract` = le module d'un contrat ; `calls` = l'ancien regroupement par appels. */
+  grouping: "folder" | "calls" | "contract";
   /**
    * Sa place dans le déployable, relative à ses points d'entrée : `base` s'il
    * en sert au moins les trois quarts ; `own` si tous ceux qu'il sert ont leur
@@ -383,7 +383,12 @@ export interface ComponentFacet {
   functions: number;
   /** Ce que ses fichiers lisent, écrivent, publient, appellent : les occurrences des liens du déployable écrites chez lui, par cible. */
   touches: { kind: EdgeKind; node: string; entity?: string; topic?: string; count: number; proof: Proof[] }[];
+  /** La couche de chacun de ses fichiers, lue dans les faits (components.ts). */
+  layers?: Record<string, ComponentLayer>;
 }
+
+/** `entry` : porte un point d'entrée ; `data` : lit ou écrit un stockage ; `external` : appelle un service extérieur ou publie ; `logic` : le reste. */
+export type ComponentLayer = "entry" | "logic" | "data" | "external";
 
 /**
  * Une fonction du dépôt, ouverte seule : sa déclaration, ce que fait son code

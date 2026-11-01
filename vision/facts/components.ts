@@ -1,31 +1,26 @@
-import type { ArchEdge, ArchNode, ComponentFacet, Occurrence, Proof } from "../arch/types.js";
+import type { ArchEdge, ArchNode, ComponentFacet, ComponentLayer, Occurrence, Proof } from "../arch/types.js";
 import { fnId, type FnGraph, type Reach } from "./fn-graph.js";
 
 /**
- * Les composants d'un déployable, calculés depuis ce qui s'exécute, jamais
- * depuis les dossiers (docs/fonctionnement/05-le-modele-neutre.md).
+ * Les modules d'un déployable (docs/fonctionnement/05-le-modele-neutre.md) : le découpage que l'équipe a
+ * rangé dans ses dossiers, et ce que l'exécution en fait. Un ingénieur cherche d'abord « où est le
+ * paiement », puis « où est l'accès à la base » : le module répond à la première question, la couche de
+ * chaque fichier à la seconde.
  *
- * 1. Chaque fichier du déployable sert les points d'entrée dont la portée
- *    (entry-reach.ts) l'exécute. Un fichier qu'aucun n'exécute n'entre dans
- *    aucun composant.
- * 2. Deux fichiers dont l'un appelle l'autre et qui servent exactement les
- *    mêmes points d'entrée forment un même composant, de proche en proche.
- *    Un fichier appelé aussi d'ailleurs sert plus de points d'entrée : il
- *    reste à part, c'est un composant partagé.
- * 3. Les fichiers d'un composant à contrat (une interface implémentée deux
- *    fois, lue dans le code) gardent leur nœud : un groupe calculé dont tous
- *    les fichiers sont les siens s'y fond.
- * 4. La classe, relative au déployable (E = ses points d'entrée exécutés) :
- *    `base` s'il sert au moins les trois quarts de E (avec E ≥ 4) ; sinon
- *    `own` si tous les points d'entrée qu'il sert ont leur fonction dans un
- *    même composant (le sien ou un autre), `shared` sinon. Un point d'entrée
- *    dont la fonction est dans un composant `base` (un index qui les déclare
- *    toutes) ne forme un groupe qu'avec lui-même.
- *
- * Le nom vient des fichiers : le nom du fichier seul ; le dossier quand le
- * groupe tient dans un dossier et en contient tous les fichiers exécutés,
- * sous-dossiers compris ;
- * sinon le fichier le plus appelé du groupe, suivi du nombre des autres.
+ * 1. Chaque fichier du déployable sert les points d'entrée dont la portée (entry-reach.ts) l'exécute. Un
+ *    fichier qu'aucun n'exécute n'entre dans aucun module.
+ * 2. Le module d'un fichier : son dossier de premier niveau sous la racine du code du déployable
+ *    (`src/bookings/create.ts` → `bookings`) ; un fichier posé à la racine forme un module à lui seul,
+ *    nommé sans extension (`db`). Un dossier qui porte plus de la moitié des fichiers servis et range
+ *    ses fichiers dans des sous-dossiers se découpe un cran plus bas (`api/controllers`, `api/routes`).
+ * 3. Un composant à contrat (une interface implémentée deux fois, lue dans le code) garde son nœud : le
+ *    module qui contient tous ses fichiers servis s'y fond, et lui donne ses fichiers.
+ * 4. Ce qu'il sert, relatif au déployable (E = ses points d'entrée exécutés) : `base` s'il sert au moins
+ *    les trois quarts de E (avec E ≥ 4) ; `own` si tous les points d'entrée qu'il sert ont leur fonction
+ *    dans un même module, `shared` sinon.
+ * 5. La couche de chaque fichier, lue dans les faits : `entry` s'il porte la fonction ou la déclaration
+ *    d'un point d'entrée, `data` s'il ouvre, lit ou écrit un stockage, `external` s'il construit le client
+ *    d'un service extérieur ou d'une file, l'appelle ou publie un message, `logic` sinon.
  */
 
 /** Fraction des points d'entrée du déployable au-delà de laquelle un composant est le socle commun. */
@@ -59,40 +54,45 @@ export function attributeComponents(nodes: ArchNode[], edges: ArchEdge[], graph:
       (calls.get(k) ?? calls.set(k, []).get(k)!).push(c.proof);
     }
 
-    // 2. Regrouper : appel dans un sens ou dans l'autre, mêmes points d'entrée servis.
-    const parent = new Map([...served.keys()].map((f) => [f, f]));
-    const find = (f: string): string => (parent.get(f) === f ? f : find(parent.get(f)!));
-    const union = (a: string, b: string) => { const [x, y] = [find(a), find(b)]; if (x !== y) parent.set(x < y ? y : x, x < y ? x : y); };
-    for (const k of calls.keys()) {
-      const [a, b] = k.split("\0") as [string, string];
-      if (key(a) === key(b)) union(a, b);
-    }
-    const groups = new Map<string, string[]>();
-    for (const f of served.keys()) (groups.get(find(f)) ?? groups.set(find(f), []).get(find(f))!).push(f);
+    // 2. Regrouper par dossier, sous la racine du code du déployable.
+    const groups = folderGroups([...served.keys()]);
 
     // 3. Les composants à contrat de ce déployable : un groupe tout entier dans leurs fichiers s'y fond.
     const contracts = nodes.filter((n) => n.level === "component" && n.parent === node.id && n.facets.contract?.length);
     const home = new Map<string, string>(); // fichier → id du nœud composant
     const members = new Map<string, { node?: ArchNode; files: string[]; name?: { name: string; head: string } }>();
+    // Un module se fond dans un contrat quand il en est le dossier : tous les fichiers servis du contrat sont dans ce module.
     for (const files of groups.values()) {
-      const c = contracts.find((n) => files.every((f) => n.files?.includes(f)));
+      const c = contracts.find((n) => (n.files ?? []).filter((f) => served.has(f)).length > 0 && (n.files ?? []).filter((f) => served.has(f)).every((f) => files.includes(f)));
       if (c) {
         const m = members.get(c.id) ?? members.set(c.id, { node: c, files: [] }).get(c.id)!;
         m.files.push(...files);
         for (const f of files) home.set(f, c.id);
       }
     }
-    const computed = [...groups.values()].filter((files) => !home.has(files[0]!));
+    const computed = [...groups].filter(([, files]) => !files.every((f) => home.has(f))).map(([name, files]) => ({ name, files: files.filter((f) => !home.has(f)) }));
     const handlers = new Map<string, number>();
     for (const e of entries) handlers.set(e.handler!.path, (handlers.get(e.handler!.path) ?? 0) + 1);
-    const names = nameGroups(computed, served, calls, own, handlers);
-    for (const [i, files] of computed.entries()) {
+    const names = computed.map(({ name, files }) => ({ id: name, name, head: [...files].sort((a, b) => (handlers.get(b) ?? 0) - (handlers.get(a) ?? 0) || a.localeCompare(b))[0]! }));
+    for (const [i, { files }] of computed.entries()) {
       let id = `${node.id}:${names[i]!.id}`;
       while (used.has(id)) id = `${id}'`;
       used.add(id);
       members.set(id, { files, name: names[i]! });
       for (const f of files) home.set(f, id);
     }
+
+    // 5. La couche de chaque fichier : ce qu'il fait, lu dans les faits.
+    const entryFiles = new Set(entries.flatMap((e) => [e.handler!.path, e.proof.path]));
+    const storeIds = new Set(nodes.filter((n) => n.role === "store").map((n) => n.id));
+    // Le fichier qui ouvre la connexion à un stockage, ou construit le client d'un service extérieur ou d'une file.
+    const opens = (roles: string[]) => new Set(nodes.filter((n) => roles.includes(n.role) && n.level !== "component").flatMap((n) => n.proof.map((p) => p.path)));
+    const dataClients = opens(["store"]), outClients = opens(["external", "channel", "managed"]);
+    const touched = (f: string, ok: (e: ArchEdge) => boolean) => edges.some((e) => e.from === node.id && ok(e) && e.occurrences.some((o) => o.path === f));
+    const layerOf = (f: string): ComponentLayer => entryFiles.has(f) ? "entry"
+      : dataClients.has(f) || touched(f, (e) => (e.kind === "read" || e.kind === "write") && storeIds.has(e.to)) ? "data"
+      : outClients.has(f) || touched(f, (e) => e.kind === "request" || e.kind === "use" || e.kind === "message") ? "external"
+      : "logic";
 
     // 4. Les points d'entrée servis, la classe, ce que le composant touche.
     const servesOf = (m: { files: string[] }) => [...new Set(m.files.flatMap((f) => [...served.get(f)!]))].sort();
@@ -109,11 +109,12 @@ export function attributeComponents(nodes: ArchNode[], edges: ArchEdge[], graph:
       const homes = new Set(serves.map(homeOf));
       const reach: ComponentFacet["reach"] = isBase(serves.length) ? "base" : homes.size === 1 ? "own" : "shared";
       const facet: ComponentFacet = {
-        grouping: m.node ? "contract" : "calls",
+        grouping: m.node ? "contract" : "folder",
         reach,
         entrypoints: serves,
         functions: files.reduce((n, f) => n + (graph.spans.get(f)?.length ?? 0), 0),
         ...touchesOf(node, edges, new Set(files)),
+        layers: Object.fromEntries(files.map((f) => [f, layerOf(f)])),
       };
       if (m.node) { m.node.facets.component = facet; continue; }
       const name = m.name!;
@@ -123,7 +124,7 @@ export function attributeComponents(nodes: ArchNode[], edges: ArchEdge[], graph:
         level: "component",
         role: "module",
         parent: node.id,
-        subtitle: `${count(files.length, "fichier")} · ${count(facet.functions, "fonction")} · ${serves.length} sur ${entries.length} points d'entrée`,
+        subtitle: `${count(files.length, "fichier")}, utilisé par ${serves.length} points d'entrée sur ${entries.length}`,
         status: "proposed",
         proof: [{ path: name.head, line: graph.spans.get(name.head)?.[0]?.start ?? 1, source: "syntax" }],
         files,
@@ -168,41 +169,31 @@ function touchesOf(node: ArchNode, edges: ArchEdge[], files: Set<string>): Pick<
 }
 
 /**
- * Le nom de chaque groupe, tiré de ses fichiers, et un `id` stable d'une carte
- * à l'autre (un chemin). Deux groupes dont la tête porte le même nom (`get.ts`)
- * gardent chacun autant de dossiers parents qu'il faut pour se distinguer
- * (`bookings/get.ts`).
+ * Les modules d'un déployable par dossier : le dossier de premier niveau sous la racine commune des fichiers qu'il exécute,
+ * découpé un cran plus bas quand il porte plus de la moitié des fichiers et range les siens dans des
+ * sous-dossiers ; un fichier à la racine est un module à lui seul, nommé sans extension.
  */
-function nameGroups(groups: string[][], served: Map<string, Set<string>>, calls: Map<string, Proof[]>, own: Set<string>, handlers: Map<string, number>): { id: string; name: string; head: string }[] {
-  const dirOf = (f: string) => (f.includes("/") ? f.slice(0, f.lastIndexOf("/")) : "");
-  const tail = (path: string, depth: number) => path.split("/").slice(-depth).join("/");
-  const shapes = groups.map((files) => {
-    const set = new Set(files);
-    // La tête : le fichier qui porte le plus de fonctions de points d'entrée, puis le plus appelé
-    // depuis l'extérieur du groupe, puis le plus servi, puis le premier.
-    const inbound = (f: string) => [...calls].filter(([k]) => { const [a, b] = k.split("\0"); return b === f && !set.has(a!); }).reduce((n, [, p]) => n + p.length, 0);
-    const head = [...files].sort((a, b) => (handlers.get(b) ?? 0) - (handlers.get(a) ?? 0) || inbound(b) - inbound(a) || served.get(b)!.size - served.get(a)!.size || a.localeCompare(b))[0]!;
-    const dirs = new Set(files.map(dirOf));
-    const dir = [...dirs][0]!;
-    // Le dossier nomme le groupe s'il en contient tous les fichiers exécutés, sous-dossiers compris.
-    const whole = files.length > 1 && dirs.size === 1 && !!dir && [...own].filter((f) => f.startsWith(`${dir}/`) && served.has(f)).every((f) => set.has(f));
-    // Ce qui nomme le groupe : le dossier entier, ou le fichier de tête ; et ce qui s'ajoute après.
-    return whole ? { head, path: dir, suffix: "/", id: `${dir}/` }
-      : { head, path: head, suffix: files.length > 1 ? ` +${files.length - 1}` : "", id: files.length > 1 ? `${head}+${files.length - 1}` : head };
-  });
-  const depth = shapes.map(() => 1);
-  const label = (i: number) => `${tail(shapes[i]!.path, depth[i]!)}${shapes[i]!.suffix}`;
-  for (let changed = true; changed;) {
-    changed = false;
-    const seen = new Map<string, number[]>();
-    // Le même fichier ou dossier de tête, quel que soit le reste du nom : `stripe.ts` et `stripe.ts +1` se confondent.
-    const named = (i: number) => tail(shapes[i]!.path, depth[i]!);
-    shapes.forEach((_, i) => seen.set(named(i), [...(seen.get(named(i)) ?? []), i]));
-    for (const list of seen.values()) if (list.length > 1) for (const i of list) {
-      if (depth[i]! < shapes[i]!.path.split("/").length) { depth[i]!++; changed = true; }
-    }
+export function folderGroups(files: string[]): Map<string, string[]> {
+  const dirs = files.map((f) => f.split("/").slice(0, -1));
+  let root = dirs[0] ?? [];
+  for (const d of dirs) { let i = 0; while (i < root.length && i < d.length && root[i] === d[i]) i++; root = root.slice(0, i); }
+  const rel = (f: string) => f.split("/").slice(root.length);
+  const stem = (x: string) => x.replace(/\.[cm]?[jt]sx?$/, "");
+  const first = (f: string) => { const r = rel(f); return r.length > 1 ? r[0]! : stem(r[0]!); };
+  const byFirst = new Map<string, string[]>();
+  for (const f of files) (byFirst.get(first(f)) ?? byFirst.set(first(f), []).get(first(f))!).push(f);
+  const out = new Map<string, string[]>();
+  for (const [name, list] of [...byFirst].sort(([a], [b]) => a.localeCompare(b))) {
+    const deep = list.filter((f) => rel(f).length > 2);
+    if (list.length > files.length / 2 && files.length >= 6 && deep.length) {
+      for (const f of list) {
+        const r = rel(f);
+        const k = r.length > 2 ? `${name}/${r[1]}` : name;
+        (out.get(k) ?? out.set(k, []).get(k)!).push(f);
+      }
+    } else out.set(name, list);
   }
-  return shapes.map((x, i) => ({ id: x.id, name: label(i), head: x.head }));
+  return out;
 }
 
 function count(n: number, word: string): string {

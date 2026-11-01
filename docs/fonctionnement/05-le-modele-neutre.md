@@ -24,7 +24,7 @@ flowchart TB
 | **Niveau** | `system` (acteurs, services externes), `deployable` (ce qui s'exécute ou se stocke séparément), `component` (une partie d'un déployable), `code` (cité, jamais recopié : il vit dans `model.json`) |
 | **Rôle** | `actor`, `external` ; `app`, `service`, `function`, `worker`, `job`, `store`, `channel`, `binary`, `managed` ; `module`, `layer`, `adapter` |
 | **Statut** | `extracted` (lu), `proposed` (calculé par une règle), `declared` (écrit par un agent ou un humain) |
-| **Facettes** | `entrypoints` (genre, clé, code, garde d'accès, appelants) ; `data` (forme, entités, champs, contraintes, déclencheurs, règle d'accès) ; `contract` (interface, opérations, implémentations, ce qui choisit) ; `channel` (files, topics, réglages) ; `config` (noms de variables, où elles sont lues, obligatoires ou non quand le code le dit : `env_required`) ; `trust` (comment un appelant prouve qui il est) ; `functions` (les fonctions du dépôt, ouvertes seules : leur déroulé, qui les appelle, ce qu'elles appellent) ; `component` (ce qu'un composant sert dans son déployable : sa classe, les points d'entrée servis, ses fonctions, ce qu'il touche) |
+| **Facettes** | `entrypoints` (genre, clé, code, garde d'accès, appelants) ; `data` (forme, entités, champs, contraintes, déclencheurs, règle d'accès) ; `contract` (interface, opérations, implémentations, ce qui choisit) ; `channel` (files, topics, réglages) ; `config` (noms de variables, où elles sont lues, obligatoires ou non quand le code le dit : `env_required`) ; `trust` (comment un appelant prouve qui il est) ; `functions` (les fonctions du dépôt, ouvertes seules : leur déroulé, qui les appelle, ce qu'elles appellent) ; `component` (ce qu'un module sert dans son déployable : sa classe, les points d'entrée servis, ses fonctions, ce qu'il touche, la couche de chaque fichier) |
 | **Lien** | genre `call`, `read`, `write`, `message`, `request`, `trigger`, `use`, `deploy` ; une cible fine facultative (une entité, un topic, un point d'entrée) ; ses occurrences, chacune avec sa ligne |
 | **Preuve** | `path`, `line`, `text`, et sa **source** : `syntax`, `symbols`, `manifest`, `pack`, `runtime` (prévu), `declared` |
 | **Couverture** | par niveau : lus sur total, et les trous : `language_not_read`, `pack_missing`, `target_unknown`, `path_dynamic`, `manifest_unknown` |
@@ -40,7 +40,7 @@ flowchart LR
   I["unit_image · uses_store · store_decl<br/>entity_def · entity_seen · channel_topic"] --> ST["Stockages et canaux"]
   X["external_pkg · client"] --> EX["Services externes"]
   IM["implements_at · selects"] --> CT["Composants à contrat"]
-  FG["fn_span · fn_calls · member_call<br/>instantiates · resolves"] --> CC["Portée des points d'entrée<br/>et composants calculés"]
+  FG["fn_span · fn_calls · member_call<br/>instantiates · resolves · typed"] --> CC["Portée des points d'entrée<br/>et modules"]
   A["accesses · publishes · subscribes · trigger_on<br/>calls_external · inbound_from · http_call"] --> L["Liens"]
   P["present · file · imports_pkg"] --> C["Couverture"]
 ```
@@ -132,27 +132,25 @@ Les méthodes des classes de premier niveau sont des fonctions comme les autres,
 Sur OpenArchiver, écrit en contrôleurs et services, les routes qui ont un déroulé passent de 2 sur 21 à 16 sur 21. Une interface implémentée par plusieurs classes n'est pas tranchée : le Contrat la montre.
 Limites : une fonction passée en valeur n'est suivie que si un fichier exécuté l'importe par son nom ; un appel à travers une variable locale qu'aucun type ne nomme (`const s = getSender(); s.send()`) n'est pas suivi au-delà de ce qui le construit ; une valeur lue sans appel (une constante, un type, `config.X`) ne fait pas entrer son fichier dans la portée.
 
-### Les composants calculés
+### Les modules
 
-Entre le déployable et la fonction, un **composant** est un groupe de fichiers qui travaillent ensemble pour les mêmes points d'entrée. Il est calculé depuis ce qui s'exécute, jamais depuis les dossiers ([vision/facts/components.ts](../../vision/facts/components.ts)). Le nœud est au niveau `component`, de rôle `module`, rattaché à son déployable (`parent`), avec `status: "proposed"` : c'est un calcul, pas un fait lu.
+Entre le déployable et la fonction, un **module** est le découpage que l'équipe a rangé dans ses dossiers, et ce que l'exécution en fait ([vision/facts/components.ts](../../vision/facts/components.ts)). C'est ce qu'un ingénieur cherche d'abord (« où est le paiement ? »), puis la couche de chaque fichier (« où est l'accès à la base ? ») : le niveau composant de C4. Le nœud est au niveau `component`, de rôle `module`, rattaché à son déployable (`parent`), avec `status: "proposed"` : le regroupement est calculé, pas déclaré.
 
-1. **Qui sert qui.** Un fichier du déployable sert les points d'entrée dont la portée l'exécute. Un fichier qu'aucun n'exécute (un type, un script, du code mort) n'entre dans aucun composant.
-2. **Le regroupement.** Deux fichiers dont l'un appelle l'autre et qui servent exactement les mêmes points d'entrée sont dans le même composant, de proche en proche. Un fichier appelé aussi d'ailleurs sert plus de points d'entrée : il reste à part, c'est un composant partagé.
-3. **Les contrats.** Un composant à contrat (lu dans le code, `status: "extracted"`) garde son nœud : un groupe calculé dont tous les fichiers sont les siens s'y fond, et le nœud reçoit la facette `component` avec `grouping: "contract"`. Les autres groupes ont `grouping: "calls"`.
-4. **La classe** (`reach`), relative au déployable, E étant le nombre de ses points d'entrée dont la portée est connue :
-   - `base` : il sert au moins les trois quarts de E, à condition que E vaille au moins 4 (en dessous, tout composant partagé serait le socle) ;
-   - `own` : tous les points d'entrée qu'il sert ont leur fonction dans un même composant, le sien ou un autre (une route et son aide, un sous-système qu'une seule fonction lance). Un point d'entrée dont la fonction est dans un composant `base` (un index qui les déclare toutes) ne forme un groupe qu'avec lui-même ;
-   - `shared` : sinon.
+1. **Qui sert qui.** Un fichier du déployable sert les points d'entrée dont la portée l'exécute. Un fichier qu'aucun n'exécute (un type, un script, du code mort) n'entre dans aucun module.
+2. **Le regroupement.** Le module d'un fichier est son dossier de premier niveau sous la racine commune des fichiers exécutés (`src/bookings/create.ts` → `bookings`). Un fichier posé à la racine forme un module à lui seul, nommé sans extension (`db`, `logger`). Un dossier qui porte plus de la moitié des fichiers exécutés et range les siens dans des sous-dossiers se découpe un cran plus bas (`services`, `services/ingestion-connectors`). `grouping: "folder"`.
+3. **Les contrats.** Un composant à contrat (lu dans le code, `status: "extracted"`) garde son nœud : le module qui contient tous ses fichiers exécutés s'y fond, et le nœud reçoit la facette `component` avec `grouping: "contract"`.
+4. **Ce qu'il sert**, relatif au déployable (E = ses points d'entrée exécutés) :
+   - `base` : il sert au moins les trois quarts de E, à condition que E vaille au moins 4 ;
+   - `own` : tous les points d'entrée qu'il sert ont leur fonction dans un même module ;
+   - `shared` sinon.
+   L'écran le dit sans ces mots : « utilisé par 10 points d'entrée sur 15 ».
+5. **La couche de chaque fichier** (`layers`), lue dans les faits : `entry` s'il porte la fonction ou la déclaration d'un point d'entrée ; `data` s'il ouvre la connexion à un stockage, le lit ou l'écrit ; `external` s'il construit le client d'un service extérieur ou d'une file, l'appelle ou publie un message ; `logic` sinon.
+6. **Ce qu'il porte** (facette `component`) : les points d'entrée servis (`entrypoints`), le nombre de fonctions de ses fichiers (`functions`), ce qu'il touche (`touches`) : les occurrences des liens du déployable écrites dans ses fichiers, par genre et par cible, avec leurs lignes. Les liens de la carte partent toujours du déployable.
+7. **Ses appels.** Un lien `call` va d'un module à un autre du même déployable, avec le nombre de lignes d'appel et ces lignes.
 
-   Le groupe de fonctionnalités d'un point d'entrée n'existe pas tant qu'aucune connaissance ne le déclare : on prend le composant qui porte sa fonction. Un déployable à un seul point d'entrée n'a pas de composants calculés.
-5. **Ce qu'il porte** (facette `component`) : les points d'entrée servis (`entrypoints`), le nombre de fonctions de ses fichiers (`functions`), et ce qu'il touche (`touches`) : les occurrences des liens du déployable écrites dans ses fichiers, par genre et par cible (entité, topic ou nœud), avec leurs lignes. Ces accès restent sur le composant : les liens de la carte partent toujours du déployable.
-6. **Ses appels.** Un lien `call` va d'un composant à un autre du même déployable, avec le nombre de lignes d'appel et ces lignes. Les occurrences ne portent pas de points d'entrée : ce ne sont pas des effets.
+Sur `api` d'atelier-api (18 points d'entrée) : `admin`, `auth`, `bookings`, `payments`, `jobs`, `webhooks`, `workshops`, `reviews`, `health`, et les fichiers de la racine `db` (le socle, couche données), `http`, `logger`, `queue` et `stripe` (couche client externe), `time`. Sur le serveur d'OpenArchiver, rangé par couches : `api` (6 fichiers d'entrée), `services`, `services/ingestion-connectors`, `database`, `jobs`.
 
-**Le nom** vient des fichiers, jamais d'un sens inventé : le nom du fichier seul ; le dossier quand le groupe tient dans un dossier et en contient tous les fichiers exécutés, sous-dossiers compris (`video/`) ; sinon le fichier de tête suivi du nombre des autres (`tutor.ts +2`). La tête est le fichier qui porte le plus de fonctions de points d'entrée, puis le plus appelé depuis l'extérieur du groupe. Deux têtes du même nom gardent autant de dossiers parents qu'il faut (`bookings/get.ts`, `workshops/get.ts`). L'`id` est un chemin, stable d'une carte à l'autre : `api:src/auth/session.ts`. Un nom métier ne peut venir que d'une connaissance déclarée.
-
-Exemple, la codebase `functions` de learn-app (16 points d'entrée) : `db.ts` est le socle (16 sur 16, ne touche aucune donnée lui-même) ; `telemetry.ts` (8) et `wallet.ts` (6, le seul composant à écrire `users/{}/wallet` et `users/{}/creditTx`) sont partagés ; les fichiers de la couche IA, servis par les mêmes 7 points d'entrée et qui s'appellent, se fondent dans le composant à contrat `functions/src/ai` ; `awa.ts +4` (la recherche), `tutor.ts +2` et `video/` (8 fichiers, 58 fonctions) sont propres à leur point d'entrée ; `access-mirror.ts` est propre aux trois fonctions d'`access.ts`. Sur `api` d'atelier-api (18 points d'entrée), chaque route a son fichier : `db.ts` est le socle, `session.ts` (10) et `http.ts` (11) sont partagés, `webhooks/stripe.ts +1` réunit le webhook et la confirmation qu'il est seul à appeler.
-
-Limites : celles de la portée ; deux fichiers qui servent presque les mêmes points d'entrée restent séparés ; un fichier sans fonction exécutée (un schéma, des types) n'apparaît dans aucun composant.
+Limites : celles de la portée ; un dossier rangé autrement que par fonctionnalité donne des modules par couche, c'est le rangement de l'équipe ; un fichier sans fonction exécutée (un schéma, des types) n'apparaît dans aucun module.
 
 ### Le déroulé d'un point d'entrée
 

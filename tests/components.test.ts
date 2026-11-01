@@ -92,27 +92,28 @@ const API = {
   "src/health.ts": `import { pool } from "./db";\nexport async function health(req, res) {\n  await pool.query("SELECT 1");\n  res.json({ ok: true });\n}\n`,
 };
 
-test("composants d'une API : un socle commun, une session partagée, une route et son aide propres", async () => {
+test("modules d'une API : un par dossier ou fichier à la racine ; le socle, la session partagée, chaque fichier avec sa couche", async () => {
   const m = await mapOf(API);
   const api = m.nodes.find((n) => n.level === "deployable" && n.facets.entrypoints?.some((e) => e.key === "POST /orders"))!;
   assert.deepEqual(comps(m, api.id).map(shape).sort(), [
-    "db.ts base 1f 5e", "get.ts own 1f 1e", "health.ts own 1f 1e", "items/create.ts own 1f 1e",
-    "list.ts own 1f 1e", "orders/create.ts +1 own 2f 1e", "session.ts shared 1f 3e",
+    "db base 1f 5e", "health own 1f 1e", "items own 2f 2e", "orders own 3f 2e", "session shared 1f 3e",
   ]);
-  // Calculé, et il le dit ; le nom vient des fichiers.
-  const session = comp(m, api.id, "session.ts");
+  // Calculé, et il le dit ; le nom vient du dossier, ou du fichier posé à la racine.
+  const session = comp(m, api.id, "session");
   assert.equal(session.status, "proposed");
   assert.equal(session.level, "component");
+  assert.equal(session.facets.component!.grouping, "folder");
   assert.deepEqual(keys(session), ["GET /orders/:id", "POST /items", "POST /orders"]);
-  // Le socle ne touche aucune donnée lui-même : chaque lecture est écrite chez son appelant.
-  assert.deepEqual(touches(comp(m, api.id, "db.ts")), []);
+  // Le socle ne touche aucune donnée lui-même : chaque lecture est écrite chez son appelant ; il ouvre la connexion.
+  assert.deepEqual(touches(comp(m, api.id, "db")), []);
+  assert.deepEqual(comp(m, api.id, "db").facets.component!.layers, { "src/db.ts": "data" });
   assert.deepEqual(touches(session), ["read sessions", "write sessions"]);
-  // La route et la fonction qu'elle seule appelle : un composant, nommé par le fichier de la route,
-  // avec son dossier parce qu'une autre tête s'appelle aussi create.ts.
-  assert.deepEqual(comp(m, api.id, "orders/create.ts +1").files, ["src/orders/create.ts", "src/orders/price.ts"]);
-  assert.deepEqual(touches(comp(m, api.id, "orders/create.ts +1")), ["write orders"]);
-  assert.ok(calls(m, api.id).includes("session.ts > db.ts ×2"), calls(m, api.id).join(" ; "));
-  assert.ok(calls(m, api.id).includes("orders/create.ts +1 > session.ts ×1"), calls(m, api.id).join(" ; "));
+  // Le dossier orders : ses routes et la fonction qu'elles seules appellent, chaque fichier avec sa couche.
+  const orders = comp(m, api.id, "orders");
+  assert.deepEqual(orders.files, ["src/orders/create.ts", "src/orders/get.ts", "src/orders/price.ts"]);
+  assert.deepEqual(orders.facets.component!.layers, { "src/orders/create.ts": "entry", "src/orders/get.ts": "entry", "src/orders/price.ts": "logic" });
+  assert.ok(calls(m, api.id).includes("session > db ×2"), calls(m, api.id).join(" ; "));
+  assert.ok(calls(m, api.id).some((c) => c.startsWith("orders > session ")), calls(m, api.id).join(" ; "));
   // M4 : une route n'exécute de la session que ce qu'elle appelle.
   const order = api.facets.entrypoints!.find((e) => e.key === "POST /orders")!;
   assert.deepEqual(order.files, ["src/db.ts", "src/orders/create.ts", "src/orders/price.ts", "src/session.ts"]);
@@ -176,31 +177,27 @@ test("portée au niveau des fonctions : un fichier importé par l'index mais jam
   assert.deepEqual(entry("ping").ranges, [[18, 21]]);
 });
 
-test("composants d'une codebase de fonctions : un sous-système de fichiers qui s'appellent, un index socle", async () => {
+test("modules d'une codebase de fonctions : un dossier par sous-système, l'index et le journal au socle", async () => {
   const m = await mapOf(FUNCTIONS);
   assert.deepEqual(comps(m, "functions").map(shape).sort(), [
-    "index.ts +1 base 2f 4e", "media/ own 2f 1e", "search/ shared 3f 2e",
+    "index base 1f 4e", "log base 1f 4e", "media own 2f 1e", "search shared 3f 2e",
   ]);
-  // Le dossier nomme un groupe qui en contient tous les fichiers exécutés ; il ne sert jamais à regrouper.
-  assert.deepEqual(comp(m, "functions", "search/").files, ["functions/src/search/engine.ts", "functions/src/search/rank.ts", "functions/src/search/tokens.ts"]);
-  assert.equal(comp(m, "functions", "search/").facets.component!.functions, 3);
-  // Jamais exécuté : dans aucun composant.
+  assert.deepEqual(comp(m, "functions", "search").files, ["functions/src/search/engine.ts", "functions/src/search/rank.ts", "functions/src/search/tokens.ts"]);
+  assert.equal(comp(m, "functions", "search").facets.component!.functions, 3);
+  // Jamais exécuté : dans aucun module.
   assert.ok(comps(m, "functions").every((c) => !c.files!.includes("functions/src/audit.ts")));
-  // L'index et ce qu'il appelle depuis chaque fonction servent les mêmes points d'entrée : un seul socle.
-  assert.deepEqual(comp(m, "functions", "index.ts +1").files, ["functions/src/index.ts", "functions/src/log.ts"]);
-  assert.deepEqual(calls(m, "functions"), ["index.ts +1 > media/ ×1", "index.ts +1 > search/ ×2"]);
+  assert.deepEqual(calls(m, "functions"), ["index > log ×4", "index > media ×1", "index > search ×2"]);
 });
 
-test("composants : un dossier qui mêle deux sous-systèmes n'est pas un composant", async () => {
+test("modules : un dossier reste le module que l'équipe a rangé, même quand un de ses fichiers sert ailleurs", async () => {
   const m = await mapOf({
     ...FUNCTIONS,
-    // media/encode.ts déménage dans search/ : même dossier, autres appels, autres points d'entrée.
+    // media/encode.ts déménage dans search/ : rangé avec la recherche, appelé par le rendu.
     "functions/src/media/render.ts": `import { encode } from "../search/encode";\nexport function render(data) {\n  return encode(data);\n}\n`,
     "functions/src/media/encode.ts": "",
     "functions/src/search/encode.ts": `export function encode(data) {\n  return JSON.stringify(data);\n}\n`,
   });
-  assert.deepEqual(comps(m, "functions").map(shape).sort(), [
-    "engine.ts +2 shared 3f 2e", "index.ts +1 base 2f 4e", "render.ts +1 own 2f 1e",
-  ]);
-  assert.deepEqual(comp(m, "functions", "render.ts +1").files, ["functions/src/media/render.ts", "functions/src/search/encode.ts"]);
+  assert.deepEqual(comp(m, "functions", "search").files, ["functions/src/search/encode.ts", "functions/src/search/engine.ts", "functions/src/search/rank.ts", "functions/src/search/tokens.ts"]);
+  assert.deepEqual(comp(m, "functions", "media").files, ["functions/src/media/render.ts"]);
+  assert.ok(calls(m, "functions").includes("media > search ×1"), calls(m, "functions").join(" ; "));
 });
