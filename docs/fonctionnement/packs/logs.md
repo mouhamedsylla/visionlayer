@@ -23,7 +23,7 @@ On regarde chaque argument : un objet (ses clés et ses valeurs), une variable, 
 | # | Forme | Exemple | État |
 |---|---|---|---|
 | W1 | le corps entier d'une requête HTTP | `logger.info({ body: req.body })` dans le code d'une route : `req` est le premier paramètre de la fonction | lu |
-| W2 | un champ nommé comme une donnée personnelle | `{ email }`, `{ userEmail: u.email }`, `console.log(user.phone)`, `` `${input.password}` `` : un mot du nom parmi `email`, `mail`, `password`, `passwd`, `phone`, `telephone`, `address`, `birthdate`, `birthday`, `ssn`, `iban` | lu |
+| W2 | un champ nommé comme une donnée personnelle | `{ email }`, `{ userEmail: u.email }`, `console.log(user.phone)`, `` `${input.password}` `` : un mot du nom parmi `email`, `mail`, `password`, `passwd`, `phone`, `telephone`, `address`, `birthdate`, `birthday`, `ssn`, `iban` ; sauf quand le dernier mot dit que ce n'est pas la valeur (`emailId`, `phoneVerified`, `mailCount` : un identifiant, un état, un nombre) | lu |
 | W3 | un journal qui masque des champs | `pino({ redact: ["req.body.password"] })` | lu : rien n'est affirmé pour ce journal |
 
 ## Hors pack, ou plus tard

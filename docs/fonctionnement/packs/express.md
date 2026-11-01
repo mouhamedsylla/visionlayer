@@ -12,6 +12,7 @@ Chaque forme a un exemple dans [tests/packs-express.test.ts](../../../tests/pack
 | A2 | un routeur | `express.Router()`, `Router()` importé, `Router({ mergeParams: true })` | lu |
 | A3 | un routeur créé dans un fichier, ses routes déclarées dans un autre | `import { router } from "./router"; router.get(…)` | lu |
 | A4 | une sous-app montée | `const admin = express(); app.use("/admin", admin)` | lu |
+| A5 | un routeur fabriqué par une fonction | `export const createMailRouter = (s) => { const router = Router(); …; return router; }`, puis `app.use("/v1/mail", createMailRouter(s))` ou par une variable qui garde l'appel | lu : la fonction désigne le routeur qu'elle rend ; deux fabriques d'un même fichier qui nomment leur routeur pareil se confondent |
 
 ## Déclarer une route
 

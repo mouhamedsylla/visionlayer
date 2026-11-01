@@ -43,6 +43,7 @@ test("logs J3 W2 W3 : winston, champs personnels, journal qui masque", async () 
       `  logger.info({ count: users.filter((u) => u.email).length });`,
       `  safe.info({ email: user.email });`,
       `  logger.info("password reset requested");`,
+      `  logger.info({ emailId: input.id, phoneVerified: true, mailCount: 3 });`,
       `}`,
     ].join("\n"),
   });

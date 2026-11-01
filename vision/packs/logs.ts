@@ -17,8 +17,13 @@ const LEVELS = new Set(["log", "trace", "debug", "info", "warn", "error", "fatal
 const PERSONAL = new Set(["email", "mail", "password", "passwd", "phone", "telephone", "address", "birthdate", "birthday", "ssn", "iban"]);
 
 /** Un nom dont un des mots désigne une donnée personnelle : userEmail, phone_number, passwordHash. */
+const NOT_THE_VALUE = new Set(["id", "ids", "uid", "count", "length", "verified", "valid", "exists", "status", "type", "provider", "enabled"]);
+
 export function personal(name: string): boolean {
-  return name.replace(/([a-z0-9])([A-Z])/g, "$1 $2").split(/[\s_-]+/).some((w) => PERSONAL.has(w.toLowerCase()));
+  const words = name.replace(/([a-z0-9])([A-Z])/g, "$1 $2").split(/[\s_-]+/).map((w) => w.toLowerCase());
+  // emailId, mail_count, phoneVerified : l'identifiant, le nombre ou l'état d'une donnée personnelle n'en est pas une.
+  if (words.length > 1 && NOT_THE_VALUE.has(words.at(-1)!)) return false;
+  return words.some((w) => PERSONAL.has(w));
 }
 
 const script: PackScript = ({ file, root, imports, fact }) => {

@@ -43,12 +43,11 @@ test("node-package S3 S4 : un script qui en appelle d'autres, seul, en chaîne o
   ]);
 });
 
-test("node-package S5 S6 S7 : le script d'un autre paquet, par son nom ou son dossier ; pas un motif", async () => {
+test("node-package S5 S6 : le script d'un autre paquet, par son nom ou son dossier", async () => {
   const files = {
     "package.json": JSON.stringify({ scripts: {
       byName: "pnpm --filter @app/web start", short: "pnpm -F @app/web start", yarnWs: "yarn workspace @app/web start",
       npmWs: "npm run start -w @app/web", byDir: "pnpm --filter ./apps/web start", npmDir: "npm run start --workspace=apps/web",
-      glob: 'pnpm --filter "./apps/*" start',
     } }),
     "apps/web/package.json": JSON.stringify({ name: "@app/web", scripts: { start: "node dist/main.js" } }),
     "apps/web/src/main.ts": code,
@@ -57,6 +56,37 @@ test("node-package S5 S6 S7 : le script d'un autre paquet, par son nom ou son do
     "byDir → apps/web/src/main.ts", "byName → apps/web/src/main.ts", "npmDir → apps/web/src/main.ts",
     "npmWs → apps/web/src/main.ts", "short → apps/web/src/main.ts", "yarnWs → apps/web/src/main.ts",
   ]);
+});
+
+test("node-package S7 : plusieurs paquets à la fois, par motif de dossier ou de nom, -r, et les exclusions", async () => {
+  const files = {
+    "package.json": JSON.stringify({ scripts: {
+      dirGlob: 'dotenv -- pnpm --filter "./packages/*" --parallel start',
+      nameGlob: 'pnpm --filter "@oa/*" start',
+      deep: 'pnpm --filter "./packages/**" start',
+      braces: 'pnpm --filter "{./packages/*}" start',
+      rec: "pnpm -r start",
+      except: 'pnpm --filter "./packages/*" --filter "!./packages/enterprise" start',
+      exceptName: 'pnpm --filter "!@oa/enterprise" start',
+      two: 'pnpm --filter @oa/backend --filter "./apps/*" start',
+      both: 'concurrently "pnpm --filter \'!./packages/enterprise\' -r start" "pnpm --filter ./packages/enterprise start"',
+      graph: "pnpm --filter @oa/backend... start",
+    } }),
+    "packages/backend/package.json": JSON.stringify({ name: "@oa/backend", scripts: { start: "node dist/index.js" } }),
+    "packages/backend/src/index.ts": code,
+    "packages/enterprise/package.json": JSON.stringify({ name: "@oa/enterprise", scripts: { start: "node dist/ee.js" } }),
+    "packages/enterprise/src/ee.ts": code,
+    "apps/web/package.json": JSON.stringify({ name: "web", scripts: { start: "node dist/web.js" } }),
+    "apps/web/src/web.ts": code,
+  };
+  const be = "packages/backend/src/index.ts", ee = "packages/enterprise/src/ee.ts", web = "apps/web/src/web.ts";
+  const got = await launched(files);
+  const want = [
+    ...[be, ee].map((f) => `dirGlob → ${f}`), ...[be, ee].map((f) => `nameGlob → ${f}`), ...[be, ee].map((f) => `deep → ${f}`),
+    ...[be, ee].map((f) => `braces → ${f}`), ...[be, ee, web].map((f) => `rec → ${f}`), `except → ${be}`, ...[be, web].map((f) => `exceptName → ${f}`),
+    ...[be, web].map((f) => `two → ${f}`), ...[be, web, ee].map((f) => `both → ${f}`),
+  ];
+  assert.deepEqual(got.sort(), want.sort());
 });
 
 test("node-package : une image qui lance un script qui en lance d'autres a ses points d'entrée", async () => {

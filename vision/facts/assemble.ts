@@ -196,6 +196,16 @@ export function assemble(db: Database, opts: AssembleOptions): ArchModelV2 {
     nodes.push(node);
   }
 
+  // Plusieurs programmes lancés par un même manifeste portent son nom : chacun reçoit en plus le fichier qu'il lance.
+  const deployables = nodes.filter((n) => n.level === "deployable");
+  const short = (x: ArchNode) => x.subtitle!.split(" · ")[0]!.split("/").pop()!.replace(/\.[cm]?[jt]sx?$/, "");
+  const renamed = deployables.map((n) => {
+    const twins = deployables.filter((o) => o.name === n.name);
+    if (twins.length < 2) return n.name;
+    return `${n.name} (${twins.filter((o) => short(o) === short(n)).length > 1 ? n.subtitle!.split(" · ")[0]! : short(n)})`;
+  });
+  deployables.forEach((n, i) => { n.name = renamed[i]!; });
+
   /* --- Stockages et canaux : par image, par pilote, par entités déclarées ---- */
   const stores = new Map<string, { name?: string; display?: string; role?: ArchNode["role"]; shape?: string; proof: Proof[] }>();
   const store = (tech: string) => stores.get(tech) ?? stores.set(tech, { proof: [] }).get(tech)!;

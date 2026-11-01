@@ -1,6 +1,6 @@
 import type { PackScript } from "../facts/packs.js";
 import type { FileFact } from "../facts/types.js";
-import { args, isFunction, literal, topLevelFunctions, unwrap, walkAll, type Node } from "../arch/ast.js";
+import { args, isFunction, literal, returnedExpressions, topLevelFunctions, unwrap, walkAll, type Node } from "../arch/ast.js";
 import { packageName } from "../stack/build.js";
 
 /**
@@ -18,6 +18,8 @@ import { packageName } from "../stack/build.js";
  * static_on(Fichier, Objet, Préfixe, Ligne)           obj.use("/static", express.static("public"))
  * use_covers(Fichier, Objet, MÉTHODE, Chemin, Intermédiaire, Ligne)
  *                                                     obj.use([préfixe], mw) placé avant la route, dont le préfixe couvre son chemin
+ * ex_returns(Fichier, Fonction, Nom)                 une fonction de premier niveau qui rend un objet : `return router` (un routeur fabriqué)
+ * ex_call_bind(Fichier, Nom, Fonction)               const nom = fonction(…) : la valeur d'un appel, gardée dans une variable
  * admin_word(Fichier, Chemin)                         un chemin ou un préfixe dont un morceau commence par « admin »
  * status_in(Fichier, LigneFonction, 401|403)          une fonction qui répond 401 ou 403 : throw new HttpError(403), res.status(403)…
  * calls_in(Fichier, LigneFonction, Appelé, Ligne)     une fonction (de premier niveau, ou écrite en argument) qui appelle `Appelé(…)`
@@ -59,6 +61,24 @@ const script: PackScript = ({ file, root, imports, fact }) => {
       }
     });
   }
+  // Un routeur fabriqué par une fonction : `export const createRouter = (c) => { const router = Router(); …; return router; }`.
+  if (fileImportsExpress) for (const [name, fn] of topLevelFunctions(root)) {
+    for (const r of returnedExpressions(fn)) {
+      const v = unwrap(r);
+      if (v?.type === "identifier") out.push(fact("ex_returns", [file.path, name, v.text], line(v)));
+    }
+  }
+  // const archivedEmailRouter = createArchivedEmailRouter(…) : la variable vaut ce que rend la fonction.
+  for (const stmt of root.namedChildren) {
+    const decl = stmt.type === "export_statement" ? stmt.childForFieldName("declaration") ?? stmt.namedChildren[0] : stmt;
+    if (decl?.type !== "lexical_declaration" && decl?.type !== "variable_declaration") continue;
+    for (const d of decl.namedChildren) {
+      const name = d.childForFieldName("name"), value = unwrap(d.childForFieldName("value") ?? undefined);
+      const callee = value?.type === "call_expression" ? value.childForFieldName("function") : undefined;
+      if (name?.type === "identifier" && callee?.type === "identifier") out.push(fact("ex_call_bind", [file.path, name.text, callee.text], line(d)));
+    }
+  }
+
   // export default router : le nom par défaut désigne le même objet.
   for (const stmt of root.namedChildren) {
     if (stmt.type !== "export_statement" || !stmt.text.startsWith("export default")) continue;

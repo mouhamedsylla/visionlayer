@@ -211,6 +211,7 @@ export const CATALOG: CatalogEntry[] = [
   { id: "drizzle", name: "Drizzle ORM", category: "database", icon: "drizzle", npm: ["drizzle-orm", "drizzle-kit"] },
   { id: "sqlalchemy", name: "SQLAlchemy", category: "database", icon: "sqlalchemy", pypi: ["sqlalchemy"] },
   { id: "elasticsearch", name: "Elasticsearch", category: "database", icon: "elasticsearch", npm: ["@elastic/elasticsearch"], images: ["elasticsearch", "elastic/elasticsearch"] },
+  { id: "meilisearch", name: "Meilisearch", category: "database", icon: "meilisearch", npm: ["meilisearch"], images: ["getmeili/meilisearch"] },
   { id: "rabbitmq", name: "RabbitMQ", category: "database", icon: "rabbitmq", npm: ["amqplib"], images: ["rabbitmq"] },
   { id: "kafka", name: "Apache Kafka", category: "database", icon: "apachekafka", npm: ["kafkajs"], images: ["confluentinc/cp-kafka", "bitnami/kafka", "apache/kafka"] },
   { id: "minio", name: "MinIO", category: "database", icon: "minio", images: ["minio/minio", "minio"] },

@@ -68,6 +68,31 @@ test("express A2 A3 A4 R9 R10 R11 R12 : routeurs d'autres fichiers, préfixes im
   assert.deepEqual(routes(m), ["GET /admin", "GET /api", "GET /api/v1/stats", "GET /healthz", "GET /static/*"]);
 });
 
+test("express A5 : un routeur fabriqué par une fonction, monté par sa variable ou par l'appel lui-même", async () => {
+  const m = await mapOf({ ...SERVER,
+    "server.ts": [
+      `import express from "express";`,
+      `import { createMailRouter } from "./routes/mail";`,
+      `import { createUserRouter } from "./routes/user";`,
+      `const app = express();`,
+      `const mailRouter = createMailRouter(service);`,
+      `app.use("/v1/mail", mailRouter);`,
+      `app.use("/v1/users", createUserRouter());`,
+    ].join("\n"),
+    "routes/mail.ts": [
+      `import { Router } from "express";`,
+      `export const createMailRouter = (service: unknown): Router => {`,
+      `  const router = Router();`,
+      `  router.get("/:id", (req, res) => res.end());`,
+      `  router.delete("/:id", (req, res) => res.end());`,
+      `  return router;`,
+      `};`,
+    ].join("\n"),
+    "routes/user.ts": `import express from "express";\nexport function createUserRouter() {\n  const r = express.Router();\n  r.get("/:id", (req, res) => res.end());\n  return r;\n}\n`,
+  });
+  assert.deepEqual(routes(m), ["DELETE /v1/mail/:id", "GET /v1/mail/:id", "GET /v1/users/:id"]);
+});
+
 test("express H1 H3 H4 : le code d'une route, nommé, enveloppé, membre d'un module", async () => {
   const m = await mapOf({ ...SERVER,
     "server.ts": [
