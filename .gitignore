@@ -15,3 +15,6 @@ coverage/
 **/.vision/*
 !**/.vision/infra.yaml
 tests/corpus/controle/*/checkout/
+
+# A symlink named node_modules is not matched by node_modules/
+node_modules
