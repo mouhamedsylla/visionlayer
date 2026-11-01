@@ -27,8 +27,9 @@ const cols = (...parts: (string | undefined | false)[]) => `  ${parts.filter(Boo
  * ligne commence par le nom à donner à `vision_slice`. L'agent choisit selon
  * le sens de sa tâche ; la carte ne devine rien.
  */
-export function buildSummary(index: MapIndex, opts: { block?: string; knowledge?: KnowledgeReport; workspace?: string[]; localPacks?: PackState[] } = {}): string {
+export function buildSummary(index: MapIndex, given: { block?: string; knowledge?: KnowledgeReport; workspace?: string[]; localPacks?: PackState[] } = {}): string {
   const { model } = index;
+  const opts = { ...given, ...(given.block ? { block: index.nodeId(given.block) } : {}) };
   const out: string[] = [`SOMMAIRE ${model.system.name}`, "Choisis ce qui concerne ta tâche, puis demande sa tranche à vision_slice avec les noms de la première colonne.", ""];
   const entries = index.entries.filter((e) => e.kind !== "main" && (!opts.block || e.node === opts.block));
 
@@ -60,7 +61,7 @@ export function buildSummary(index: MapIndex, opts: { block?: string; knowledge?
     for (const n of model.nodes.filter((n) => n.level === "deployable")) {
       const own = entries.filter((e) => e.node === n.id).length;
       const tables = n.facets.data?.entities.length ?? 0;
-      out.push(cols(n.id, `${n.role}${own ? `, ${own} points d'entrée` : ""}${tables ? `, ${tables} tables` : ""}`));
+      out.push(cols(n.name, `${n.role}${own ? `, ${own} points d'entrée` : ""}${tables ? `, ${tables} tables` : ""}`));
     }
     return out.join("\n");
   }
@@ -70,7 +71,7 @@ export function buildSummary(index: MapIndex, opts: { block?: string; knowledge?
     const name = index.entryName(e);
     const key = name === e.key ? "" : e.key;
     const handler = e.handler ? `${e.kind === "http" ? e.handler.name + " " : ""}${at(e.handler)}` : at(e.proof);
-    out.push(cols(name, e.kind, e.node, key, handler, e.kind === "http" && e.access && guardText(e.access)));
+    out.push(cols(name, e.kind, index.nodeName(e.node), key, handler, e.kind === "http" && e.access && guardText(e.access)));
   }
 
   const entities = index.entities.filter((t) => !opts.block || t.node === opts.block || index.occurrences("write", { entity: t.name }).some((o) => o.node === opts.block));
@@ -88,7 +89,7 @@ export function buildSummary(index: MapIndex, opts: { block?: string; knowledge?
     out.push("", "FILES ET MESSAGES");
     for (const t of index.topics) {
       const producers = index.occurrences("message", { topic: t.name }).length;
-      const consumers = index.entries.filter((e) => e.kind === "message" && e.key === t.name).map((e) => `${index.entryName(e)} (${e.node})`);
+      const consumers = index.entries.filter((e) => e.kind === "message" && e.key === t.name).map((e) => `${index.entryName(e)} (${index.nodeName(e.node)})`);
       out.push(cols(t.name, `${producers ? `déposé à ${producers} endroit${producers > 1 ? "s" : ""}` : "aucun dépôt lu"}, traité par ${consumers.join(", ") || "rien de lu"}`));
     }
   }

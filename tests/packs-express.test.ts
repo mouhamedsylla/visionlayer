@@ -78,6 +78,7 @@ test("express A5 : un routeur fabriqué par une fonction, monté par sa variable
       `const mailRouter = createMailRouter(service);`,
       `app.use("/v1/mail", mailRouter);`,
       `app.use("/v1/users", createUserRouter());`,
+      `app.use(\`/\${config.api.version}/admin\`, createUserRouter());`,
     ].join("\n"),
     "routes/mail.ts": [
       `import { Router } from "express";`,
@@ -90,7 +91,8 @@ test("express A5 : un routeur fabriqué par une fonction, monté par sa variable
     ].join("\n"),
     "routes/user.ts": `import express from "express";\nexport function createUserRouter() {\n  const r = express.Router();\n  r.get("/:id", (req, res) => res.end());\n  return r;\n}\n`,
   });
-  assert.deepEqual(routes(m), ["DELETE /v1/mail/:id", "GET /v1/mail/:id", "GET /v1/users/:id"]);
+  // Un préfixe calculé garde sa partie calculée entre accolades, au lieu de disparaître.
+  assert.deepEqual(routes(m), ["DELETE /v1/mail/:id", "GET /v1/mail/:id", "GET /v1/users/:id", "GET /{config.api.version}/admin/:id"]);
 });
 
 test("express H1 H3 H4 : le code d'une route, nommé, enveloppé, membre d'un module", async () => {

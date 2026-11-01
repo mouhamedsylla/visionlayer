@@ -30,6 +30,7 @@ Chaque forme a un exemple dans [tests/packs-express.test.ts](../../../tests/pack
 | R10 | des routeurs imbriqués | `router.use("/v1", sub)` | lu |
 | R11 | un routeur monté sans préfixe | `app.use(router)` | lu |
 | R12 | des fichiers servis | `app.use("/static", express.static("public"))` : `GET /static/*` | lu |
+| R13 | un préfixe ou un chemin calculé par un gabarit | ``app.use(`/${config.api.version}/auth`, r)`` | lu : la partie calculée reste écrite entre accolades, `/{config.api.version}/auth` |
 
 ## Le code d'une route
 

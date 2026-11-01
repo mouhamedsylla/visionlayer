@@ -29,6 +29,16 @@ export class MapIndex {
     this.topics = model.nodes.flatMap((n) => (n.facets.channel?.topics ?? []).map((t) => ({ node: n.id, name: t.name, proof: t.proof })));
   }
 
+  /** Le nom d'un nœud, tel que l'agent le lit (`docker (ingestion.worker)`), à la place de son identifiant. */
+  nodeName(id: string): string {
+    return this.model.nodes.find((n) => n.id === id)?.name ?? id;
+  }
+
+  /** Un bloc donné par son nom ou son identifiant. */
+  nodeId(nameOrId: string): string {
+    return this.model.nodes.find((n) => n.id === nameOrId || n.name === nameOrId)?.id ?? nameOrId;
+  }
+
   /** La fonction du dépôt dont les lignes contiennent cette adresse (la plus courte si elles s'emboîtent). */
   functionAt(p: { path: string; line: number }): CodeFunction | undefined {
     return this.functions

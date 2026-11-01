@@ -213,6 +213,13 @@ function pathsOf(n: Node | undefined): string[] | undefined {
   const lit = literal(x);
   if (lit !== undefined) return lit.startsWith("/") || lit === "*" ? [lit] : undefined;
   if (x.type === "regex") return [x.text];
+  // `/${config.api.version}/auth` : le morceau calculé reste écrit entre accolades, le préfixe n'est pas perdu.
+  if (x.type === "template_string") {
+    const text = x.namedChildren.length
+      ? x.text.slice(1, -1).replace(/\$\{\s*([^}]*?)\s*\}/g, "{$1}")
+      : x.text.slice(1, -1);
+    return text.startsWith("/") ? [text] : undefined;
+  }
   if (x.type === "array") {
     const all = x.namedChildren.map((c) => pathsOf(c));
     return all.every((p) => p) ? all.flat() as string[] : undefined;

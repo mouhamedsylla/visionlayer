@@ -69,7 +69,7 @@ server.registerTool(
     description:
       "À appeler en premier, avant de chercher dans le code. Une ligne par élément du système, sans code : points d'entrée (routes, tâches planifiées, consommateurs de messages) avec leur fonction et leur garde, tables avec le nombre d'écritures et de lectures, files, constats, ce qui n'est pas lu. Choisis ce qui concerne ta tâche, puis appelle vision_slice avec les noms de la première colonne.",
     inputSchema: {
-      block: z.string().optional().describe("Sur un grand système : ne donner que ce bloc (id de la première colonne de la liste des blocs)"),
+      block: z.string().optional().describe("Sur un grand système : ne donner que ce bloc (son nom, première colonne de la liste des blocs)"),
       root: z.string().optional().describe("Racine du dépôt (défaut : le dossier d'où le serveur a été lancé)"),
     },
   },

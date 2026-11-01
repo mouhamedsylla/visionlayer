@@ -111,7 +111,7 @@ export function buildSlice(index: MapIndex, handles: string[], opts: { knowledge
     if (entriesIn.has(e.id)) return;
     entriesIn.add(e.id);
     const name = index.entryName(e);
-    add(dist, `Point d'entrée ${name}`, e.proof, `${e.kind} ${e.key} dans ${e.node}${e.handler ? `, code : ${e.handler.name} (${at(e.handler)})` : ""}`);
+    add(dist, `Point d'entrée ${name}`, e.proof, `${e.kind} ${e.key} dans ${index.nodeName(e.node)}${e.handler ? `, code : ${e.handler.name} (${at(e.handler)})` : ""}`);
     if (e.handler) keepFn(e.handler);
     if (e.access) add(dist, `Point d'entrée ${name}`, e.access.proof ?? e.access.by ?? e.proof, `garde : ${guardText(e.access)}${e.access.by ? ` par ${e.access.by.name}` : ""}`);
     else if (e.kind === "http") add(dist, `Point d'entrée ${name}`, e.proof, "garde : aucune trouvée");
@@ -124,7 +124,7 @@ export function buildSlice(index: MapIndex, handles: string[], opts: { knowledge
       }
       for (const [, os] of others) {
         const g = os[0]!.access!;
-        add(dist + 1, `Autres gardes de ${e.node}`, g.by, `${guardText(g)} par ${g.by!.name}, employée par ${os.map((o) => index.entryName(o)).join(", ")}`);
+        add(dist + 1, `Autres gardes de ${index.nodeName(e.node)}`, g.by, `${guardText(g)} par ${g.by!.name}, employée par ${os.map((o) => index.entryName(o)).join(", ")}`);
       }
     }
     for (const by of entryNames(e.calledBy)) add(dist + 1, `Point d'entrée ${name}`, undefined, `déclenché par ${by}`);
@@ -138,7 +138,7 @@ export function buildSlice(index: MapIndex, handles: string[], opts: { knowledge
     add(dist, `Fonction ${f.name}`, f.proof, `${f.name}, lignes ${f.proof.line} à ${f.end}`);
     for (const c of f.calledFrom ?? []) add(dist + 1, `Fonction ${f.name}`, c.proof, `appelée${c.fn ? ` par ${c.fn}` : ""}`);
     const reaching = index.entries.filter((e) => e.flow?.some((s) => s.kind === "invoke" && s.name === f.name) && e.files?.includes(f.proof.path));
-    for (const e of reaching) add(dist + 1, `Fonction ${f.name}`, e.proof, `exécutée par ${index.entryName(e)} (${e.node})`);
+    for (const e of reaching) add(dist + 1, `Fonction ${f.name}`, e.proof, `exécutée par ${index.entryName(e)} (${index.nodeName(e.node)})`);
     walkFlow(dist, `Déroulé de ${f.name}`, f.flow);
   };
 
