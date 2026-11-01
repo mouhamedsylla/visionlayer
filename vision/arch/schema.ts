@@ -168,6 +168,7 @@ const node = S({
   parent: z.string().optional(),
   tech: z.array(z.string()).optional(),
   subtitle: z.string().optional(),
+  summary: z.string().optional(),
   status: z.enum(["extracted", "proposed", "declared"]),
   proof: z.array(proof),
   files: z.array(z.string()).optional(),

@@ -421,6 +421,8 @@ export interface ArchNode {
   tech?: string[];
   /** Sous-titre factuel court. */
   subtitle?: string;
+  /** Ce que fait le bloc, en une phrase calculée depuis ses faits (context.ts) : « expose 15 routes, dont 8 gardées ; … ». */
+  summary?: string;
   status: NodeStatus;
   /** D'où vient le nœud (fichier de déploiement, ou premier usage dans le code). */
   proof: Proof[];

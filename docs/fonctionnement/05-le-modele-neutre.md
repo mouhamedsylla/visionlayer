@@ -132,6 +132,19 @@ Les méthodes des classes de premier niveau sont des fonctions comme les autres,
 Sur OpenArchiver, écrit en contrôleurs et services, les routes qui ont un déroulé passent de 2 sur 21 à 16 sur 21. Une interface implémentée par plusieurs classes n'est pas tranchée : le Contrat la montre.
 Limites : une fonction passée en valeur n'est suivie que si un fichier exécuté l'importe par son nom ; un appel à travers une variable locale qu'aucun type ne nomme (`const s = getSender(); s.send()`) n'est pas suivi au-delà de ce qui le construit ; une valeur lue sans appel (une constante, un type, `config.X`) ne fait pas entrer son fichier dans la portée.
 
+### Le contexte : acteurs et phrases
+
+Code : [vision/facts/context.ts](../../vision/facts/context.ts). Le niveau contexte de C4 dit qui se sert du système. Les acteurs viennent des gardes des routes HTTP :
+- une route sans garde est ouverte au **Visiteur** ;
+- une route gardée par une connexion, à l'**Utilisateur connecté** ;
+- une route gardée par un rôle, à ce rôle (« Rôle admin »), ou à l'« Utilisateur avec un rôle » quand le code ne le nomme pas.
+
+Un appel signé vient d'un service extérieur déjà sur la carte (le webhook de Stripe), une route interne d'un autre programme : ni l'un ni l'autre n'est une personne. Un acteur est un nœud `system` de rôle `actor`, `status: "proposed"`, relié par un lien `call` aux programmes qu'il atteint, une occurrence par route.
+
+Chaque bloc reçoit une phrase (`summary`) calculée depuis ses faits, sans modèle de langage : « expose 15 routes, dont 9 gardées ; lance 3 tâches planifiées ; écrit dans 9 tables et en lit 7 ; publie sur « emails » ; appelle Stripe ». Un stockage dit ses tables et qui les écrit, une file qui la remplit et qui elle réveille.
+
+Un même service ne fait qu'un bloc : le client d'un service qui est déjà un stockage sur la carte (un moteur de recherche qu'on écrit et qu'on lit) mène à ce stockage.
+
 ### Les modules
 
 Entre le déployable et la fonction, un **module** est le découpage que l'équipe a rangé dans ses dossiers, et ce que l'exécution en fait ([vision/facts/components.ts](../../vision/facts/components.ts)). C'est ce qu'un ingénieur cherche d'abord (« où est le paiement ? »), puis la couche de chaque fichier (« où est l'accès à la base ? ») : le niveau composant de C4. Le nœud est au niveau `component`, de rôle `module`, rattaché à son déployable (`parent`), avec `status: "proposed"` : le regroupement est calculé, pas déclaré.

@@ -56,3 +56,13 @@ Le 31/10/2026, sur une copie d'atelier-api, en trois essais (0,83 $ en tout). Le
 - **Essai 1, faux.** Le pack passait ses tests, mais affirmait « signed-cookie » parce que `cookieParser(secret)` est monté, alors que le code lit `req.cookies` et pose un cookie non signé. Des tests verts ne suffisent pas : c'est l'aperçu sur le projet, devant un humain, qui l'a montré.
 - **La fiche corrigée** (« installé n'est pas employé », « une valeur lue hors d'une garde peut n'être qu'une préférence »), les essais 2 et 3 sont justes sur atelier-api, et le troisième l'est aussi à l'aveugle sur OpenArchiver.
 - **Limites du pack retenu** : la requête est reconnue par le nom `req` ou `request`, et la lecture n'est pas rattachée à une garde.
+
+## Du « non lu » au lu : Meilisearch sur OpenArchiver (01/11)
+
+Sur la carte d'OpenArchiver, Meilisearch, le moteur de recherche de l'app, était un bloc « image non lue » : trois programmes l'importaient, rien ne disait ce qu'ils en faisaient. C'est l'entrée de l'écrivain : la fiche est faite depuis le README et les types installés dans le paquet `backend` (la fiche cherche maintenant dans le `node_modules` de chaque paquet du dépôt).
+
+**Premier essai, 0,41 $ : un pack juste pour la documentation, muet sur le projet.** Il ne lisait que les formes du README : `const client = new MeiliSearch()`, puis `client.index("films")`. OpenArchiver range le client dans un champ de classe (`this.client = new MeiliSearch()`) et reçoit le nom de l'index en paramètre, la forme courante d'un service qui enveloppe une bibliothèque. La fiche disait aussi : « ce qu'un lecteur statique ne peut pas trancher n'émet rien ». C'était contraire à notre règle : une carte qui se tait sur un appel réel ment autant qu'une carte qui invente.
+
+**La fiche corrigée** demande d'émettre l'appel et l'emploi du service avec ce qui est écrit, et `unresolved(…, path_dynamic, …)` à la place d'un nom calculé ; et de ne pas faire dépendre un fait d'une chaîne de variables qu'un code enveloppé casse : une méthode propre à la technologie appelée dans un fichier qui l'importe suffit.
+
+**Second essai, 0,33 $, 8 échanges :** le bloc Meilisearch est lu (le client à `SearchService.ts:9`), le serveur, le worker d'indexation et celui d'ingestion l'appellent (à partir de `SearchService.ts:33`), et les 5 noms d'index passés en paramètre sont comptés comme chemins calculés. Meilisearch n'est plus un pack manquant : un pack couvre la technologie qui porte son identifiant.

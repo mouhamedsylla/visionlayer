@@ -6,6 +6,7 @@ import { attributeComponents } from "./components.js";
 import { entityDetails } from "./entity-detail.js";
 import { addUnread, shortName } from "./unread.js";
 import { methodResolver } from "./methods.js";
+import { addActors, describe } from "./context.js";
 import { contractDetails } from "./contract-detail.js";
 import type {
   ArchEdge, ArchModelV2, ArchNode, Coverage, EdgeKind, Entrypoint, EntrypointKind, Finding, Occurrence, Proof,
@@ -320,6 +321,9 @@ export function assemble(db: Database, opts: AssembleOptions): ArchModelV2 {
   }
   for (const [pkg, proof] of [...externalClients].sort(([a], [b]) => a.localeCompare(b))) {
     const info = externalInfo.get(pkg)!;
+    // Un même service ne fait qu'un bloc : un client d'un stockage déjà sur la carte (un moteur de recherche qu'on écrit et qu'on lit) y mène.
+    const asStore = nodeIdOf.get(`store:${info.tech}`);
+    if (asStore) { nodeIdOf.set(`external:${pkg}`, asStore); continue; }
     const id = usedIds.has(info.tech) ? `external:${info.tech}` : info.tech;
     usedIds.add(id);
     nodeIdOf.set(`external:${pkg}`, id);
@@ -340,7 +344,7 @@ export function assemble(db: Database, opts: AssembleOptions): ArchModelV2 {
   const unreadGaps = addUnread({
     db, present, nodes, usedIds, edge,
     reached: new Set([...reachOf.values()].flat()),
-    packTech: new Set(opts.packs.flatMap((p) => p.tech)),
+    packTech: packTechOf(opts.packs),
     deployablesOf: (file) => deployableOf(file).map((r) => nodeIdOf.get(r)!),
   });
 
@@ -516,6 +520,12 @@ export function assemble(db: Database, opts: AssembleOptions): ArchModelV2 {
   // Les composants, une fois les occurrences rattachées : leurs liens entre eux ne sont pas des étapes de déroulé.
   for (const e of attributeComponents(nodes, [...edges.values()], graph, reaches)) edges.set(e.id, e);
 
+  // Le niveau contexte : les acteurs tirés des gardes, puis une phrase par bloc (context.ts).
+  const linked = [...edges.values()];
+  addActors(nodes, linked);
+  for (const e of linked) if (!edges.has(e.id)) edges.set(e.id, e);
+  describe(nodes, [...edges.values()]);
+
   /* --- Constats établis sur la carte (docs/fonctionnement/constats.md) ------------- */
   const findings: Finding[] = [];
   // Une route qu'aucun code du dépôt n'appelle : seulement pour un service dont le dépôt contient au moins un client.
@@ -576,7 +586,7 @@ export function assemble(db: Database, opts: AssembleOptions): ArchModelV2 {
   const unread = [...present].filter((f) => UNREAD_CODE.test(f));
   const byExt = new Map<string, number>();
   for (const f of unread) byExt.set(f.slice(f.lastIndexOf(".")), (byExt.get(f.slice(f.lastIndexOf("."))) ?? 0) + 1);
-  const packTech = new Set(opts.packs.flatMap((p) => p.tech));
+  const packTech = packTechOf(opts.packs);
   const missing = new Map<string, { count: number; proof: Proof; where: Proof[] }>();
   for (const t of rows("imports_pkg")) {
     for (const entry of techsForPackage("npm", s(t.args[2]))) {
@@ -631,6 +641,11 @@ function packageName(rows: (rel: string) => readonly { args: readonly Value[] }[
   const clean = nearest.map((t) => String(t.args[1]).replace(/^(start|run|serve):/, "").replace(/:(dev|prod|watch)$/, ""));
   const own = clean.find((c) => !/^(start|dev|serve|main|prod|watch)$/.test(c));
   return own ?? (shortName(names.get(String(nearest[0]!.args[0])) ?? "") || undefined);
+}
+
+/** Les technologies que les packs lisent : celles qu'ils déclarent, et celle qui porte leur identifiant (un pack écrit pour `meilisearch`). */
+function packTechOf(packs: Pack[]): Set<string> {
+  return new Set(packs.flatMap((p) => [...p.tech, p.id]));
 }
 
 /** Le texte d'un constat établi par les règles : son code, le détail que la règle donne, le nom de ce qu'il concerne. */
