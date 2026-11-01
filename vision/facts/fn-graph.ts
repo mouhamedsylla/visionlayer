@@ -1,5 +1,6 @@
 import type { Proof } from "../arch/types.js";
 import type { Tuple, Value } from "./datalog.js";
+import { methodResolver } from "./methods.js";
 
 /**
  * Le graphe d'exécution du dépôt, au niveau des fonctions de premier niveau :
@@ -18,7 +19,8 @@ import type { Tuple, Value } from "./datalog.js";
  *   instantiates(F, Fn, Classe, L)       `new SmtpSender()` : le fichier de la classe.
  *
  * Ce qui n'est pas vu : une fonction passée en valeur (`items.map(format)`),
- * appelée par une méthode de classe ou à travers une variable locale.
+ * ou à travers une variable locale qu'aucun type ne nomme. Les méthodes des classes sont des fonctions
+ * (`Classe.méthode`), reliées par methods.ts.
  */
 
 export interface FnSpan { path: string; name: string; start: number; end: number }
@@ -78,8 +80,12 @@ export function fnGraph(rows: (rel: string) => readonly Tuple[]): FnGraph {
     const sp = to && enclosing(to.path, to.line);
     if (sp) add(spans.get(path)?.find((x) => x.start === start), { to: fnId(sp), proof: proofOf(t, path, line) });
   }
+  const methodOf = methodResolver(rows);
   for (const t of rows("member_call")) {
-    const [path, root, , line] = [s(t.args[0]), s(t.args[1]), s(t.args[2]), Number(t.args[3])];
+    const [path, root, chain, line] = [s(t.args[0]), s(t.args[1]), s(t.args[2]), Number(t.args[3])];
+    // Une méthode d'une classe du dépôt (methods.ts) : la méthode elle-même, pas seulement le fichier de la classe.
+    const m = methodOf(path, line, root, chain);
+    if (m) { add(enclosing(path, line), { to: `${m.path}:${m.start}`, proof: proofOf(t, path, line) }); continue; }
     const to = target(path, root);
     // Une valeur du même fichier (`const queue = new Queue()` puis `queue.add()`) n'apprend rien de plus.
     if (to && to.file !== path) add(enclosing(path, line), { ...to, proof: proofOf(t, path, line) });

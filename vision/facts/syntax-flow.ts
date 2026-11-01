@@ -1,5 +1,5 @@
 import type { Value } from "./datalog.js";
-import { topLevelFunctions, walkAll, type Node } from "../arch/ast.js";
+import { functionsAndMethods, walkAll, type Node } from "../arch/ast.js";
 import type { FileFact } from "./types.js";
 
 /**
@@ -66,7 +66,7 @@ const strip = (c: string) => c.replace(/^\/\/+\s?|^\/\*+\s?|\s?\*+\/$/g, "").rep
 export function flowFacts(path: string, root: Node, fact: (rel: string, args: Value[], line: number) => FileFact): FileFact[] {
   const out: FileFact[] = [];
   const line = (n: Node) => n.startPosition.row + 1;
-  for (const [, fn] of topLevelFunctions(root, true)) {
+  for (const [, fn] of functionsAndMethods(root, true)) {
     const at = line(fn);
     const params = (fn.childForFieldName("parameters")?.namedChildren ?? []).map((p) => (p.childForFieldName("pattern") ?? p).text);
     if (!params.length && fn.childForFieldName("parameter")) params.push(fn.childForFieldName("parameter")!.text);

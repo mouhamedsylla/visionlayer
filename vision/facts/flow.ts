@@ -1,4 +1,5 @@
 import type { ArchEdge, ArchNode, Entrypoint, FlowStep, Proof } from "../arch/types.js";
+import { methodResolver } from "./methods.js";
 import type { Tuple, Value } from "./datalog.js";
 
 /**
@@ -88,6 +89,9 @@ export function flowWalker(edges: ArchEdge[], rows: Rows) {
   }));
   const notes = group("note", fnKey, (t) => ({ start: Number(t.args[2]), end: Number(t.args[3]), text: s(t.args[4]), proof: t.proof[0]! }));
   const calls = group("fn_calls", fnKey, (t) => ({ callee: s(t.args[2]), line: Number(t.args[3]), when: s(t.args[4]), proof: proofOf(t, Number(t.args[3])) }));
+  // Les appels de méthodes d'une classe du dépôt (methods.ts), rangés par fichier : dépliés comme une fonction.
+  const methodOf = methodResolver(rows);
+  const memberCalls = group("member_call", (t) => s(t.args[0]), (t) => ({ root: s(t.args[1]), chain: s(t.args[2]), line: Number(t.args[3]), proof: proofOf(t, Number(t.args[3])) }));
   const methods = new Map(rows("sdk_call").map((t) => [`${s(t.args[0])}\0${s(t.args[3])}`, s(t.args[2])]));
   const links = new Map<string, FlowStep[]>();
   for (const e of edges) for (const o of e.occurrences) {
@@ -118,6 +122,15 @@ export function flowWalker(edges: ArchEdge[], rows: Rows) {
       const sub = walk(owner, to.path, target, depth + 1, new Set([...seen, key]));
       if (sub.length) steps.push({ line: c.line, list: [{ kind: "invoke", depth, proof: c.proof, name: c.callee, ...(c.when ? { when: c.when } : {}) }, ...sub] });
     }
+    if (depth < MAX_DEPTH) for (const c of memberCalls.get(path) ?? []) {
+      if (c.line < span.start || c.line > span.end) continue;
+      const m = methodOf(path, c.line, c.root, c.chain);
+      const target = m && spans.get(m.path)?.find((sp) => sp.start === m.start);
+      // Un appel écrit dans une fonction imbriquée de la méthode compte pour elle ; la méthode elle-même n'est pas rejouée.
+      if (!m || !target || (m.path === path && m.start === span.start) || seen.has(`${m.path}\0${target.start}`)) continue;
+      const sub = walk(owner, m.path, target, depth + 1, new Set([...seen, key]));
+      if (sub.length) steps.push({ line: c.line, list: [{ kind: "invoke", depth, proof: c.proof, name: `${c.root === "this" ? "this" : c.root}.${c.chain}` }, ...sub] });
+    }
     const flat = steps.sort((a, b) => a.line - b.line).flatMap((x) => x.list);
     for (const n of notes.get(key) ?? []) {
       const step = flat.find((x) => x.depth === depth && !x.why && x.proof.line >= n.start && x.proof.line <= n.end);
@@ -125,7 +138,7 @@ export function flowWalker(edges: ArchEdge[], rows: Rows) {
     }
     return flat;
   };
-  return { walk, spans, calls, resolves };
+  return { walk, spans, calls, resolves, methodOf, memberCalls };
 }
 
 /** Une même ligne lue deux fois par deux liens identiques ne fait qu'une étape. */

@@ -1,5 +1,5 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 import type { Pack } from "../facts/packs.js";
 import { vocabularyText } from "./vocabulary.js";
 
@@ -152,18 +152,45 @@ function versionOf(root: string, pkg: string): string | undefined {
   }
 }
 
-/** Le README et les types du paquet et de @types, s'ils sont installés. */
+/**
+ * Le README et les types du paquet et de @types, s'ils sont installés : dans le node_modules de la racine, ou
+ * dans celui d'un paquet du dépôt (un monorepo installe souvent une bibliothèque dans le paquet qui l'emploie).
+ * Les types sont ceux que nomme le champ `types` du paquet, sinon les .d.ts posés à sa racine.
+ */
 function installedDocs(root: string, pkg: string): { source: string; text: string }[] {
   const out: { source: string; text: string }[] = [];
   const typesName = `@types/${pkg.startsWith("@") ? pkg.slice(1).replace("/", "__") : pkg}`;
   for (const name of [pkg, typesName]) {
-    const dir = join(root, "node_modules", name);
-    if (!existsSync(dir)) continue;
-    for (const f of readdirSync(dir).sort()) {
-      const path = join(dir, f);
+    const base = packageDirs(root).map((d) => join(d, "node_modules", name)).find((d) => existsSync(d));
+    if (!base) continue;
+    const rel = relative(root, base);
+    for (const f of readdirSync(base).sort()) {
+      const path = join(base, f);
       if (!statSync(path).isFile()) continue;
-      if (/^readme(\.md)?$/i.test(f) || f.endsWith(".d.ts")) out.push({ source: `node_modules/${name}/${f}`, text: readFileSync(path, "utf8") });
+      if (/^readme(\.md)?$/i.test(f) || f.endsWith(".d.ts")) out.push({ source: `${rel}/${f}`, text: readFileSync(path, "utf8") });
     }
+    try {
+      const manifest = JSON.parse(readFileSync(join(base, "package.json"), "utf8")) as { types?: string; typings?: string };
+      const types = manifest.types ?? manifest.typings;
+      const path = types ? join(base, types) : undefined;
+      if (path && existsSync(path) && !out.some((o) => o.source === `${rel}/${types}`)) out.push({ source: `${rel}/${types!.replace(/^\.\//, "")}`, text: readFileSync(path, "utf8") });
+    } catch { /* pas de manifeste lisible : le README suffit */ }
   }
+  return out;
+}
+
+/** La racine, puis les dossiers des paquets du dépôt (ceux qui ont un package.json), hors node_modules. */
+function packageDirs(root: string): string[] {
+  const out = [root];
+  const walk = (dir: string, depth: number) => {
+    if (depth > 3) return;
+    for (const f of readdirSync(dir, { withFileTypes: true })) {
+      if (!f.isDirectory() || f.name === "node_modules" || f.name.startsWith(".")) continue;
+      const d = join(dir, f.name);
+      if (existsSync(join(d, "package.json"))) out.push(d);
+      walk(d, depth + 1);
+    }
+  };
+  walk(root, 0);
   return out;
 }

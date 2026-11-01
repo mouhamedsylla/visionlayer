@@ -12,6 +12,12 @@ import type { Proof } from "../arch/types.js";
  * - `X != Y`, `X = Y` : comparaisons ; `X = "c"` lie X.
  * - `L1 < L2`, `<=`, `>`, `>=` : comparaisons de nombres (une ligne avant une autre).
  * - `P = cat(A, "/", B)` : colle des valeurs liées en une chaîne (comme `cat` de Soufflé) et lie P.
+ * - `glob(F, Motif, C)` : F, déjà lié, suit le motif (`*` dans un segment, `**` sur plusieurs segments) ;
+ *   C reçoit ce qu'ont pris les jokers, segments joints par `/`. Avec le motif `src/app/` `**` `/route.ts`,
+ *   `src/app/api/orders/[id]/route.ts` donne `api/orders/[id]`.
+ * - `route_path(C, P)` : un chemin de dossiers devient la route qu'il sert, selon les conventions de routage par
+ *   fichiers (Next.js, SvelteKit, Nuxt, Astro) : `(groupe)` disparaît, `[id]` devient `:id`, `[...x]` devient `*`,
+ *   `index` disparaît ; `admin/(protected)/orders/[id]` donne `/admin/orders/:id`.
  * - `%` ouvre un commentaire jusqu'à la fin de la ligne.
  *
  * Déterministe : mêmes faits, mêmes règles, même résultat, dans le même ordre.
@@ -194,6 +200,32 @@ function mergeProofs(into: Proof[], from: Proof[]) {
   }
 }
 
+/** Les fonctions du langage écrites comme des atomes : leurs derniers arguments sont calculés à partir des premiers. */
+const BUILTINS: Record<string, { inputs: number; run: (args: Value[]) => Value[] | undefined }> = {
+  glob: { inputs: 2, run: ([value, pattern]) => globCapture(String(value), String(pattern)) },
+  route_path: { inputs: 1, run: ([raw]) => [routePath(String(raw))] },
+};
+
+/** Ce que les jokers d'un motif prennent dans un chemin, ou rien s'il ne le suit pas. */
+export function globCapture(value: string, pattern: string): [string] | undefined {
+  let re = "";
+  const parts = pattern.split("/");
+  parts.forEach((seg, i) => {
+    const last = i === parts.length - 1;
+    if (seg === "**") { re += last ? "(.*)" : "(?:(.*)/)?"; return; }
+    re += seg.split("*").map((x) => x.replace(/[.+?^${}()|[\]\\]/g, "\\$&")).join("([^/]*)") + (last ? "" : "/");
+  });
+  const m = new RegExp(`^${re}$`).exec(value);
+  return m ? [m.slice(1).filter((g) => g !== undefined && g !== "").join("/")] : undefined;
+}
+
+/** La route qu'un chemin de dossiers sert, selon les conventions communes de routage par fichiers. */
+export function routePath(raw: string): string {
+  const segs = raw.split("/").filter((x) => x && !/^\(.*\)$/.test(x) && x !== "index" && !x.startsWith("@"))
+    .map((x) => (/^\[\[?\.\.\./.test(x) ? "*" : x.replace(/^\[(.+)\]$/, ":$1")));
+  return `/${segs.join("/")}`;
+}
+
 export class Database {
   private readonly rels = new Map<string, Relation>();
 
@@ -258,6 +290,22 @@ export class Database {
       return;
     }
 
+    const builtin = BUILTINS[lit.rel];
+    if (builtin && !lit.negated) {
+      const inputs = lit.terms.slice(0, builtin.inputs).map(val);
+      if (inputs.some((x) => x === undefined)) throw new Error(`${lit.rel}(…) : ses ${builtin.inputs} premiers arguments doivent être liés par un fait écrit avant lui`);
+      const out = builtin.run(inputs as Value[]);
+      if (!out) return;
+      let next: Map<string, Value> | undefined = env;
+      lit.terms.slice(builtin.inputs).forEach((t, k) => {
+        if (!next) return;
+        const want = val(t);
+        if (want !== undefined) { if (want !== out[k]) next = undefined; return; }
+        if ("var" in t && t.var !== "_") { if (next === env) next = new Map(env); next.set(t.var, out[k]!); }
+      });
+      if (next) this.solve(body, i + 1, next, proof, emit);
+      return;
+    }
     const rel = this.rels.get(lit.rel);
     if (lit.negated) {
       const args = lit.terms.map(val);

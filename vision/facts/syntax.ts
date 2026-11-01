@@ -1,5 +1,5 @@
 import type { Value } from "./datalog.js";
-import { isFunction, literal, statementBindings, topLevelFunctions, walkAll, type Node } from "../arch/ast.js";
+import { functionsAndMethods, isFunction, literal, statementBindings, walkAll, type Node } from "../arch/ast.js";
 import type { FileFact } from "./types.js";
 
 /**
@@ -128,7 +128,7 @@ export function syntaxFacts(path: string, root: Node, fact: (rel: string, args: 
     }
   }
   for (const [name, id] of exported) out.push(fact("export_fn", [path, name, line(id)], line(id)));
-  for (const [name, decl] of topLevelFunctions(root, true)) out.push(fact("fn_span", [path, name, line(decl), decl.endPosition.row + 1], line(decl)));
+  for (const [name, decl] of functionsAndMethods(root, true)) out.push(fact("fn_span", [path, name, line(decl), decl.endPosition.row + 1], line(decl)));
   for (const c of root.namedChildren) {
     const title = c.type === "comment" ? sectionTitle(c.text) : undefined;
     if (title) out.push(fact("section", [path, title, line(c)], line(c)));
@@ -144,13 +144,15 @@ export function syntaxFacts(path: string, root: Node, fact: (rel: string, args: 
   }
 
   // new X(…) dans une fonction de premier niveau : qui fabrique quoi.
-  for (const [fn, body] of topLevelFunctions(root)) {
+  for (const [fn, body] of functionsAndMethods(root)) {
     walkAll(body, (n) => {
       if (n.type !== "new_expression") return;
       const cls = n.childForFieldName("constructor");
       if (cls?.type === "identifier") out.push(fact("instantiates", [path, fn, cls.text, line(n)], line(n)));
     });
   }
+
+  out.push(...typedFacts(path, root, fact));
 
   const seen = new Set<string>();
   walkAll(root, (n) => {
@@ -163,7 +165,7 @@ export function syntaxFacts(path: string, root: Node, fact: (rel: string, args: 
         parts.unshift(prop.text);
         cur = cur.childForFieldName("object");
       }
-      if (cur?.type === "identifier" && parts.length) out.push(fact("member_call", [path, cur.text, parts.join("."), line(n)], line(n)));
+      if ((cur?.type === "identifier" || cur?.type === "this") && parts.length) out.push(fact("member_call", [path, cur.text, parts.join("."), line(n)], line(n)));
     }
     if (n.type !== "member_expression") return;
     const obj = n.childForFieldName("object")?.text;
@@ -204,5 +206,51 @@ function reexports(node: Node): Map<string, { imported: string; raw: string }> {
     const alias = spec.childForFieldName("alias")?.text;
     if (name) out.set(alias ?? name, { imported: name, raw });
   }
+  return out;
+}
+
+/**
+ * typed(Fichier, Portée, Nom, Type, Ligne) : le type qu'un nom porte, quand il est une classe ou une interface
+ * nommée. Portée = la classe pour un de ses champs (`private search: SearchService`, ou un paramètre du
+ * constructeur marqué `private`), vide pour un paramètre, une variable ou une valeur `const x = new C()`.
+ * C'est ce qui relie `ctrl.find`, `this.search.query()` ou `service.run()` à la méthode d'une classe.
+ */
+function typedFacts(path: string, root: Node, fact: (rel: string, args: Value[], line: number) => FileFact): FileFact[] {
+  const out: FileFact[] = [];
+  const line = (n: Node) => n.startPosition.row + 1;
+  const typeName = (ann: Node | null | undefined): string | undefined => {
+    const t = ann?.type === "type_annotation" ? ann.namedChildren[0] : ann;
+    if (t?.type === "type_identifier") return t.text;
+    if (t?.type === "generic_type") return t.childForFieldName("name")?.text;
+    return undefined;
+  };
+  const classOf = (n: Node): string | undefined => {
+    for (let c: Node | null = n.parent; c; c = c.parent) if (c.type === "class_declaration" || c.type === "abstract_class_declaration") return c.childForFieldName("name")?.text;
+    return undefined;
+  };
+  walkAll(root, (n) => {
+    if (n.type === "required_parameter" || n.type === "optional_parameter") {
+      const name = n.childForFieldName("pattern");
+      const type = typeName(n.childForFieldName("type"));
+      if (name?.type !== "identifier" || !type) return;
+      const field = n.namedChildren.some((c) => c.type === "accessibility_modifier" || c.text === "readonly");
+      out.push(fact("typed", [path, field ? classOf(n) ?? "" : "", name.text, type, line(n)], line(n)));
+    }
+    if (n.type === "public_field_definition" || n.type === "field_definition") {
+      const name = n.childForFieldName("name")?.text;
+      const type = typeName(n.childForFieldName("type"));
+      const value = n.childForFieldName("value");
+      const made = value?.type === "new_expression" ? value.childForFieldName("constructor") : undefined;
+      const t = type ?? (made?.type === "identifier" ? made.text : undefined);
+      if (name && t) out.push(fact("typed", [path, classOf(n) ?? "", name, t, line(n)], line(n)));
+    }
+    if (n.type === "variable_declarator") {
+      const name = n.childForFieldName("name");
+      const value = n.childForFieldName("value");
+      const made = value?.type === "new_expression" ? value.childForFieldName("constructor") : value?.type === "await_expression" ? undefined : undefined;
+      const t = typeName(n.childForFieldName("type")) ?? (made?.type === "identifier" ? made.text : undefined);
+      if (name?.type === "identifier" && t) out.push(fact("typed", [path, "", name.text, t, line(n)], line(n)));
+    }
+  });
   return out;
 }

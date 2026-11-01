@@ -121,7 +121,16 @@ Chaque occurrence d'un lien sortant reçoit alors les points d'entrée qui l'att
 
 Exemple : `POST /payments` d'atelier-api a pour fonction `createPayment` (`src/payments/create.ts`). Sa portée : `create.ts`, `keys.ts` (la clé d'idempotence), `session.ts` (il appelle `requireUser`), `http.ts` (`new HttpError`), `db.ts` et `stripe.ts` (il emploie leurs clients). Il lit `bookings`, `payments`, `sessions` et `users`, écrit `payments`, appelle Stripe. La lecture par fichier lui donnait aussi l'écriture de `sessions`, faite par `openSession`, que la route n'appelle jamais. Sur learn-app, `exoFeedbackQuota`, déclarée dans l'index, passe de 47 fichiers à 3.
 
-Limites : une fonction passée en valeur n'est suivie que si un fichier exécuté l'importe par son nom ; un appel écrit dans une méthode de classe ou à travers une variable locale (`const s = getSender(); s.send()`) n'est pas suivi au-delà de ce qui le construit ; une valeur lue sans appel (une constante, un type, `config.X`) ne fait pas entrer son fichier dans la portée.
+
+Les méthodes des classes de premier niveau sont des fonctions comme les autres, nommées `Classe.méthode` ([vision/facts/methods.ts](../../vision/facts/methods.ts)). Un appel mène à la méthode qu'il exécute dans cinq formes :
+- `this.valider()` : une méthode de la même classe ;
+- `this.stockage.put()` : un champ typé, ou un paramètre du constructeur marqué `private` ;
+- `OrderService.find()` : une méthode statique d'une classe importée ;
+- `audit.record()` : une instance, `const audit = new AuditService()`, ici ou dans le fichier qui l'exporte ;
+- `ctrl.findById`, passé à une route : un paramètre typé par sa classe ; c'est le gestionnaire de la route.
+
+Sur OpenArchiver, écrit en contrôleurs et services, les routes qui ont un déroulé passent de 2 sur 21 à 16 sur 21. Une interface implémentée par plusieurs classes n'est pas tranchée : le Contrat la montre.
+Limites : une fonction passée en valeur n'est suivie que si un fichier exécuté l'importe par son nom ; un appel à travers une variable locale qu'aucun type ne nomme (`const s = getSender(); s.send()`) n'est pas suivi au-delà de ce qui le construit ; une valeur lue sans appel (une constante, un type, `config.X`) ne fait pas entrer son fichier dans la portée.
 
 ### Les composants calculés
 

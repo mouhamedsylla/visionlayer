@@ -5,6 +5,7 @@ import { fnGraph } from "./fn-graph.js";
 import { attributeComponents } from "./components.js";
 import { entityDetails } from "./entity-detail.js";
 import { addUnread, shortName } from "./unread.js";
+import { methodResolver } from "./methods.js";
 import { contractDetails } from "./contract-detail.js";
 import type {
   ArchEdge, ArchModelV2, ArchNode, Coverage, EdgeKind, Entrypoint, EntrypointKind, Finding, Occurrence, Proof,
@@ -79,6 +80,14 @@ export function assemble(db: Database, opts: AssembleOptions): ArchModelV2 {
 
   const entryFacts = new Map(rows("entrypoint").map((t) => [`${s(t.args[0])}\0${s(t.args[2])}`, t]));
   const handlers = new Map(rows("handler_at").map((t) => [`${s(t.args[0])}\0${s(t.args[1])}`, { path: s(t.args[2]), line: Number(t.args[3]) }]));
+  // Un gestionnaire qui est la méthode d'une classe (`ctrl.find`, le contrôleur passé à la route) : la méthode elle-même (methods.ts).
+  const methodOf = methodResolver(rows);
+  for (const t of rows("entrypoint")) {
+    const [file, , key, name] = t.args.map(s) as [string, string, string, string];
+    if (handlers.has(`${file}\0${key}`) || !name.includes(".")) continue;
+    const m = methodOf(file, Number(t.args[4]), name.slice(0, name.indexOf(".")), name.slice(name.indexOf(".") + 1));
+    if (m) handlers.set(`${file}\0${key}`, { path: m.path, line: m.start });
+  }
 
   const at = (path: string, line: number, proof: Proof[]): Occurrence => proof.find((p) => p.path === path && p.line === line) ?? { path, line, source: "syntax" };
 

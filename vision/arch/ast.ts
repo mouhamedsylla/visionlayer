@@ -125,6 +125,35 @@ export function topLevelFunctions(root: Node, wrapped = false): Map<string, Node
   return out;
 }
 
+/**
+ * Les méthodes des classes de premier niveau, nommées `Classe.méthode` : une méthode (`async find() {}`),
+ * ou un champ qui porte une fonction (`find = async () => {}`). Le constructeur s'appelle `Classe.constructor`.
+ */
+export function classMembers(root: Node): Map<string, Node> {
+  const out = new Map<string, Node>();
+  for (const stmt of root.namedChildren) {
+    const decl = stmt.type === "export_statement" ? stmt.childForFieldName("declaration") ?? stmt.namedChildren[0] : stmt;
+    if (decl?.type !== "class_declaration" && decl?.type !== "abstract_class_declaration") continue;
+    const cls = decl.childForFieldName("name")?.text;
+    if (!cls) continue;
+    for (const m of decl.childForFieldName("body")?.namedChildren ?? []) {
+      const name = m.childForFieldName("name")?.text;
+      if (!name) continue;
+      if (m.type === "method_definition") out.set(`${cls}.${name}`, m);
+      else if (m.type === "public_field_definition" || m.type === "field_definition") {
+        const value = m.childForFieldName("value");
+        if (value && isFunction(value)) out.set(`${cls}.${name}`, value);
+      }
+    }
+  }
+  return out;
+}
+
+/** Les fonctions de premier niveau, puis les méthodes des classes de premier niveau. */
+export function functionsAndMethods(root: Node, wrapped = false): Map<string, Node> {
+  return new Map([...topLevelFunctions(root, wrapped), ...classMembers(root)]);
+}
+
 /** Expressions renvoyées par une fonction (corps expression d'une flèche, ou chaque `return`). */
 export function returnedExpressions(fn: Node): Node[] {
   const body = fn.childForFieldName("body");

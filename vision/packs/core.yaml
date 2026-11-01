@@ -5,6 +5,8 @@ rules: |
   % Ce que lance un déployable, et tout ce que ce fichier importe de proche en proche.
   reach(R, R) :- unit_runs(_, _, R), present(R).
   reach(R, H) :- reach(R, G), depends(G, H).
+  % Un fichier que le framework charge par convention quand un autre tourne (une page, une route par fichier), sans import.
+  reach(R, H) :- reach(R, G), loads(G, H).
 
   % Le code derrière un nom : défini dans le fichier, ou importé d'un autre fichier du dépôt.
   resolves(F, N, F, L) :- defines(F, N, L).

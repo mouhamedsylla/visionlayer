@@ -12,7 +12,7 @@ const MAX_FUNCTIONS = 2000;
  */
 export function attributeFunctions(nodes: ArchNode[], edges: ArchEdge[], rows: Rows): void {
   const s = (v: unknown) => String(v);
-  const { walk, spans, calls, resolves } = flowWalker(edges, rows);
+  const { walk, spans, calls, resolves, methodOf, memberCalls } = flowWalker(edges, rows);
   const tests = new Set(rows("test_file").map((t) => s(t.args[0])));
   const exported = new Set(rows("export_fn").map((t) => `${s(t.args[0])}\0${s(t.args[1])}`));
   const enclosing = (path: string, line: number) => spans.get(path)?.find((sp) => sp.start <= line && sp.end >= line);
@@ -28,6 +28,20 @@ export function attributeFunctions(nodes: ArchNode[], edges: ArchEdge[], rows: R
     const key = `${to.path}:${target.start}`;
     const proof = t.proof.find((p) => p.line === line) ?? { path, line, source: "syntax" as const };
     (callers.get(key) ?? callers.set(key, []).get(key)!).push({ proof, fn: enclosing(path, line)?.name });
+  }
+
+  // Et les appels de méthodes d'une classe du dépôt (methods.ts) : `OrderService.find()`, `this.mailer.send()`.
+  const methodCalls = new Map<string, { name: string; proof: Proof; to: string }[]>();
+  for (const [path, list] of memberCalls) {
+    if (tests.has(path)) continue;
+    for (const c of list) {
+      const m = methodOf(path, c.line, c.root, c.chain);
+      if (!m) continue;
+      const key = `${m.path}:${m.start}`;
+      const from = enclosing(path, c.line);
+      (callers.get(key) ?? callers.set(key, []).get(key)!).push({ proof: c.proof, fn: from?.name });
+      if (from) (methodCalls.get(`${path}\0${from.start}`) ?? methodCalls.set(`${path}\0${from.start}`, []).get(`${path}\0${from.start}`)!).push({ name: `${c.root}.${c.chain}`, proof: c.proof, to: key });
+    }
   }
 
   const owner = new Map<string, ArchNode>();
@@ -49,7 +63,9 @@ export function attributeFunctions(nodes: ArchNode[], edges: ArchEdge[], rows: R
           const to = resolves.get(`${path}\0${c.callee}`);
           const target = to && enclosing(to.path, to.line);
           return { name: c.callee, local: !!to, proof: c.proof, ...(target ? { to: `${to.path}:${target.start}` } : {}) };
-        });
+        })
+        .concat((methodCalls.get(`${path}\0${span.start}`) ?? []).filter((c) => !seen.has(c.name) && !!seen.add(c.name)).map((c) => ({ name: c.name, local: true, proof: c.proof, to: c.to })))
+        .sort((a, b) => a.proof.line - b.proof.line);
       const fn: CodeFunction = {
         id, name: span.name, proof: { path, line: span.start, source: "syntax" }, end: span.end,
         ...(exported.has(`${path}\0${span.name}`) ? { exported: true } : {}),
