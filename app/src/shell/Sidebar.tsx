@@ -3,13 +3,12 @@ import { sidebarCounts } from "../model/overview";
 import { Icon, Logo } from "./icons";
 import { SCREENS, type Screen } from "./route";
 import { useVigie } from "../vigie/Vigie";
-import { Face, PERSONAS, useFace } from "../vigie/Face";
+import { Face } from "../vigie/Face";
 import "./shell.css";
 
 /** La barre latérale de la planche 01 : logo, projet, recherche, quatre groupes avec leurs compteurs, Vigie, Réglages, la personne. */
 export function Sidebar({ project, map, screen, go }: { project?: ProjectInfo; map?: MapPayload; screen: Screen; go: (s: Screen) => void }) {
   const vigie = useVigie();
-  const face = PERSONAS.find((p) => p.id === useFace())?.name;
   const counts = map ? sidebarCounts(map) : {};
   const groups = [...new Set(SCREENS.map((s) => s.group))].filter(Boolean);
   const initials = (project?.user ?? "").split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
@@ -47,7 +46,7 @@ export function Sidebar({ project, map, screen, go }: { project?: ProjectInfo; m
       <div className="side__foot">
         <a className="side__vigie" href="#" onClick={(e) => { e.preventDefault(); vigie(); }}>
           <span className="side__vigieface"><Face size={34} mood="welcome" /><i className="side__online" /></span>
-          <span className="side__vigietext"><b>Demander à Vigie</b><small>{face ? `${face}, ` : ""}cite ses preuves</small></span>
+          <span className="side__vigietext"><b>Demander à Vigie</b><small>Muse Spark, cite ses preuves</small></span>
           <span className="vl-kbd side__kbd">⌘J</span>
         </a>
         <a href="#/reglages" className={`vl-nav${screen === "reglages" ? " vl-nav--active" : ""}`} onClick={(e) => { e.preventDefault(); go("reglages"); }}>{Icon.reglages}<span>Réglages</span></a>

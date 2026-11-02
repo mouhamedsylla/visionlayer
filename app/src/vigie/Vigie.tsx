@@ -3,7 +3,7 @@ import { api } from "../api/client";
 import type { MapPayload, VigieAnswer } from "../api/types";
 import { CodeRef } from "../ui/CodeRef";
 import { useOpenCode } from "../ui/code";
-import { Face, PERSONAS, useFace } from "./Face";
+import { Face } from "./Face";
 import "./vigie.css";
 
 /** Ouvrir Vigie depuis n'importe quel écran, avec une question déjà posée ou non. */
@@ -58,14 +58,12 @@ function examples(map?: MapPayload): string[] {
 
 function Panel({ map, turns, busy, draft, setDraft, ask, close }: { map?: MapPayload; turns: Turn[]; busy: boolean; draft: string; setDraft: (s: string) => void; ask: (q: string) => void; close: () => void }) {
   const end = useRef<HTMLDivElement>(null);
-  const face = useFace();
-  const name = PERSONAS.find((p) => p.id === face)?.name;
   useEffect(() => { end.current?.scrollIntoView({ block: "end" }); }, [turns.length, busy]);
   return (
     <aside className="vg" aria-label="Vigie">
       <header className="vg__head">
         <Face mood={busy ? "think" : "welcome"} size={46} ring={busy} />
-        <span className="vg__who"><b>Vigie{name ? `, ${name}` : ""}</b><small>{busy ? <>lit la carte<i className="vg__dots"><i /><i /><i /></i></> : "répond depuis la carte, cite ses lignes"}</small></span>
+        <span className="vg__who"><b>Vigie</b><small>{busy ? <>lit la carte<i className="vg__dots"><i /><i /><i /></i></> : "répond depuis la carte, cite ses lignes"}</small></span>
         <button className="vg__close" onClick={close} aria-label="Fermer">×</button>
       </header>
       <div className="vg__body">

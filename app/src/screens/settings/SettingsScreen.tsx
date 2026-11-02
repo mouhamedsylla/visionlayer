@@ -2,17 +2,15 @@ import { useEffect, useState } from "react";
 import { api } from "../../api/client";
 import type { AgentLink } from "../../api/types";
 import { AGENT } from "../../model/agents";
-import { Face, PERSONAS, ROBOT, setFace, useFace, type Mood } from "../../vigie/Face";
 import "./settings.css";
 
-const TABS = ["Agents du projet", "Visage de Vigie", "Modèles Meta", "Outils reliés", "Ce qu'il lit", "Où il écrit"];
+const TABS = ["Agents du projet", "Modèles Meta", "Outils reliés", "Ce qu'il lit", "Où il écrit"];
 
 /** Planche 40, Réglages des agents : ce qui relie chaque agent à VisionLayer, posé ou retiré d'un clic. */
 export function SettingsScreen() {
   const [links, setLinks] = useState<AgentLink[]>();
   const [busy, setBusy] = useState<string>();
   const [error, setError] = useState<string>();
-  const [tab, setTab] = useState(0);
   useEffect(() => { api.links().then(setLinks).catch((e) => setError(String(e))); }, []);
   const act = (a: AgentLink, on: boolean) => { setBusy(a.agent); setError(undefined); (on ? api.link : api.unlink)(a.agent).then(setLinks).catch((e) => setError(String(e))).finally(() => setBusy(undefined)); };
   return (
@@ -21,8 +19,7 @@ export function SettingsScreen() {
         <h1 className="st__title">Les agents qui codent sur ce projet</h1>
         <p className="st__lead">VisionLayer ne lance aucun agent. Il donne la carte aux agents du projet, apprend d'eux ce qu'ils ont touché, et leur demande de déclarer ce qu'ils savent. Chaque lien se pose ici, en un clic, et se retire de même.</p>
       </div>
-      <div className="tabs st__tabs">{TABS.map((t, i) => <button key={t} className={`seg${i === tab ? " seg--on" : ""}`} disabled={i > 1} title={i > 1 ? "À venir" : undefined} onClick={() => setTab(i)}>{t}</button>)}</div>
-      {tab === 1 ? <Faces /> : <>
+      <div className="tabs st__tabs">{TABS.map((t, i) => <button key={t} className={`seg${i === 0 ? " seg--on" : ""}`} disabled={i > 0} title={i > 0 ? "À venir" : undefined}>{t}</button>)}</div>
       {error && <p className="st__err">{error}</p>}
       <section className="card">
         <div className="st__row st__row--h"><span>Agent</span><span>Sur cette machine</span><span>Lit la carte</span><span>Dit ce qu'il touche</span><span>Déclare ce qu'il sait</span><span /></div>
@@ -72,35 +69,7 @@ export function SettingsScreen() {
           <p className="st__foot">Muse Code garde lui-même son journal sur la machine ; VisionLayer le lit sans le copier. Les crochets de Claude Code et Codex écrivent dans <code>.vision/activity/</code>, qui n'est pas commité.</p>
         </section>
       </div>
-      </>}
     </div>
-  );
-}
-
-const MOODS: [Mood, string][] = [["welcome", "Accueille"], ["think", "Lit ta copie"], ["question", "Questionne"], ["focus", "Concentré"], ["wow", "Épaté"], ["happy", "Content"]];
-
-/** Le visage que prend l'assistant choisi : un portrait dessiné, animé, gardé pour cette personne. */
-function Faces() {
-  const chosen = useFace();
-  const all = [...PERSONAS, ROBOT];
-  return (
-    <>
-      <section className="card st__faces">
-        {all.map((p) => (
-          <button key={p.id} className={`st__face${chosen === p.id ? " st__face--on" : ""}`} onClick={() => setFace(p.id)} aria-pressed={chosen === p.id}>
-            <Face id={p.id} size={96} mood="welcome" />
-            <b>{p.name}</b>
-            <small>{p.line}</small>
-            <span className={`mk ${chosen === p.id ? "mk--on" : "mk--q"}`}>{chosen === p.id ? "choisi" : "choisir"}</span>
-          </button>
-        ))}
-      </section>
-      <section className="card">
-        <div className="hd"><h2>Ses humeurs</h2></div>
-        <div className="st__moods">{MOODS.map(([m, l]) => <div key={m}><Face mood={m} size={72} ring={m === "think"} /><span>{l}</span></div>)}</div>
-        <p className="st__foot">Des personnages dessinés, pas des personnes. Derrière chaque visage, c'est le même assistant, Muse Spark : il ne lit que la carte et le code qu'elle cite. Le choix reste sur ce navigateur.</p>
-      </section>
-    </>
   );
 }
 
