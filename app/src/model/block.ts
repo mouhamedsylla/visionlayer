@@ -74,3 +74,18 @@ export function moduleOf(p: MapPayload, e: Entrypoint): ArchNode | undefined {
 }
 
 export const callCount = (calls: ArchEdge[], from: string, to: string) => calls.filter((c) => c.from === from && c.to === to).reduce((n, c) => n + c.count, 0);
+
+/** S3, les fonctions qu'un module offre : chacune avec le nombre de lignes qui l'appellent et ses effets, des plus appelées aux moins appelées. */
+export function offered(block: ArchNode, module: ArchNode) {
+  const files = new Set(module.files ?? []);
+  return (block.facets.functions ?? []).filter((f) => files.has(f.proof.path)).map((f) => {
+    const fx = (f.flow ?? []).filter((s) => s.depth === 0);
+    const effects = [
+      ...[...new Set(fx.filter((s) => s.kind === "write").map((s) => s.target?.entity).filter(Boolean))].map((x) => ({ kind: "write" as const, what: x! })),
+      ...[...new Set(fx.filter((s) => s.kind === "read").map((s) => s.target?.entity).filter(Boolean))].map((x) => ({ kind: "read" as const, what: x! })),
+      ...[...new Set(fx.filter((s) => s.kind === "message").map((s) => s.target?.topic).filter(Boolean))].map((x) => ({ kind: "message" as const, what: x! })),
+      ...[...new Set(fx.filter((s) => s.kind === "refuse").map((s) => s.status ?? s.code).filter(Boolean))].map((x) => ({ kind: "refuse" as const, what: x! })),
+    ];
+    return { fn: f, callers: f.calledFrom?.length ?? 0, effects };
+  }).sort((a, b) => b.callers - a.callers || b.effects.length - a.effects.length);
+}

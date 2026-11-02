@@ -1,6 +1,8 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import type { ArchNode, MapPayload } from "../../api/types";
-import { blockView, callCount, COLUMN, entryGroups, type Column, type ModuleCard } from "../../model/block";
+import { blockView, callCount, COLUMN, entryGroups, offered, type Column, type ModuleCard } from "../../model/block";
+import { Rep } from "../../lang/Rep";
+import { Effect } from "../../lang/marks";
 import { ROLE } from "../../model/words";
 import { Ref } from "../../ui/Ref";
 import { EntryRow } from "./EntryRow";
@@ -25,8 +27,11 @@ export function BlockScreen({ map, block, openFlow, back }: { map: MapPayload; b
       </div>
       {v.modules.length > 0 ? (
         <div className="bk__body">
-          <Columns v={v} sel={sel} pick={setChosen} />
-          {sel && <ModulePanel map={map} m={sel} v={v} openFlow={openFlow} />}
+          <Rep code="S2" name="Intérieur d'un bloc" question="Comment ce déployable est-il composé ?" flush
+            sentence={sentenceOf(v)} reads="de gauche à droite : les appels vont toujours vers la droite. Pointillé : un module calculé ; plein : un contrat lu dans le code. Choisir un module estompe les autres et trace ses appels.">
+            <Columns v={v} sel={sel} pick={setChosen} />
+          </Rep>
+          {sel && <div className="bk__side"><Offered block={block} m={sel} /><ModulePanel map={map} m={sel} v={v} openFlow={openFlow} /></div>}
         </div>
       ) : <p className="bk__empty">Ce bloc n'a pas de modules calculés : moins de deux points d'entrée exécutés, ou un code que les packs ne lisent pas encore.</p>}
       <section className="card">
@@ -39,6 +44,35 @@ export function BlockScreen({ map, block, openFlow, back }: { map: MapPayload; b
         ))}
       </section>
     </div>
+  );
+}
+
+/** La phrase de S2 : le module le plus partagé, ce qui est propre à une fonctionnalité, le socle. */
+function sentenceOf(v: ReturnType<typeof blockView>): string {
+  const most = [...v.modules].sort((a, b) => b.serves - a.serves)[0];
+  const own = v.modules.filter((m) => m.column === "own").length, base = v.modules.filter((m) => m.column === "base");
+  return `${v.modules.length} modules : ${own} propres à une fonctionnalité${most ? `, ${most.node.name} servi par ${most.serves} entrées sur ${most.of}` : ""}${base.length ? `, ${base.map((m) => m.node.name).join(", ")} au socle` : ""}.`;
+}
+
+/** S3, les fonctions offertes par le module choisi. */
+function Offered({ block, m }: { block: ArchNode; m: ModuleCard }) {
+  const list = offered(block, m.node);
+  const max = Math.max(1, ...list.map((x) => x.callers));
+  return (
+    <Rep code="S3" name="Fonctions offertes" question="Que fournit ce module, et à qui ?" sentence={list[0] ? <>{m.node.name} sert surtout <code>{list[0].fn.name}</code> : {list[0].callers} ligne{list[0].callers > 1 ? "s" : ""} l'appellent.</> : <>{m.node.name} n'offre aucune fonction qui fasse quelque chose de visible.</>} flush
+      reads="de haut en bas, des plus appelées aux moins appelées.">
+      <div className="bk__fns">
+        <div className="bk__fnrow bk__fnrow--h"><span className="vl-label">Fonction</span><span className="vl-label">Appelée par</span><span className="vl-label">Effet</span></div>
+        {list.slice(0, 10).map((x) => (
+          <div key={x.fn.id} className="bk__fnrow">
+            <code>{x.fn.name}</code>
+            <span className="bk__callers"><i style={{ width: `${(x.callers / max) * 60}px` }} />{x.callers}</span>
+            <span className="bk__fx">{x.effects.slice(0, 3).map((e, i) => <Effect key={i} kind={e.kind} what={e.what} />)}{!x.effects.length && <span className="q">aucun</span>}</span>
+          </div>
+        ))}
+        {list.length > 10 && <p className="bk__more">et {list.length - 10} autres</p>}
+      </div>
+    </Rep>
   );
 }
 
@@ -68,7 +102,7 @@ function Columns({ v, sel, pick }: { v: ReturnType<typeof blockView>; sel?: Modu
     setLines(out);
   }, [v, sel?.node.id]);
   return (
-    <section className="card bk__cols" ref={wrap}>
+    <div className="bk__cols" ref={wrap}>
       <svg className="bk__svg" aria-hidden="true">
         <defs><marker id="bk-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L8 4L0 8z" fill="var(--ink)" /></marker></defs>
         {lines.map((l) => <g key={l.key}><path d={l.d} markerEnd="url(#bk-arrow)" /><text x={l.x} y={l.y - 4} className="bk__n">{l.n}</text></g>)}
@@ -91,7 +125,7 @@ function Columns({ v, sel, pick }: { v: ReturnType<typeof blockView>; sel?: Modu
         </div>
       ))}
       <div className="bk__legend"><span><i className="ly--entry" />entrée</span><span><i className="ly--logic" />logique</span><span><i className="ly--data" />données</span><span><i className="ly--external" />client externe</span><span>la barre : les couches de ses fichiers</span></div>
-    </section>
+    </div>
   );
 }
 
@@ -101,7 +135,7 @@ function ModulePanel({ map, m, v, openFlow }: { map: MapPayload; m: ModuleCard; 
   const touches = c.touches.filter((t) => t.entity || t.topic);
   const name = (id: string) => map.model.nodes.find((n) => n.id === id)?.name ?? id;
   return (
-    <aside className="card bk__panel">
+    <aside className="card">
       <div className="hd"><h2>{m.node.name}</h2><span className={`mk ${m.contract ? "mk--k" : "mk--q"}`}>{m.contract ? "contrat lu" : "calculé"}</span></div>
       <p className="bk__line">{m.node.subtitle}</p>
       {touches.length > 0 && <>
