@@ -1,6 +1,6 @@
 /* Repris de la planche 03 (Carte), mêmes mesures. */
 .scr-map {
-.mp__intro { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1 1 520px; }
+.mp__intro { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .mp__titlerow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .mp__sentence { color: var(--ink-2); }
 .mph { display: flex; flex-wrap: wrap; background: var(--night); color: var(--on-night); border-radius: 12px; overflow: hidden; }
@@ -24,7 +24,7 @@
 .mp__howto { padding: 12px 20px 0; font-size: 12.5px; line-height: 18px; color: var(--ink-2); }
 .mp__howto b { font-weight: 600; }
 
-.map { display: grid; grid-template-columns: 160px minmax(138px, 1fr) 218px minmax(96px, 1fr) 176px; row-gap: 0; align-items: center; padding: 16px 20px 22px; }
+.map { display: grid; grid-template-columns: 150px minmax(84px, 1fr) 206px minmax(76px, 1fr) 168px; row-gap: 0; align-items: center; padding: 16px 20px 22px; }
 .lane { grid-row: 1; font: 500 10.5px/14px var(--font-mono); letter-spacing: .07em; text-transform: uppercase; color: var(--muted); padding-bottom: 10px; }
 .blk { background: #fff; border: 1px solid var(--line-strong); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 5px; cursor: pointer; text-align: left; font: inherit; color: inherit; min-width: 0; align-self: stretch; justify-content: center; margin: 6px 0; }
 .blk--on { border: 1.5px solid var(--ink); box-shadow: 0 0 0 3px rgba(18, 18, 17, .07); }

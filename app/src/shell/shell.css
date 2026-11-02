@@ -1,5 +1,5 @@
-.app { display: flex; min-height: 100vh; background: var(--canvas); }
-.side { flex: 0 0 232px; position: sticky; top: 0; height: 100vh; overflow-y: auto; background: var(--surface); border-right: 1px solid var(--line); padding: 14px 12px; display: flex; flex-direction: column; gap: 14px; }
+.app { display: flex; height: 100vh; overflow: hidden; background: var(--canvas); }
+.side { flex: 0 0 232px; height: 100vh; overflow-y: auto; background: var(--surface); border-right: 1px solid var(--line); padding: 14px 12px; display: flex; flex-direction: column; gap: 14px; }
 .side__brand { display: flex; align-items: center; gap: 10px; padding: 2px 4px; }
 .side__who { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
 .side__name { font-weight: 600; font-size: 14px; line-height: 18px; }
@@ -21,8 +21,23 @@
 .side__user { display: flex; align-items: center; gap: 10px; padding: 8px 6px 2px; border-top: 1px solid var(--line); }
 .side__avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--surface-sunken); border: 1px solid var(--line-strong); display: grid; place-items: center; font: 600 11px/1 var(--font-sans); }
 .side__username { font-weight: 600; font-size: 12.5px; line-height: 16px; }
-.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 24px; border-bottom: 1px solid var(--line); background: var(--surface); position: sticky; top: 0; z-index: 5; }
+.main { flex: 1; min-width: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+/* Chaque écran défile dans sa zone, sous la barre du haut qui ne bouge pas. */
+.view { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; scrollbar-gutter: stable; }
+/* Un espace de travail (Carte, bloc, déroulé) : son en-tête reste, la toile et le panneau défilent chacun. */
+.view--ws { overflow: hidden; display: flex; flex-direction: column; scrollbar-gutter: auto; }
+.ws { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.ws__head { flex: none; padding: 16px 24px 14px; border-bottom: 1px solid var(--line); background: var(--canvas); display: flex; flex-direction: column; gap: 12px; }
+.ws__body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) var(--ws-panel, 360px); }
+.ws__canvas { min-height: 0; overflow: auto; padding: 18px 24px 32px; display: flex; flex-direction: column; gap: 14px; }
+.ws__panel { min-height: 0; overflow-y: auto; background: var(--surface); border-left: 1px solid var(--line); }
+@media (max-width: 1080px) {
+  .view--ws { overflow-y: auto; display: block; }
+  .ws__body { display: block; }
+  .ws__canvas { overflow: visible; }
+  .ws__panel { border-left: 0; border-top: 1px solid var(--line); }
+}
+.top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 24px; border-bottom: 1px solid var(--line); background: var(--surface); flex: none; z-index: 5; }
 .top__crumbs { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); }
 .top__crumbs svg { width: 14px; height: 14px; }
 .top__here { color: var(--ink); font-weight: 500; }
@@ -33,3 +48,6 @@
 .page__head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
 .page__title { font: 600 24px/30px var(--font-sans); letter-spacing: -.02em; }
 .state { padding: 48px 24px; color: var(--muted); }
+/* Dans le panneau, une carte ou une représentation perd son cadre : le panneau en est un. */
+.ws__panel > .vl-card, .ws__panel > .lx-rep { border: 0; border-radius: 0; box-shadow: none; background: transparent; }
+.ws__panel > * + * { border-top: 1px solid var(--line); }

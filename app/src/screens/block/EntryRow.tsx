@@ -1,4 +1,5 @@
 import type { Entrypoint } from "../../api/types";
+import "./entry.css";
 
 const GUARD: Record<string, string> = { public: "ouverte", authenticated: "connexion", role: "rôle", signature: "signée", internal: "interne", unknown: "garde non reconnue" };
 

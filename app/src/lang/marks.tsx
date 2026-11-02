@@ -35,3 +35,12 @@ export function Provenance({ kind, who }: { kind: "read" | "declared" | "propose
 /** Gravité : toujours un libellé ; la couleur seule ne dit rien. */
 export const Gravity = ({ tone }: { tone: "critical" | "signal" | "live" }) =>
   <span className={`vl-tag vl-tag--${tone}`}>{{ critical: "Constat", signal: "À surveiller", live: "Vérifié" }[tone]}</span>;
+
+type Trait = "call" | "write" | "read" | "message" | "use";
+/** Un lien (L1, les traits) : plein, il appelle ; épais, il écrit ; fin et gris, il lit ; tirets, il met en file ; pointillé, il importe sans pack. L'étiquette dit ce qui passe. */
+export const Arrow = ({ kind = "call", label, back }: { kind?: Trait; label?: ReactNode; back?: boolean }) =>
+  <span className={`lx-a lx-a--${kind}${back ? " lx-a--back" : ""}`}>{label && <span className="lx-a__label" title={typeof label === "string" ? label : undefined}>{label}</span>}<i /></span>;
+
+/** Le même lien, de haut en bas, quand les deux bouts sont dans la même colonne. */
+export const VArrow = ({ kind = "call", label }: { kind?: Trait; label?: ReactNode }) =>
+  <span className={`lx-v lx-v--${kind}`}><i />{label && <span className="lx-a__label">{label}</span>}</span>;

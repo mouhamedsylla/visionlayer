@@ -7,6 +7,7 @@ import { Effect, Moment, Step } from "../../lang/marks";
 import { Rep } from "../../lang/Rep";
 import { Ref } from "../../ui/Ref";
 import { Rich } from "../../ui/Rich";
+import { Workspace } from "../../ui/Workspace";
 import "./flow.css";
 
 /** Le déroulé d'un point d'entrée : F1 (le déroulé), A1 (l'algorithme indexé), A2 (l'aiguillage), du catalogue. */
@@ -18,14 +19,31 @@ export function FlowScreen({ map, entryId, found, back, toBlock }: { map: MapPay
   const row = v.rows.find((r) => r.n === pick) ?? v.rows[0];
   const n = v.cols.length;
   return (
-    <div className="page">
-      <div className="fl__head">
+    <Workspace panelWidth={460}
+      panel={<>
+        {row && <Indexed row={row} rows={v.rows} />}
+        {v.gates.length > 0 && (
+            <Rep code="A2" name="Aiguillage" question="Quand refuse-t-il, et que laisse-t-il ?" sentence={`${v.gates.length} façon${v.gates.length > 1 ? "s" : ""} de refuser.`}
+              reads="de haut en bas : chaque question est la condition d'un refus ; oui, la flèche part à droite vers le refus et son code ; non, l'exécution descend à la question suivante.">
+              <div className="fl__gates">
+                {v.gates.map((g, i) => (
+                  <div key={g.n} className="fl__gate">
+                    <button className="fl__q" onClick={() => setPick(g.n)}><Rich text={g.question.replace(/^(.*)$/, "`$1`").replace(/^`sans condition`$/, "sans condition")} /></button>
+                    <span className="fl__no"><em>oui</em><i /></span>
+                    <span className="vl-tag vl-tag--critical">{g.refusal}{g.leaves.length ? `, après avoir écrit ${g.leaves.join(", ")}` : ", avant toute écriture"}</span>
+                    {i < v.gates.length - 1 && <span className="fl__yes">non</span>}
+                  </div>
+                ))}
+              </div>
+            </Rep>
+          )}
+      </>}
+      head={<div className="fl__head">
         <button className="vl-btn vl-btn--secondary vl-btn--sm" onClick={toBlock}>‹ {found.owner.name}</button>
         <Entry e={found.entry} />
         <span className="fl__sub">{found.entry.handler?.name}, <Ref proof={found.entry.handler ? { path: found.entry.handler.path, line: found.entry.handler.line } : found.entry.proof} /></span>
         <button className="vl-btn vl-btn--secondary vl-btn--sm fl__map" onClick={back}>Carte</button>
-      </div>
-      <div className="fl__body">
+      </div>}>
         <Rep code="F1" name="Déroulé" question="Que fait cette exécution, dans quel ordre ?" sentence={<Rich text={v.sentence} />} flush
           reads="de haut en bas, dans l'ordre. Chaque flèche part du code vers ce qu'il touche : épaisse, il écrit ; grise, il lit ; pointillée, il met en file. Choisir une étape montre son code.">
           {v.rows.length === 0 ? <p className="fl__empty">Aucune étape lue : son code n'appelle ni stockage, ni file, ni service, et ne refuse rien qu'un pack sache lire.</p> : <>
@@ -43,26 +61,7 @@ export function FlowScreen({ map, entryId, found, back, toBlock }: { map: MapPay
             })}
           </>}
         </Rep>
-        <div className="fl__side">
-          {row && <Indexed row={row} rows={v.rows} />}
-          {v.gates.length > 0 && (
-            <Rep code="A2" name="Aiguillage" question="Quand refuse-t-il, et que laisse-t-il ?" sentence={`${v.gates.length} façon${v.gates.length > 1 ? "s" : ""} de refuser.`}
-              reads="de haut en bas : chaque question est la condition d'un refus ; oui, la flèche part à droite vers le refus et son code ; non, l'exécution descend à la question suivante.">
-              <div className="fl__gates">
-                {v.gates.map((g, i) => (
-                  <div key={g.n} className="fl__gate">
-                    <button className="fl__q" onClick={() => setPick(g.n)}><Rich text={g.question.replace(/^(.*)$/, "`$1`").replace(/^`sans condition`$/, "sans condition")} /></button>
-                    <span className="fl__no"><em>oui</em><i /></span>
-                    <span className="vl-tag vl-tag--critical">{g.refusal}{g.leaves.length ? `, après avoir écrit ${g.leaves.join(", ")}` : ", avant toute écriture"}</span>
-                    {i < v.gates.length - 1 && <span className="fl__yes">non</span>}
-                  </div>
-                ))}
-              </div>
-            </Rep>
-          )}
-        </div>
-      </div>
-    </div>
+    </Workspace>
   );
 }
 

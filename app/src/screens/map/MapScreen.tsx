@@ -5,6 +5,7 @@ import { MapHero } from "./MapHero";
 import { MapGridView } from "./MapGridView";
 import { Panel } from "./Panel";
 import { Rep } from "../../lang/Rep";
+import { Workspace } from "../../ui/Workspace";
 import "./map.css";
 
 /** Planche 03, Carte : quelles unités s'exécutent, et comment elles communiquent. */
@@ -14,31 +15,22 @@ export function MapScreen({ map, selected, select, enter, openFlow }: { map: Map
   const chosen = nodes.find((n) => n.id === selected || n.name === selected) ?? nodes.find((n) => n.id === defaultSelection(map));
   const hero = mapHero(map);
   return (
-    <div className="page">
-      <div className="page__head">
-        <div className="mp__intro">
-          <div className="mp__titlerow"><h1 className="page__title">Carte</h1></div>
-          <p className="mp__sentence">Quelles unités s'exécutent, et comment elles communiquent.</p>
-        </div>
-      </div>
+    <Workspace
+      head={<div className="mp__intro"><h1 className="page__title">Carte</h1><p className="mp__sentence">Quelles unités s'exécutent, et comment elles communiquent.</p></div>}
+      panel={chosen && <Panel map={map} node={chosen} links={grid.links} select={select} enter={enter} openFlow={openFlow} />}>
       {hero && <MapHero hero={hero} onPick={select} />}
-      <div className="mp__body">
-        <div className="mp__card">
-          <Rep code="S1" name="Carte" question="De quoi le système est-il fait ?" sentence={mapSentence(map)} flush
-            reads="de gauche à droite : ce qui appelle, ce qui tourne, ce qui est touché. Une file se lit de haut en bas, de qui y dépose à qui la consomme. Choisir un bloc montre ses liens ; double-clic pour entrer.">
-            <MapGridView grid={grid} tech={map.tech} selected={chosen?.id} chosen={chosen} select={select} enter={enter} />
-            <div className="mp__legend">
-              <span className="lg"><span className="a sw"><i /></span>appel</span>
-              <span className="lg"><span className="a a--w sw"><i /></span>écriture</span>
-              <span className="lg"><span className="a a--r sw"><i /></span>lecture</span>
-              <span className="lg"><span className="a a--q sw"><i /></span>message en file</span>
-              <span className="lg"><span className="a a--u sw"><i /></span>import, sans pack</span>
-              <span className="lg"><span className="mk mk--nl">non lu</span>sans pack pour cette technologie</span>
-            </div>
-          </Rep>
+      <Rep code="S1" name="Carte" question="De quoi le système est-il fait ?" sentence={mapSentence(map)} flush
+        reads="de gauche à droite : ce qui appelle, ce qui tourne, ce qui est touché. Une file se lit de haut en bas, de qui y dépose à qui la consomme. Choisir un bloc montre ses liens ; double-clic pour entrer.">
+        <MapGridView grid={grid} tech={map.tech} selected={chosen?.id} chosen={chosen} select={select} enter={enter} />
+        <div className="mp__legend">
+          <span className="lg"><span className="a sw"><i /></span>appel</span>
+          <span className="lg"><span className="a a--w sw"><i /></span>écriture</span>
+          <span className="lg"><span className="a a--r sw"><i /></span>lecture</span>
+          <span className="lg"><span className="a a--q sw"><i /></span>message en file</span>
+          <span className="lg"><span className="a a--u sw"><i /></span>import, sans pack</span>
+          <span className="lg"><span className="mk mk--nl">non lu</span>sans pack pour cette technologie</span>
         </div>
-        {chosen && <Panel map={map} node={chosen} links={grid.links} select={select} enter={enter} openFlow={openFlow} />}
-      </div>
-    </div>
+      </Rep>
+    </Workspace>
   );
 }
