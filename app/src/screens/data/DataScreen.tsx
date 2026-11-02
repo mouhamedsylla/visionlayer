@@ -1,6 +1,10 @@
 import { useState } from "react";
 import type { MapPayload } from "../../api/types";
-import { dataTable, stores, writers } from "../../model/data";
+import { dataTable, lifecycle, stores, writers } from "../../model/data";
+import { Rep } from "../../lang/Rep";
+import { State } from "../../lang/objects";
+import { Arrow } from "../../lang/marks";
+import { Workspace } from "../../ui/Workspace";
 import { plural } from "../../model/words";
 import { Ref } from "../../ui/Ref";
 import { Rich } from "../../ui/Rich";
@@ -12,7 +16,7 @@ export function DataScreen({ map, item, open, openFlow }: { map: MapPayload; ite
   const list = stores(map);
   const store = list.find((s) => s.id === item || s.name === item) ?? list.find((s) => s.facets.data?.entities.length) ?? list[0];
   const [chosen, setChosen] = useState<string>();
-  if (!store) return <div className="page dx"><h1 className="dx__title">Qui lit, qui écrit, et sous quel contrôle</h1><p className="dx__lead">Aucun stockage n'est lu sur ce projet.</p></div>;
+  if (!store) return <div className="page"><h1 className="dx__title">Qui lit, qui écrit, et sous quel contrôle</h1><p className="dx__lead">Aucun stockage n'est lu sur ce projet.</p></div>;
   const t = dataTable(map, store);
   const race = t.rows.find((r) => r.seeTone === "cr");
   const row = t.rows.find((r) => r.entity.name === chosen) ?? race ?? t.rows[0];
@@ -20,20 +24,24 @@ export function DataScreen({ map, item, open, openFlow }: { map: MapPayload; ite
   const unique = t.rows.filter((r) => r.constraint).length;
   const decl = store.facets.data?.entities[0]?.proof;
   const grid = { gridTemplateColumns: `128px repeat(${t.columns.length}, 98px) minmax(0, 1fr) minmax(0, 1.25fr)` };
+  const life = row && lifecycle(row.entity);
+  const writing = t.columns.filter((c) => t.rows.some((r) => r.cells[c.id]?.write)).length;
   return (
-    <div className="page dx">
-      <div className="dx__intro">
+    <Workspace
+      head={<div className="dx__intro">
         <h1 className="dx__title">Qui lit, qui écrit, et sous quel contrôle</h1>
         <p className="dx__lead">Les {plural(t.rows.length, "table", "tables")} de {store.name}{decl ? `, déclarées dans ${decl.path}` : ""}, croisées avec le code qui les touche. Chaque case renvoie à sa ligne. Ce que contient la base en production n'est pas lu.</p>
-      </div>
+      </div>}
+      panel={row && <Side map={map} store={store} row={row} findings={t.findings} openFlow={openFlow} />}>
       <div className="tiles">
         <div className="tile"><small>Les tables</small><b>{plural(t.rows.length, "table", "tables")}</b><span>{groups.length > 1 ? `en ${groups.length} groupes : ${groups.join(", ").toLowerCase()}` : "déclarées dans le code"}</span></div>
         <div className="tile"><small>Qui les touche</small><b>{plural(t.columns.length, "partie du code", "parties du code")}</b><span>{t.columns.map((c) => c.label.toLowerCase()).join(", ")}</span></div>
         <div className="tile"><small>Contrôles en base</small><b>{plural(unique, "contrainte d'unicité", "contraintes d'unicité")}</b><span>{t.rows.find((r) => r.constraint?.includes(", si "))?.constraint ?? "lues dans le schéma"}</span></div>
         <div className={`tile${race ? " tile--cr" : ""}`}><small>Lue puis réécrite</small><b>{race ? race.entity.name : "aucune"}</b><span>{race ? <Rich text={t.findings.find((f) => f.code === "race_read_then_write")?.message.split(",")[0] ?? ""} /> : "aucune course lue"}</span></div>
       </div>
-      <div className="dx__body">
-        <section className="card">
+        <Rep code="X1" name="Matrice d'accès" question="Qui touche quoi ?" flush
+          sentence={`${plural(t.rows.length, "table", "tables")} de ${store.name}, touchées par ${plural(t.columns.length, "partie du code", "parties du code")} ; ${writing} y écri${writing > 1 ? "vent" : "t"}.`}
+          reads="par ligne : une table, et ce que chaque partie du code y fait. Noir, elle écrit ; à filet, elle lit. En rouge, ce qu'il faut aller voir. Choisir une ligne montre son cycle de vie et qui l'écrit.">
           <div className="tabs">
             {list.map((s) => <button key={s.id} className={`seg${s.id === store.id ? " seg--on" : ""}`} onClick={() => open(s.id)}>{s.name} <span className="vl-count">{s.facets.data?.entities.length ?? s.facets.channel?.topics.length ?? 0}</span></button>)}
             <span className="note"><span className="rw"><i>lit</i><i className="w">écrit</i></span></span>
@@ -53,10 +61,27 @@ export function DataScreen({ map, item, open, openFlow }: { map: MapPayload; ite
             </div>
           ))}
           {t.rows.length === 0 && <Unread map={map} store={store.name} />}
-        </section>
-        {row && <Side map={map} store={store} row={row} findings={t.findings} openFlow={openFlow} />}
+        </Rep>
+        {life && row && <Lifecycle name={row.entity.name} life={life} />}
+    </Workspace>
+  );
+}
+
+/** T1, le cycle de vie : l'état de départ, chaque écriture vers un état avec sa fonction et sa ligne, les états jamais écrits. */
+function Lifecycle({ name, life }: { name: string; life: NonNullable<ReturnType<typeof lifecycle>> }) {
+  const rows = Math.max(1, life.steps.length);
+  return (
+    <Rep code="T1" name="Cycle de vie" question="Par quels états passe cette donnée ?" sentence={<Rich text={life.sentence} />}
+      reads={<>en suivant les flèches : chacune est une écriture de <code>{name}.{life.field.name}</code>, avec la fonction et la ligne qui la font{life.start ? ", depuis l'état que la base pose à la création" : ""}. En pointillé, un état permis que rien n'écrit.</>}>
+      <div className="dx__life">
+        <div className="dx__start" style={{ gridRow: `1 / span ${rows}` }}>{life.start ? <><State value={life.start} /><small>posé par la base</small></> : <small>écrit par le code</small>}</div>
+        {life.steps.map((s, i) => [
+          <div key={`a${s.value}`} className="dx__arrow" style={{ gridRow: i + 1 }}><Arrow kind="write" label={s.fns.slice(0, 2).join(", ") || "écrit"} /></div>,
+          <div key={`s${s.value}`} className="dx__to" style={{ gridRow: i + 1 }}><State value={s.value} /><Ref proof={s.proof} /></div>,
+        ])}
+        {life.never.length > 0 && <div className="dx__never" style={{ gridRow: rows + 1 }}>{life.never.map((v) => <State key={v} value={`${v}, jamais écrit`} never />)}</div>}
       </div>
-    </div>
+    </Rep>
   );
 }
 

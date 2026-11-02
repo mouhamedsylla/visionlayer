@@ -51,3 +51,4 @@
 /* Dans le panneau, une carte ou une représentation perd son cadre : le panneau en est un. */
 .ws__panel > .vl-card, .ws__panel > .lx-rep { border: 0; border-radius: 0; box-shadow: none; background: transparent; }
 .ws__panel > * + * { border-top: 1px solid var(--line); }
+.ws__canvas > * { flex-shrink: 0; }

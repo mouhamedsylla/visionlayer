@@ -78,3 +78,24 @@ export function writers(p: MapPayload, store: ArchNode, entity: Entity): Writer[
   }
   return [...by.values()].sort((a, b) => Number(a.danger) - Number(b.danger));
 }
+
+/**
+ * T1, le cycle de vie d'une table : son champ d'état, l'état que la base pose à la création, puis chaque valeur
+ * écrite par le code, avec les fonctions qui l'écrivent et la ligne ; les valeurs permises que rien n'écrit.
+ */
+export function lifecycle(entity: Entity) {
+  const field = entity.fields?.find((f) => f.values?.length && f.writes?.some((w) => w.value));
+  if (!field) return undefined;
+  const written = new Map<string, { fns: string[]; proof: Proof }>();
+  for (const w of field.writes ?? []) {
+    if (!w.value) continue;
+    const at = written.get(w.value) ?? written.set(w.value, { fns: [], proof: w.proof }).get(w.value)!;
+    if (w.fn && !at.fns.includes(w.fn)) at.fns.push(w.fn);
+  }
+  const start = field.default && field.values!.includes(field.default) ? field.default : undefined;
+  const steps = field.values!.filter((v) => written.has(v) && v !== start).map((v) => ({ value: v, ...written.get(v)! }));
+  const never = field.values!.filter((v) => !written.has(v) && v !== start);
+  const tail = (fns: string[]) => fns.length > 1 ? `${fns.slice(0, -1).join(", ")} ou ${fns.at(-1)}` : fns[0] ?? "le code";
+  const sentence = `${start ? `Une ligne de \`${entity.name}\` naît \`${start}\`` : `\`${entity.name}.${field.name}\` est écrit par le code`}${steps.length ? ` ; ${steps.map((s) => `\`${tail(s.fns)}\` la passe à \`${s.value}\``).slice(0, 3).join(", ")}` : ""}.${never.length ? ` ${never.map((v) => `\`${v}\``).join(", ")} ${never.length > 1 ? "ne sont jamais écrits" : "n'est jamais écrit"}.` : ""}`;
+  return { field, start, steps, never, sentence };
+}

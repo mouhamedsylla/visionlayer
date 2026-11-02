@@ -30,7 +30,7 @@ export function App() {
             : screen === "deroule" && item ? <div key={`${screen}/${item ?? ""}`} className="view view--ws scr-fl"><FlowScreen map={data.map} entryId={item} found={findEntry(data.map, item)} back={() => go("carte", findEntry(data.map!, item)?.owner.id)} toBlock={() => go("bloc", findEntry(data.map!, item)?.owner.id)} /></div>
             : screen === "acces" ? <div key={screen} className="view scr-ax"><AccessScreen map={data.map} openFlow={(id) => go("deroule", id)} /></div>
             : screen === "taches" ? <div key={screen} className="view scr-tk"><TasksScreen map={data.map} openFlow={(id) => go("deroule", id)} /></div>
-            : screen === "donnees" ? <div key={screen} className="view scr-dx"><DataScreen map={data.map} item={item} open={(id) => go("donnees", id)} openFlow={(id) => go("deroule", id)} /></div>
+            : screen === "donnees" ? <div key={screen} className="view view--ws scr-dx"><DataScreen map={data.map} item={item} open={(id) => go("donnees", id)} openFlow={(id) => go("deroule", id)} /></div>
             : screen === "packs" ? <div key={screen} className="view scr-pk"><PacksScreen map={data.map} item={item} open={(id) => go("packs", id)} onChanged={data.refresh} /></div>
             : <div key={screen} className="view scr-ov"><Overview map={data.map} project={data.project} claims={data.claims} go={go} /></div>}
         </main>
