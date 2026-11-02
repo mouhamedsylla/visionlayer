@@ -1,6 +1,11 @@
 import { useState } from "react";
 import type { MapPayload } from "../../api/types";
-import { actors, levelsText, plural, reachByResource, type ActorRow } from "../../model/access";
+import { accessMatrix, actors, layers, levelsText, plural, reachByResource, type ActorRow } from "../../model/access";
+import { Rep } from "../../lang/Rep";
+import { Actor as ActorMark } from "../../lang/objects";
+import { Effect } from "../../lang/marks";
+import { Rich } from "../../ui/Rich";
+import { Workspace } from "../../ui/Workspace";
 import { Ref } from "../../ui/Ref";
 import { EntryRow } from "../block/EntryRow";
 import { entryGroups } from "../../model/block";
@@ -17,19 +22,20 @@ export function AccessScreen({ map, openFlow }: { map: MapPayload; openFlow: (id
   const [tab, setTab] = useState<"actors" | "entries">(people ? "actors" : "entries");
   const allRoutes = map.model.nodes.filter((n) => n.level === "deployable").flatMap((n) => (n.facets.entrypoints ?? []).filter((e) => e.kind === "http" || e.kind === "rpc"));
   const humans = a.rows.filter((r) => r.group === "people").length, outside = a.rows.filter((r) => r.group === "outside").length, system = a.rows.filter((r) => r.group === "system").length;
+  const m = accessMatrix(a.rows);
   return (
-    <div className="page ax">
-      <div className="ax__intro">
+    <Workspace
+      head={<div className="ax__intro">
         <h1 className="ax__title">Qui peut entrer, et ce qu'il a le droit d'y faire</h1>
         <p className="ax__lead">Lu dans le code : qui appelle le système, comment chacun prouve qui il est, ce qu'il peut appeler et toucher. Les comptes réels et les rôles attribués en base ne sont pas lus.</p>
-      </div>
+      </div>}
+      panel={row && <Side map={map} row={row} />}>
       <div className="tiles">
         <div className="tile"><small>Qui peut appeler</small><b>{plural(a.total, "point d'entrée", "points d'entrée")}</b><span>{levelsText(a.byLevel)}</span></div>
         <div className="tile"><small>Les acteurs</small><b>{plural(a.rows.length, "acteur", "acteurs")}</b><span>{[humans && plural(humans, "sorte de personne", "sortes de personnes"), outside && plural(outside, "service extérieur", "services extérieurs"), system && plural(system, "tâche du système", "tâches du système")].filter(Boolean).join(", ")}</span></div>
         <div className="tile"><small>Comment on prouve qui on est</small><b>{a.mechanism ? a.mechanism.name : "Non lu"}</b><span>{a.mechanism ? <Ref proof={a.mechanism.proof} /> : "aucun pack ne lit encore la preuve que présente l'appelant"}</span></div>
         <div className="tile tile--cr"><small>Vérifié sur la donnée</small><b>Non lu</b><span>la comparaison entre la donnée et l'appelant n'est pas encore lue</span></div>
       </div>
-      <div className="ax__body">
         <section className="card">
           <div className="tabs">
             <button className={`seg${tab === "actors" ? " seg--on" : ""}`} onClick={() => setTab("actors")}>Par acteur <span className="vl-count">{a.rows.length}</span></button>
@@ -51,16 +57,23 @@ export function AccessScreen({ map, openFlow }: { map: MapPayload; openFlow: (id
             );
           })}</>}
         </section>
-        {row && <Side map={map} row={row} />}
-      </div>
-    </div>
+        {m.tables.length > 0 && (
+          <Rep code="X1" name="Matrice d'accès" question="Qui touche quoi ?" sentence={<Rich text={m.sentence} />} flush
+            reads="par ligne : une table, et ce que chaque acteur peut y faire par les routes qu'il atteint. Noir, il écrit ; à filet, il lit. Déduit des déroulés : une route dont le code n'est pas lu n'y figure pas.">
+            <table className="ax__mx">
+              <thead><tr><th>Table</th>{m.actors.map((x) => <th key={x.id} className={x.id === row?.id ? "is-on" : ""}><button onClick={() => setChosen(x.id)}>{x.name}</button></th>)}</tr></thead>
+              <tbody>{m.tables.map((t) => <tr key={t}><td><code>{t}</code></td>{m.actors.map((x) => { const k = m.cell(t, x.id); return <td key={x.id} className={x.id === row?.id ? "is-on" : ""}>{k && <Effect kind={k} what="" />}</td>; })}</tr>)}</tbody>
+            </table>
+          </Rep>
+        )}
+    </Workspace>
   );
 }
 
 function Actor({ r, on, pick }: { r: ActorRow; on: boolean; pick: () => void }) {
   return (
     <button className={`ac ac--row${on ? " ac--on" : ""}`} onClick={pick}>
-      <span><b>{r.name}</b>{r.note && <small>{r.note}</small>}</span>
+      <span className="ac__who"><ActorMark label="" kind={r.group === "people" ? (r.id === "role" ? "role" : "person") : "service"} initials={r.name.replace(/[^A-Za-zÀ-ÿ]/g, "").slice(0, 2).toUpperCase()} /><span><b>{r.name}</b>{r.note && <small>{r.note}</small>}</span></span>
       <span className={`pf${r.proofKind ? ` pf--${r.proofKind}` : ""}`}>{r.proof}</span>
       <span className={r.by ? "fn" : "q"}>{r.by?.name ?? "rien"}</span>
       {r.reachText ? <span className="q">{r.reachText}</span> : <span className="reach"><i><b style={{ width: `${Math.round((r.reach / Math.max(1, r.total)) * 100)}%` }} /></i>{r.reach} / {r.total}</span>}
@@ -93,6 +106,12 @@ function Side({ map, row }: { map: MapPayload; row: ActorRow }) {
         </div>
         {row.see && <div className="warn">{row.see.replace(/^./, (c) => c.toUpperCase())}.{row.seeProof && <> <Ref proof={row.seeProof} /></>}</div>}
       </section>
+      <Rep code="X2" name="Pile des couches" question="Où cet appel est-il vérifié ?" sentence={`Un appel de ${row.name.toLowerCase()} est vérifié à ${plural(layers(map, row).filter((l) => l.state === "read").length, "couche lue", "couches lues")}.`}
+        reads="de haut en bas, comme l'appel traverse le système, de la preuve à la base. Plein : lu dans le code ; orange pointillé : non lu ; rouge : absent.">
+        <div className="ax__stack">{layers(map, row).map((l, i) => (
+          <div key={i} className={`ax__layer ax__layer--${l.state}`}><span><b>{l.name}</b> <small>{l.what}</small></span><span className="ax__lnote">{l.proof ? <Ref proof={l.proof} /> : l.note}</span></div>
+        ))}</div>
+      </Rep>
       {res.length > 0 && (
         <section className="card">
           <div className="hd"><h2>Ce qu'il atteint</h2><span>{row.reach} sur {row.total}</span></div>

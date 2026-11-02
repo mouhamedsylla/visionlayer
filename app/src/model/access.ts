@@ -106,3 +106,47 @@ export function levelsText(byLevel: Record<string, number>): string {
   return Object.entries(byLevel).map(([k, n]) => `${n} ${w[k] ?? k}`).join(", ");
 }
 export { plural };
+
+/**
+ * X1, la matrice d'accès : pour chaque table, ce que chaque acteur peut y faire, déduit des déroulés des routes
+ * qu'il atteint (une écriture l'emporte sur une lecture). Les tâches du système ne sont pas des acteurs ici.
+ */
+export function accessMatrix(rows: ActorRow[]) {
+  const actorsIn = rows.filter((r) => r.group !== "system" && r.routes.length);
+  const cells = new Map<string, Map<string, "write" | "read">>();
+  for (const a of actorsIn) {
+    for (const e of a.routes) {
+      for (const s of e.flow ?? []) {
+        const t = s.target?.entity;
+        if (!t || (s.kind !== "write" && s.kind !== "read")) continue;
+        const row = cells.get(t) ?? cells.set(t, new Map()).get(t)!;
+        if (row.get(a.id) !== "write") row.set(a.id, s.kind);
+      }
+    }
+  }
+  const tables = [...cells.keys()].sort((x, y) => [...cells.get(y)!.values()].filter((k) => k === "write").length - [...cells.get(x)!.values()].filter((k) => k === "write").length || x.localeCompare(y));
+  const open = actorsIn.find((a) => a.id === "public");
+  const openWrites = open ? tables.filter((t) => cells.get(t)!.get(open.id) === "write") : [];
+  const sentence = !tables.length ? "Aucune table n'est touchée par une route lue."
+    : openWrites.length ? `Sans aucune preuve, un visiteur écrit ${openWrites.slice(0, 3).map((t) => `\`${t}\``).join(", ")}${openWrites.length > 3 ? ` et ${openWrites.length - 3} autres` : ""}.`
+    : `${plural(tables.length, "table est touchée", "tables sont touchées")} par ${plural(actorsIn.length, "acteur", "acteurs")} ; un visiteur n'en écrit aucune.`;
+  return { actors: actorsIn, tables, cell: (t: string, a: string) => cells.get(t)?.get(a), sentence };
+}
+
+export interface Layer { name: string; what: string; state: "read" | "unread" | "absent" | "none"; proof?: Proof; note: string }
+/** X2, la pile des couches qu'un appel de cet acteur traverse, de l'entrée à la base : ce qui est lu, ce qui ne l'est pas, ce qui manque. */
+export function layers(p: MapPayload, row: ActorRow): Layer[] {
+  const mech = p.model.nodes.flatMap((n) => n.facets.trust?.mechanisms ?? [])[0];
+  const out: Layer[] = [];
+  out.push(mech ? { name: mech.name, what: "lit la preuve de l'appelant", state: "read", proof: mech.proof, note: "lu" } : { name: "Preuve", what: "ce qui lit la session ou le jeton", state: "unread", note: "non lu" });
+  if (row.group === "system") out.push({ name: "Aucune garde", what: "le système s'appelle lui-même", state: "none", note: "sans objet" });
+  else if (row.id === "public") out.push({ name: "Aucune garde", what: "la route est ouverte à tous", state: "none", note: "voulu ou non, à décider" });
+  else if (row.by) out.push({ name: row.by.name, what: row.group === "outside" ? "vérifie la signature" : "refuse sans preuve valable", state: "read", ...(row.by.proof ? { proof: row.by.proof } : {}), note: "lu" });
+  else out.push({ name: "Garde", what: "la garde de ces routes", state: "unread", note: "non lue" });
+  const roles = p.model.nodes.some((n) => (n.facets.entrypoints ?? []).some((e) => e.access?.level === "role"));
+  if (row.id === "role") out.push({ name: "Rôle", what: "vérifié avant d'agir", state: "read", ...(row.by?.proof ? { proof: row.by.proof } : {}), note: "lu" });
+  else if (row.id === "authenticated" && roles && row.see) out.push({ name: "Rôle", what: "jamais vérifié sur certaines routes", state: "absent", ...(row.seeProof ? { proof: row.seeProof } : {}), note: "absent" });
+  if (row.group === "people" && row.id !== "public") out.push({ name: "Sur la donnée", what: "la ligne appartient-elle à l'appelant ?", state: "unread", note: "non lu" });
+  out.push({ name: "Base", what: "règles par ligne", state: "none", note: "aucune lue" });
+  return out;
+}
