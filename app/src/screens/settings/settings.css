@@ -23,3 +23,11 @@
 .st__keep p { font-size: 12.5px; line-height: 18px; color: var(--ink-2); margin-top: 6px; }
 @media (max-width: 1080px) { .st__body { grid-template-columns: 1fr; } }
 }
+.scr-st .st__faces { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; padding: 14px; }
+.scr-st .st__face { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; padding: 18px 14px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); font: inherit; cursor: pointer; transition: border-color .15s, transform .15s; }
+.scr-st .st__face:hover { border-color: var(--line-strong); transform: translateY(-1px); }
+.scr-st .st__face--on { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+.scr-st .st__face b { font-size: 14px; }
+.scr-st .st__face small { font-size: 12px; line-height: 17px; color: var(--muted); min-height: 34px; }
+.scr-st .st__moods { display: flex; flex-wrap: wrap; gap: 22px; padding: 6px 16px 16px; }
+.scr-st .st__moods > div { display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-2); }

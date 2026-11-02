@@ -3,6 +3,7 @@ import { api } from "../api/client";
 import type { MapPayload, VigieAnswer } from "../api/types";
 import { CodeRef } from "../ui/CodeRef";
 import { useOpenCode } from "../ui/code";
+import { Face, PERSONAS, useFace } from "./Face";
 import "./vigie.css";
 
 /** Ouvrir Vigie depuis n'importe quel écran, avec une question déjà posée ou non. */
@@ -57,27 +58,32 @@ function examples(map?: MapPayload): string[] {
 
 function Panel({ map, turns, busy, draft, setDraft, ask, close }: { map?: MapPayload; turns: Turn[]; busy: boolean; draft: string; setDraft: (s: string) => void; ask: (q: string) => void; close: () => void }) {
   const end = useRef<HTMLDivElement>(null);
+  const face = useFace();
+  const name = PERSONAS.find((p) => p.id === face)?.name;
   useEffect(() => { end.current?.scrollIntoView({ block: "end" }); }, [turns.length, busy]);
   return (
     <aside className="vg" aria-label="Vigie">
       <header className="vg__head">
-        <span className="vg__face" aria-hidden="true"><i /><i /></span>
-        <span className="vg__who"><b>Vigie</b><small>Muse Spark, répond depuis la carte et cite ses lignes</small></span>
+        <Face mood={busy ? "think" : "welcome"} size={46} ring={busy} />
+        <span className="vg__who"><b>Vigie{name ? `, ${name}` : ""}</b><small>{busy ? <>lit la carte<i className="vg__dots"><i /><i /><i /></i></> : "répond depuis la carte, cite ses lignes"}</small></span>
         <button className="vg__close" onClick={close} aria-label="Fermer">×</button>
       </header>
       <div className="vg__body">
         {turns.length === 0 && (
           <div className="vg__intro">
-            <p>Pose une question sur le système. Vigie ne lit que ce que VisionLayer a lu : la carte, et le code qu'elle cite. Ce qu'elle ne couvre pas, il le dit « non lu ».</p>
-            {examples(map).map((q) => <button key={q} className="vg__ex" onClick={() => ask(q)}>{q}</button>)}
+            <div className="vg__msg"><Face mood="welcome" size={30} /><p className="vg__bub">Pose-moi une question sur le système. Je ne lis que ce que VisionLayer a lu : la carte, et le code qu'elle cite. Ce que je ne couvre pas, je te le dis « non lu ».</p></div>
+            <div className="vg__exs">{examples(map).map((q) => <button key={q} className="vg__ex" onClick={() => ask(q)}>{q}</button>)}</div>
           </div>
         )}
         {turns.map((t, i) => (
           <div key={i} className="vg__turn">
             <p className="vg__q">{t.q}</p>
-            {t.error ? <p className="vg__err">Vigie n'a pas pu répondre : {t.error}</p>
-              : !t.a ? <p className="vg__wait">Vigie lit la carte…</p>
-              : <Answer a={t.a} />}
+            <div className="vg__msg">
+              <Face mood={t.error ? "question" : !t.a ? "think" : "happy"} size={30} />
+              {t.error ? <p className="vg__bub vg__err">Je n'ai pas pu répondre : {t.error}</p>
+                : !t.a ? <p className="vg__bub vg__typing"><i /><i /><i /></p>
+                : <div className="vg__bub"><Answer a={t.a} /></div>}
+            </div>
           </div>
         ))}
         <div ref={end} />
