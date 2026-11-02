@@ -5,6 +5,7 @@ import { plural } from "../../model/words";
 import { Icon } from "../../shell/icons";
 import { Ref } from "../../ui/Ref";
 import { Rich } from "../../ui/Rich";
+import { Rep } from "../../lang/Rep";
 
 const TABS = [["forms", "Formes"], ["rules", "Règles"], ["yaml", "YAML"], ["brief", "Fiche de l'agent"]] as const;
 
@@ -106,16 +107,7 @@ export function Workshop({ map, proposal: p, others, open, accept, reject }: { m
         </section>
 
         <div className="pk__side">
-          <section className="vl-card" aria-label="Faits ajoutés">
-            <div className="vl-card__head"><span className="vl-label">Ce qu'il ajoute <span className="vl-count">{added.length}</span></span><span className="mono pk__muted">− {removed.length} retiré{removed.length > 1 ? "s" : ""}</span></div>
-            {changes.length === 0 && <p className="pk__empty">Rien ne change sur la carte.</p>}
-            {changes.slice(0, 12).map((c, i) => (
-              <div key={i} className="pk__fact">
-                <span className={`mono pk__sign${c.sign === "removed" ? " pk__sign--minus" : ""}`}>{c.sign === "added" ? "+" : "−"}</span>
-                <div className="pk__factbody"><p className="pk__facttext"><Rich text={c.text} /></p>{c.proof && <Ref proof={c.proof} />}</div>
-              </div>
-            ))}
-          </section>
+          <Signed name={p.name} changes={changes} />
           <section className="vl-card" aria-label="Vérifications">
             <div className="vl-card__head"><span className="vl-label">Vérifié par VisionLayer</span><span className={`mono ${ch.every((c) => c.ok) ? "pk__live" : "pk__bad"}`}>{ch.filter((c) => c.ok).length} / {ch.length}</span></div>
             {ch.map((c) => (
@@ -128,5 +120,37 @@ export function Workshop({ map, proposal: p, others, open, accept, reject }: { m
         </div>
       </div>
     </div>
+  );
+}
+
+const KIND: Record<string, [string, string]> = { node: ["bloc", "blocs"], entry: ["point d'entrée", "points d'entrée"], trust: ["preuve", "preuves"], entity: ["table", "tables"], field: ["champ", "champs"], value: ["valeur", "valeurs"], edge: ["lien", "liens"], finding: ["constat", "constats"] };
+
+/** C2, la différence signée : « + » ajouté, « − » retiré, avec sa preuve ; au-delà de douze, repliée par sorte. */
+function Signed({ name, changes }: { name: string; changes: NonNullable<PackProposal["preview"]>["changes"] }) {
+  const [open, setOpen] = useState<string>();
+  const added = changes.filter((c) => c.sign === "added").length, removed = changes.length - added;
+  const groups = new Map<string, typeof changes>();
+  for (const c of changes) { const k = `${c.sign}:${c.kind}`; (groups.get(k) ?? groups.set(k, []).get(k)!).push(c); }
+  const fold = changes.length > 12;
+  const row = (c: (typeof changes)[number], i: number) => (
+    <div key={i} className="pk__fact">
+      <span className={`mono pk__sign${c.sign === "removed" ? " pk__sign--minus" : ""}`}>{c.sign === "added" ? "+" : "−"}</span>
+      <div className="pk__factbody"><p className="pk__facttext"><Rich text={c.text} /></p>{c.proof && <Ref proof={c.proof} />}</div>
+    </div>
+  );
+  return (
+    <Rep code="C2" name="Différence signée" question="Qu'est-ce qui a changé ?" flush
+      sentence={changes.length ? `Le pack ${name} ajoute ${plural(added, "fait", "faits")} à la carte et en retire ${removed}.` : `Le pack ${name} ne change rien sur la carte.`}
+      reads={fold ? "par ligne : « + » ajouté, « − » retiré ; replié par sorte, chaque groupe s'ouvre sur ses lignes et leurs preuves." : "par ligne : « + » ajouté, « − » retiré, avec sa preuve."}>
+      {!fold ? changes.map(row) : [...groups].map(([k, list]) => (
+        <div key={k}>
+          <button className="pk__fold" onClick={() => setOpen(open === k ? undefined : k)}>
+            <span className={`mono pk__sign${k.startsWith("removed") ? " pk__sign--minus" : ""}`}>{k.startsWith("added") ? "+" : "−"}{list.length}</span>
+            <span>{KIND[list[0]!.kind]?.[list.length > 1 ? 1 : 0] ?? list[0]!.kind}</span><span className="pk__muted">{open === k ? "replier" : "ouvrir"}</span>
+          </button>
+          {open === k && list.slice(0, 40).map(row)}
+        </div>
+      ))}
+    </Rep>
   );
 }
