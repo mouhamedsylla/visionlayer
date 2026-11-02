@@ -11,6 +11,7 @@ import { BlockScreen } from "../screens/block/BlockScreen";
 import { FlowScreen } from "../screens/flow/FlowScreen";
 import { AgentsScreen } from "../screens/agents/AgentsScreen";
 import { SettingsScreen } from "../screens/settings/SettingsScreen";
+import { ReplaysScreen } from "../screens/replay/ReplaysScreen";
 import { findEntry } from "../model/flow";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
@@ -36,6 +37,7 @@ export function App() {
             : screen === "taches" ? <div key={screen} className="view view--ws scr-tk"><TasksScreen map={data.map} openFlow={(id) => go("deroule", id)} /></div>
             : screen === "donnees" ? <div key={screen} className="view view--ws scr-dx"><DataScreen map={data.map} item={item} open={(id) => go("donnees", id)} openFlow={(id) => go("deroule", id)} /></div>
             : screen === "agents" ? <div key={screen} className="view view--ws scr-ag"><AgentsScreen map={data.map} enter={(id) => go("bloc", id)} /></div>
+            : screen === "replays" ? <div key={`${screen}/${item ?? ""}`} className="view scr-rp"><ReplaysScreen item={item} open={(id) => go("replays", id)} /></div>
             : screen === "reglages" ? <div key={screen} className="view scr-st"><SettingsScreen /></div>
             : screen === "packs" ? <div key={screen} className="view scr-pk"><PacksScreen map={data.map} item={item} open={(id) => go("packs", id)} onChanged={data.refresh} /></div>
             : <div key={screen} className="view scr-ov"><Overview map={data.map} project={data.project} claims={data.claims} go={go} /></div>}

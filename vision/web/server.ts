@@ -11,7 +11,8 @@ import { StackSource } from "./stack-source.js";
 import { PacksSource } from "./packs-source.js";
 import { agentSessions } from "./agents-source.js";
 import { SettingsSource } from "./settings-source.js";
-import { askVigie } from "../vigie/vigie.js";
+import { askVigie, coachVigie, compareSolutions } from "../vigie/vigie.js";
+import { ReplayStore } from "../replay/replay.js";
 
 export interface WebServerOptions {
   /** Le dépôt lu. */
@@ -35,6 +36,12 @@ export function createWebServer(opts: WebServerOptions): Server {
   const knowledge = new KnowledgeSource(root);
   const packs = new PacksSource(root);
   const settings = new SettingsSource(root);
+  const replays = new ReplayStore(root);
+  // La carte de la copie d'un Replay : celle du code d'avant, jamais du code corrigé.
+  const copies = new Map<string, MapSource>();
+  const copyMap = (id: string) => { const r = replays.get(id); if (!r.copy) throw new Error("copie non ouverte"); const m = copies.get(id) ?? copies.set(id, new MapSource(r.copy)).get(id)!; return m.refresh(); };
+  /** Ce qu'on montre d'un Replay : jamais le correctif de l'agent tant que l'ingénieur n'a pas rendu le sien. */
+  const shown = (id: string) => { const r = replays.get(id); return { ...r, ...(r.submitted ? { agentPatch: replays.agentPatch(id), yourDiff: r.submitted.diff } : {}) }; };
   const param = (req: IncomingMessage, name: string) => new URL(req.url ?? "/", "http://localhost").searchParams.get(name) ?? "";
   const agentParam = (req: Parameters<Handler>[0]) => { const a = param(req, "agent"); if (!["muse", "claude", "codex"].includes(a)) throw new Error(`agent inconnu : ${a}`); return a; };
   const routes: Record<string, Handler> = {
@@ -44,6 +51,27 @@ export function createWebServer(opts: WebServerOptions): Server {
       const q = param(req, "q").trim();
       if (!q || q.length > 600) throw new Error("question vide ou trop longue");
       sendJson(res, 200, await askVigie(root, (await map.get()).model, q));
+    },
+    "GET /api/replays": (_req, res) => sendJson(res, 200, replays.list()),
+    "GET /api/replays/one": (req, res) => sendJson(res, 200, shown(param(req, "id"))),
+    "POST /api/replays/create": async (req, res) => sendJson(res, 200, await replays.create(param(req, "session"))),
+    "POST /api/replays/start": (req, res) => { replays.start(param(req, "id")); sendJson(res, 200, shown(param(req, "id"))); },
+    "POST /api/replays/reset": (req, res) => { replays.reset(param(req, "id")); copies.delete(param(req, "id")); sendJson(res, 200, shown(param(req, "id"))); },
+    "POST /api/replays/test": (req, res) => sendJson(res, 200, replays.test(param(req, "id"))),
+    "POST /api/replays/ask": async (req, res) => {
+      const id = param(req, "id"), r = replays.get(id);
+      const hint = Number(param(req, "hint")) || undefined, q = param(req, "q").trim();
+      if (!hint && !q) throw new Error("question vide");
+      const problem = r.finding ? `${r.finding.message} (${r.finding.proof.map((p) => `${p.path}:${p.line}`).join(", ")})` : r.title;
+      sendJson(res, 200, await coachVigie(r.copy!, (await copyMap(id)).model, { problem, tests: r.submitted?.result ?? r.last ?? r.before, diff: replays.diff(id) }, hint ? { hint } : { question: q }));
+    },
+    "POST /api/replays/submit": async (req, res) => {
+      const id = param(req, "id");
+      const r = replays.submit(id);
+      const c = await compareSolutions({ problem: r.finding?.message ?? r.title, agentName: r.agent.name, agentPatch: replays.agentPatch(id), agentTests: r.agentResult, yourDiff: r.submitted!.diff, yourTests: r.submitted!.result });
+      const { cost: _cost, ...comparison } = c;
+      replays.save({ ...r, comparison });
+      sendJson(res, 200, shown(id));
     },
     "GET /api/style": (_req, res) => sendJson(res, 200, readStyle(root)),
     "POST /api/style/confirm": (req, res) => {

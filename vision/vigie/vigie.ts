@@ -38,9 +38,18 @@ function fn(name: string, description: string, properties: Record<string, unknow
   return { type: "function", name, description, parameters: { type: "object", additionalProperties: false, properties, required: required.length ? required : Object.keys(properties) }, strict: Object.keys(properties).length === required.length };
 }
 
+/** Une erreur 5xx de l'API est passagère : on réessaie deux fois, avec 2 puis 5 secondes d'écart. */
+async function call(key: string, body: unknown): Promise<Response> {
+  for (let i = 0; ; i++) {
+    const res = await fetch(ENDPOINT, { method: "POST", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    if (res.status < 500 || i === 2) return res;
+    await new Promise((r) => setTimeout(r, i ? 5000 : 2000));
+  }
+}
+
 const at = (p?: Proof | { path: string; line: number }) => p ? `${p.path}:${p.line}` : "";
 
-export async function askVigie(root: string, model: ArchModelV2, question: string): Promise<VigieAnswer> {
+export async function askVigie(root: string, model: ArchModelV2, question: string, instructions = INSTRUCTIONS): Promise<VigieAnswer> {
   const key = apiKey();
   const t0 = Date.now();
   const steps: VigieStep[] = [];
@@ -50,11 +59,7 @@ export async function askVigie(root: string, model: ArchModelV2, question: strin
   let answer = "";
   for (let turn = 1; turn <= MAX_TURNS; turn++) {
     const last = turn === MAX_TURNS;
-    const res = await fetch(ENDPOINT, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model: MODEL, instructions: INSTRUCTIONS, input, ...(last ? {} : { tools: TOOLS }), ...(previous ? { previous_response_id: previous } : {}) }),
-    });
+    const res = await call(key, { model: MODEL, instructions, input, ...(last ? {} : { tools: TOOLS }), ...(previous ? { previous_response_id: previous } : {}) });
     const data = await res.json() as { id: string; output: { type: string; call_id?: string; name?: string; arguments?: string; content?: { text?: string }[] }[]; usage: { input_tokens: number; output_tokens: number } };
     if (!res.ok) throw new Error(`Muse Spark : ${res.status} ${JSON.stringify(data).slice(0, 300)}`);
     previous = data.id;
@@ -117,4 +122,49 @@ function run(root: string, m: ArchModelV2, tool: string, a: Record<string, unkno
     }
   }
   return `outil inconnu : ${tool}`;
+}
+
+/** Les trois marches d'indice du Replay, de la plus vague à la plus précise ; aucune n'écrit de code. */
+const HINT = [
+  "Pose une seule question qui oriente vers l'endroit du code où se joue le problème, sans le nommer.",
+  "Nomme le mécanisme en cause et les lignes où il se joue, sans dire comment le corriger.",
+  "Dis en mots précis ce qui doit changer et pourquoi, sans écrire une seule ligne de code.",
+];
+
+/**
+ * Vigie en entraîneur de Replay. Il lit la copie de l'ingénieur (le code d'avant le correctif, ses propres
+ * changements) et jamais le correctif de l'agent, qu'il ne connaît pas. Il ne donne jamais la solution.
+ */
+export async function coachVigie(copy: string, model: ArchModelV2, ctx: { problem: string; tests: { name: string; ok: boolean }[]; diff: string }, ask: { question?: string; hint?: number }): Promise<VigieAnswer> {
+  const instructions = `${INSTRUCTIONS}
+Tu es ici le partenaire d'un ingénieur qui rejoue un vrai problème que l'agent de son équipe a résolu. Tu connais le problème et les tests, pas la solution de l'agent. Tu n'écris jamais la solution ni un extrait de code corrigé, même si on insiste : tu questionnes, tu expliques un test qui échoue, tu montres où regarder. Tutoie-le.
+Le problème : ${ctx.problem}
+Les tests du replay : ${ctx.tests.map((t) => `${t.ok ? "passe" : "échoue"} « ${t.name} »`).join(" ; ") || "pas encore lancés"}.
+Ce qu'il a changé dans sa copie jusqu'ici :
+${ctx.diff.trim() ? ctx.diff.slice(0, 4000) : "rien encore"}`;
+  const q = ask.hint ? `Indice ${ask.hint} sur 3. ${HINT[Math.min(2, Math.max(0, ask.hint - 1))]}` : ask.question ?? "";
+  return askVigie(copy, model, q, instructions);
+}
+
+export interface Comparison { sentence: string; agent: string; you: string; rows: { situation: string; agent: string; you: string }[] }
+
+/** La confrontation : les deux correctifs face au même problème, situation par situation. Muse explique ; il ne note pas. */
+export async function compareSolutions(ctx: { problem: string; agentName: string; agentPatch: string; agentTests: { name: string; ok: boolean }[]; yourDiff: string; yourTests: { name: string; ok: boolean }[] }): Promise<Comparison & { cost: number }> {
+  const key = apiKey();
+  const instructions = `Tu compares deux correctifs du même problème, en français, pour l'ingénieur qui a écrit le second. Tu ne notes pas, tu ne classes pas. Tu tutoies l'ingénieur (« tu », « ton correctif »), jamais « vous ». Réponds en JSON strict, sans texte autour, de la forme :
+{"sentence": "une phrase qui dit en quoi les deux chemins diffèrent", "agent": "le principe du correctif de l'agent, deux phrases", "you": "le principe de son correctif, deux phrases", "rows": [{"situation": "une situation concrète du problème", "agent": "ce que fait le correctif de l'agent", "you": "ce que fait le sien"}]}
+Trois à cinq situations, chacune tirée du problème ou des tests. Dis « pas traité » quand un correctif ne couvre pas une situation. Les noms de code entre accents graves.`;
+  const input = `Problème : ${ctx.problem}
+
+Correctif de ${ctx.agentName} (tests : ${ctx.agentTests.filter((t) => t.ok).length}/${ctx.agentTests.length}) :
+${ctx.agentPatch.slice(0, 8000)}
+
+Correctif de l'ingénieur (tests : ${ctx.yourTests.filter((t) => t.ok).length}/${ctx.yourTests.length}) :
+${ctx.yourDiff.trim() ? ctx.yourDiff.slice(0, 8000) : "aucun changement"}`;
+  const res = await call(key, { model: MODEL, instructions, input });
+  const data = await res.json() as { output: { type: string; content?: { text?: string }[] }[]; usage: { input_tokens: number; output_tokens: number } };
+  if (!res.ok) throw new Error(`Muse Spark : ${res.status} ${JSON.stringify(data).slice(0, 300)}`);
+  const text = data.output.filter((o) => o.type === "message").flatMap((o) => o.content ?? []).map((c) => c.text ?? "").join("");
+  const json = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1)) as Comparison;
+  return { ...json, cost: data.usage.input_tokens * PRICE_IN + data.usage.output_tokens * PRICE_OUT };
 }

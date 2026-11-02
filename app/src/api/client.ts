@@ -1,4 +1,7 @@
-import type { AgentLink, AgentSession, VigieAnswer, KnowledgePayload, MapPayload, PacksPayload, ProjectInfo, SourceExcerpt, WriterJob } from "./types";
+import type { AgentLink, AgentSession, Replay, ReplayTest, VigieAnswer, KnowledgePayload, MapPayload, PacksPayload, ProjectInfo, SourceExcerpt, WriterJob } from "./types";
+
+/** Un Replay tel que l'écran le voit : le correctif de l'agent seulement une fois le sien rendu. */
+export type ReplayView = Replay & { agentPatch?: string; yourDiff?: string };
 
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(path);
@@ -23,6 +26,15 @@ export const api = {
   agents: () => get<AgentSession[]>("/api/agents"),
   /** Une question à Vigie : Muse Spark répond depuis la carte, preuves à l'appui. */
   vigie: (q: string) => post<VigieAnswer>(`/api/vigie?q=${encodeURIComponent(q)}`),
+  replays: () => get<Replay[]>("/api/replays"),
+  replay: (id: string) => get<ReplayView>(`/api/replays/one?id=${id}`),
+  /** Gestes humains du Replay : garder une session, ouvrir sa copie, lancer les tests, demander, rendre. */
+  keepReplay: (session: string) => post<Replay>(`/api/replays/create?session=${encodeURIComponent(session)}`),
+  startReplay: (id: string) => post<ReplayView>(`/api/replays/start?id=${id}`),
+  testReplay: (id: string) => post<ReplayTest[]>(`/api/replays/test?id=${id}`),
+  askReplay: (id: string, a: { q?: string; hint?: number }) => post<VigieAnswer>(`/api/replays/ask?id=${id}${a.hint ? `&hint=${a.hint}` : `&q=${encodeURIComponent(a.q ?? "")}`}`),
+  resetReplay: (id: string) => post<ReplayView>(`/api/replays/reset?id=${id}`),
+  submitReplay: (id: string) => post<ReplayView>(`/api/replays/submit?id=${id}`),
   style: () => get<{ confirmed?: string[]; at?: string }>("/api/style"),
   /** Geste humain de la planche L3 : confirmer ou corriger les styles proposés. */
   confirmStyle: (ids: string[]) => post<{ confirmed?: string[]; at?: string }>(`/api/style/confirm?ids=${ids.join(",")}`),

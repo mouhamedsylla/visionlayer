@@ -37,7 +37,7 @@ function museSessions(root: string): AgentSession[] {
 
 function readMuseLog(path: string, root: string, row: { session_id: string; model_id: string | null; git_branch: string | null }): AgentSession | undefined {
   if (!existsSync(path)) return undefined;
-  const s: AgentSession = { agent: "muse", id: row.session_id, ...(row.model_id ? { model: row.model_id } : {}), ...(row.git_branch ? { branch: row.git_branch } : {}), started: "", tokens: { input: 0, cached: 0, output: 0, reasoning: 0 }, calls: 0, mapReads: [], writes: [], source: "journal de Muse Code" };
+  const s: AgentSession = { agent: "muse", id: row.session_id, ...(row.model_id ? { model: row.model_id } : {}), ...(row.git_branch ? { branch: row.git_branch } : {}), started: "", tokens: { input: 0, cached: 0, output: 0, reasoning: 0 }, calls: 0, mapReads: [], writes: [], source: "journal de Muse Code", timeline: [] };
   const writes = new Set<string>();
   for (const line of readFileSync(path, "utf8").split("\n")) {
     if (!line.includes('"payload_type"')) continue;
@@ -59,14 +59,14 @@ function readMuseLog(path: string, root: string, row: { session_id: string; mode
     if (ev.kind === "assistant_tool_calls_committed") {
       for (const c of ev.tool_calls ?? []) {
         const name = String(c.name ?? "");
-        if (/vision_/.test(name)) s.mapReads.push({ tool: name.replace(/^mcp__visionlayer__/, ""), beforeFirstWrite: writes.size === 0 });
+        if (/vision_/.test(name)) { s.mapReads.push({ tool: name.replace(/^mcp__visionlayer__/, ""), beforeFirstWrite: writes.size === 0 }); if (at) s.timeline.push({ at, what: "map", detail: name.replace(/^mcp__visionlayer__/, "") }); }
         if (WRITE_TOOLS.test(name)) {
           let args: any = {};
           try { args = JSON.parse(c.args ?? "{}"); } catch { /* arguments illisibles : aucun chemin retenu */ }
           for (const f of [args.path, args.file_path, ...(String(args.patch ?? args.input ?? "").match(/^\*\*\* (?:Add|Update|Delete) File: (.+)$/gm) ?? []).map((m: string) => m.replace(/^\*\*\* \w+ File: /, ""))]) {
             if (typeof f !== "string" || !f) continue;
             const rel = relative(root, isAbsolute(f) ? real(f) : join(root, f)).split(sep).join("/");
-            if (!rel.startsWith("..") && !/(^|\/)\.env/.test(rel)) writes.add(rel);
+            if (!rel.startsWith("..") && !/(^|\/)\.env/.test(rel)) { if (!writes.has(rel) && at) s.timeline.push({ at, what: "write", detail: rel }); writes.add(rel); }
           }
         }
       }
@@ -80,10 +80,10 @@ function readMuseLog(path: string, root: string, row: { session_id: string; mode
 function hookSessions(root: string): AgentSession[] {
   const by = new Map<string, AgentSession>();
   for (const e of readJournal(root)) {
-    const s = by.get(e.session) ?? by.set(e.session, { agent: e.agent, id: e.session, started: e.at, tokens: { input: 0, cached: 0, output: 0, reasoning: 0 }, calls: 0, mapReads: [], writes: [], source: `crochets de ${e.agent === "claude" ? "Claude Code" : "Codex"}` }).get(e.session)!;
+    const s = by.get(e.session) ?? by.set(e.session, { agent: e.agent, id: e.session, started: e.at, tokens: { input: 0, cached: 0, output: 0, reasoning: 0 }, calls: 0, mapReads: [], writes: [], timeline: [], source: `crochets de ${e.agent === "claude" ? "Claude Code" : "Codex"}` }).get(e.session)!;
     if (e.model) s.model ??= e.model;
-    if (e.tool && /vision_/.test(e.tool)) s.mapReads.push({ tool: e.tool.replace(/^mcp__\w+__/, ""), beforeFirstWrite: s.writes.length === 0 });
-    for (const f of e.files ?? []) if (!s.writes.includes(f)) s.writes.push(f);
+    if (e.tool && /vision_/.test(e.tool)) { s.mapReads.push({ tool: e.tool.replace(/^mcp__\w+__/, ""), beforeFirstWrite: s.writes.length === 0 }); s.timeline.push({ at: e.at, what: "map", detail: e.tool.replace(/^mcp__\w+__/, "") }); }
+    for (const f of e.files ?? []) if (!s.writes.includes(f)) { s.writes.push(f); s.timeline.push({ at: e.at, what: "write", detail: f }); }
     if (e.usage) { s.tokens = { input: e.usage.input, cached: e.usage.cacheRead, output: e.usage.output, reasoning: e.usage.reasoning }; s.model ??= e.usage.model; }
     if (e.event === "SessionEnd") s.ended = e.at;
   }

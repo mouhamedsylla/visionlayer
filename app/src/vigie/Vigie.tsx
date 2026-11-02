@@ -91,7 +91,7 @@ function Panel({ map, turns, busy, draft, setDraft, ask, close }: { map?: MapPay
 }
 
 /** La réponse : le texte, chaque `chemin:ligne` cliquable vers son code ; puis ce que Vigie a lu, et ce que ça a coûté. */
-function Answer({ a }: { a: VigieAnswer }) {
+export function Answer({ a }: { a: VigieAnswer }) {
   const open = useOpenCode();
   const lines = a.answer.split("\n");
   return (

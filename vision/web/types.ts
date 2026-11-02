@@ -138,6 +138,8 @@ export interface AgentSession {
   writes: string[];
   /** D'où vient ce qu'on sait : le journal de Muse Code, ou les crochets de Claude Code et Codex. */
   source: string;
+  /** Les moments de la session : lectures de la carte et écritures, avec leur heure. */
+  timeline: { at: string; what: "map" | "write"; detail: string }[];
 }
 
 /** Un agent de code, vu depuis le projet : installé sur la machine, et ce qui le relie à VisionLayer. */
@@ -153,3 +155,4 @@ export interface AgentLink {
 }
 
 export type { VigieAnswer, VigieStep } from "../vigie/vigie.js";
+export type { Replay, ReplayTest } from "../replay/replay.js";
