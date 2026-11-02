@@ -16,6 +16,7 @@ export const SCREENS: { id: Screen; label: string; group: string; built?: boolea
   { id: "packs", label: "Packs", group: "Lecture", built: true },
   { id: "couverture", label: "Couverture", group: "Lecture" },
   { id: "replays", label: "Replays", group: "Pratique" },
+  { id: "reglages", label: "Réglages", group: "", built: true },
 ];
 
 /** L'écran et l'élément choisi vivent dans l'adresse : `#/carte/api`. */

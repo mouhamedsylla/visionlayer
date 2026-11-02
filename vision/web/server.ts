@@ -9,6 +9,7 @@ import { KnowledgeSource } from "./knowledge-source.js";
 import { StackSource } from "./stack-source.js";
 import { PacksSource } from "./packs-source.js";
 import { agentSessions } from "./agents-source.js";
+import { SettingsSource } from "./settings-source.js";
 
 export interface WebServerOptions {
   /** Le dépôt lu. */
@@ -31,10 +32,15 @@ export function createWebServer(opts: WebServerOptions): Server {
   const deploy = new DeploySource(root);
   const knowledge = new KnowledgeSource(root);
   const packs = new PacksSource(root);
+  const settings = new SettingsSource(root);
   const param = (req: IncomingMessage, name: string) => new URL(req.url ?? "/", "http://localhost").searchParams.get(name) ?? "";
+  const agentParam = (req: Parameters<Handler>[0]) => { const a = param(req, "agent"); if (!["muse", "claude", "codex"].includes(a)) throw new Error(`agent inconnu : ${a}`); return a; };
   const routes: Record<string, Handler> = {
     "GET /api/project": (_req, res) => sendJson(res, 200, projectInfo(root)),
     "GET /api/agents": (_req, res) => sendJson(res, 200, agentSessions(root)),
+    "GET /api/settings/agents": (_req, res) => sendJson(res, 200, settings.get()),
+    "POST /api/settings/link": (req, res) => sendJson(res, 200, settings.link(agentParam(req))),
+    "POST /api/settings/unlink": (req, res) => sendJson(res, 200, settings.unlink(agentParam(req))),
     "GET /api/map": async (_req, res) => sendJson(res, 200, await map.get()),
     "GET /api/stack": async (_req, res) => sendJson(res, 200, stack.get((await map.get()).builtAt)),
     "GET /api/deploy": async (_req, res) => sendJson(res, 200, await deploy.get((await map.get()).builtAt)),

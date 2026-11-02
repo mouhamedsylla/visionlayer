@@ -1,4 +1,4 @@
-import type { AgentSession, KnowledgePayload, MapPayload, PacksPayload, ProjectInfo, SourceExcerpt, WriterJob } from "./types";
+import type { AgentLink, AgentSession, KnowledgePayload, MapPayload, PacksPayload, ProjectInfo, SourceExcerpt, WriterJob } from "./types";
 
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(path);
@@ -21,6 +21,10 @@ export const api = {
   source: (path: string, from: number, to: number) => get<SourceExcerpt>(`/api/source?path=${encodeURIComponent(path)}&from=${from}&to=${to}`),
   packs: () => get<PacksPayload>("/api/packs"),
   agents: () => get<AgentSession[]>("/api/agents"),
+  links: () => get<AgentLink[]>("/api/settings/agents"),
+  /** Gestes humains des Réglages : poser ou retirer les liens d'un agent avec VisionLayer. */
+  link: (agent: string) => post<AgentLink[]>(`/api/settings/link?agent=${agent}`),
+  unlink: (agent: string) => post<AgentLink[]>(`/api/settings/unlink?agent=${agent}`),
   /** Les gestes humains de l'écran Packs (ADR 0019) : accepter, refuser, lancer l'écrivain. */
   accept: (id: string) => post<PacksPayload>(`/api/packs/accept?id=${encodeURIComponent(id)}`),
   reject: (id: string) => post<PacksPayload>(`/api/packs/reject?id=${encodeURIComponent(id)}`),

@@ -46,7 +46,7 @@ export function Sidebar({ project, map, screen, go }: { project?: ProjectInfo; m
           <span className="side__vigietext"><b>Demander à Vigie</b><small>Muse Spark, cite ses preuves</small></span>
           <span className="vl-kbd side__kbd">⌘J</span>
         </a>
-        <a className="vl-nav vl-nav--soon" aria-disabled="true">{Icon.reglages}<span>Réglages</span></a>
+        <a href="#/reglages" className={`vl-nav${screen === "reglages" ? " vl-nav--active" : ""}`} onClick={(e) => { e.preventDefault(); go("reglages"); }}>{Icon.reglages}<span>Réglages</span></a>
         {project?.user && (
           <div className="side__user">
             <span className="side__avatar">{initials}</span>

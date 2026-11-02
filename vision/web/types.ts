@@ -139,3 +139,15 @@ export interface AgentSession {
   /** D'où vient ce qu'on sait : le journal de Muse Code, ou les crochets de Claude Code et Codex. */
   source: string;
 }
+
+/** Un agent de code, vu depuis le projet : installé sur la machine, et ce qui le relie à VisionLayer. */
+export interface AgentLink {
+  agent: "muse" | "claude" | "codex";
+  installed: boolean;
+  /** Lit la carte : le serveur MCP de VisionLayer est déclaré là où l'agent le cherche. */
+  map: { linked: boolean; where: string; editable: boolean };
+  /** Dit ce qu'il touche : son propre journal (Muse Code) ou les crochets de VisionLayer. */
+  report: { linked: boolean; where: string; editable: boolean };
+  /** Déclare ce qu'il sait : la section VisionLayer de son fichier de consignes. */
+  contract: { linked: boolean; where: string; editable: boolean };
+}
