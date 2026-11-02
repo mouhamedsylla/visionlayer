@@ -1,12 +1,11 @@
 /* Repris de la planche 06 (Tâches planifiées) ; l'axe s'appelle .tk__axis, .ax étant pris par Accès. */
 .scr-tk {
-.tk { padding: 24px 28px 36px; gap: 18px; }
 .tk__intro { display: flex; flex-direction: column; gap: 6px; max-width: 880px; }
-.tk__title { font: 600 26px/32px var(--font-sans); letter-spacing: -.02em; }
-.tk__lead { color: var(--ink-2); font-size: 14px; line-height: 21px; }
+.tk__title { font: 600 22px/28px var(--font-sans); letter-spacing: -.02em; }
+.tk__lead { color: var(--ink-2); font-size: 13px; line-height: 19px; }
 .tk__body { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; align-items: start; }
 .tk__main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
-.tk__side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.tk__side { display: flex; flex-direction: column; gap: 14px; min-width: 0; padding: 14px; }
 .tk__day { padding: 6px 16px 14px; }
 .tk__dh { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 12px; font: 500 10.5px/14px var(--font-mono); color: var(--muted); padding: 6px 0; }
 .tk__axis { position: relative; height: 14px; }

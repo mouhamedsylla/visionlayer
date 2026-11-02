@@ -5,6 +5,8 @@ import { triggers, type Trigger } from "../../model/tasks";
 import { plural } from "../../model/words";
 import { Ref } from "../../ui/Ref";
 import { Rich } from "../../ui/Rich";
+import { Rep } from "../../lang/Rep";
+import { Workspace } from "../../ui/Workspace";
 import "./tasks.css";
 
 /** Planche 06, Tâches planifiées : ce qui tourne sans que personne clique. */
@@ -15,22 +17,24 @@ export function TasksScreen({ map, openFlow }: { map: MapPayload; openFlow: (id:
   const schedules = list.filter((x) => x.kind === "schedule"), queues = list.filter((x) => x.kind === "queue"), hooks = list.filter((x) => x.kind === "webhook");
   const twice = schedules.filter((x) => x.machines > 1);
   const decl = schedules[0]?.entry.proof;
+  const clock = schedules.length === 0 ? `Aucune tâche planifiée ; ${plural(list.length, "déclencheur à la demande", "déclencheurs à la demande")}.`
+    : twice.length ? `${twice.length === schedules.length ? `Les ${plural(schedules.length, "tâche", "tâches")}` : plural(twice.length, "tâche", "tâches")} tournent dans ${twice[0]!.node.name}, déployé sur ${twice[0]!.machines} machines : chacune s'exécute ${twice[0]!.machines} fois.`
+    : `${plural(schedules.length, "tâche planifiée", "tâches planifiées")}, chacune lancée une fois.`;
   return (
-    <div className="page tk">
-      <div className="tk__intro">
+    <Workspace
+      head={<div className="tk__intro">
         <h1 className="tk__title">Ce qui tourne sans que personne clique</h1>
         <p className="tk__lead">Lu dans le code et dans les manifestes de déploiement : les tâches planifiées, les files, les événements qu'un service extérieur envoie. Leurs exécutions réelles ne sont pas lues.</p>
-      </div>
+      </div>}
+      panel={t && <Side t={t} openFlow={openFlow} />}>
       <div className="tiles">
         <div className="tile"><small>Tâches planifiées</small><b>{plural(schedules.length, "tâche", "tâches")}</b><span>{decl ? `déclarées dans ${decl.path.split("/").slice(-2).join("/")}` : "aucune lue"}</span></div>
         <div className="tile"><small>Files</small><b>{queues.length ? `${plural(queues.length, "file", "files")} : ${queues.map((q) => q.entry.key).join(", ")}` : "aucune file"}</b><span>{queues.map((q) => `${q.node.name}, ${q.onFail}`).join(" ; ") || "aucun consommateur lu"}</span></div>
         <div className="tile"><small>Événements reçus</small><b>{plural(hooks.length, "webhook signé", "webhooks signés")}</b><span>{hooks.map((h) => h.entry.key).join(", ") || "aucun"}</span></div>
         <div className={`tile${twice.length ? " tile--cr" : ""}`}><small>Lancées plusieurs fois</small><b>{twice.length ? (twice.length === schedules.length ? `Les ${schedules.length} tâches` : plural(twice.length, "tâche", "tâches")) : "aucune"}</b><span>{twice.length ? `elles tournent dans ${twice[0]!.node.name}, déployé sur ${twice[0]!.machines} machines` : "chaque tâche part une fois"}</span></div>
       </div>
-      <div className="tk__body">
-        <div className="tk__main">
-          <section className="card">
-            <div className="hd"><h2>Une journée de {map.model.system.name}</h2><span>ce qui se lance sans clic</span></div>
+          <Rep code="T3" name="Horloge" question="Qu'est-ce qui tourne sans personne, et quand ?" sentence={clock} flush
+            reads={<>sur une journée de {map.model.system.name} : chaque marque est un passage, une bande pleine un passage si fréquent qu'il remplit la journée ; « ×N », il a lieu sur chaque machine. Choisir une ligne la détaille à droite.</>}>
             <div className="tk__day">
               <div className="tk__dh"><span /><div className="tk__axis"><span style={{ left: 0, transform: "none" }}>0 h</span><span style={{ left: "25%" }}>6 h</span><span style={{ left: "50%" }}>12 h</span><span style={{ left: "75%" }}>18 h</span><span style={{ left: "100%", transform: "translateX(-100%)" }}>24 h</span></div></div>
               {list.map((x) => (
@@ -47,7 +51,7 @@ export function TasksScreen({ map, openFlow }: { map: MapPayload; openFlow: (id:
               ))}
             </div>
             <div className="lg"><span><i />planifié, heure fixe</span><span><i className="ev" />à la demande</span><span>×N : une fois par machine</span></div>
-          </section>
+          </Rep>
           <section className="card">
             <div className="trg trg--h"><span>Déclencheur</span><span>Quand</span><span>Ce qu'il fait</span><span>Si ça rate</span><span>À aller voir</span></div>
             {list.map((x) => (
@@ -58,10 +62,7 @@ export function TasksScreen({ map, openFlow }: { map: MapPayload; openFlow: (id:
             ))}
             {list.length === 0 && <p className="foot">Rien ne tourne sans clic sur ce projet, d'après ce qui est lu : aucune tâche planifiée, aucun consommateur de file, aucun webhook signé. Une technologie de planification sans pack resterait invisible ici ; la Vue d'ensemble dit ce qui n'est pas lu.</p>}
           </section>
-        </div>
-        {t && <Side t={t} openFlow={openFlow} />}
-      </div>
-    </div>
+    </Workspace>
   );
 }
 
