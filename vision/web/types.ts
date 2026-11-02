@@ -120,3 +120,22 @@ export interface PacksPayload {
   proposals: PackProposal[];
   job?: WriterJob;
 }
+
+/** Une session d'agent sur ce dépôt, telle que l'agent l'a consignée : jamais un prompt, ni une commande, ni un contenu. */
+export interface AgentSession {
+  agent: "muse" | "claude" | "codex";
+  id: string;
+  model?: string;
+  branch?: string;
+  started: string;
+  ended?: string;
+  /** Tokens additionnés sur les appels au modèle. */
+  tokens: { input: number; cached: number; output: number; reasoning: number };
+  calls: number;
+  /** Les lectures de la carte par MCP, dans l'ordre : l'outil, et si elle a eu lieu avant la première écriture. */
+  mapReads: { tool: string; beforeFirstWrite: boolean }[];
+  /** Les fichiers du dépôt que la session a écrits, relatifs à la racine. */
+  writes: string[];
+  /** D'où vient ce qu'on sait : le journal de Muse Code, ou les crochets de Claude Code et Codex. */
+  source: string;
+}

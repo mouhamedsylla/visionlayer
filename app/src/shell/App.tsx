@@ -8,6 +8,7 @@ import { DataScreen } from "../screens/data/DataScreen";
 import { TasksScreen } from "../screens/tasks/TasksScreen";
 import { BlockScreen } from "../screens/block/BlockScreen";
 import { FlowScreen } from "../screens/flow/FlowScreen";
+import { AgentsScreen } from "../screens/agents/AgentsScreen";
 import { findEntry } from "../model/flow";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
@@ -31,6 +32,7 @@ export function App() {
             : screen === "acces" ? <div key={screen} className="view view--ws scr-ax"><AccessScreen map={data.map} openFlow={(id) => go("deroule", id)} /></div>
             : screen === "taches" ? <div key={screen} className="view view--ws scr-tk"><TasksScreen map={data.map} openFlow={(id) => go("deroule", id)} /></div>
             : screen === "donnees" ? <div key={screen} className="view view--ws scr-dx"><DataScreen map={data.map} item={item} open={(id) => go("donnees", id)} openFlow={(id) => go("deroule", id)} /></div>
+            : screen === "agents" ? <div key={screen} className="view view--ws scr-ag"><AgentsScreen map={data.map} enter={(id) => go("bloc", id)} /></div>
             : screen === "packs" ? <div key={screen} className="view scr-pk"><PacksScreen map={data.map} item={item} open={(id) => go("packs", id)} onChanged={data.refresh} /></div>
             : <div key={screen} className="view scr-ov"><Overview map={data.map} project={data.project} claims={data.claims} go={go} /></div>}
         </main>

@@ -8,6 +8,7 @@ import { DeploySource } from "./deploy-source.js";
 import { KnowledgeSource } from "./knowledge-source.js";
 import { StackSource } from "./stack-source.js";
 import { PacksSource } from "./packs-source.js";
+import { agentSessions } from "./agents-source.js";
 
 export interface WebServerOptions {
   /** Le dépôt lu. */
@@ -33,6 +34,7 @@ export function createWebServer(opts: WebServerOptions): Server {
   const param = (req: IncomingMessage, name: string) => new URL(req.url ?? "/", "http://localhost").searchParams.get(name) ?? "";
   const routes: Record<string, Handler> = {
     "GET /api/project": (_req, res) => sendJson(res, 200, projectInfo(root)),
+    "GET /api/agents": (_req, res) => sendJson(res, 200, agentSessions(root)),
     "GET /api/map": async (_req, res) => sendJson(res, 200, await map.get()),
     "GET /api/stack": async (_req, res) => sendJson(res, 200, stack.get((await map.get()).builtAt)),
     "GET /api/deploy": async (_req, res) => sendJson(res, 200, await deploy.get((await map.get()).builtAt)),

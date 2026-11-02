@@ -54,11 +54,11 @@ export function eventFromHook(agent: AgentKind, raw: unknown, now = new Date()):
   return { root, event };
 }
 
-/** Le repository qui contient `cwd` et a déjà été scanné (`.vision/model.json`). */
+/** Le repository qui contient `cwd` : celui que VisionLayer a déjà lu (`.vision/`), sinon la racine git. */
 export function repoRoot(cwd: string): string | undefined {
   let dir = resolve(cwd);
   for (;;) {
-    if (existsSync(join(dir, ".vision", "model.json"))) return dir;
+    if (existsSync(join(dir, ".vision")) || existsSync(join(dir, ".git"))) return dir;
     const parent = dirname(dir);
     if (parent === dir) return undefined;
     dir = parent;
