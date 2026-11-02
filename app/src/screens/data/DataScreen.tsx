@@ -8,7 +8,7 @@ import { Method } from "./Method";
 import "./data.css";
 
 /** Planche 05, Données : qui lit, qui écrit, et sous quel contrôle. */
-export function DataScreen({ map, item, open }: { map: MapPayload; item?: string; open: (id?: string) => void }) {
+export function DataScreen({ map, item, open, openFlow }: { map: MapPayload; item?: string; open: (id?: string) => void; openFlow: (id: string) => void }) {
   const list = stores(map);
   const store = list.find((s) => s.id === item || s.name === item) ?? list.find((s) => s.facets.data?.entities.length) ?? list[0];
   const [chosen, setChosen] = useState<string>();
@@ -52,15 +52,15 @@ export function DataScreen({ map, item, open }: { map: MapPayload; item?: string
               ))}
             </div>
           ))}
-          {t.rows.length === 0 && <p className="foot">Aucune table lue dans ce stockage : sa technologie n'a peut-être pas encore de pack.</p>}
+          {t.rows.length === 0 && <Unread map={map} store={store.name} />}
         </section>
-        {row && <Side map={map} store={store} row={row} findings={t.findings} />}
+        {row && <Side map={map} store={store} row={row} findings={t.findings} openFlow={openFlow} />}
       </div>
     </div>
   );
 }
 
-function Side({ map, store, row, findings }: { map: MapPayload; store: Parameters<typeof writers>[1]; row: ReturnType<typeof dataTable>["rows"][number]; findings: ReturnType<typeof dataTable>["findings"] }) {
+function Side({ map, store, row, findings, openFlow }: { openFlow: (id: string) => void; map: MapPayload; store: Parameters<typeof writers>[1]; row: ReturnType<typeof dataTable>["rows"][number]; findings: ReturnType<typeof dataTable>["findings"] }) {
   const e = row.entity;
   const w = writers(map, store, e);
   const lines = (k: "read" | "write") => map.model.edges.filter((x) => x.to === store.id && x.kind === k && x.target?.entity === e.name).reduce((n, x) => n + x.count, 0);
@@ -97,7 +97,7 @@ function Side({ map, store, row, findings }: { map: MapPayload; store: Parameter
         <div className="hd"><h2>Qui l'écrit</h2><span>{plural(lines("write"), "ligne", "lignes")}</span></div>
         {w.length === 0 && <p className="foot">Aucun point d'entrée lu ne l'écrit.</p>}
         {w.map((x) => (
-          <div key={x.key} className={`wr${x.danger ? " wr--cr" : ""}`}>
+          <div key={x.key} className={`wr wr--link${x.danger ? " wr--cr" : ""}`} onClick={() => openFlow(x.id)} title="Ouvrir son déroulé">
             <span>{x.kind === "http" ? <><Method verb={x.key.split(" ")[0]!} /> <code className="vl-code">{x.key.split(" ").slice(1).join(" ")}</code></> : x.key}</span>
             <span className={`mk ${x.danger ? "mk--cr" : "mk--q"}`}>{x.verb}</span>
             <small>{x.proofs.slice(0, 2).map((p) => `${p.path.split("/").slice(-2).join("/")}:${p.line}`).join(", ")}</small>
@@ -106,5 +106,16 @@ function Side({ map, store, row, findings }: { map: MapPayload; store: Parameter
         {e.triggers?.length ? <div className="foot">Ensuite, {e.triggers.map((t) => `le déclencheur ${t.name}`).join(", ")} {e.triggers.length > 1 ? "réagissent" : "réagit"} en base ({e.triggers[0]!.proof.path.split("/").pop()}:{e.triggers[0]!.proof.line}).</div> : null}
       </section>
     </aside>
+  );
+}
+
+/** Un stockage sans table lue : dire pourquoi, et mener à ce qui le lirait. */
+function Unread({ map, store }: { map: MapPayload; store: string }) {
+  const gaps = map.model.coverage.flatMap((c) => c.gaps).filter((g) => g.kind === "pack_missing");
+  return (
+    <div className="dx__unread">
+      <p><b>Aucune table de {store} n'est lue.</b> Le code y accède sans doute par une bibliothèque qu'aucun pack ne lit encore{gaps.length ? ` : ${gaps.map((g) => g.subject).join(", ")}` : ""}.</p>
+      <a className="vl-btn vl-btn--primary vl-btn--sm" href="#/packs">Voir les packs à écrire ou à accepter</a>
+    </div>
   );
 }

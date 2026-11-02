@@ -1,3 +1,4 @@
+.scr-pk {
 .pk__intro { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .pk__titlerow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .pk__title { font: 600 24px/30px var(--font-mono); letter-spacing: -.02em; }
@@ -70,3 +71,5 @@
 .pk__idle { opacity: .55; }
 .pk__local b { color: var(--live-ink); }
 .pk__local span { margin-left: 6px; color: var(--muted); }
+
+}

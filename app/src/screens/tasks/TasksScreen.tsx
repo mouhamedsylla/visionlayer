@@ -8,7 +8,7 @@ import { Rich } from "../../ui/Rich";
 import "./tasks.css";
 
 /** Planche 06, Tâches planifiées : ce qui tourne sans que personne clique. */
-export function TasksScreen({ map }: { map: MapPayload }) {
+export function TasksScreen({ map, openFlow }: { map: MapPayload; openFlow: (id: string) => void }) {
   const list = triggers(map);
   const [chosen, setChosen] = useState<string>();
   const t = list.find((x) => x.id === chosen) ?? list.find((x) => x.seeTone === "cr") ?? list[0];
@@ -56,16 +56,16 @@ export function TasksScreen({ map }: { map: MapPayload }) {
                 <span className={x.seeTone === "cr" ? "see" : "q"}>{x.see ? <Rich text={x.see} /> : "rien"}</span>
               </button>
             ))}
-            {list.length === 0 && <p className="foot">Rien ne tourne sans clic sur ce projet, d'après ce qui est lu.</p>}
+            {list.length === 0 && <p className="foot">Rien ne tourne sans clic sur ce projet, d'après ce qui est lu : aucune tâche planifiée, aucun consommateur de file, aucun webhook signé. Une technologie de planification sans pack resterait invisible ici ; la Vue d'ensemble dit ce qui n'est pas lu.</p>}
           </section>
         </div>
-        {t && <Side t={t} />}
+        {t && <Side t={t} openFlow={openFlow} />}
       </div>
     </div>
   );
 }
 
-function Side({ t }: { t: Trigger }) {
+function Side({ t, openFlow }: { t: Trigger; openFlow: (id: string) => void }) {
   const [code, setCode] = useState<SourceExcerpt>();
   useEffect(() => { setCode(undefined); api.source(t.entry.proof.path, Math.max(1, t.entry.proof.line - 1), t.entry.proof.line).then(setCode).catch(() => {}); }, [t.id]);
   const steps = (t.entry.flow ?? []).filter((s) => ["read", "write", "message", "request", "refuse"].includes(s.kind)).slice(0, 4);
@@ -79,6 +79,7 @@ function Side({ t }: { t: Trigger }) {
           <p className="sub">{t.when}, {t.entry.proof.path.split("/").slice(-2).join("/")}:{t.entry.proof.line}</p>
         </div>
         {code && <div className="ed">{code.lines.map((l, i) => <div key={i} className={code.from + i === t.entry.proof.line ? "hl" : ""}><span>{code.from + i}</span><span>{l}</span></div>)}</div>}
+        <button className="vl-btn vl-btn--light vl-btn--sm tk__open" onClick={() => openFlow(t.entry.id)}>Ouvrir son déroulé</button>
         <span className="lbl">Son trajet</span>
         <div className="life">
           {steps.length === 0 && <div className="nlrow"><i /><b>—</b><p>aucun effet lu dans son code</p></div>}

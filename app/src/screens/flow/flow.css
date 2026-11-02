@@ -1,0 +1,40 @@
+/* Transposé de B4 (déroulé par composants) et de 07 (Feature, déroulé tracé), dans le langage du hackathon. */
+.scr-fl {
+.fl__head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.fl__title { font: 600 22px/28px var(--font-mono); letter-spacing: -.02em; }
+.fl__sub { color: var(--ink-2); display: inline-flex; align-items: center; gap: 6px; }
+.fl__map { margin-left: auto; }
+.fl__tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.fl__body { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 16px; align-items: start; }
+.fl__seq { padding-bottom: 8px; }
+.fl__cols { display: grid; gap: 0; align-items: end; padding: 12px 16px 10px; border-bottom: 1px solid var(--line); background: #fff; }
+.fl__col { display: flex; flex-direction: column; align-items: center; text-align: center; min-width: 0; }
+.fl__col b { font: 500 12px/16px var(--font-mono); overflow: hidden; text-overflow: ellipsis; max-width: 100%; white-space: nowrap; }
+.fl__col small { font-size: 11px; color: var(--muted); }
+.fl__row { width: 100%; display: grid; align-items: center; min-height: 42px; padding: 0 16px; border: 0; border-top: 1px solid #f0efec; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.fl__row:hover { background: #fbfaf9; }
+.fl__row--on { background: var(--surface-sunken); box-shadow: inset 3px 0 0 var(--ink); }
+.fl__label { display: flex; gap: 8px; align-items: flex-start; font-size: 12.5px; line-height: 17px; padding: 6px 0; }
+.fl__label small { display: block; font: 400 11px/15px var(--font-mono); color: var(--muted); }
+.fl__num { flex: none; width: 20px; height: 20px; border-radius: 50%; background: var(--ink); color: #fff; display: grid; place-items: center; font: 600 10.5px/1 var(--font-mono); }
+.fl__row--refuse .fl__num { background: var(--critical); }
+.fl__row--invoke .fl__num, .fl__row--return .fl__num { background: var(--tile-quiet); color: var(--ink); }
+.fl__lanes { position: relative; align-self: stretch; }
+.fl__life { position: absolute; top: 0; bottom: 0; border-left: 1px dashed var(--line-strong); }
+.fl__arrow { position: absolute; top: 50%; height: 0; border-top: 1.5px solid var(--ink); }
+.fl__arrow::after { content: ""; position: absolute; right: -1px; top: -5px; border-left: 8px solid var(--ink); border-top: 4.5px solid transparent; border-bottom: 4.5px solid transparent; }
+.fl__arrow--write { border-top-width: 2.5px; }
+.fl__arrow--read { border-top-color: var(--muted); }
+.fl__arrow--read::after { border-left-color: var(--muted); }
+.fl__arrow--message { border-top-style: dashed; }
+.fl__dot { position: absolute; top: 50%; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: var(--tile-quiet); }
+.fl__dot--refuse { background: var(--critical); }
+.fl__dot--reply { background: var(--live); }
+.fl__panel { position: sticky; top: 68px; }
+.fl__why { font-size: 12.5px; line-height: 18px; color: #d8d5cf; font-style: italic; }
+.fl__empty { padding: 16px; color: var(--muted); }
+.ed { background: #1d1d1b; border-radius: 10px; padding: 8px 0; font: 400 12px/20px var(--font-mono); overflow: auto; max-height: 420px; }
+.ed > div { display: grid; grid-template-columns: 40px minmax(0, 1fr); white-space: pre; }
+.ed > div > span:first-child { color: var(--muted); text-align: right; padding-right: 10px; }
+.ed .hl { background: #3a2a18; }
+}

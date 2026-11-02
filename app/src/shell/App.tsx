@@ -6,6 +6,9 @@ import { PacksScreen } from "../screens/packs/PacksScreen";
 import { AccessScreen } from "../screens/access/AccessScreen";
 import { DataScreen } from "../screens/data/DataScreen";
 import { TasksScreen } from "../screens/tasks/TasksScreen";
+import { BlockScreen } from "../screens/block/BlockScreen";
+import { FlowScreen } from "../screens/flow/FlowScreen";
+import { findEntry } from "../model/flow";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { SCREENS, useRoute } from "./route";
@@ -22,12 +25,14 @@ export function App() {
           <Topbar project={data.project} map={data.map} title={title} refreshing={data.refreshing} onRefresh={data.refresh} />
           {data.error ? <p className="state">La carte n'a pas pu être lue : {data.error}</p>
             : !data.map ? <p className="state">Lecture du dépôt…</p>
-            : screen === "carte" ? <MapScreen map={data.map} selected={item} select={(id) => go("carte", id)} />
-            : screen === "acces" ? <AccessScreen map={data.map} />
-            : screen === "taches" ? <TasksScreen map={data.map} />
-            : screen === "donnees" ? <DataScreen map={data.map} item={item} open={(id) => go("donnees", id)} />
-            : screen === "packs" ? <PacksScreen map={data.map} item={item} open={(id) => go("packs", id)} onChanged={data.refresh} />
-            : <Overview map={data.map} project={data.project} claims={data.claims} go={go} />}
+            : screen === "carte" ? <div className="scr-map"><MapScreen map={data.map} selected={item} select={(id) => go("carte", id)} enter={(id) => go("bloc", id)} openFlow={(id) => go("deroule", id)} /></div>
+            : screen === "bloc" && data.map.model.nodes.find((n) => n.id === item) ? <div className="scr-bk"><BlockScreen map={data.map} block={data.map.model.nodes.find((n) => n.id === item)!} openFlow={(id) => go("deroule", id)} back={() => go("carte", item)} /></div>
+            : screen === "deroule" && item ? <div className="scr-fl"><FlowScreen map={data.map} entryId={item} found={findEntry(data.map, item)} back={() => go("carte", findEntry(data.map!, item)?.owner.id)} toBlock={() => go("bloc", findEntry(data.map!, item)?.owner.id)} /></div>
+            : screen === "acces" ? <div className="scr-ax"><AccessScreen map={data.map} openFlow={(id) => go("deroule", id)} /></div>
+            : screen === "taches" ? <div className="scr-tk"><TasksScreen map={data.map} openFlow={(id) => go("deroule", id)} /></div>
+            : screen === "donnees" ? <div className="scr-dx"><DataScreen map={data.map} item={item} open={(id) => go("donnees", id)} openFlow={(id) => go("deroule", id)} /></div>
+            : screen === "packs" ? <div className="scr-pk"><PacksScreen map={data.map} item={item} open={(id) => go("packs", id)} onChanged={data.refresh} /></div>
+            : <div className="scr-ov"><Overview map={data.map} project={data.project} claims={data.claims} go={go} /></div>}
         </main>
       </div>
     </CodeProvider>

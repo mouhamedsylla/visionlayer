@@ -5,6 +5,9 @@ rules: |
   % Ce que lance un déployable, et tout ce que ce fichier importe de proche en proche.
   reach(R, R) :- unit_runs(_, _, R), present(R).
   reach(R, H) :- reach(R, G), depends(G, H).
+  % Une valeur construite par un paquet (un client), ici ou dans le module du dépôt qui l'exporte et qu'on importe.
+  pkg_value(F, N, P) :- made_with(F, N, C, _), import_raw(F, C, P, _).
+  pkg_value(F, L, P) :- imports(F, L, G, N), pkg_value(G, N, P).
   % Un fichier que le framework charge par convention quand un autre tourne (une page, une route par fichier), sans import.
   reach(R, H) :- reach(R, G), loads(G, H).
 

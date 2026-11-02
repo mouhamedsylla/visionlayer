@@ -247,9 +247,14 @@ function typedFacts(path: string, root: Node, fact: (rel: string, args: Value[],
     if (n.type === "variable_declarator") {
       const name = n.childForFieldName("name");
       const value = n.childForFieldName("value");
-      const made = value?.type === "new_expression" ? value.childForFieldName("constructor") : value?.type === "await_expression" ? undefined : undefined;
+      // La valeur construite par `new`, même enveloppée : `globalThis.x ?? new Client()` (un client partagé).
+      let built: Node | null | undefined = value?.type === "new_expression" ? value : undefined;
+      if (!built && value && !isFunction(value)) walkAll(value, (x) => { if (built) return false; if (isFunction(x)) return false; if (x.type === "new_expression") { built = x; return false; } });
+      const made = built?.childForFieldName("constructor");
       const t = typeName(n.childForFieldName("type")) ?? (made?.type === "identifier" ? made.text : undefined);
       if (name?.type === "identifier" && t) out.push(fact("typed", [path, "", name.text, t, line(n)], line(n)));
+      // made_with(Fichier, Nom, Classe, L) : la valeur est construite par cette classe, pas seulement annotée.
+      if (name?.type === "identifier" && made?.type === "identifier") out.push(fact("made_with", [path, name.text, made.text, line(n)], line(n)));
     }
   });
   return out;

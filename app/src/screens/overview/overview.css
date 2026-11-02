@@ -1,3 +1,4 @@
+.scr-ov {
 .ov__hello { display: flex; flex-direction: column; gap: 4px; }
 .ov__line { color: var(--muted); }
 .ov__known { color: var(--ink); }
@@ -57,3 +58,5 @@
 .ov__missing { border-color: var(--signal); color: var(--signal-ink); cursor: default; }
 .ov__missing b { color: var(--signal-ink); }
 .ov__missing span { margin-left: 6px; }
+
+}

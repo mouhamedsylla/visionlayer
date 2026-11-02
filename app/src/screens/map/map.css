@@ -1,4 +1,5 @@
 /* Repris de la planche 03 (Carte), mêmes mesures. */
+.scr-map {
 .mp__intro { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1 1 520px; }
 .mp__titlerow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .mp__sentence { color: var(--ink-2); }
@@ -108,3 +109,11 @@
 .mp__pempty { padding: 10px 16px 14px; border-top: 1px solid var(--line); font-size: 12px; line-height: 17px; color: var(--muted); }
 .a__to { font: 400 10.5px/13px var(--font-mono); font-style: normal; color: var(--muted); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .a--off .a__to { visibility: hidden; }
+
+.mp__enter { align-self: flex-start; margin-top: 4px; }
+.mp__pentry { width: 100%; display: flex; justify-content: space-between; gap: 8px; padding: 7px 16px; border: 0; border-top: 1px solid var(--line); background: none; font: inherit; cursor: pointer; text-align: left; }
+.mp__pentry:hover { background: #fbfaf9; }
+.mp__pentry code { font: 500 12px/16px var(--font-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mp__pentry span { font: 400 11.5px/16px var(--font-mono); color: var(--muted); white-space: nowrap; }
+.mp__pmore { width: 100%; padding: 8px 16px; border: 0; border-top: 1px solid var(--line); background: none; font: 500 12px/1 var(--font-sans); text-align: left; cursor: pointer; }
+}

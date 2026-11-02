@@ -23,6 +23,7 @@ export const READABLE: Relation[] = [
   { name: "handler_at", args: ["Fichier", "Clé", "FichierCode", "LigneCode"], meaning: "où est écrit le code d'un point d'entrée" },
   { name: "present", args: ["Fichier"], meaning: "un fichier du dépôt, quel que soit son langage : la seule façon de voir un fichier qu'aucun import ne nomme (une page, une route par fichier)" },
   { name: "pkg_name", args: ["Manifeste", "Nom"], meaning: "le nom d'un paquet, d'après son package.json", example: 'packages/web/package.json, "@acme/web"' },
+  { name: "pkg_value", args: ["Fichier", "Nom", "Paquet"], meaning: "dans ce fichier, ce nom désigne une valeur construite par ce paquet : créée ici (`const db = new Client()`, même `globalThis.db ?? new Client()`), ou importée d'un module du dépôt qui la crée (`import { prisma } from '@/lib/prisma'`). C'est la forme la plus courante d'un client partagé ; joins-la à member_call pour lire ses appels", example: 'pkg_value("src/app/api/orders/route.ts", "prisma", "@prisma/client")' },
   { name: "reach", args: ["FichierLancé", "Fichier"], meaning: "les fichiers qu'un programme lancé atteint par ses imports" },
 ];
 

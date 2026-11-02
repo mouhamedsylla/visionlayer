@@ -7,7 +7,7 @@ import { Panel } from "./Panel";
 import "./map.css";
 
 /** Planche 03, Carte : quelles unités s'exécutent, et comment elles communiquent. */
-export function MapScreen({ map, selected, select }: { map: MapPayload; selected?: string; select: (id: string) => void }) {
+export function MapScreen({ map, selected, select, enter, openFlow }: { map: MapPayload; selected?: string; select: (id: string) => void; enter: (id: string) => void; openFlow: (id: string) => void }) {
   const grid = mapGrid(map);
   const nodes = map.model.nodes.filter((n) => n.level !== "component");
   const chosen = nodes.find((n) => n.id === selected || n.name === selected) ?? nodes.find((n) => n.id === defaultSelection(map));
@@ -28,7 +28,7 @@ export function MapScreen({ map, selected, select }: { map: MapPayload; selected
             <span className="mp__hint">Choisir un bloc montre ses liens</span>
           </div>
           <p className="mp__howto"><b>Se lit :</b> de gauche à droite, de ce qui appelle à ce qui est touché. Une file se lit de haut en bas, de qui y dépose à qui la consomme.</p>
-          <MapGridView grid={grid} tech={map.tech} selected={chosen?.id} chosen={chosen} select={select} />
+          <MapGridView grid={grid} tech={map.tech} selected={chosen?.id} chosen={chosen} select={select} enter={enter} />
           <div className="vl-card__foot mp__legend">
             <span className="lg"><span className="a sw"><i /></span>appel</span>
             <span className="lg"><span className="a a--w sw"><i /></span>écriture</span>
@@ -38,7 +38,7 @@ export function MapScreen({ map, selected, select }: { map: MapPayload; selected
             <span className="lg"><span className="mk mk--nl">non lu</span>sans pack pour cette technologie</span>
           </div>
         </section>
-        {chosen && <Panel map={map} node={chosen} links={grid.links} select={select} />}
+        {chosen && <Panel map={map} node={chosen} links={grid.links} select={select} enter={enter} openFlow={openFlow} />}
       </div>
     </div>
   );

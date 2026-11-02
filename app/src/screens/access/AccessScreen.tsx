@@ -2,16 +2,21 @@ import { useState } from "react";
 import type { MapPayload } from "../../api/types";
 import { actors, levelsText, plural, reachByResource, type ActorRow } from "../../model/access";
 import { Ref } from "../../ui/Ref";
+import { EntryRow } from "../block/EntryRow";
+import { entryGroups } from "../../model/block";
 import "./access.css";
 
 const GROUPS = [["people", "Personnes"], ["outside", "Service extérieur"], ["system", "Le système lui-même"]] as const;
 
 /** Planche 04, Accès par acteur : qui peut entrer, comment il le prouve, ce qu'il atteint. */
-export function AccessScreen({ map }: { map: MapPayload }) {
+export function AccessScreen({ map, openFlow }: { map: MapPayload; openFlow: (id: string) => void }) {
   const a = actors(map);
   const [chosen, setChosen] = useState<string>(a.rows.find((r) => r.id === "authenticated")?.id ?? a.rows[0]?.id ?? "");
   const row = a.rows.find((r) => r.id === chosen) ?? a.rows[0];
-  const people = a.rows.filter((r) => r.group === "people").length, outside = a.rows.filter((r) => r.group === "outside").length, system = a.rows.filter((r) => r.group === "system").length;
+  const people = a.rows.filter((r) => r.group === "people" && r.id !== "unknown").length;
+  const [tab, setTab] = useState<"actors" | "entries">(people ? "actors" : "entries");
+  const allRoutes = map.model.nodes.filter((n) => n.level === "deployable").flatMap((n) => (n.facets.entrypoints ?? []).filter((e) => e.kind === "http" || e.kind === "rpc"));
+  const humans = a.rows.filter((r) => r.group === "people").length, outside = a.rows.filter((r) => r.group === "outside").length, system = a.rows.filter((r) => r.group === "system").length;
   return (
     <div className="page ax">
       <div className="ax__intro">
@@ -20,18 +25,21 @@ export function AccessScreen({ map }: { map: MapPayload }) {
       </div>
       <div className="tiles">
         <div className="tile"><small>Qui peut appeler</small><b>{plural(a.total, "point d'entrée", "points d'entrée")}</b><span>{levelsText(a.byLevel)}</span></div>
-        <div className="tile"><small>Les acteurs</small><b>{plural(a.rows.length, "acteur", "acteurs")}</b><span>{[people && plural(people, "sorte de personne", "sortes de personnes"), outside && plural(outside, "service extérieur", "services extérieurs"), system && plural(system, "tâche du système", "tâches du système")].filter(Boolean).join(", ")}</span></div>
+        <div className="tile"><small>Les acteurs</small><b>{plural(a.rows.length, "acteur", "acteurs")}</b><span>{[humans && plural(humans, "sorte de personne", "sortes de personnes"), outside && plural(outside, "service extérieur", "services extérieurs"), system && plural(system, "tâche du système", "tâches du système")].filter(Boolean).join(", ")}</span></div>
         <div className="tile"><small>Comment on prouve qui on est</small><b>{a.mechanism ? a.mechanism.name : "Non lu"}</b><span>{a.mechanism ? <Ref proof={a.mechanism.proof} /> : "aucun pack ne lit encore la preuve que présente l'appelant"}</span></div>
         <div className="tile tile--cr"><small>Vérifié sur la donnée</small><b>Non lu</b><span>la comparaison entre la donnée et l'appelant n'est pas encore lue</span></div>
       </div>
       <div className="ax__body">
         <section className="card">
           <div className="tabs">
-            <button className="seg seg--on">Par acteur <span className="vl-count">{a.rows.length}</span></button>
-            <button className="seg" disabled title="La vue par point d'entrée arrive">Par point d'entrée <span className="vl-count">{a.total}</span></button>
+            <button className={`seg${tab === "actors" ? " seg--on" : ""}`} onClick={() => setTab("actors")}>Par acteur <span className="vl-count">{a.rows.length}</span></button>
+            <button className={`seg${tab === "entries" ? " seg--on" : ""}`} onClick={() => setTab("entries")}>Par point d'entrée <span className="vl-count">{a.total}</span></button>
             <span className="note">Deux façons de lire la même chose</span>
           </div>
-          <div className="ac ac--h"><span>Acteur</span><span>Sa preuve</span><span>Reconnu par</span><span>Routes atteintes</span><span>Sur la donnée</span><span>À aller voir</span></div>
+          {tab === "entries" && entryGroups(allRoutes).map((g) => (
+            <div key={g.name}><div className="grp">{g.name} <span>{g.entries.length}</span></div>{g.entries.map((e) => <EntryRow key={e.id} e={e} open={() => openFlow(e.id)} />)}</div>
+          ))}
+          {tab === "actors" && <><div className="ac ac--h"><span>Acteur</span><span>Sa preuve</span><span>Reconnu par</span><span>Routes atteintes</span><span>Sur la donnée</span><span>À aller voir</span></div>
           {GROUPS.map(([g, label]) => {
             const list = a.rows.filter((r) => r.group === g);
             if (!list.length) return null;
@@ -41,7 +49,7 @@ export function AccessScreen({ map }: { map: MapPayload }) {
                 {list.map((r) => <Actor key={r.id} r={r} on={r.id === row?.id} pick={() => setChosen(r.id)} />)}
               </div>
             );
-          })}
+          })}</>}
         </section>
         {row && <Side map={map} row={row} />}
       </div>

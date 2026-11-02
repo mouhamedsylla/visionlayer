@@ -32,7 +32,7 @@ export function Overview({ map, project, claims, go }: { map: MapPayload; projec
       <div className="ov__body">
         <CoverageCard map={map} />
         <div className="ov__side">
-          <AttentionCard map={map} onMap={(id) => go("carte", id)} />
+          <AttentionCard map={map} go={go} />
           <PacksCard map={map} />
         </div>
       </div>

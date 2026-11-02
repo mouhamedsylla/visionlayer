@@ -56,7 +56,7 @@ export function dataTable(p: MapPayload, store: ArchNode): { columns: Column[]; 
   return { columns: cols, rows, findings };
 }
 
-export interface Writer { key: string; kind: string; verb: string; proofs: Proof[]; danger: boolean }
+export interface Writer { id: string; key: string; kind: string; verb: string; proofs: Proof[]; danger: boolean }
 
 /** Qui écrit une table : chaque point d'entrée dont le code l'écrit, la valeur qu'il pose quand elle est écrite en clair. */
 export function writers(p: MapPayload, store: ArchNode, entity: Entity): Writer[] {
@@ -71,7 +71,7 @@ export function writers(p: MapPayload, store: ArchNode, entity: Entity): Writer[
       const e = entries.get(id);
       if (!e) continue;
       const value = status?.writes?.find((w) => w.entrypoints?.includes(id) && w.value)?.value;
-      const w = by.get(id) ?? by.set(id, { key: e.kind === "schedule" ? `${e.handler?.name ?? e.key}(), ${e.key}` : e.key, kind: e.kind, verb: value ? `pose ${value}` : "écrit", proofs: [], danger: false }).get(id)!;
+      const w = by.get(id) ?? by.set(id, { id, key: e.kind === "schedule" ? `${e.handler?.name ?? e.key}(), ${e.key}` : e.key, kind: e.kind, verb: value ? `pose ${value}` : "écrit", proofs: [], danger: false }).get(id)!;
       if (!w.proofs.some((x) => x.path === o.path && x.line === o.line)) w.proofs.push(o);
       if (e.handler?.name && culprits.has(e.handler.name)) w.danger = true;
     }

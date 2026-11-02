@@ -60,6 +60,10 @@ export function actors(p: MapPayload): { rows: ActorRow[]; total: number; byLeve
     });
   }
 
+  // Une garde que le moteur ne reconnaît pas : ces routes ont une porte, mais personne ne sait encore laquelle.
+  const unknown = routes.filter((e) => !e.access || e.access.level === "unknown");
+  if (unknown.length) rows.push({ id: "unknown", group: "people", name: "Garde non reconnue", note: "aucun pack ne lit encore la garde de ces routes", proof: "non lue", proofKind: "", reach: unknown.length, total, data: "non lu", routes: unknown });
+
   // Les services extérieurs : un appel signé vient d'un service que la carte connaît (un webhook).
   for (const e of routes.filter((x) => x.access?.level === "signature")) {
     const from = e.calledBy?.map((id) => p.model.nodes.find((n) => n.id === id)).find((n) => n?.role === "external");

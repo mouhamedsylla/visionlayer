@@ -262,7 +262,7 @@ export function shortName(name: string): string {
 
 /* --- À savoir --------------------------------------------------------------------------------- */
 
-export interface Attention { tone: "critical" | "signal"; icon: string; title: string; sub: string; proof: Proof; action: string; node?: string }
+export interface Attention { tone: "critical" | "signal"; icon: string; title: string; sub: string; proof: Proof; action: string; screen: "acces" | "donnees" | "taches" | "carte"; node?: string }
 
 /** Les icônes de la planche, par famille de constat : un cadenas, une horloge, un document, un journal. */
 const ICON: Partial<Record<FindingCode, string>> & { other: string } = {
@@ -284,6 +284,6 @@ export function attention(p: MapPayload): Attention[] {
   return byGravity(p.model.findings).map((f) => ({
     tone: FINDING_TONE[f.code], icon: ICON[f.code] ?? ICON.other,
     title: sentence(f.message), sub: rest(f.message), proof: f.proof[0]!,
-    action: ACTION[f.code] ?? "Carte", ...(f.nodes?.[0] ? { node: f.nodes[0] } : {}),
+    action: ACTION[f.code] ?? "Carte", screen: ({ Accès: "acces", Données: "donnees", Tâches: "taches", Rejouer: "donnees" } as const)[ACTION[f.code] as "Accès"] ?? "carte", ...(f.nodes?.[0] ? { node: f.nodes[0] } : {}),
   }));
 }
