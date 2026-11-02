@@ -21,6 +21,9 @@ export const api = {
   source: (path: string, from: number, to: number) => get<SourceExcerpt>(`/api/source?path=${encodeURIComponent(path)}&from=${from}&to=${to}`),
   packs: () => get<PacksPayload>("/api/packs"),
   agents: () => get<AgentSession[]>("/api/agents"),
+  style: () => get<{ confirmed?: string[]; at?: string }>("/api/style"),
+  /** Geste humain de la planche L3 : confirmer ou corriger les styles proposés. */
+  confirmStyle: (ids: string[]) => post<{ confirmed?: string[]; at?: string }>(`/api/style/confirm?ids=${ids.join(",")}`),
   links: () => get<AgentLink[]>("/api/settings/agents"),
   /** Gestes humains des Réglages : poser ou retirer les liens d'un agent avec VisionLayer. */
   link: (agent: string) => post<AgentLink[]>(`/api/settings/link?agent=${agent}`),

@@ -1,5 +1,6 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
-import { resolve } from "node:path";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join, resolve } from "node:path";
 import { sendError, sendJson, serveStatic } from "./http.js";
 import { MapSource } from "./map-source.js";
 import { projectInfo } from "./project.js";
@@ -38,6 +39,14 @@ export function createWebServer(opts: WebServerOptions): Server {
   const routes: Record<string, Handler> = {
     "GET /api/project": (_req, res) => sendJson(res, 200, projectInfo(root)),
     "GET /api/agents": (_req, res) => sendJson(res, 200, agentSessions(root)),
+    "GET /api/style": (_req, res) => sendJson(res, 200, readStyle(root)),
+    "POST /api/style/confirm": (req, res) => {
+      const ids = param(req, "ids").split(",").filter(Boolean);
+      if (ids.some((i) => !/^[a-z-]+$/.test(i))) throw new Error("style inconnu");
+      mkdirSync(join(root, ".vision"), { recursive: true });
+      writeFileSync(join(root, ".vision", "style.json"), JSON.stringify({ confirmed: ids, at: new Date().toISOString() }, null, 2) + "\n");
+      sendJson(res, 200, readStyle(root));
+    },
     "GET /api/settings/agents": (_req, res) => sendJson(res, 200, settings.get()),
     "POST /api/settings/link": (req, res) => sendJson(res, 200, settings.link(agentParam(req))),
     "POST /api/settings/unlink": (req, res) => sendJson(res, 200, settings.unlink(agentParam(req))),
@@ -78,4 +87,10 @@ export function createWebServer(opts: WebServerOptions): Server {
       sendError(res, 500, err instanceof Error ? err.message : String(err));
     }
   });
+}
+
+/** Le style d'architecture confirmé par l'humain (planche L3), s'il l'a été. */
+function readStyle(root: string): { confirmed?: string[]; at?: string } {
+  const f = join(root, ".vision", "style.json");
+  try { return existsSync(f) ? JSON.parse(readFileSync(f, "utf8")) : {}; } catch { return {}; }
 }

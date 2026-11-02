@@ -4,6 +4,7 @@ import { mapSentence, mapHero } from "../../model/mapText";
 import { MapHero } from "./MapHero";
 import { MapGridView } from "./MapGridView";
 import { Panel } from "./Panel";
+import { StyleBar } from "./StyleBar";
 import { Rep } from "../../lang/Rep";
 import { Workspace } from "../../ui/Workspace";
 import "./map.css";
@@ -19,6 +20,7 @@ export function MapScreen({ map, selected, select, enter, openFlow }: { map: Map
       head={<div className="mp__intro"><h1 className="page__title">Carte</h1><p className="mp__sentence">Quelles unités s'exécutent, et comment elles communiquent.</p></div>}
       panel={chosen && <Panel map={map} node={chosen} links={grid.links} select={select} enter={enter} openFlow={openFlow} />}>
       {hero && <MapHero hero={hero} onPick={select} />}
+      <StyleBar map={map} />
       <Rep code="S1" name="Carte" question="De quoi le système est-il fait ?" sentence={mapSentence(map)} flush
         reads="de gauche à droite : ce qui appelle, ce qui tourne, ce qui est touché. Une file se lit de haut en bas, de qui y dépose à qui la consomme. Choisir un bloc montre ses liens ; double-clic pour entrer.">
         <MapGridView grid={grid} tech={map.tech} selected={chosen?.id} chosen={chosen} select={select} enter={enter} />
