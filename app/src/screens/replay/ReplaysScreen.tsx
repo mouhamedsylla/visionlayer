@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { api, type ReplayView } from "../../api/client";
 import type { AgentSession, Replay, ReplayTest, VigieAnswer } from "../../api/types";
 import { AGENT } from "../../model/agents";
-import { Face, type Mood } from "../../vigie/Face";
+import { Face, PERSONAS, useFace, type Mood } from "../../vigie/Face";
 import { inline } from "../../vigie/Vigie";
 import { Rich } from "../../ui/Rich";
 import { useOpenCode } from "../../ui/code";
@@ -388,7 +388,8 @@ function Propose({ r, propose, back, busy, error }: { r: ReplayView; propose: ()
   );
 }
 
-/** Vigie en tête de chaque moment du Replay : son visage, son nom, et ce qu'il dit dans la bulle d'à côté. */
+/** Vigie en tête de chaque moment du Replay : le visage choisi, son nom, et ce qu'il dit dans la bulle d'à côté. */
 function Host({ mood }: { mood: Mood }) {
-  return <span className="rp__host"><Face mood={mood} size={120} /><span className="rp__hostname"><i />Vigie</span></span>;
+  const name = PERSONAS.find((p) => p.id === useFace())?.name;
+  return <span className="rp__host"><Face mood={mood} size={112} /><span className="rp__hostname"><i />{name ? `${name}, ta Vigie` : "Vigie"}</span></span>;
 }
