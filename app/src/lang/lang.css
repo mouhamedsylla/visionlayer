@@ -1,0 +1,70 @@
+/* Le langage visuel (planches L1 et L2), une seule fois pour tous les écrans. */
+.lx-mg { width: 22px; height: 22px; border-radius: 6px; background: var(--ink); color: #fff; display: grid; place-items: center; font: 600 9.5px/1 var(--font-mono); flex: none; }
+.lx-mg--muted { background: var(--ink-2); }
+.lx-node { background: #fff; border: 1px solid var(--line-strong); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; min-width: 0; text-align: left; font: inherit; color: inherit; cursor: pointer; transition: opacity .15s, box-shadow .15s; }
+.lx-node:hover { box-shadow: var(--shadow-pop); }
+.lx-node.is-on { border: 1.5px solid var(--ink); box-shadow: 0 0 0 3px rgba(18, 18, 17, .07); }
+.lx-node.is-far { opacity: .45; }
+.lx-node__head { display: flex; align-items: center; gap: 6px 8px; min-width: 0; flex-wrap: wrap; }
+.lx-node__head b { font-weight: 600; font-size: 13px; line-height: 17px; overflow-wrap: normal; word-break: keep-all; min-width: 0; }
+.lx-node__head .vl-tag { margin-left: auto; }
+.lx-node__meta { font: 400 11px/15px var(--font-mono); color: var(--muted); overflow-wrap: anywhere; }
+.lx-node__count { margin-left: auto; font: 400 11px/1 var(--font-mono); color: var(--muted); white-space: nowrap; }
+.lx-node--client { clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%); border-color: var(--ink); }
+.lx-node--ext { background: var(--surface-sunken); }
+.lx-node--res { border-radius: 8px; padding: 8px 12px; }
+.lx-comp { text-align: left; font: inherit; color: inherit; cursor: pointer; background: #fff; border: 1.5px dashed var(--line-strong); border-radius: 8px; padding: 7px 10px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.lx-comp b { font: 500 12px/16px var(--font-mono); overflow-wrap: anywhere; }
+.lx-comp--contract { border: 1.5px solid var(--ink); }
+.lx-comp.is-on { border: 1.5px solid var(--ink); box-shadow: 0 0 0 3px rgba(18, 18, 17, .07); }
+.lx-comp.is-far { opacity: .45; }
+.lx-fn { display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border-radius: 7px; background: var(--surface-sunken); border: 1px solid var(--line); font: 500 12px/1 var(--font-mono); color: var(--ink); }
+.lx-entry { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.lx-entry__key { font: 500 12.5px/16px var(--font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lx-entry__cron { font: 400 11px/1 var(--font-mono); color: var(--muted); }
+.lx-chip { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border-radius: 7px; background: #fff; border: 1px solid var(--line-strong); font: 500 12px/1 var(--font-mono); color: var(--ink); white-space: nowrap; }
+.lx-chip--w { background: var(--ink); border-color: var(--ink); color: var(--on-night); }
+.lx-actor { display: inline-flex; flex-direction: column; align-items: center; gap: 6px; font: 400 10.5px/1 var(--font-mono); color: var(--muted); }
+.lx-actor__dot { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font: 600 11px/1 var(--font-sans); background: #fff; border: 1px solid var(--line-strong); color: var(--ink); }
+.lx-actor__dot--role { background: var(--ink); color: #fff; border-color: var(--ink); }
+.lx-actor__dot--service { background: var(--surface-sunken); font-family: var(--font-mono); }
+.lx-state { display: inline-flex; align-items: center; height: 26px; padding: 0 11px; border-radius: 999px; font: 500 12px/1 var(--font-mono); background: #fff; border: 1px solid var(--line-strong); }
+.lx-state--final { background: var(--ink); color: #fff; border-color: var(--ink); }
+.lx-state--never { background: none; border: 1.5px dashed var(--tile-quiet); color: var(--muted); }
+.lx-time { display: block; position: relative; height: 18px; }
+.lx-time__line { position: absolute; left: 0; right: 0; top: 8px; height: 1px; background: var(--line-strong); }
+.lx-time__line i { position: absolute; top: -4px; width: 8px; height: 8px; margin-left: -4px; border-radius: 2px; background: var(--ink); }
+.lx-time__fill { left: 0 !important; right: 0; width: auto !important; margin: 0 !important; height: 6px !important; top: -3px !important; background: repeating-linear-gradient(90deg, var(--ink) 0 2px, transparent 2px 5px) !important; }
+.is-link { cursor: pointer; }
+.is-link:hover { text-decoration: underline; }
+/* Les marques */
+.lx-fx { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border-radius: var(--radius-tile); font: 500 10.5px/1 var(--font-mono); letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; background: var(--surface-sunken); color: var(--ink); border: 1px solid var(--line); }
+.lx-fx--write { background: var(--ink); color: #fff; border-color: var(--ink); }
+.lx-fx--message { background: #fff; border: 1px dashed var(--ink); }
+.lx-fx--refuse { background: var(--critical); color: #fff; border-color: var(--critical); }
+.lx-step { width: 20px; height: 20px; border-radius: 50%; background: var(--ink); color: #fff; display: inline-grid; place-items: center; font: 600 10.5px/1 var(--font-mono); flex: none; }
+.lx-step--refuse { background: var(--critical); }
+.lx-step--quiet { background: var(--tile-quiet); color: var(--ink); }
+.lx-moment { border-top: 1px solid var(--line); }
+.lx-moment__head { width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; background: var(--surface-sunken); border: 0; cursor: pointer; font: inherit; }
+.lx-moment__n { font: 400 11px/1 var(--font-mono); color: var(--muted); }
+.lx-frame { position: relative; border: 1.5px dashed var(--ink-2); border-radius: 10px; padding: 14px 8px 6px; margin: 10px 8px; }
+.lx-frame__tag { position: absolute; top: -10px; left: 10px; background: #fff; }
+.lx-prov { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; }
+.lx-prov i { width: 30px; border-top: 1.5px solid var(--ink); }
+.lx-prov--declared i { border-top: 1.5px dashed var(--line-strong); }
+.lx-prov--proposed i { border-top: 1.5px dashed var(--signal); }
+.lx-prov--unread i { height: 8px; border: 0; background: repeating-linear-gradient(135deg, var(--tile-quiet) 0 2px, transparent 2px 5px); }
+.lx-prov--unread { color: var(--signal-ink); }
+/* Le cadre d'une représentation (L2) */
+.lx-rep { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px 12px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.lx-rep__head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.lx-rep__code { font: 600 10.5px/1 var(--font-mono); background: var(--ink); color: #fff; padding: 3px 5px; border-radius: 4px; align-self: center; }
+.lx-rep__head b { font-weight: 600; font-size: 13.5px; }
+.lx-rep__q { font-size: 12.5px; color: var(--muted); }
+.lx-rep__action { margin-left: auto; align-self: center; }
+.lx-rep__sentence { font-weight: 600; font-size: 13.5px; line-height: 19px; }
+.lx-rep__body { background: var(--surface-sunken); border: 1px solid var(--line); border-radius: 10px; padding: 14px; min-width: 0; }
+.lx-rep__body--flush { padding: 0; background: #fff; overflow: hidden; }
+.lx-rep__reads { font-size: 12px; color: var(--ink-2); }
+.lx-rep__reads b { font-weight: 600; }
