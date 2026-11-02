@@ -39,6 +39,8 @@ export const api = {
     if (!res.ok) throw new Error((await res.json())?.error ?? `${res.status}`);
     return (await res.json()) as { ok: boolean; diff: string };
   },
+  prepareProposal: (id: string) => post<ReplayView>(`/api/replays/prepare?id=${id}`),
+  propose: (id: string) => post<ReplayView>(`/api/replays/propose?id=${id}`),
   reopenReplay: (id: string) => post<ReplayView>(`/api/replays/reopen?id=${id}`),
   resetReplay: (id: string) => post<ReplayView>(`/api/replays/reset?id=${id}`),
   submitReplay: (id: string) => post<ReplayView>(`/api/replays/submit?id=${id}`),

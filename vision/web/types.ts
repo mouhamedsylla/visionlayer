@@ -155,4 +155,4 @@ export interface AgentLink {
 }
 
 export type { VigieAnswer, VigieStep } from "../vigie/vigie.js";
-export type { Replay, ReplayTest } from "../replay/replay.js";
+export type { Proposal, ProposalStep, Replay, ReplayTest } from "../replay/replay.js";

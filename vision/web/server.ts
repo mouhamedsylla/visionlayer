@@ -56,6 +56,8 @@ export function createWebServer(opts: WebServerOptions): Server {
     "GET /api/replays/one": (req, res) => sendJson(res, 200, shown(param(req, "id"))),
     "POST /api/replays/create": async (req, res) => sendJson(res, 200, await replays.create(param(req, "session"))),
     "POST /api/replays/start": (req, res) => { replays.start(param(req, "id")); sendJson(res, 200, shown(param(req, "id"))); },
+    "POST /api/replays/prepare": async (req, res) => { await replays.prepare(param(req, "id")); sendJson(res, 200, shown(param(req, "id"))); },
+    "POST /api/replays/propose": (req, res) => { replays.propose(param(req, "id")); sendJson(res, 200, shown(param(req, "id"))); },
     "POST /api/replays/reopen": (req, res) => { replays.reopen(param(req, "id")); sendJson(res, 200, shown(param(req, "id"))); },
     "POST /api/replays/reset": (req, res) => { replays.reset(param(req, "id")); copies.delete(param(req, "id")); sendJson(res, 200, shown(param(req, "id"))); },
     "GET /api/replays/files": (req, res) => sendJson(res, 200, replays.files(param(req, "id")).map((path) => ({ path, test: replays.get(param(req, "id")).tests.includes(path), text: replays.read(param(req, "id"), path) }))),

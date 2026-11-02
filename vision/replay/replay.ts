@@ -4,6 +4,8 @@ import { homedir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { agentSessions } from "../web/agents-source.js";
 import { MapSource } from "../web/map-source.js";
+import { mapChanges } from "../web/changes.js";
+import type { MapChange } from "../web/types.js";
 
 /**
  * Un Replay : un vrai problème qu'un agent a résolu sur ce dépôt, gardé tel qu'il était. Le code d'avant son
@@ -12,6 +14,27 @@ import { MapSource } from "../web/map-source.js";
  */
 
 export interface ReplayTest { name: string; ok: boolean; message?: string }
+export interface ProposalStep { name: string; ok: boolean; note: string }
+export interface Proposal {
+  at: string;
+  /** La branche du projet sur laquelle le correctif est reporté, et son commit. */
+  onto: { branch: string; commit: string };
+  steps: ProposalStep[];
+  /** Le test du replay sur trois états : le projet avec ton correctif, le projet tel qu'il est, l'état capturé. */
+  protects: { label: string; note: string; result: ReplayTest[] }[];
+  /** Ce que ton correctif change sur la carte du projet. */
+  impact: MapChange[];
+  /** Les tests du replay absents du projet, apportés avec ton correctif. */
+  addsTests: string[];
+  title: string;
+  body: string;
+  branch: string;
+  /** Où la branche irait : un remote GitHub avec gh, un autre remote, ou aucun. */
+  remote: "github" | "other" | "none";
+  /** Rempli au clic : la branche créée, poussée ou non, et la PR. */
+  done?: { at: string; commit: string; pushed: boolean; url?: string; note: string };
+}
+
 export interface Replay {
   id: string;
   title: string;
@@ -34,6 +57,8 @@ export interface Replay {
   /** Le dernier passage des tests dans la copie. */
   last?: ReplayTest[];
   submitted?: { at: string; result: ReplayTest[]; diff: string };
+  /** Ramener ce que tu as trouvé dans le projet : les vérifications faites sur le projet à jour, puis la branche. */
+  proposal?: Proposal;
   /** La confrontation, écrite par Muse une fois la solution rendue. */
   comparison?: { sentence: string; agent: string; you: string; rows: { situation: string; agent: string; you: string }[] };
 }
@@ -144,7 +169,7 @@ export class ReplayStore {
   /** Reprendre sa copie après la confrontation : la solution rendue et la comparaison s'effacent, la copie reste. */
   reopen(id: string): Replay {
     const r = this.get(id);
-    delete r.submitted; delete r.comparison;
+    delete r.submitted; delete r.comparison; delete r.proposal;
     this.save(r);
     return r;
   }
@@ -153,7 +178,104 @@ export class ReplayStore {
   reset(id: string): Replay {
     const r = this.get(id);
     if (r.copy) this.drop(r.copy);
-    delete r.copy; delete r.last; delete r.submitted; delete r.comparison;
+    delete r.copy; delete r.last; delete r.submitted; delete r.comparison; delete r.proposal;
+    this.save(r);
+    return r;
+  }
+
+  /**
+   * Préparer la proposition : une copie du projet à jour (sa branche courante), ton correctif reporté dessus,
+   * puis la suite de tests du projet, tsc avant et après, la carte avant et après. Rien n'est écrit dans le projet.
+   */
+  async prepare(id: string): Promise<Replay> {
+    const r = this.get(id);
+    if (!r.submitted) throw new Error("rends d'abord ta solution");
+    const branch = git(this.root, "rev-parse", "--abbrev-ref", "HEAD").trim();
+    const head = git(this.root, "rev-parse", "HEAD").trim();
+    const testsDir = join(this.dir, `${id}.tests`);
+    const addsTests = r.tests.filter((t) => spawnSync("git", ["cat-file", "-e", `${head}:${t}`], { cwd: this.root }).status !== 0);
+    const dir = this.worktree(`${id}-proposer`, head, testsDir);
+    const patchFile = join(this.dir, `${id}.yours.patch`);
+    writeFileSync(patchFile, r.submitted.diff);
+    const steps: ProposalStep[] = [];
+    const ok = (t: ReplayTest[]) => t.length > 0 && t.every((x) => x.ok);
+    steps.push({ name: "Tests du replay", ok: ok(r.submitted.result), note: `${r.submitted.result.filter((x) => x.ok).length} sur ${r.submitted.result.length}, sur ta copie` });
+    // L'état du projet sans ton correctif : le test du replay, tsc, la carte.
+    const without = this.runTests(dir, r.tests);
+    const tsc = (cwd: string) => existsSync(join(cwd, "tsconfig.json")) ? (spawnSync("npx", ["tsc", "--noEmit", "-p", "."], { cwd, encoding: "utf8", maxBuffer: 64 << 20, timeout: 240_000 }).stdout.match(/error TS\d+/g) ?? []).length : undefined;
+    const tscBefore = tsc(dir);
+    const mapBefore = (await new MapSource(dir).refresh()).model;
+    const check = spawnSync("git", ["apply", "--check", patchFile], { cwd: dir, encoding: "utf8" });
+    const applies = check.status === 0;
+    steps.push({ name: "Patch", ok: applies, note: applies ? `reporté sur ${branch}, sans conflit` : `en conflit avec ${branch} : ${check.stderr.split("\n")[0]}` });
+    let impact: MapChange[] = [], withYours: ReplayTest[] = [];
+    if (applies) {
+      git(dir, "apply", patchFile);
+      withYours = this.runTests(dir, r.tests);
+      const suite = this.runTests(dir, []);
+      steps.splice(1, 0, { name: "Suite du projet", ok: ok(suite), note: `${suite.filter((x) => x.ok).length} sur ${suite.length}, sur ${branch} à jour` });
+      const tscAfter = tsc(dir);
+      steps.splice(2, 0, { name: "Analyse statique", ok: tscAfter === undefined || tscAfter <= (tscBefore ?? 0), note: tscAfter === undefined ? "pas de tsconfig : non lancée" : tscAfter > (tscBefore ?? 0) ? `tsc : ${tscAfter - (tscBefore ?? 0)} message${tscAfter - (tscBefore ?? 0) > 1 ? "s" : ""} de plus` : "tsc, aucun message de plus" });
+      impact = mapChanges(mapBefore, (await new MapSource(dir).refresh()).model);
+      const gone = impact.filter((c) => c.kind === "finding" && c.sign === "removed").length, added = impact.filter((c) => c.kind === "finding" && c.sign === "added").length;
+      steps.splice(3, 0, { name: "Impact", ok: added === 0, note: gone || added ? [gone && `${gone} constat${gone > 1 ? "s" : ""} en moins`, added && `${added} en plus`].filter(Boolean).join(", ") : `${impact.length} changement${impact.length > 1 ? "s" : ""} sur la carte` });
+    }
+    rmSync(join(dir, ".vision"), { recursive: true, force: true });
+    rmSync(join(dir, ".replay-result.json"), { force: true });
+    const short = r.fixFiles.map((f) => basename(f).replace(/\.[^.]+$/, "")).join("-");
+    const num = r.id.slice(2);
+    const WHAT: Record<string, string> = { race_read_then_write: "la lecture puis réécriture sans revérifier", unguarded_route: "la garde manquante", scheduled_on_every_instance: "la tâche lancée sur chaque machine" };
+    const title = `Corrige ${r.finding ? WHAT[r.finding.code] ?? "le constat" : "le bug"} dans ${r.fixFiles.map((f) => basename(f)).join(", ")} (replay #${num})`;
+    const url = spawnSync("git", ["remote", "get-url", "origin"], { cwd: this.root, encoding: "utf8" }).stdout.trim();
+    const remote = !url ? "none" : /github\.com/.test(url) && spawnSync("gh", ["--version"]).status === 0 ? "github" : "other";
+    const body = [
+      `Issu du replay #${num}, rejoué à partir de la correction de ${r.agent.name} du ${new Date(r.agent.at).toLocaleDateString("fr-FR")}.`,
+      r.comparison ? `\n${r.comparison.sentence}` : "",
+      `\nTests du replay : ${withYours.filter((x) => x.ok).length} sur ${withYours.length} avec ce correctif, ${without.filter((x) => x.ok).length} sur ${without.length} sans.`,
+      addsTests.length ? `Ajoute le test ${addsTests.join(", ")}, écrit par ${r.agent.name}.` : "",
+      impact.length ? `\nSur la carte de VisionLayer :\n${impact.slice(0, 12).map((c) => `- ${c.sign === "added" ? "ajouté" : "retiré"} : ${c.text}`).join("\n")}` : "",
+    ].filter(Boolean).join("\n");
+    r.proposal = {
+      at: new Date().toISOString(), onto: { branch, commit: head }, steps, impact, addsTests, title, body, branch: `replay/${num}-${short}`, remote,
+      protects: [
+        { label: `Sur ${branch} avec ton correctif`, note: "ce que la PR apporterait", result: withYours },
+        { label: `Sur ${branch} tel qu'il est`, note: `le commit ${head.slice(0, 7)}`, result: without },
+        { label: `Sur l'état capturé ${r.base.slice(0, 7)}`, note: "avant toute correction", result: r.before },
+      ],
+    };
+    this.save(r);
+    return r;
+  }
+
+  /**
+   * Le clic : la branche est créée depuis la copie préparée, avec ton correctif et les tests qu'il apporte.
+   * Si le projet a un remote GitHub et que gh est là, elle est poussée et la PR ouverte en brouillon ; sinon
+   * la branche reste dans le dépôt, prête à pousser. VisionLayer ne fusionne jamais.
+   */
+  propose(id: string): Replay {
+    const r = this.get(id);
+    const p = r.proposal;
+    if (!p) throw new Error("proposition non préparée");
+    if (!p.steps.find((s) => s.name === "Patch")?.ok) throw new Error("le correctif ne se reporte pas sans conflit");
+    const dir = join(homedir(), ".visionlayer", "replays", `${basename(this.root)}-${id}-proposer`);
+    if (!existsSync(dir)) throw new Error("la copie préparée a disparu : prépare de nouveau");
+    git(dir, "switch", "-c", p.branch);
+    git(dir, "add", "-A", "--", ...r.fixFiles, ...p.addsTests);
+    git(dir, "-c", "user.name=" + (git(this.root, "config", "user.name").trim() || "VisionLayer"), "-c", "user.email=" + (git(this.root, "config", "user.email").trim() || "replay@visionlayer"), "commit", "-q", "-m", `${p.title}\n\n${p.body}`);
+    const commit = git(dir, "rev-parse", "HEAD").trim();
+    const remote = spawnSync("git", ["remote", "get-url", "origin"], { cwd: this.root, encoding: "utf8" }).stdout.trim();
+    const gh = spawnSync("gh", ["--version"]).status === 0;
+    if (!/github\.com/.test(remote) || !gh) {
+      p.done = { at: new Date().toISOString(), commit, pushed: false, note: !remote ? `Ce dépôt n'a pas de remote : la branche ${p.branch} est prête dans le dépôt, à pousser toi-même.` : !gh ? `gh n'est pas installé : la branche ${p.branch} est prête, à pousser toi-même.` : `Le remote n'est pas sur GitHub : la branche ${p.branch} est prête, à pousser toi-même.` };
+    } else {
+      const push = spawnSync("git", ["push", "-u", "origin", p.branch], { cwd: dir, encoding: "utf8" });
+      if (push.status !== 0) p.done = { at: new Date().toISOString(), commit, pushed: false, note: `La poussée a échoué : ${push.stderr.split("\n")[0]}. La branche ${p.branch} est prête dans le dépôt.` };
+      else {
+        const pr = spawnSync("gh", ["pr", "create", "--draft", "--head", p.branch, "--base", p.onto.branch, "--title", p.title, "--body", p.body], { cwd: dir, encoding: "utf8" });
+        p.done = pr.status === 0 ? { at: new Date().toISOString(), commit, pushed: true, url: pr.stdout.trim(), note: "PR ouverte en brouillon, à relire et fusionner par l'équipe." } : { at: new Date().toISOString(), commit, pushed: true, note: `Branche poussée ; la PR n'a pas pu être ouverte : ${pr.stderr.split("\n")[0]}` };
+      }
+    }
+    this.drop(dir);
     this.save(r);
     return r;
   }

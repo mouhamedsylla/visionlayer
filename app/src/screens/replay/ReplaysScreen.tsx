@@ -100,7 +100,8 @@ function ReplayPage({ id, open }: { id: string; open: (id?: string) => void }) {
   useEffect(() => { api.replay(id).then(setR).catch((e) => setError(String(e))); }, [id]);
   const run = <T,>(what: string, p: Promise<T>, then: (x: T) => void) => { setBusy(what); setError(undefined); p.then(then).catch((e) => setError(String(e.message ?? e))).finally(() => setBusy(undefined)); };
   if (!r) return <div className="rp"><p>{error ?? "Lecture du Replay…"}</p></div>;
-  if (r.submitted) return <Confront r={r} error={error} busy={busy} reopen={() => run("reopen", api.reopenReplay(id), setR)} reset={() => run("reset", api.resetReplay(id), setR)} back={() => open()} />;
+  if (r.submitted && (r.proposal || busy === "prepare")) return <Propose r={r} error={error} busy={busy} propose={() => run("propose", api.propose(id), setR)} back={() => open()} />;
+  if (r.submitted) return <Confront r={r} error={error} busy={busy} reopen={() => run("reopen", api.reopenReplay(id), setR)} reset={() => run("reset", api.resetReplay(id), setR)} back={() => open()} prepare={() => run("prepare", api.prepareProposal(id), setR)} />;
   if (r.copy) return <Play r={r} error={error} busy={busy} test={() => run("test", api.testReplay(id), (last) => setR({ ...r, last }))} submit={() => run("submit", api.submitReplay(id), setR)} />;
   return <Briefing r={r} error={error} busy={busy === "start"} start={() => run("start", api.startReplay(id), setR)} />;
 }
@@ -261,7 +262,7 @@ function Play({ r, test, submit, busy, error }: { r: ReplayView; test: () => voi
 }
 
 /** R3, la confrontation : deux solutions au même problème, situation par situation ; ni score ni gagnant. */
-function Confront({ r, reopen, reset, back, busy, error }: { r: ReplayView; reopen: () => void; reset: () => void; back: () => void; busy?: string; error?: string }) {
+function Confront({ r, reopen, reset, back, prepare, busy, error }: { r: ReplayView; reopen: () => void; reset: () => void; back: () => void; prepare: () => void; busy?: string; error?: string }) {
   const c = r.comparison, you = r.submitted!.result;
   const missed = (s: string) => /^pas trait/i.test(s.trim());
   const seen = (s: string) => /^vu\b/i.test(s.trim());
@@ -298,7 +299,7 @@ function Confront({ r, reopen, reset, back, busy, error }: { r: ReplayView; reop
       )}
       <div className="rp__row">
         <button className="vl-btn vl-btn--primary" onClick={reopen} disabled={!!busy}>Reprendre ma copie</button>
-        <button className="vl-btn vl-btn--secondary" disabled title="Ramener ta solution dans le projet : à venir">Proposer au projet</button>
+        <button className="vl-btn vl-btn--secondary" onClick={prepare} disabled={!!busy}>Proposer au projet</button>
         <button className="vl-btn vl-btn--secondary" onClick={back}>Garder pour moi</button>
         <span className="rp__muted">Pas de score ni de gagnant : deux bonnes solutions, ou deux qui ratent le même cas. <button className="rp__link" onClick={reset} disabled={!!busy}>Rejouer depuis le début</button></span>
       </div>
@@ -328,5 +329,61 @@ function Side({ who, av, text, diff, mine }: { who: string; av: string; text?: s
       {text && <p><Rich text={text} /></p>}
       <div className="ed ed--diff">{keep.length ? keep.map((x, i) => <div key={i} className={x.kind}><span>{x.n}</span><span>{x.text}</span></div>) : <div><span /><span>aucun changement</span></div>}</div>
     </section>
+  );
+}
+
+/** R4, proposer : ramener ce que tu as trouvé dans le projet, vérifié sur le projet à jour, puis la PR au clic. */
+function Propose({ r, propose, back, busy, error }: { r: ReplayView; propose: () => void; back: () => void; busy?: string; error?: string }) {
+  const p = r.proposal;
+  if (!p) return (
+    <div className="rp">
+      <section className="rp__night"><Bolt mood="think" night size={120} /><div className="rp__nightmain"><h1>Ramener ce que tu as trouvé dans le projet</h1><p className="rp__nightp">Je reporte ton correctif sur une copie du projet à jour, puis je lance sa suite de tests, tsc, et je compare la carte avant et après. Ton projet n'est pas touché.</p></div></section>
+    </div>
+  );
+  const [withYours, without] = p.protects;
+  const okAll = (t: ReplayTest[]) => t.length > 0 && t.every((x) => x.ok);
+  const mark = (t: ReplayTest[]) => okAll(t) ? <span className="mk mk--ok">passe {t.length} sur {t.length}</span> : <span className="mk mk--cr">échoue {t.length - passed(t)} sur {t.length}</span>;
+  const catches = withYours && without && okAll(withYours.result) && !okAll(without.result);
+  const lead = `${p.onto.branch} ${without && okAll(without.result) ? "protège déjà ce cas" : "ne protège pas encore ce cas"} : le test du replay y passe ${without ? passed(without.result) : 0} sur ${without?.result.length ?? 0}. Avec ton correctif, il passe ${withYours ? passed(withYours.result) : 0} sur ${withYours?.result.length ?? 0}${p.addsTests.length ? ", et la PR apporte le test que l'agent avait écrit" : ""}.`;
+  return (
+    <div className="rp">
+      <section className="rp__night">
+        <Bolt mood={p.done ? "happy" : "welcome"} night size={120} />
+        <div className="rp__nightmain">
+          <h1>Ramener ce que tu as trouvé dans le projet</h1>
+          <p className="rp__nightp">{lead}</p>
+        </div>
+      </section>
+      {error && <p className="rp__err">{error}</p>}
+      <section className="card">
+        <div className="steps">
+          {p.steps.map((s) => <div key={s.name} className={s.ok ? "" : "ko"}><i>{s.ok ? "✓" : "×"}</i><b>{s.name}</b><span>{s.note}</span></div>)}
+          <div className={p.done ? "" : "now"}><i>{p.done ? "✓" : p.steps.length + 1}</i><b>Ta relecture</b><span>{p.done ? "faite" : "maintenant"}</span></div>
+          <div className={p.done?.url ? "" : "off"}><i>{p.done?.url ? "✓" : p.steps.length + 2}</i><b>{p.remote === "github" ? "PR sur GitHub" : "Branche"}</b><span>{p.done ? (p.done.url ? "ouverte en brouillon" : "créée, à pousser") : "relue et fusionnée par l'équipe"}</span></div>
+        </div>
+      </section>
+      <div className="rp__pgrid">
+        <section className="card rp__cmp">
+          <div className="rp__chkhead"><h2>Ce test protège-t-il vraiment ce cas ?</h2></div>
+          {p.protects.map((x) => <div key={x.label} className="chk"><span>{x.label}<small>{x.note}</small></span>{mark(x.result)}</div>)}
+          <p className="rp__chkfoot">{catches ? "Il attrape le cas qu'on cherchait : il échoue sans ton correctif et passe avec. S'il passait partout, il ne prouverait rien." : withYours && !okAll(withYours.result) ? `Avec ton correctif, ${withYours.result.length - passed(withYours.result)} test${withYours.result.length - passed(withYours.result) > 1 ? "s" : ""} du replay échoue${withYours.result.length - passed(withYours.result) > 1 ? "nt" : ""} encore : ${withYours.result.filter((t) => !t.ok).map((t) => `« ${t.name} »`).join(", ")}. Dis-le dans ta relecture.` : "Le test passe déjà sans ton correctif : il ne prouve pas que ton changement sert."}</p>
+        </section>
+        <section className="card">
+          <span className="vl-label">{p.remote === "github" ? "La PR proposée" : "La branche proposée"}</span>
+          <h2 className="rp__prt">{p.title}</h2>
+          <span className="vl-ref rp__branch">{p.branch}</span>
+          <p className="rp__prbody">{p.body}</p>
+          {p.done ? (
+            <div className="run run--ok">{p.done.url ? <a href={p.done.url} target="_blank" rel="noreferrer">{p.done.url}</a> : p.done.note}</div>
+          ) : (
+            <div className="rp__row">
+              <button className="vl-btn vl-btn--primary" onClick={propose} disabled={!!busy || !p.steps.find((s) => s.name === "Patch")?.ok}>{busy === "propose" ? "…" : p.remote === "github" ? "Ouvrir la PR sur GitHub" : "Créer la branche"}</button>
+              <button className="vl-btn vl-btn--secondary" onClick={back}>Garder pour moi</button>
+            </div>
+          )}
+          <p className="rp__note">{p.remote === "github" ? "Au clic, la branche est poussée depuis une copie du projet et la PR ouverte en brouillon." : p.remote === "none" ? "Ce dépôt n'a pas de remote : au clic, la branche est créée dans le dépôt, à pousser toi-même." : "Le remote n'est pas sur GitHub : au clic, la branche est créée, à pousser toi-même."} VisionLayer n'écrit rien dans les fichiers de ton projet et ne fusionne jamais.</p>
+        </section>
+      </div>
+    </div>
   );
 }
