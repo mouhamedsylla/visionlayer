@@ -1,221 +1,332 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api, type ReplayView } from "../../api/client";
 import type { AgentSession, Replay, ReplayTest, VigieAnswer } from "../../api/types";
 import { AGENT } from "../../model/agents";
-import { Answer } from "../../vigie/Vigie";
+import { Bolt } from "../../vigie/Bolt";
+import { inline } from "../../vigie/Vigie";
 import { Rich } from "../../ui/Rich";
-import { CodeRef } from "../../ui/CodeRef";
 import { useOpenCode } from "../../ui/code";
 import "./replay.css";
 
+/** Transposé des planches R0 à R3 (salle, briefing, en jeu, confrontation), au balisage près. */
+
 const TIME = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit" });
 const DAY = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long" });
-const score = (t: ReplayTest[]) => `${t.filter((x) => x.ok).length} sur ${t.length}`;
+const passed = (t: ReplayTest[]) => t.filter((x) => x.ok).length;
+const isTest = (f: string) => /(\.|_)(spec|test)\./.test(f);
 
-/** Les Replays : la salle, puis un Replay de son briefing à la confrontation. */
 export function ReplaysScreen({ item, open }: { item?: string; open: (id?: string) => void }) {
-  return item ? <ReplayPage id={item} back={() => open()} /> : <Room open={open} />;
+  return item ? <ReplayPage id={item} open={open} /> : <Room open={open} />;
 }
 
-/** La salle : les Replays gardés, et les sessions d'agents qu'on peut garder. */
+/** R0, la salle : reprendre où tu en étais, les replays à rejouer, les moments pas encore gardés. */
 function Room({ open }: { open: (id: string) => void }) {
   const [list, setList] = useState<Replay[]>();
   const [sessions, setSessions] = useState<AgentSession[]>([]);
+  const [showKeep, setShowKeep] = useState(false);
   const [busy, setBusy] = useState<string>();
   const [error, setError] = useState<string>();
   useEffect(() => { api.replays().then(setList).catch((e) => setError(String(e))); api.agents().then(setSessions).catch(() => {}); }, []);
   const kept = new Set(list?.map((r) => r.agent.session));
-  const keepable = sessions.filter((s) => !kept.has(s.id) && s.writes.some((f) => /(\.|_)(spec|test)\./.test(f)) && s.writes.some((f) => !/(\.|_)(spec|test)\./.test(f)));
+  const keepable = sessions.filter((s) => !kept.has(s.id) && s.writes.some(isTest) && s.writes.some((f) => !isTest(f)));
+  const current = list?.find((r) => r.copy && !r.submitted);
+  const toPlay = list?.filter((r) => r !== current && !r.submitted) ?? [];
+  const done = list?.filter((r) => r.submitted) ?? [];
   const keep = (s: AgentSession) => { setBusy(s.id); setError(undefined); api.keepReplay(s.id).then((r) => open(r.id)).catch((e) => setError(String(e.message ?? e))).finally(() => setBusy(undefined)); };
+  const last = current && (current.last ?? current.before);
+  const left = last ? last.length - passed(last) : 0;
   return (
-    <div className="page rp">
+    <div className="rp">
       <div className="rp__intro">
-        <h1 className="rp__title">Replays</h1>
-        <p className="rp__lead">Les vrais problèmes que tes agents ont rencontrés, gardés tels qu'ils étaient. Tu y retournes quand tu veux. La solution de l'agent reste cachée jusqu'au bout. Ni série, ni classement.</p>
+        <h1>Replays</h1>
+        <p>Les vrais problèmes que tes agents ont rencontrés, gardés tels qu'ils étaient. Tu y retournes quand tu veux. La solution de l'agent reste cachée jusqu'au bout.</p>
       </div>
       {error && <p className="rp__err">{error}</p>}
-      <div className="rp__grid">
-        {list?.map((r) => (
-          <button key={r.id} className="rp__card" onClick={() => open(r.id)}>
-            <span className="vl-tag vl-tag--neutral">{r.finding ? "Course" : "Bug"}{r.submitted ? ", rejoué" : r.copy ? ", en cours" : ""}</span>
-            <b><Rich text={r.title} /></b>
-            <small>{r.agent.name}, le {DAY.format(new Date(r.agent.at))} ; {r.tests.length} test{r.tests.length > 1 ? "s" : ""}, {score(r.before)} passent avant</small>
-            <span className="rp__go">{r.submitted ? "Revoir la confrontation ›" : r.copy ? "Reprendre ›" : "Commencer ›"}</span>
-          </button>
-        ))}
-        {list && !list.length && <p className="rp__none">Aucun Replay gardé. Un Replay naît d'une session d'agent qui a écrit un test et un correctif.</p>}
+      <section className="rp__night" aria-label="Reprendre">
+        <Bolt mood="welcome" night size={150} />
+        <div className="rp__nightmain">
+          <p className="bub">{current ? <>Content de te revoir. Tu t'es arrêté sur <Rich text={current.title.replace(/\.$/, "")} />. {left ? `Il te reste ${left} test${left > 1 ? "s" : ""} à faire passer.` : "Tous les tests passent : tu peux soumettre."}</>
+            : list?.length ? "Choisis un replay. Je connais chaque problème, pas la réponse de l'agent."
+            : "Aucun replay pour l'instant. Garde un moment où un agent a corrigé quelque chose avec un test, et on le rejoue ensemble."}</p>
+          {current && last && (
+            <div className="rp__resume">
+              <span className="vl-label vl-label--night">Reprendre où tu en étais</span>
+              <p className="rp__resumet"><Rich text={current.title} /></p>
+              <div className="rp__barrow"><span className="bar"><i style={{ width: `${(passed(last) / Math.max(1, last.length)) * 100}%` }} /></span><span className="mono">{passed(last)} test{passed(last) > 1 ? "s" : ""} sur {last.length}</span></div>
+              <div><button className="vl-btn vl-btn--light" onClick={() => open(current.id)}>Reprendre</button></div>
+            </div>
+          )}
+        </div>
+      </section>
+      <div className="rp__sec">
+        <div className="rp__sechead"><h2>À rejouer</h2><span>Choisis celui qui te tente</span></div>
+        <div className="cards">
+          {toPlay.map((r) => (
+            <article key={r.id} className="rc">
+              <span className="kind"><i className="gi gi--bug" />{r.finding ? "Course" : "Bug"}</span>
+              <p className="rt"><Rich text={r.title} /></p>
+              <p className="rd">{r.tests.length > 1 ? `Les ${r.tests.length} tests de l'agent échouent` : "Le test de l'agent échoue"} sur le code d'avant. Fais-le passer sans voir sa solution.</p>
+              <div className="rf"><span>{r.agent.name}, {DAY.format(new Date(r.agent.at))}</span><button className="vl-btn vl-btn--primary vl-btn--sm" onClick={() => open(r.id)}>Commencer</button></div>
+            </article>
+          ))}
+          {list && !toPlay.length && <p className="rp__muted">{current ? "Rien d'autre à rejouer pour l'instant." : "Rien à rejouer pour l'instant."}</p>}
+        </div>
       </div>
-      {keepable.length > 0 && (
+      <div className="more">
+        <button className="ml" disabled={!done.length} onClick={() => done[0] && open(done[0].id)}><b>{done.length}</b> déjà rejoué{done.length > 1 ? "s" : ""}</button>
+        <button className="ml" disabled={!keepable.length} onClick={() => setShowKeep((v) => !v)}><b>{keepable.length}</b> moment{keepable.length > 1 ? "s" : ""} d'agent, pas encore gardé{keepable.length > 1 ? "s" : ""}</button>
+        <span className="rp__muted rp__right">Ni série, ni classement : tu viens quand tu veux.</span>
+      </div>
+      {showKeep && keepable.length > 0 && (
         <section className="card">
-          <div className="hd"><h2>Sessions à garder en Replay</h2><span>elles ont écrit un test et du code</span></div>
           {keepable.map((s) => (
             <div key={s.id} className="rp__keep">
-              <span className="lx-mg">{AGENT[s.agent].mono}</span>
+              <span className="av">{AGENT[s.agent].mono}</span>
               <span><b>{AGENT[s.agent].name}{s.branch ? `, ${s.branch}` : ""}</b><small>{DAY.format(new Date(s.started))}, {s.writes.join(", ")}</small></span>
               <button className="vl-btn vl-btn--primary vl-btn--sm" disabled={!!busy} onClick={() => keep(s)}>{busy === s.id ? "Préparation…" : "Garder ce moment"}</button>
             </div>
           ))}
-          <p className="rp__foot">Garder : VisionLayer retrouve le code d'avant le correctif, lit le constat sur ce code, puis lance le test de l'agent avant et après. Rien n'est envoyé à un modèle.</p>
+          <p className="rp__muted">Garder : VisionLayer retrouve le code d'avant le correctif, lit le constat sur ce code et lance le test de l'agent avant et après. Rien n'est envoyé à un modèle.</p>
         </section>
       )}
     </div>
   );
 }
 
-function ReplayPage({ id, back }: { id: string; back: () => void }) {
+function ReplayPage({ id, open }: { id: string; open: (id?: string) => void }) {
   const [r, setR] = useState<ReplayView>();
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState<string>();
   useEffect(() => { api.replay(id).then(setR).catch((e) => setError(String(e))); }, [id]);
   const run = <T,>(what: string, p: Promise<T>, then: (x: T) => void) => { setBusy(what); setError(undefined); p.then(then).catch((e) => setError(String(e.message ?? e))).finally(() => setBusy(undefined)); };
-  if (!r) return <div className="page"><p className="rp__lead">{error ?? "Lecture du Replay…"}</p></div>;
-  const stage = r.submitted ? "Confrontation" : r.copy ? "En jeu" : "Briefing";
-  return (
-    <div className="page rp">
-      <div className="rp__crumbs"><button className="vl-btn vl-btn--secondary vl-btn--sm" onClick={back}>‹ Replays</button><span className="mono">#{r.id.slice(2)}</span><ol className="rp__steps">{["Briefing", "En jeu", "Confrontation"].map((s) => <li key={s} className={s === stage ? "is-on" : ""}>{s}</li>)}</ol></div>
-      {error && <p className="rp__err">{error}</p>}
-      {stage === "Briefing" && <Briefing r={r} start={() => run("start", api.startReplay(id), setR)} busy={busy === "start"} />}
-      {stage === "En jeu" && <Play r={r} busy={busy} test={() => run("test", api.testReplay(id), (last) => setR({ ...r, last }))} submit={() => run("submit", api.submitReplay(id), setR)} />}
-      {stage === "Confrontation" && <Confront r={r} />}
-      {stage === "Confrontation" && <div className="rp__actions"><button className="vl-btn vl-btn--secondary" disabled={!!busy} onClick={() => run("reset", api.resetReplay(id), setR)}>Rejouer depuis le début</button></div>}
-    </div>
-  );
+  if (!r) return <div className="rp"><p>{error ?? "Lecture du Replay…"}</p></div>;
+  if (r.submitted) return <Confront r={r} error={error} busy={busy} reopen={() => run("reopen", api.reopenReplay(id), setR)} reset={() => run("reset", api.resetReplay(id), setR)} back={() => open()} />;
+  if (r.copy) return <Play r={r} error={error} busy={busy} test={() => run("test", api.testReplay(id), (last) => setR({ ...r, last }))} submit={() => run("submit", api.submitReplay(id), setR)} />;
+  return <Briefing r={r} error={error} busy={busy === "start"} start={() => run("start", api.startReplay(id), setR)} />;
 }
 
-function Briefing({ r, start, busy }: { r: ReplayView; start: () => void; busy: boolean }) {
-  const open = useOpenCode();
+/** R1, le briefing : le problème, Vigie, ce que l'agent a vécu jusqu'à l'instant où le code t'est remis. */
+function Briefing({ r, start, busy, error }: { r: ReplayView; start: () => void; busy: boolean; error?: string }) {
+  const failing = r.before.length - passed(r.before);
   return (
-    <>
-      <section className="rp__hero">
-        <div className="rp__heromain">
-          <span className="vl-tag vl-tag--night">{r.finding ? "Course" : "Bug"}, rencontrée le {DAY.format(new Date(r.agent.at))} par {r.agent.name}</span>
-          <h1><Rich text={r.title} /></h1>
-          <p>{r.brief}</p>
-          <div className="rp__vigie"><span className="vg__face"><i /><i /></span><p>Je connais tout le contexte, sauf la réponse. Demande-moi un indice quand tu veux : il y en a trois, du plus vague au plus précis.</p></div>
-          <button className="vl-btn vl-btn--light" onClick={start} disabled={busy}>{busy ? "Ouverture de ta copie…" : "Commencer le replay"}</button>
-          <small>Ta copie s'ouvre à part, dans ton éditeur ou un terminal. Ton projet n'est pas touché.</small>
+    <div className="rp">
+      <div className="rp__intro">
+        <span className="kind"><i className="gi gi--bug" />{r.finding ? "Course" : "Bug"}, rencontrée le {DAY.format(new Date(r.agent.at))} par {r.agent.name}</span>
+        <h1><Rich text={r.title} /></h1>
+        <p>{r.finding ? "VisionLayer l'avait signalé sur le code d'avant. " : ""}Le test que {r.agent.name} a écrit le décrit ; à toi de le faire passer, sans voir sa solution.</p>
+      </div>
+      {error && <p className="rp__err">{error}</p>}
+      <section className="rp__night">
+        <Bolt mood="think" night size={130} />
+        <div className="rp__nightmain">
+          <p className="bub">Je connais tout le contexte, sauf la réponse. Demande-moi un indice quand tu veux : il y en a trois, du plus vague au plus précis.</p>
+          <div className="rp__row">
+            <button className="vl-btn vl-btn--light" onClick={start} disabled={busy}>{busy ? "Ouverture de ta copie…" : "Commencer le replay"}</button>
+            <span className="rp__nightnote">Ta copie s'ouvre ici, dans VS Code ou dans un terminal. Ton projet n'est pas touché.</span>
+          </div>
         </div>
-        <div className="rp__heroside">
-          <span className="lbl">Ce que l'agent a vécu</span>
-          <ol className="rp__time">
-            {r.timeline.map((t, i) => <li key={i}><span className="mono">{TIME.format(new Date(t.at))}</span><b>{t.what === "map" ? "Lit la carte" : "Écrit"}</b><small>{t.what === "map" ? t.detail : t.detail.split("/").slice(-2).join("/")}</small></li>)}
-            <li className="is-you"><span className="mono">{r.base.slice(0, 7)}</span><b>À toi</b><small>le code est remis à cet instant</small></li>
-            <li className="is-hidden"><span className="mono">…</span><b>La suite</b><small>cachée jusqu'à ta solution</small></li>
-          </ol>
+      </section>
+      <section className="card">
+        <h2>Ce que l'agent a vécu</h2>
+        <div className="tl" style={{ gridTemplateColumns: `repeat(${r.timeline.length + 2}, minmax(0, 1fr))` }}>
+          {r.timeline.map((t, i) => <div key={i}><i /><small>{TIME.format(new Date(t.at))}</small><b>{t.what === "map" ? "Lit la carte" : `Écrit ${t.detail.split("/").pop()}`}</b><span>{t.what === "map" ? t.detail : t.detail.split("/").slice(0, -1).join("/")}</span></div>)}
+          <div className="you"><i /><small>{r.base.slice(0, 7)}</small><b>À toi</b><span>le code est remis à cet instant</span></div>
+          <div className="off"><i /><small>…</small><b>La suite</b><span>cachée jusqu'à ta solution</span></div>
         </div>
       </section>
       <div className="rp__two">
         <section className="card">
-          <div className="hd"><h2>Le test qui échoue</h2><span>{score(r.before)} passent sur le code d'avant</span></div>
-          <Tests list={r.before} />
-          {r.finding && <p className="rp__foot">Le constat de VisionLayer sur ce code : <Rich text={r.finding.message} />. {r.finding.proof.slice(0, 3).map((p, i) => <CodeRef key={i} proof={p} onOpen={open} />)}</p>}
+          <h2>Le test qui échoue</h2>
+          <p>{r.before.map((t, i) => <span key={i}>« {t.name} »{i < r.before.length - 1 ? " ; " : "."}</span>)}</p>
+          <div className={`run${failing ? "" : " run--ok"}`}>{failing ? `Sur le code d'avant, ${failing} test${failing > 1 ? "s" : ""} sur ${r.before.length} échoue${failing > 1 ? "nt" : ""}.` : "Passe déjà sur le code d'avant."}</div>
         </section>
         <section className="card">
-          <div className="hd"><h2>Dans la boîte</h2></div>
-          <div className="rp__box">
-            <span className="vl-label">Code</span><span>le dépôt au commit <code>{r.base.slice(0, 7)}</code>, juste avant le correctif</span>
-            <span className="vl-label">Tests</span><span>{r.tests.map((t) => <code key={t}>{t}</code>)}, écrit par l'agent</span>
-            <span className="vl-label">Avec son correctif</span><span>{score(r.agentResult)} passent</span>
-          </div>
+          <h2>Dans la boîte</h2>
+          <dl className="box">
+            <dt>Code</dt><dd>le dépôt au commit {r.base.slice(0, 7)}, juste avant la correction</dd>
+            <dt>Tests</dt><dd>{r.tests.join(", ")}, écrit{r.tests.length > 1 ? "s" : ""} par {r.agent.name}</dd>
+            <dt>Constat</dt><dd>{r.finding ? `lu par VisionLayer sur ce code, ${r.finding.proof.length} lignes` : "aucun"}</dd>
+            <dt>L'agent</dt><dd>{passed(r.agentResult)} test{passed(r.agentResult) > 1 ? "s" : ""} sur {r.agentResult.length} avec sa correction</dd>
+          </dl>
         </section>
       </div>
-    </>
+    </div>
   );
 }
 
-function Play({ r, busy, test, submit }: { r: ReplayView; busy?: string; test: () => void; submit: () => void }) {
-  const [turns, setTurns] = useState<{ q: string; a?: VigieAnswer; error?: string }[]>([]);
+type File = { path: string; test: boolean; text: string };
+type Turn = { q: string; hint?: number; a?: VigieAnswer; error?: string };
+const HINTS = ["Où regarder", "Ce qui cloche, sans nommer de solution", "La forme d'une réponse, jamais le code"];
+
+/** R2, en jeu : la barre de la partie, ta copie éditable ici, le dernier lancement ; Vigie et ses trois indices à droite. */
+function Play({ r, test, submit, busy, error }: { r: ReplayView; test: () => void; submit: () => void; busy?: string; error?: string }) {
+  const [files, setFiles] = useState<File[]>([]);
+  const [tab, setTab] = useState(0);
+  const [dirty, setDirty] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
+  const [turns, setTurns] = useState<Turn[]>([]);
   const [draft, setDraft] = useState("");
   const [asking, setAsking] = useState(false);
-  const hints = turns.filter((t) => /^Indice \d/.test(t.q) && t.a).length;
+  const openCode = useOpenCode();
+  useEffect(() => { api.replayFiles(r.id).then((f) => { setFiles(f); setTab(Math.max(0, f.findIndex((x) => r.fixFiles.includes(x.path)))); }).catch(() => {}); }, [r.id]);
+  const last = r.last ?? r.before;
+  const f = files[tab];
+  const text = f ? dirty[f.path] ?? f.text : "";
+  const lines = useMemo(() => text.split("\n").length, [text]);
+  const save = async () => {
+    setSaving(true);
+    for (const [path, t] of Object.entries(dirty)) { await api.saveReplayFile(r.id, path, t); setFiles((fs) => fs.map((x) => x.path === path ? { ...x, text: t } : x)); }
+    setDirty({}); setSaving(false);
+  };
+  const flush = () => Object.keys(dirty).length ? save() : Promise.resolve();
   const ask = (a: { q?: string; hint?: number }) => {
-    const q = a.hint ? `Indice ${a.hint} sur 3` : a.q!;
-    setAsking(true); setDraft(""); setTurns((t) => [...t, { q }]);
-    api.askReplay(r.id, a).then((ans) => setTurns((t) => t.map((x, i) => i === t.length - 1 ? { ...x, a: ans } : x)))
+    const q = a.hint ? `Indice ${a.hint} : ${HINTS[a.hint - 1]!.toLowerCase()}` : a.q!;
+    setAsking(true); setDraft(""); setTurns((t) => [...t, { q, ...(a.hint ? { hint: a.hint } : {}) }]);
+    flush().then(() => api.askReplay(r.id, a)).then((ans) => setTurns((t) => t.map((x, i) => i === t.length - 1 ? { ...x, a: ans } : x)))
       .catch((e) => setTurns((t) => t.map((x, i) => i === t.length - 1 ? { ...x, error: String(e.message ?? e) } : x))).finally(() => setAsking(false));
   };
-  const last = r.last ?? r.before;
+  const taken = (n: number) => turns.find((t) => t.hint === n && t.a);
+  const hintsTaken = [1, 2, 3].filter((n) => taken(n)).length;
+  const failing = last.filter((t) => !t.ok);
   return (
-    <div className="rp__play">
-      <div className="rp__left">
-        <section className="card">
-          <div className="hd"><h2>Ta copie</h2><span>le code d'avant, et le test de l'agent</span></div>
-          <div className="rp__copy">
-            <code>{r.copy}</code>
-            <div className="rp__copyact">
-              <a className="vl-btn vl-btn--secondary vl-btn--sm" href={`vscode://file${r.copy}`}>Ouvrir dans VS Code</a>
-              <button className="vl-btn vl-btn--secondary vl-btn--sm" onClick={() => navigator.clipboard?.writeText(`cd ${r.copy}`)}>Copier « cd » pour un terminal</button>
-            </div>
-            <p className="rp__foot">Le problème est dans <code>{r.fixFiles.join(", ")}</code> d'après le constat. Corrige dans ton éditeur, puis lance les tests ici.</p>
-          </div>
-        </section>
-        <section className="card">
-          <div className="hd"><h2>Les tests</h2><span>{score(last)}{r.last ? "" : ", sur le code d'avant"}</span></div>
-          <Tests list={last} />
-          <div className="rp__actions">
-            <button className="vl-btn vl-btn--secondary" onClick={test} disabled={!!busy}>{busy === "test" ? "Les tests tournent…" : "Lancer les tests"}</button>
-            <button className="vl-btn vl-btn--primary" onClick={submit} disabled={!!busy}>{busy === "submit" ? "Comparaison en cours…" : "Rendre ma solution"}</button>
-          </div>
-          <p className="rp__foot">Rendre révèle la solution de l'agent et compare les deux. Tu peux rendre même si un test échoue.</p>
-        </section>
+    <div className="rp--play">
+      <div className="rbar">
+        <span className="kind kind--night"><i className="gi gi--bug" />#{r.id.slice(2)}</span>
+        <span className="t"><Rich text={r.title.split(",")[0]!.replace(/\.$/, "")} /></span>
+        <span className="rbar__score"><span className="bar"><i style={{ width: `${(passed(last) / Math.max(1, last.length)) * 100}%` }} /></span><span className="mono">{passed(last)} test{passed(last) > 1 ? "s" : ""} sur {last.length}</span></span>
+        <button className="vl-btn vl-btn--ghost-night" onClick={() => flush().then(test)} disabled={!!busy || saving}>{busy === "test" ? "Les tests tournent…" : "Relancer les tests"}</button>
+        <button className="vl-btn vl-btn--light" onClick={() => flush().then(submit)} disabled={!!busy}>{busy === "submit" ? "Comparaison…" : "Soumettre"}</button>
       </div>
-      <aside className="rp__coach">
-        <header><span className="vg__face"><i /><i /></span><span><b>Vigie</b><small>connaît le problème et ta copie, pas la solution</small></span></header>
-        <div className="rp__coachbody">
-          {turns.length === 0 && <p className="rp__coachhi">Dis-moi où tu en es, ou demande un indice. Je ne t'écrirai pas la solution, même si tu insistes.</p>}
-          {turns.map((t, i) => <div key={i} className="vg__turn"><p className="vg__q">{t.q}</p>{t.error ? <p className="vg__err">{t.error}</p> : !t.a ? <p className="vg__wait">Vigie lit ta copie…</p> : <Answer a={t.a} />}</div>)}
+      <div className="rp__game">
+        <div className="rp__gamemain">
+          <div className="rp__sechead"><h2>Ta copie</h2><span>Tu édites ici, ou dans <a href={`vscode://file${r.copy}`}>VS Code</a></span></div>
+          {error && <p className="rp__err">{error}</p>}
+          <div className="ed">
+            <div className="edh">
+              {files.map((x, i) => <button key={x.path} className={i === tab ? "on" : ""} onClick={() => setTab(i)} title={x.path}>{x.path.split("/").pop()}{dirty[x.path] !== undefined ? ", modifié" : ""}{x.test ? ", test" : ""}</button>)}
+              {Object.keys(dirty).length > 0 && <button className="edh__save" onClick={save} disabled={saving}>{saving ? "…" : "Enregistrer"}</button>}
+            </div>
+            {f && (
+              <div className="ed__area">
+                <pre className="ed__nums" aria-hidden="true">{Array.from({ length: lines }, (_, i) => i + 1).join("\n")}</pre>
+                <textarea value={text} readOnly={f.test} spellCheck={false} rows={lines}
+                  onChange={(e) => setDirty((d) => ({ ...d, [f.path]: e.target.value }))}
+                  onKeyDown={(e) => { if ((e.metaKey || e.ctrlKey) && e.key === "s") { e.preventDefault(); save(); } }} />
+              </div>
+            )}
+          </div>
+          <div className={`run${failing.length ? "" : " run--ok"}`}>{!r.last ? `Pas encore lancé sur ta copie : sur le code d'avant, ${failing.length} test${failing.length > 1 ? "s" : ""} sur ${last.length} échoue${failing.length > 1 ? "nt" : ""}.` : failing.length ? `Ton dernier lancement : ${failing.length} test${failing.length > 1 ? "s" : ""} sur ${last.length} échoue${failing.length > 1 ? "nt" : ""} encore.` : `Ton dernier lancement : les ${last.length} tests passent.`}</div>
+          {failing.length > 0 && (
+            <section className="card">
+              <h2>Ce que disent les tests qui échouent</h2>
+              {failing.map((t, i) => <div key={i} className="rp__fail"><b>« {t.name} »</b>{t.message && <pre>{t.message}</pre>}</div>)}
+            </section>
+          )}
         </div>
-        <div className="rp__hints">{[1, 2, 3].map((n) => <button key={n} className="vg__ex" disabled={asking || n !== hints + 1} onClick={() => ask({ hint: n })}>Indice {n}{n === 1 ? ", le plus vague" : n === 3 ? ", le plus précis" : ""}</button>)}</div>
-        <form className="vg__ask" onSubmit={(e) => { e.preventDefault(); if (draft.trim()) ask({ q: draft }); }}>
-          <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Et si deux instances lancent la tâche ensemble ?" disabled={asking} />
-          <button className="vl-btn vl-btn--primary vl-btn--sm" disabled={asking || !draft.trim()}>Demander</button>
-        </form>
-      </aside>
+        <aside className="rp__gameside">
+          <div className="rp__who"><Bolt mood="think" size={64} /><div><p className="rp__whon">Vigie</p><p className="rp__muted">ne voit pas la correction de l'agent</p></div></div>
+          {turns.length > 0 && (
+            <div className="chat">
+              {turns.map((t, i) => [
+                <p key={`q${i}`} className="me">{t.q}</p>,
+                t.error ? <p key={`e${i}`} className="vg"><small>Vigie</small>Je n'ai pas pu répondre : {t.error}</p>
+                  : !t.a ? <p key={`w${i}`} className="vg"><small>Vigie</small>Je lis ta copie…</p>
+                  : <div key={`a${i}`} className="vg"><small>Vigie</small>{t.a.answer.split("\n").filter(Boolean).map((l, j) => <p key={j}>{inline(l.replace(/^\s*[-•]\s*/, ""), openCode)}</p>)}</div>,
+              ])}
+            </div>
+          )}
+          <div className="rp__hintsbox">
+            <span className="vl-label">Indices, {hintsTaken} pris sur 3</span>
+            <div className="hints">
+              {[1, 2, 3].map((n) => {
+                const t = taken(n);
+                return (
+                  <div key={n}>
+                    <span className={`hn${t ? "" : " hn--off"}`}>{n}</span>
+                    <span className={t ? "" : "rp__muted"}>{t ? <><b>{HINTS[n - 1]}.</b> {inline(t.a!.answer.split("\n")[0]!, openCode)}</> : HINTS[n - 1]}</span>
+                    {!t ? <button className="vl-btn vl-btn--secondary vl-btn--sm" disabled={asking || n !== hintsTaken + 1} onClick={() => ask({ hint: n })}>Ouvrir</button> : <span />}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          <form className="ask" onSubmit={(e) => { e.preventDefault(); if (draft.trim()) ask({ q: draft }); }}>
+            <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Demande à Vigie, ou colle une erreur" disabled={asking} />
+            <button className="vl-btn vl-btn--primary vl-btn--sm" disabled={asking || !draft.trim()}>Envoyer</button>
+          </form>
+        </aside>
+      </div>
     </div>
   );
 }
 
-function Confront({ r }: { r: ReplayView }) {
+/** R3, la confrontation : deux solutions au même problème, situation par situation ; ni score ni gagnant. */
+function Confront({ r, reopen, reset, back, busy, error }: { r: ReplayView; reopen: () => void; reset: () => void; back: () => void; busy?: string; error?: string }) {
   const c = r.comparison, you = r.submitted!.result;
+  const missed = (s: string) => /^pas trait/i.test(s.trim());
+  const seen = (s: string) => /^vu\b/i.test(s.trim());
+  const agentKey = r.agent.name === "Muse Code" ? "muse" : r.agent.name === "Codex" ? "codex" : "claude";
   return (
-    <>
-      <section className="rp__hero rp__hero--c">
-        <div className="rp__heromain">
-          <span className="vl-tag vl-tag--night">Deux solutions au même problème</span>
-          <h1>{c ? <Rich text={c.sentence} /> : "La comparaison n'a pas pu être écrite."}</h1>
+    <div className="rp">
+      <section className="rp__night">
+        <Bolt mood="happy" night size={120} />
+        <div className="rp__nightmain">
+          <h1>Deux solutions au même problème</h1>
+          <p className="bub">{c ? <Rich text={c.sentence} /> : "Je n'ai pas pu écrire la comparaison ; les deux correctifs sont là, côte à côte."}</p>
         </div>
-        <div className="rp__scores">
-          <div><b>{score(you)}</b><span>tes tests</span></div>
-          <div><b>{score(r.agentResult)}</b><span>avec la solution de {r.agent.name}</span></div>
+        <div className="rp__stats">
+          <div className="stat"><b>{passed(you)} / {you.length}</b><span>tes tests</span></div>
+          <div className="stat"><b>{passed(r.agentResult)} / {r.agentResult.length}</b><span>avec la solution de {r.agent.name}</span></div>
         </div>
       </section>
+      {error && <p className="rp__err">{error}</p>}
       <div className="rp__two">
-        <Side who={`${r.agent.name}, le ${DAY.format(new Date(r.agent.at))}`} mono={r.agent.name.split(" ").map((w) => w[0]).join("")} text={c?.agent} diff={r.agentPatch ?? ""} />
-        <Side who="Toi, aujourd'hui" mono="TOI" text={c?.you} diff={r.yourDiff ?? ""} />
+        <Side who={`${r.agent.name}, le ${DAY.format(new Date(r.agent.at))}`} av={AGENT[agentKey].mono} text={c?.agent} diff={r.agentPatch ?? ""} />
+        <Side who="Toi, aujourd'hui" av="TOI" mine text={c?.you} diff={r.yourDiff ?? ""} />
       </div>
       {c && (
-        <section className="card">
-          <div className="rp__row rp__row--h"><span>La situation</span><span>{r.agent.name}</span><span>Toi</span></div>
-          {c.rows.map((x, i) => <div key={i} className="rp__row"><span><Rich text={x.situation} /></span><span className={/pas trait/i.test(x.agent) ? "rp__no" : ""}><Rich text={x.agent} /></span><span className={/pas trait/i.test(x.you) ? "rp__no" : ""}><Rich text={x.you} /></span></div>)}
-          <p className="rp__foot">Écrit par Muse Spark à partir des deux correctifs et des tests. Il compare, il ne note pas.</p>
+        <section className="card rp__cmp">
+          <div className="cmp cmp--h"><span>La situation</span><span>{r.agent.name}</span><span>Toi</span></div>
+          {c.rows.map((x, i) => (
+            <div key={i} className={`cmp${missed(x.agent) !== missed(x.you) ? " cmp--diff" : ""}`}>
+              <span className="cmp__s"><Rich text={x.situation} /></span>
+              <span className={missed(x.agent) ? "miss" : seen(x.agent) ? "seen" : ""}><Rich text={x.agent} /></span>
+              <span className={missed(x.you) ? "miss" : seen(x.you) ? "seen" : ""}><Rich text={x.you} /></span>
+            </div>
+          ))}
         </section>
       )}
-    </>
+      <div className="rp__row">
+        <button className="vl-btn vl-btn--primary" onClick={reopen} disabled={!!busy}>Reprendre ma copie</button>
+        <button className="vl-btn vl-btn--secondary" disabled title="Ramener ta solution dans le projet : à venir">Proposer au projet</button>
+        <button className="vl-btn vl-btn--secondary" onClick={back}>Garder pour moi</button>
+        <span className="rp__muted">Pas de score ni de gagnant : deux bonnes solutions, ou deux qui ratent le même cas. <button className="rp__link" onClick={reset} disabled={!!busy}>Rejouer depuis le début</button></span>
+      </div>
+    </div>
   );
 }
 
-function Side({ who, mono, text, diff }: { who: string; mono: string; text?: string; diff: string }) {
-  const lines = diff.split("\n").filter((l) => /^[+-]/.test(l) && !/^(\+\+\+|---)/.test(l));
-  const add = lines.filter((l) => l.startsWith("+")).length, del = lines.length - add;
+/** Un correctif : qui, combien de lignes, son principe, ses lignes retirées et ajoutées avec leur numéro. */
+function Side({ who, av, text, diff, mine }: { who: string; av: string; text?: string; diff: string; mine?: boolean }) {
+  const rows: { n: number; kind: "add" | "del" | ""; text: string }[] = [];
+  let o = 0, n = 0;
+  for (const l of diff.split("\n")) {
+    const h = l.match(/^@@ -(\d+)(?:,\d+)? \+(\d+)/);
+    if (h) { o = Number(h[1]); n = Number(h[2]); continue; }
+    if (/^(diff |index |\+\+\+|---|new file|deleted file)/.test(l)) continue;
+    if (l.startsWith("-")) rows.push({ n: o++, kind: "del", text: l.slice(1) });
+    else if (l.startsWith("+")) rows.push({ n: n++, kind: "add", text: l.slice(1) });
+    else if (l.startsWith(" ")) { rows.push({ n, kind: "", text: l.slice(1) }); o++; n++; }
+  }
+  // Seulement ce qui change, avec une ligne de contexte autour.
+  const keep = rows.filter((x, i) => x.kind || rows[i - 1]?.kind || rows[i + 1]?.kind);
+  const add = rows.filter((x) => x.kind === "add").length, del = rows.filter((x) => x.kind === "del").length;
+  const files = (diff.match(/^\+\+\+ /gm) ?? []).length;
   return (
-    <section className="card">
-      <div className="rp__who"><span className="lx-mg">{mono.slice(0, 3)}</span><span><b>{who}</b><small>{add} lignes ajoutées, {del} retirées</small></span></div>
-      {text && <p className="rp__principle"><Rich text={text} /></p>}
-      <pre className="rp__diff">{lines.length ? lines.map((l, i) => <span key={i} className={l.startsWith("+") ? "a" : "d"}>{l}{"\n"}</span>) : "aucun changement"}</pre>
+    <section className={`card${mine ? " card--on" : ""}`}>
+      <div className="who2"><span className={`av${mine ? " av--me" : ""}`}>{av}</span><div><p className="rp__whon">{who}</p><p className="rp__muted">{files} fichier{files > 1 ? "s" : ""}, {add} ligne{add > 1 ? "s" : ""} ajoutée{add > 1 ? "s" : ""}, {del} retirée{del > 1 ? "s" : ""}</p></div></div>
+      {text && <p><Rich text={text} /></p>}
+      <div className="ed ed--diff">{keep.length ? keep.map((x, i) => <div key={i} className={x.kind}><span>{x.n}</span><span>{x.text}</span></div>) : <div><span /><span>aucun changement</span></div>}</div>
     </section>
   );
-}
-
-function Tests({ list }: { list: ReplayTest[] }) {
-  return <div className="rp__tests">{list.map((t, i) => <div key={i} className={t.ok ? "ok" : "ko"}><i>{t.ok ? "✓" : "×"}</i><span>{t.name}</span></div>)}</div>;
 }

@@ -56,7 +56,15 @@ export function createWebServer(opts: WebServerOptions): Server {
     "GET /api/replays/one": (req, res) => sendJson(res, 200, shown(param(req, "id"))),
     "POST /api/replays/create": async (req, res) => sendJson(res, 200, await replays.create(param(req, "session"))),
     "POST /api/replays/start": (req, res) => { replays.start(param(req, "id")); sendJson(res, 200, shown(param(req, "id"))); },
+    "POST /api/replays/reopen": (req, res) => { replays.reopen(param(req, "id")); sendJson(res, 200, shown(param(req, "id"))); },
     "POST /api/replays/reset": (req, res) => { replays.reset(param(req, "id")); copies.delete(param(req, "id")); sendJson(res, 200, shown(param(req, "id"))); },
+    "GET /api/replays/files": (req, res) => sendJson(res, 200, replays.files(param(req, "id")).map((path) => ({ path, test: replays.get(param(req, "id")).tests.includes(path), text: replays.read(param(req, "id"), path) }))),
+    "POST /api/replays/save": async (req, res) => {
+      const chunks: Buffer[] = [];
+      for await (const c of req) chunks.push(c as Buffer);
+      replays.write(param(req, "id"), param(req, "path"), Buffer.concat(chunks).toString("utf8"));
+      sendJson(res, 200, { ok: true, diff: replays.diff(param(req, "id")) });
+    },
     "POST /api/replays/test": (req, res) => sendJson(res, 200, replays.test(param(req, "id"))),
     "POST /api/replays/ask": async (req, res) => {
       const id = param(req, "id"), r = replays.get(id);

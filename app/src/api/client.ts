@@ -33,6 +33,13 @@ export const api = {
   startReplay: (id: string) => post<ReplayView>(`/api/replays/start?id=${id}`),
   testReplay: (id: string) => post<ReplayTest[]>(`/api/replays/test?id=${id}`),
   askReplay: (id: string, a: { q?: string; hint?: number }) => post<VigieAnswer>(`/api/replays/ask?id=${id}${a.hint ? `&hint=${a.hint}` : `&q=${encodeURIComponent(a.q ?? "")}`}`),
+  replayFiles: (id: string) => get<{ path: string; test: boolean; text: string }[]>(`/api/replays/files?id=${id}`),
+  saveReplayFile: async (id: string, path: string, text: string) => {
+    const res = await fetch(`/api/replays/save?id=${id}&path=${encodeURIComponent(path)}`, { method: "POST", body: text });
+    if (!res.ok) throw new Error((await res.json())?.error ?? `${res.status}`);
+    return (await res.json()) as { ok: boolean; diff: string };
+  },
+  reopenReplay: (id: string) => post<ReplayView>(`/api/replays/reopen?id=${id}`),
   resetReplay: (id: string) => post<ReplayView>(`/api/replays/reset?id=${id}`),
   submitReplay: (id: string) => post<ReplayView>(`/api/replays/submit?id=${id}`),
   style: () => get<{ confirmed?: string[]; at?: string }>("/api/style"),

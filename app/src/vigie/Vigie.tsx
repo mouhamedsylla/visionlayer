@@ -107,7 +107,7 @@ export function Answer({ a }: { a: VigieAnswer }) {
 }
 
 /** Le texte de Vigie : les accents graves en code, les `chemin:ligne` en références cliquables. */
-function inline(text: string, open: (p: { path: string; line: number }) => void): ReactNode[] {
+export function inline(text: string, open: (p: { path: string; line: number }) => void): ReactNode[] {
   const out: ReactNode[] = [];
   const re = /`([^`]+)`|([\w./@()[\]-]+\.\w+):(\d+)/g;
   let last = 0, m: RegExpExecArray | null, k = 0;

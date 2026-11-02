@@ -11,7 +11,7 @@ import { MapSource } from "../web/map-source.js";
  * rende le sien. On joue dans une copie (un worktree git hors du projet) : le projet n'est jamais touché.
  */
 
-export interface ReplayTest { name: string; ok: boolean }
+export interface ReplayTest { name: string; ok: boolean; message?: string }
 export interface Replay {
   id: string;
   title: string;
@@ -113,6 +113,23 @@ export class ReplayStore {
     return r.last;
   }
 
+  /** Les fichiers qu'on peut ouvrir dans la copie : ceux que l'agent a corrigés, ceux du constat, ses tests. */
+  files(id: string): string[] {
+    const r = this.get(id);
+    return [...new Set([...r.fixFiles, ...(r.finding?.proof.map((p) => p.path) ?? []), ...r.tests])];
+  }
+  read(id: string, path: string): string {
+    const r = this.get(id);
+    if (!r.copy || !this.files(id).includes(path)) throw new Error("fichier hors du replay");
+    return readFileSync(join(r.copy, path), "utf8");
+  }
+  /** Écrire dans la copie : seulement un fichier du problème, jamais un test de l'agent. */
+  write(id: string, path: string, text: string): void {
+    const r = this.get(id);
+    if (!r.copy || !this.files(id).includes(path) || r.tests.includes(path)) throw new Error("ce fichier ne s'édite pas ici");
+    writeFileSync(join(r.copy, path), text);
+  }
+
   /** Ce que l'ingénieur a changé dans sa copie, hors tests. */
   diff(id: string): string { const r = this.get(id); return r.copy ? git(r.copy, "diff", "--", ".", ...r.tests.map((t) => `:(exclude)${t}`)) : ""; }
 
@@ -120,6 +137,14 @@ export class ReplayStore {
     const r = this.get(id);
     if (!r.copy) throw new Error("copie non ouverte");
     r.submitted = { at: new Date().toISOString(), result: this.runTests(r.copy, r.tests), diff: this.diff(id) };
+    this.save(r);
+    return r;
+  }
+
+  /** Reprendre sa copie après la confrontation : la solution rendue et la comparaison s'effacent, la copie reste. */
+  reopen(id: string): Replay {
+    const r = this.get(id);
+    delete r.submitted; delete r.comparison;
     this.save(r);
     return r;
   }
@@ -153,8 +178,10 @@ export class ReplayStore {
     rmSync(file, { force: true });
     spawnSync("npx", ["vitest", "run", ...tests, "--reporter=json", `--outputFile=${file}`], { cwd, encoding: "utf8", maxBuffer: 64 << 20, timeout: 120_000 });
     try {
-      const data = JSON.parse(readFileSync(file, "utf8")) as { testResults: { assertionResults: { title: string; status: string }[] }[] };
-      return data.testResults.flatMap((f) => f.assertionResults.map((a) => ({ name: a.title, ok: a.status === "passed" })));
+      const data = JSON.parse(readFileSync(file, "utf8")) as { testResults: { assertionResults: { title: string; status: string; failureMessages?: string[] }[] }[] };
+      // Le message d'échec, sans la pile d'appels ni les codes de couleur du terminal.
+      const why = (m?: string[]) => m?.[0]?.replace(/\u001b\[[0-9;]*m/g, "").split("\n").filter((l) => !/^\s+at /.test(l)).slice(0, 6).join("\n").trim();
+      return data.testResults.flatMap((f) => f.assertionResults.map((a) => ({ name: a.title, ok: a.status === "passed", ...(a.status !== "passed" && why(a.failureMessages) ? { message: why(a.failureMessages)! } : {}) })));
     } catch { return [{ name: "les tests n'ont pas pu tourner", ok: false }]; }
     finally { rmSync(file, { force: true }); }
   }

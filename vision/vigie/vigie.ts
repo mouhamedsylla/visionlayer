@@ -153,7 +153,7 @@ export async function compareSolutions(ctx: { problem: string; agentName: string
   const key = apiKey();
   const instructions = `Tu compares deux correctifs du même problème, en français, pour l'ingénieur qui a écrit le second. Tu ne notes pas, tu ne classes pas. Tu tutoies l'ingénieur (« tu », « ton correctif »), jamais « vous ». Réponds en JSON strict, sans texte autour, de la forme :
 {"sentence": "une phrase qui dit en quoi les deux chemins diffèrent", "agent": "le principe du correctif de l'agent, deux phrases", "you": "le principe de son correctif, deux phrases", "rows": [{"situation": "une situation concrète du problème", "agent": "ce que fait le correctif de l'agent", "you": "ce que fait le sien"}]}
-Trois à cinq situations, chacune tirée du problème ou des tests. Dis « pas traité » quand un correctif ne couvre pas une situation. Les noms de code entre accents graves.`;
+Trois à cinq situations, chacune tirée du problème ou des tests ; la dernière est « Ce que dit le code » (où se lit la règle dans chaque correctif). Chaque case commence par « Vu : » quand le correctif couvre la situation, ou « Pas traité : » quand il ne la couvre pas, sauf pour la dernière ligne. "sentence" est dit par Vigie à l'ingénieur, en le tutoyant, en deux phrases au plus. Les noms de code entre accents graves.`;
   const input = `Problème : ${ctx.problem}
 
 Correctif de ${ctx.agentName} (tests : ${ctx.agentTests.filter((t) => t.ok).length}/${ctx.agentTests.length}) :
