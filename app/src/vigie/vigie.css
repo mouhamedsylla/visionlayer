@@ -1,0 +1,32 @@
+/* Vigie : un panneau à droite, au-dessus de l'écran, sur fond nuit comme la carte noire. */
+.vg { position: fixed; top: 0; right: 0; bottom: 0; width: min(460px, 100vw); z-index: 40; background: var(--night); color: var(--on-night); display: flex; flex-direction: column; box-shadow: -12px 0 40px rgba(0, 0, 0, .18); }
+.vg__head { display: flex; align-items: center; gap: 12px; padding: 16px 18px; border-bottom: 1px solid var(--night-line); }
+.vg__face { width: 34px; height: 34px; border-radius: 10px; background: var(--night-2); border: 1px solid var(--night-line); display: flex; align-items: center; justify-content: center; gap: 6px; }
+.vg__face i { width: 5px; height: 9px; border-radius: 3px; background: var(--live); }
+.vg__who { display: flex; flex-direction: column; flex: 1; }
+.vg__who b { font-size: 14px; }
+.vg__who small { font-size: 11.5px; color: var(--on-night-muted); }
+.vg__close { background: none; border: 0; color: var(--on-night-muted); font-size: 22px; cursor: pointer; }
+.vg__body { flex: 1; min-height: 0; overflow-y: auto; padding: 16px 18px; display: flex; flex-direction: column; gap: 18px; }
+.vg__intro { display: flex; flex-direction: column; gap: 8px; }
+.vg__intro p { font-size: 13px; line-height: 19px; color: var(--on-night-muted); margin-bottom: 4px; }
+.vg__ex { text-align: left; background: var(--night-2); border: 1px solid var(--night-line); color: var(--on-night); border-radius: 10px; padding: 9px 12px; font: inherit; font-size: 12.5px; cursor: pointer; }
+.vg__ex:hover { border-color: var(--on-night-muted); }
+.vg__turn { display: flex; flex-direction: column; gap: 8px; }
+.vg__q { align-self: flex-end; max-width: 85%; background: var(--night-2); border: 1px solid var(--night-line); border-radius: 12px 12px 2px 12px; padding: 8px 12px; font-size: 13px; }
+.vg__wait { color: var(--on-night-muted); font-size: 12.5px; }
+.vg__err { color: #f3a99c; font-size: 12.5px; }
+.vg__a { display: flex; flex-direction: column; gap: 6px; font-size: 13px; line-height: 19px; }
+.vg__a p:first-child { font-weight: 600; }
+.vg__li { padding-left: 12px; position: relative; color: #e2e0db; }
+.vg__li::before { content: ""; position: absolute; left: 0; top: 8px; width: 5px; height: 5px; border-radius: 1px; background: var(--on-night-muted); }
+.vg__a code.rich { font: 500 12px/16px var(--font-mono); color: var(--on-night); background: var(--night-2); padding: 0 4px; border-radius: 4px; }
+.vg__a .vl-ref { background: #2a2a27; color: var(--on-night-muted); border-color: var(--night-line); }
+.vg__a .vl-ref b { color: var(--on-night); }
+.vg__trace { margin-top: 4px; font-size: 11.5px; color: var(--on-night-muted); }
+.vg__trace summary { cursor: pointer; }
+.vg__trace code { display: block; font: 400 11px/16px var(--font-mono); color: var(--on-night-muted); }
+.vg__cost { font: 400 11px/14px var(--font-mono); color: var(--on-night-muted); }
+.vg__ask { display: flex; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--night-line); }
+.vg__ask input { flex: 1; min-width: 0; background: var(--night-2); border: 1px solid var(--night-line); border-radius: 8px; padding: 0 10px; height: 32px; color: var(--on-night); font: inherit; font-size: 13px; outline: none; }
+.vg__ask .vl-btn--primary { background: var(--on-night); color: var(--ink); }

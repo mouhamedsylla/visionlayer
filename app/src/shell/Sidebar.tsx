@@ -2,10 +2,12 @@ import type { MapPayload, ProjectInfo } from "../api/types";
 import { sidebarCounts } from "../model/overview";
 import { Icon, Logo } from "./icons";
 import { SCREENS, type Screen } from "./route";
+import { useVigie } from "../vigie/Vigie";
 import "./shell.css";
 
 /** La barre latérale de la planche 01 : logo, projet, recherche, quatre groupes avec leurs compteurs, Vigie, Réglages, la personne. */
 export function Sidebar({ project, map, screen, go }: { project?: ProjectInfo; map?: MapPayload; screen: Screen; go: (s: Screen) => void }) {
+  const vigie = useVigie();
   const counts = map ? sidebarCounts(map) : {};
   const groups = [...new Set(SCREENS.map((s) => s.group))].filter(Boolean);
   const initials = (project?.user ?? "").split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
@@ -41,7 +43,7 @@ export function Sidebar({ project, map, screen, go }: { project?: ProjectInfo; m
         </div>
       ))}
       <div className="side__foot">
-        <a className="side__vigie" aria-disabled="true" title="Vigie arrive après les écrans">
+        <a className="side__vigie" href="#" onClick={(e) => { e.preventDefault(); vigie(); }}>
           <span className="side__vigieicon">{Icon.vigie}</span>
           <span className="side__vigietext"><b>Demander à Vigie</b><small>Muse Spark, cite ses preuves</small></span>
           <span className="vl-kbd side__kbd">⌘J</span>

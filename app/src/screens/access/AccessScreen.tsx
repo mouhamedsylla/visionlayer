@@ -6,6 +6,7 @@ import { Actor as ActorMark } from "../../lang/objects";
 import { Effect } from "../../lang/marks";
 import { Rich } from "../../ui/Rich";
 import { Workspace } from "../../ui/Workspace";
+import { useVigie } from "../../vigie/Vigie";
 import { Ref } from "../../ui/Ref";
 import { EntryRow } from "../block/EntryRow";
 import { entryGroups } from "../../model/block";
@@ -23,11 +24,13 @@ export function AccessScreen({ map, openFlow }: { map: MapPayload; openFlow: (id
   const allRoutes = map.model.nodes.filter((n) => n.level === "deployable").flatMap((n) => (n.facets.entrypoints ?? []).filter((e) => e.kind === "http" || e.kind === "rpc"));
   const humans = a.rows.filter((r) => r.group === "people").length, outside = a.rows.filter((r) => r.group === "outside").length, system = a.rows.filter((r) => r.group === "system").length;
   const m = accessMatrix(a.rows);
+  const vigie = useVigie();
   return (
     <Workspace
       head={<div className="ax__intro">
         <h1 className="ax__title">Qui peut entrer, et ce qu'il a le droit d'y faire</h1>
         <p className="ax__lead">Lu dans le code : qui appelle le système, comment chacun prouve qui il est, ce qu'il peut appeler et toucher. Les comptes réels et les rôles attribués en base ne sont pas lus.</p>
+        <button className="vl-btn vl-btn--secondary vl-btn--sm ax__ask" onClick={() => vigie()}>Demander à Vigie</button>
       </div>}
       panel={row && <Side map={map} row={row} />}>
       <div className="tiles">

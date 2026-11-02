@@ -11,6 +11,7 @@ import { StackSource } from "./stack-source.js";
 import { PacksSource } from "./packs-source.js";
 import { agentSessions } from "./agents-source.js";
 import { SettingsSource } from "./settings-source.js";
+import { askVigie } from "../vigie/vigie.js";
 
 export interface WebServerOptions {
   /** Le dépôt lu. */
@@ -39,6 +40,11 @@ export function createWebServer(opts: WebServerOptions): Server {
   const routes: Record<string, Handler> = {
     "GET /api/project": (_req, res) => sendJson(res, 200, projectInfo(root)),
     "GET /api/agents": (_req, res) => sendJson(res, 200, agentSessions(root)),
+    "POST /api/vigie": async (req, res) => {
+      const q = param(req, "q").trim();
+      if (!q || q.length > 600) throw new Error("question vide ou trop longue");
+      sendJson(res, 200, await askVigie(root, (await map.get()).model, q));
+    },
     "GET /api/style": (_req, res) => sendJson(res, 200, readStyle(root)),
     "POST /api/style/confirm": (req, res) => {
       const ids = param(req, "ids").split(",").filter(Boolean);

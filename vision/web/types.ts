@@ -151,3 +151,5 @@ export interface AgentLink {
   /** Déclare ce qu'il sait : la section VisionLayer de son fichier de consignes. */
   contract: { linked: boolean; where: string; editable: boolean };
 }
+
+export type { VigieAnswer, VigieStep } from "../vigie/vigie.js";

@@ -1,4 +1,4 @@
-import type { AgentLink, AgentSession, KnowledgePayload, MapPayload, PacksPayload, ProjectInfo, SourceExcerpt, WriterJob } from "./types";
+import type { AgentLink, AgentSession, VigieAnswer, KnowledgePayload, MapPayload, PacksPayload, ProjectInfo, SourceExcerpt, WriterJob } from "./types";
 
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(path);
@@ -21,6 +21,8 @@ export const api = {
   source: (path: string, from: number, to: number) => get<SourceExcerpt>(`/api/source?path=${encodeURIComponent(path)}&from=${from}&to=${to}`),
   packs: () => get<PacksPayload>("/api/packs"),
   agents: () => get<AgentSession[]>("/api/agents"),
+  /** Une question à Vigie : Muse Spark répond depuis la carte, preuves à l'appui. */
+  vigie: (q: string) => post<VigieAnswer>(`/api/vigie?q=${encodeURIComponent(q)}`),
   style: () => get<{ confirmed?: string[]; at?: string }>("/api/style"),
   /** Geste humain de la planche L3 : confirmer ou corriger les styles proposés. */
   confirmStyle: (ids: string[]) => post<{ confirmed?: string[]; at?: string }>(`/api/style/confirm?ids=${ids.join(",")}`),

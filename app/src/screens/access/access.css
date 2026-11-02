@@ -3,6 +3,7 @@
 .ax__intro { display: flex; flex-direction: column; gap: 6px; max-width: 860px; }
 .ax__title { font: 600 22px/28px var(--font-sans); letter-spacing: -.02em; }
 .ax__lead { color: var(--ink-2); font-size: 13px; line-height: 19px; }
+.ax__ask { align-self: flex-start; margin-top: 4px; }
 .ac__who { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .ac__who .lx-actor__dot { width: 28px; height: 28px; font-size: 10px; }
 .ac__who .lx-actor > span:last-child { display: none; }

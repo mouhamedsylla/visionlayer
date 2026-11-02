@@ -1,5 +1,6 @@
 import { useData } from "../api/useData";
 import { CodeProvider } from "../ui/code";
+import { VigieProvider } from "../vigie/Vigie";
 import { Overview } from "../screens/overview/Overview";
 import { MapScreen } from "../screens/map/MapScreen";
 import { PacksScreen } from "../screens/packs/PacksScreen";
@@ -21,6 +22,7 @@ export function App() {
   const title = SCREENS.find((s) => s.id === screen)!.label;
   return (
     <CodeProvider>
+      <VigieProvider map={data.map}>
       <div className="vl app">
         <Sidebar project={data.project} map={data.map} screen={screen} go={go} />
         <main className="main">
@@ -39,6 +41,7 @@ export function App() {
             : <div key={screen} className="view scr-ov"><Overview map={data.map} project={data.project} claims={data.claims} go={go} /></div>}
         </main>
       </div>
+      </VigieProvider>
     </CodeProvider>
   );
 }
