@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { api, type ReplayView } from "../../api/client";
 import type { AgentSession, Replay, ReplayTest, VigieAnswer } from "../../api/types";
 import { AGENT } from "../../model/agents";
-import { Face, PERSONAS, useFace, type Mood } from "../../vigie/Face";
+import { Bolt } from "../../vigie/Bolt";
 import { inline } from "../../vigie/Vigie";
 import { Rich } from "../../ui/Rich";
 import { useOpenCode } from "../../ui/code";
@@ -43,14 +43,14 @@ function Room({ open }: { open: (id: string) => void }) {
       </div>
       {error && <p className="rp__err">{error}</p>}
       <section className="rp__night" aria-label="Reprendre">
-        <Host mood="welcome" />
+        <Bolt mood="welcome" night size={150} />
         <div className="rp__nightmain">
           <p className="bub">{current ? <>Content de te revoir. Tu t'es arrêté sur <Rich text={current.title.replace(/\.$/, "")} />. {left ? `Il te reste ${left} test${left > 1 ? "s" : ""} à faire passer.` : "Tous les tests passent : tu peux soumettre."}</>
             : list?.length ? "Choisis un replay. Je connais chaque problème, pas la réponse de l'agent."
             : "Aucun replay pour l'instant. Garde un moment où un agent a corrigé quelque chose avec un test, et on le rejoue ensemble."}</p>
           {current && last && (
             <div className="rp__resume">
-              <span className="vl-label">Reprendre où tu en étais</span>
+              <span className="vl-label vl-label--night">Reprendre où tu en étais</span>
               <p className="rp__resumet"><Rich text={current.title} /></p>
               <div className="rp__barrow"><span className="bar"><i style={{ width: `${(passed(last) / Math.max(1, last.length)) * 100}%` }} /></span><span className="mono">{passed(last)} test{passed(last) > 1 ? "s" : ""} sur {last.length}</span></div>
               <div><button className="vl-btn vl-btn--light" onClick={() => open(current.id)}>Reprendre</button></div>
@@ -118,7 +118,7 @@ function Briefing({ r, start, busy, error }: { r: ReplayView; start: () => void;
       </div>
       {error && <p className="rp__err">{error}</p>}
       <section className="rp__night">
-        <Host mood="question" />
+        <Bolt mood="think" night size={130} />
         <div className="rp__nightmain">
           <p className="bub">Je connais tout le contexte, sauf la réponse. Demande-moi un indice quand tu veux : il y en a trois, du plus vague au plus précis.</p>
           <div className="rp__row">
@@ -225,7 +225,7 @@ function Play({ r, test, submit, busy, error }: { r: ReplayView; test: () => voi
           )}
         </div>
         <aside className="rp__gameside">
-          <div className="rp__who"><Face mood="think" size={56} /><div><p className="rp__whon">Vigie</p><p className="rp__muted">ne voit pas la correction de l'agent</p></div></div>
+          <div className="rp__who"><Bolt mood="think" size={64} /><div><p className="rp__whon">Vigie</p><p className="rp__muted">ne voit pas la correction de l'agent</p></div></div>
           {turns.length > 0 && (
             <div className="chat">
               {turns.map((t, i) => [
@@ -270,7 +270,7 @@ function Confront({ r, reopen, reset, back, prepare, busy, error }: { r: ReplayV
   return (
     <div className="rp">
       <section className="rp__night">
-        <Host mood="happy" />
+        <Bolt mood="happy" night size={120} />
         <div className="rp__nightmain">
           <h1>Deux solutions au même problème</h1>
           <p className="bub">{c ? <Rich text={c.sentence} /> : "Je n'ai pas pu écrire la comparaison ; les deux correctifs sont là, côte à côte."}</p>
@@ -337,7 +337,7 @@ function Propose({ r, propose, back, busy, error }: { r: ReplayView; propose: ()
   const p = r.proposal;
   if (!p) return (
     <div className="rp">
-      <section className="rp__night"><Host mood="focus" /><div className="rp__nightmain"><h1>Ramener ce que tu as trouvé dans le projet</h1><p className="rp__nightp">Je reporte ton correctif sur une copie du projet à jour, puis je lance sa suite de tests, tsc, et je compare la carte avant et après. Ton projet n'est pas touché.</p></div></section>
+      <section className="rp__night"><Bolt mood="think" night size={120} /><div className="rp__nightmain"><h1>Ramener ce que tu as trouvé dans le projet</h1><p className="rp__nightp">Je reporte ton correctif sur une copie du projet à jour, puis je lance sa suite de tests, tsc, et je compare la carte avant et après. Ton projet n'est pas touché.</p></div></section>
     </div>
   );
   const [withYours, without] = p.protects;
@@ -348,7 +348,7 @@ function Propose({ r, propose, back, busy, error }: { r: ReplayView; propose: ()
   return (
     <div className="rp">
       <section className="rp__night">
-        <Host mood={p.done ? "wow" : "welcome"} />
+        <Bolt mood={p.done ? "happy" : "welcome"} night size={120} />
         <div className="rp__nightmain">
           <h1>Ramener ce que tu as trouvé dans le projet</h1>
           <p className="rp__nightp">{lead}</p>
@@ -386,10 +386,4 @@ function Propose({ r, propose, back, busy, error }: { r: ReplayView; propose: ()
       </div>
     </div>
   );
-}
-
-/** Vigie en tête de chaque moment du Replay : le visage choisi, son nom, et ce qu'il dit dans la bulle d'à côté. */
-function Host({ mood }: { mood: Mood }) {
-  const name = PERSONAS.find((p) => p.id === useFace())?.name;
-  return <span className="rp__host"><Face mood={mood} size={112} /><span className="rp__hostname"><i />{name ? `${name}, ta Vigie` : "Vigie"}</span></span>;
 }
