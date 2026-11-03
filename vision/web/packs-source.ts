@@ -3,6 +3,7 @@ import { existsSync, readdirSync, readFileSync, renameSync, rmSync } from "node:
 import { join } from "node:path";
 import { parse as parseYaml } from "yaml";
 import { loadPacks } from "../facts/packs.js";
+import { loadedMeta, retirePack } from "../writer/load.js";
 import type { PackProposal, PacksPayload, WriterJob } from "./types.js";
 
 /**
@@ -13,18 +14,29 @@ import type { PackProposal, PacksPayload, WriterJob } from "./types.js";
  */
 export class PacksSource {
   private job?: WriterJob;
+  /** Les paquets qui attendent l'écrivain, dans l'ordre ; un seul s'écrit à la fois. */
+  private queue: string[] = [];
+  /** Les écritures arrêtées sans pack chargé, par paquet : la technologie reste non lue, avec la raison. */
+  private failed: Record<string, { reason: string; at: string }> = {};
 
-  constructor(private readonly root: string) {}
+  /** `onLoaded` : un pack vient d'être chargé seul ou retiré, la carte est à recalculer. */
+  constructor(private readonly root: string, private readonly onLoaded: () => Promise<unknown> = async () => {}) {}
 
   private get proposes() { return join(this.root, ".vision", "packs", "proposes"); }
 
   async get(used: string[]): Promise<PacksPayload> {
     const builtins = (await loadPacks()).filter((p) => p.id !== "core").map((p) => ({ id: p.id, name: p.name, tech: p.tech, used: used.includes(p.id) }));
-    const local = existsSync(join(this.root, ".vision", "packs"))
+    const ids = existsSync(join(this.root, ".vision", "packs"))
       ? readdirSync(join(this.root, ".vision", "packs")).filter((f) => f.endsWith(".yaml")).map((f) => f.replace(/\.yaml$/, "")).sort() : [];
+    const local = ids.map((id) => {
+      const meta = loadedMeta(this.root, id);
+      let doc: { name?: string; tech?: string[] } = {};
+      try { doc = parseYaml(readFileSync(join(this.root, ".vision", "packs", `${id}.yaml`), "utf8")) ?? {}; } catch { /* illisible : ni nom ni technologie */ }
+      return { id, name: doc.name ?? id, tech: doc.tech ?? [], used: used.includes(id), ...(meta ? { meta } : {}) };
+    });
     const proposals = existsSync(this.proposes)
       ? readdirSync(this.proposes).filter((f) => f.endsWith(".yaml")).map((f) => this.proposal(f.replace(/\.yaml$/, ""))).filter((p): p is PackProposal => !!p) : [];
-    return { builtins, local, proposals, ...(this.job ? { job: this.job } : {}) };
+    return { builtins, local, proposals, queue: [...this.queue], failed: this.failed, ...(this.job ? { job: this.job } : {}) };
   }
 
   /** Tout ce que l'écrivain a déposé pour une proposition : le pack, sa page, sa fiche, la différence prévue, son coût. */
@@ -62,18 +74,47 @@ export class PacksSource {
     for (const ext of [".yaml", ".md", ".changes.json", ".steps.json", ".fiche.md"]) rmSync(join(this.proposes, id + ext), { force: true });
   }
 
-  /** Lancer l'écrivain sur une technologie : Muse Spark lit sa documentation, jamais le projet, et dépose une proposition. */
-  write(pkg: string): WriterJob {
-    if (this.job && !this.job.done) throw new Error(`l'écrivain travaille déjà sur ${this.job.pkg}`);
-    if (!/^(@[a-z0-9._-]+\/)?[a-z0-9._-]+$/i.test(pkg)) throw new Error(`nom de paquet refusé : ${pkg}`);
+  /** Retirer un pack chargé : il est rangé dans .vision/packs/retires/, et la carte redevient celle d'avant. */
+  async retire(id: string): Promise<void> {
+    retirePack(this.root, id);
+    await this.onLoaded();
+  }
+
+  /**
+   * Mettre des technologies dans la file de l'écrivain : Muse Spark lit leur documentation, jamais le projet. Un pack
+   * qui passe toutes ses vérifications est chargé seul (ADR 0019, étape 6) ; sinon la technologie reste non lue.
+   */
+  write(pkgs: string[]): { queue: string[]; job?: WriterJob } {
+    for (const pkg of pkgs) {
+      if (!/^(@[a-z0-9._-]+\/)?[a-z0-9._-]+$/i.test(pkg)) throw new Error(`nom de paquet refusé : ${pkg}`);
+      if (!this.queue.includes(pkg) && !(this.job && !this.job.done && this.job.pkg === pkg)) this.queue.push(pkg);
+    }
+    this.next();
+    return { queue: [...this.queue], ...(this.job ? { job: this.job } : {}) };
+  }
+
+  /** Retirer un paquet de la file avant que l'écrivain le commence. */
+  dequeue(pkg: string): void {
+    this.queue = this.queue.filter((p) => p !== pkg);
+  }
+
+  private next(): void {
+    if (this.job && !this.job.done) return;
+    const pkg = this.queue.shift();
+    if (!pkg) return;
     const job: WriterJob = { pkg, lines: [], done: false, started: new Date().toISOString() };
     this.job = job;
+    delete this.failed[pkg];
     const cli = join(import.meta.dirname, "..", "..", "cli", "pack.ts");
     const child = spawn(process.execPath, ["--import", "tsx", cli, "write", pkg, this.root], { cwd: join(import.meta.dirname, "..", ".."), env: process.env });
     const take = (b: Buffer) => { for (const l of b.toString().split("\n")) if (l.trim()) job.lines.push(l); };
     child.stdout.on("data", take);
     child.stderr.on("data", take);
-    child.on("close", (code) => { job.done = true; job.ok = code === 0; });
-    return job;
+    child.on("close", async (code) => {
+      job.done = true; job.ok = code === 0;
+      if (code !== 0) this.failed[pkg] = { reason: [...job.lines].reverse().find((l) => /Pas chargé|Pas de pack|erreur|Error/i.test(l)) ?? "l'écrivain s'est arrêté", at: new Date().toISOString() };
+      else await this.onLoaded().catch(() => {});
+      this.next();
+    });
   }
 }

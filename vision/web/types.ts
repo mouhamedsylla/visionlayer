@@ -115,9 +115,13 @@ export interface WriterJob { pkg: string; lines: string[]; done: boolean; ok?: b
 
 export interface PacksPayload {
   builtins: { id: string; name: string; tech: string[]; used: boolean }[];
-  /** Les packs acceptés dans .vision/packs/. */
-  local: string[];
+  /** Les packs du projet dans .vision/packs/ ; `meta` pour ceux que Muse a écrits et qui se sont chargés seuls. */
+  local: { id: string; name: string; tech: string[]; used: boolean; meta?: { by: "muse"; pkg: string; at: string; tests: number; cost?: number } }[];
   proposals: PackProposal[];
+  /** Les paquets qui attendent l'écrivain. */
+  queue: string[];
+  /** Les écritures arrêtées sans pack chargé, par paquet. */
+  failed: Record<string, { reason: string; at: string }>;
   job?: WriterJob;
 }
 

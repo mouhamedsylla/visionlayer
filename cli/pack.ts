@@ -6,14 +6,17 @@ import { loadPacks } from "../vision/facts/packs.js";
 import { PackRegistry } from "../vision/facts/registry.js";
 import { packBrief } from "../vision/writer/brief.js";
 import { writePack, MODEL } from "../vision/writer/spark.js";
+import { loadProposal } from "../vision/writer/load.js";
 import { cliArgs } from "../vision/cli/args.js";
+import { parse as parseYaml } from "yaml";
 
 /**
  * vision pack write <paquet> [chemin] [--doc fichier]   la fiche, puis Muse Spark écrit le pack ; il est déposé
  *                                                        dans .vision/packs/proposes/ et essayé à part sur le projet
  * vision pack fiche <paquet> [chemin] [--doc fichier]   la fiche seule, pour un autre assistant
- * vision pack accept <id> [chemin]                       l'accord humain : le pack passe dans .vision/packs/
- * vision pack reject <id> [chemin]                       le refus : le pack proposé est retiré
+ * vision pack retire <id> [chemin]                       retire un pack chargé ; la carte redevient celle d'avant
+ * vision pack accept <id> [chemin]                       charge un pack resté proposé
+ * vision pack reject <id> [chemin]                       retire un pack proposé
  *
  * VisionLayer n'écrit que dans .vision/, et seulement sur ce geste (ADR 0019).
  */
@@ -26,6 +29,13 @@ const proposes = join(root, ".vision", "packs", "proposes");
 if (!verb || !name || !existsSync(root)) {
   console.error("usage: vision pack write|fiche <paquet> [chemin] [--doc fichier] | accept|reject <id> [chemin]");
   process.exit(1);
+}
+
+if (verb === "retire") {
+  const { retirePack } = await import("../vision/writer/load.js");
+  retirePack(root, name);
+  console.log(`${name} retiré : rangé dans .vision/packs/retires/, la carte redevient celle d'avant.`);
+  process.exit(0);
 }
 
 if (verb === "accept" || verb === "reject") {
@@ -78,4 +88,11 @@ writeFileSync(join(proposes, `${packId}.changes.json`), JSON.stringify(preview, 
 console.log(`\nPack proposé : ${join(proposes, `${packId}.yaml`)} (${preview.state.status}${preview.state.reason ? ` : ${preview.state.reason}` : ""})`);
 console.log(preview.changes.length ? "Ce qu'il change sur la carte de ce projet :" : "Il ne change rien sur la carte de ce projet.");
 for (const c of preview.changes) console.log(`  ${c.sign === "added" ? "+" : "-"} ${c.text}${c.proof ? `  (${c.proof.path}:${c.proof.line})` : ""}`);
-console.log(`\nAccepter : pnpm packs accept ${packId} ${root}\nRefuser : pnpm packs reject ${packId} ${root}`);
+// Chargement seul (ADR 0019, étape 6) : un pack qui passe toutes ses vérifications quitte les propositions.
+if (preview.state.status === "failed") {
+  console.error(`Pas chargé : ${preview.state.reason ?? "une vérification échoue"}. La technologie reste non lue.`);
+  process.exit(2);
+}
+const tests = ((parseYaml(result.yaml) as { tests?: unknown[] } | null)?.tests ?? []).length;
+loadProposal(root, packId, { by: "muse", pkg: name, at: new Date().toISOString(), tests, cost: u.cost });
+console.log(`\nChargé seul : ${packId} est dans .vision/packs/. Le retirer : pnpm packs retire ${packId} ${root}`);

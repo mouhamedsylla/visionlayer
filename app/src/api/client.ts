@@ -1,3 +1,4 @@
+import type { StackPayload } from "../../../vision/web/types";
 import type { AgentLink, AgentSession, Replay, ReplayTest, VigieAnswer, KnowledgePayload, MapPayload, PacksPayload, ProjectInfo, SourceExcerpt, WriterJob } from "./types";
 
 /** Un Replay tel que l'écran le voit : le correctif de l'agent seulement une fois le sien rendu. */
@@ -54,7 +55,10 @@ export const api = {
   /** Les gestes humains de l'écran Packs (ADR 0019) : accepter, refuser, lancer l'écrivain. */
   accept: (id: string) => post<PacksPayload>(`/api/packs/accept?id=${encodeURIComponent(id)}`),
   reject: (id: string) => post<PacksPayload>(`/api/packs/reject?id=${encodeURIComponent(id)}`),
-  write: (pkg: string) => post<WriterJob>(`/api/packs/write?pkg=${encodeURIComponent(pkg)}`),
+  write: (pkgs: string[]) => post<{ queue: string[]; job?: WriterJob }>(`/api/packs/write?pkg=${encodeURIComponent(pkgs.join(","))}`),
+  dequeue: (pkg: string) => post<PacksPayload>(`/api/packs/dequeue?pkg=${encodeURIComponent(pkg)}`),
+  retire: (id: string) => post<PacksPayload>(`/api/packs/retire?id=${encodeURIComponent(id)}`),
+  stack: () => get<StackPayload>("/api/stack"),
   /** Une action humaine : recalculer la carte (ADR 0009). */
   refresh: async () => {
     const res = await fetch("/api/map/refresh", { method: "POST" });

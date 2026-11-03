@@ -34,7 +34,7 @@ export function createWebServer(opts: WebServerOptions): Server {
   const stack = new StackSource(root);
   const deploy = new DeploySource(root);
   const knowledge = new KnowledgeSource(root);
-  const packs = new PacksSource(root);
+  const packs = new PacksSource(root, () => map.refresh());
   const settings = new SettingsSource(root);
   const replays = new ReplayStore(root);
   // La carte de la copie d'un Replay : celle du code d'avant, jamais du code corrigé.
@@ -106,7 +106,9 @@ export function createWebServer(opts: WebServerOptions): Server {
     // Les gestes humains de l'écran Packs : accepter recharge la carte avec le pack, refuser la laisse telle quelle.
     "POST /api/packs/accept": async (req, res) => { packs.accept(param(req, "id")); await map.refresh(); sendJson(res, 200, await packs.get((await map.get()).packs)); },
     "POST /api/packs/reject": async (req, res) => { packs.reject(param(req, "id")); sendJson(res, 200, await packs.get((await map.get()).packs)); },
-    "POST /api/packs/write": async (req, res) => sendJson(res, 200, packs.write(param(req, "pkg"))),
+    "POST /api/packs/write": async (req, res) => sendJson(res, 200, packs.write(param(req, "pkg").split(",").filter(Boolean))),
+    "POST /api/packs/dequeue": async (req, res) => { packs.dequeue(param(req, "pkg")); sendJson(res, 200, await packs.get((await map.get()).packs)); },
+    "POST /api/packs/retire": async (req, res) => { await packs.retire(param(req, "id")); sendJson(res, 200, await packs.get((await map.get()).packs)); },
     "GET /api/source": async (req, res) => {
       const q = new URL(req.url ?? "/", "http://localhost").searchParams;
       const path = q.get("path");
