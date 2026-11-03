@@ -18,3 +18,12 @@ test("un pack proposé se charge seul avec sa fiche, puis se retire sans rien pe
   assert.equal(loadedMeta(root, "next"), undefined);
   assert.throws(() => retirePack(root, "../x"));
 });
+
+test("un pack déjà chargé sous le même nom n'est jamais écrasé : il part dans retires/", () => {
+  const root = mkdtempSync(join(tmpdir(), "vl-load-"));
+  mkdirSync(join(root, ".vision", "packs", "proposes"), { recursive: true });
+  writeFileSync(join(root, ".vision", "packs", "next.yaml"), "id: next\n# ancien\n");
+  writeFileSync(join(root, ".vision", "packs", "proposes", "next.yaml"), "id: next\n# nouveau\n");
+  loadProposal(root, "next", { by: "muse", pkg: "next", at: "2026-11-03T10:00:00Z", tests: 3 });
+  assert.ok(existsSync(join(root, ".vision", "packs", "retires", "next.2026-11-03T10-00-00Z.yaml")));
+});

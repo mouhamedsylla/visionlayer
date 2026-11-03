@@ -15,7 +15,13 @@ export function loadProposal(root: string, id: string, meta: LoadedMeta): void {
   const from = join(dir(root), "proposes", `${safe(id)}.yaml`);
   if (!existsSync(from)) throw new Error(`aucun pack proposé ${id}`);
   mkdirSync(join(dir(root), "meta"), { recursive: true });
-  renameSync(from, join(dir(root), `${id}.yaml`));
+  // Un pack déjà chargé sous ce nom n'est jamais écrasé : il est rangé dans retires/, daté, et se remet à la main.
+  const to = join(dir(root), `${id}.yaml`);
+  if (existsSync(to)) {
+    mkdirSync(join(dir(root), "retires"), { recursive: true });
+    renameSync(to, join(dir(root), "retires", `${id}.${meta.at.replace(/[:.]/g, "-")}.yaml`));
+  }
+  renameSync(from, to);
   writeFileSync(join(dir(root), "meta", `${id}.json`), JSON.stringify(meta, null, 2));
 }
 

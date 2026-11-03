@@ -93,6 +93,12 @@ if (preview.state.status === "failed") {
   console.error(`Pas chargé : ${preview.state.reason ?? "une vérification échoue"}. La technologie reste non lue.`);
   process.exit(2);
 }
+// Un pack qui n'ajoute rien à la carte de ce projet n'apprend rien : il n'est pas chargé (souvent, la documentation
+// installée ne montre pas l'API ; lui en donner une avec --doc).
+if (!preview.changes.some((c) => c.sign === "added")) {
+  console.error("Pas chargé : ce pack n'ajoute rien à la carte de ce projet ; la documentation installée ne montre sans doute pas l'API (--doc pour en fournir une).");
+  process.exit(2);
+}
 const tests = ((parseYaml(result.yaml) as { tests?: unknown[] } | null)?.tests ?? []).length;
 loadProposal(root, packId, { by: "muse", pkg: name, at: new Date().toISOString(), tests, cost: u.cost });
 console.log(`\nChargé seul : ${packId} est dans .vision/packs/. Le retirer : pnpm packs retire ${packId} ${root}`);
