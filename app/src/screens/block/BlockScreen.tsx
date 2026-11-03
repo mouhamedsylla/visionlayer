@@ -15,7 +15,7 @@ const LAYER: Record<string, string> = { entry: "entrée", logic: "logique", data
 const GRID: Record<Column, number> = { own: 1, shared: 3, base: 5 };
 
 /** L'intérieur d'un bloc : S2 (sa composition, centrée sur un module), S3 (ce que ce module offre) ; le panneau dit le module et mène aux déroulés. */
-export function BlockScreen({ map, block, openFlow, back }: { map: MapPayload; block: ArchNode; openFlow: (entryId: string) => void; back: () => void }) {
+export function BlockScreen({ map, block, openFlow, back, backLabel }: { map: MapPayload; block: ArchNode; openFlow: (entryId: string) => void; back: () => void; backLabel?: string }) {
   const v = blockView(map, block);
   // Par défaut, comme la planche : le module qui s'appuie sur le plus d'autres, d'où la descente se lit jusqu'au socle.
   const uses = (m: ModuleCard) => new Set(v.calls.filter((c) => c.from === m.node.id).map((c) => c.to)).size;
@@ -25,7 +25,7 @@ export function BlockScreen({ map, block, openFlow, back }: { map: MapPayload; b
     <Workspace panelWidth={400}
       head={<>
         <div className="bk__head">
-          <button className="vl-btn vl-btn--secondary vl-btn--sm" onClick={back}>‹ Carte</button>
+          <button className="vl-btn vl-btn--secondary vl-btn--sm" onClick={back}>‹ {backLabel ?? "Carte"}</button>
           <h1 className="bk__title">{block.name}</h1>
           <span className="bk__sub">{ROLE[block.role]}{block.summary ? `, ${block.summary}` : ""}</span>
         </div>

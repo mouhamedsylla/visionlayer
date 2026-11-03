@@ -11,7 +11,7 @@ import { Workspace } from "../../ui/Workspace";
 import "./flow.css";
 
 /** Le déroulé d'un point d'entrée : F1 (le déroulé), A1 (l'algorithme indexé), A2 (l'aiguillage), du catalogue. */
-export function FlowScreen({ map, entryId, found, back, toBlock }: { map: MapPayload; entryId: string; found: ReturnType<typeof findEntry>; back: () => void; toBlock: () => void }) {
+export function FlowScreen({ map, entryId, found, back, backLabel, toBlock }: { map: MapPayload; entryId: string; found: ReturnType<typeof findEntry>; back: () => void; backLabel?: string; toBlock: () => void }) {
   const [pick, setPick] = useState(1);
   const [closed, setClosed] = useState<Set<string>>(new Set());
   if (!found) return <div className="page"><p className="fl__empty">Ce point d'entrée n'est plus sur la carte ({entryId}).</p></div>;
@@ -39,10 +39,10 @@ export function FlowScreen({ map, entryId, found, back, toBlock }: { map: MapPay
           )}
       </>}
       head={<div className="fl__head">
-        <button className="vl-btn vl-btn--secondary vl-btn--sm" onClick={toBlock}>‹ {found.owner.name}</button>
+        <button className="vl-btn vl-btn--secondary vl-btn--sm" onClick={back}>‹ {backLabel ?? "Carte"}</button>
         <Entry e={found.entry} />
         <span className="fl__sub">{found.entry.handler?.name}, <Ref proof={found.entry.handler ? { path: found.entry.handler.path, line: found.entry.handler.line } : found.entry.proof} /></span>
-        <button className="vl-btn vl-btn--secondary vl-btn--sm fl__map" onClick={back}>Carte</button>
+        {backLabel !== found.owner.name && <button className="vl-btn vl-btn--secondary vl-btn--sm fl__map" onClick={toBlock}>Intérieur de {found.owner.name}</button>}
       </div>}>
         <Rep code="F1" name="Déroulé" question="Que fait cette exécution, dans quel ordre ?" sentence={<Rich text={v.sentence} />} flush
           reads="de haut en bas, dans l'ordre. Chaque flèche part du code vers ce qu'il touche : épaisse, il écrit ; grise, il lit ; pointillée, il met en file. Choisir une étape montre son code.">

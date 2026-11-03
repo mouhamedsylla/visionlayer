@@ -10,7 +10,7 @@ import { Workspace } from "../../ui/Workspace";
 import "./map.css";
 
 /** Planche 03, Carte : quelles unités s'exécutent, et comment elles communiquent. */
-export function MapScreen({ map, selected, select, enter, openFlow }: { map: MapPayload; selected?: string; select: (id: string) => void; enter: (id: string) => void; openFlow: (id: string) => void }) {
+export function MapScreen({ map, selected, select, enter, openFlow, openData }: { map: MapPayload; selected?: string; select: (id: string) => void; enter: (id: string) => void; openFlow: (id: string) => void; openData: (id: string) => void }) {
   const grid = mapGrid(map);
   const nodes = map.model.nodes.filter((n) => n.level !== "component");
   const chosen = nodes.find((n) => n.id === selected || n.name === selected) ?? nodes.find((n) => n.id === defaultSelection(map));
@@ -18,7 +18,7 @@ export function MapScreen({ map, selected, select, enter, openFlow }: { map: Map
   return (
     <Workspace
       head={<div className="mp__intro"><h1 className="page__title">Carte</h1><p className="mp__sentence">Quelles unités s'exécutent, et comment elles communiquent.</p></div>}
-      panel={chosen && <Panel map={map} node={chosen} links={grid.links} select={select} enter={enter} openFlow={openFlow} />}>
+      panel={chosen && <Panel map={map} node={chosen} links={grid.links} select={select} enter={enter} openFlow={openFlow} openData={openData} />}>
       {hero && <MapHero hero={hero} onPick={select} />}
       <StyleBar map={map} />
       <Rep code="S1" name="Carte" question="De quoi le système est-il fait ?" sentence={mapSentence(map)} flush

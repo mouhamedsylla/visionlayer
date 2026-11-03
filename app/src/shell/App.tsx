@@ -16,24 +16,25 @@ import { MechanismsScreen } from "../screens/mechanisms/MechanismsScreen";
 import { findEntry } from "../model/flow";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
-import { SCREENS, useRoute } from "./route";
+import { SCREENS, placeLabel, useRoute } from "./route";
 
 export function App() {
   const data = useData();
-  const { screen, item, go } = useRoute();
+  const { screen, item, go, from, back, origin } = useRoute();
+  const backTo = (fallback: () => void) => ({ back: back ?? fallback, backLabel: from ? placeLabel(from) : undefined });
   const title = SCREENS.find((s) => s.id === screen)!.label;
   return (
     <CodeProvider>
       <VigieProvider map={data.map}>
       <div className="vl app">
-        <Sidebar project={data.project} map={data.map} screen={screen} go={go} />
+        <Sidebar project={data.project} map={data.map} screen={origin} go={go} />
         <main className="main">
           <Topbar project={data.project} map={data.map} title={title} refreshing={data.refreshing} onRefresh={data.refresh} />
           {data.error ? <p className="view state">La carte n'a pas pu être lue : {data.error}</p>
             : !data.map ? <p className="view state">Lecture du dépôt…</p>
-            : screen === "carte" ? <div key={screen} className="view view--ws scr-map"><MapScreen map={data.map} selected={item} select={(id) => go("carte", id)} enter={(id) => go("bloc", id)} openFlow={(id) => go("deroule", id)} /></div>
-            : screen === "bloc" && data.map.model.nodes.find((n) => n.id === item) ? <div key={`${screen}/${item ?? ""}`} className="view view--ws scr-bk"><BlockScreen map={data.map} block={data.map.model.nodes.find((n) => n.id === item)!} openFlow={(id) => go("deroule", id)} back={() => go("carte", item)} /></div>
-            : screen === "deroule" && item ? <div key={`${screen}/${item ?? ""}`} className="view view--ws scr-fl"><FlowScreen map={data.map} entryId={item} found={findEntry(data.map, item)} back={() => go("carte", findEntry(data.map!, item)?.owner.id)} toBlock={() => go("bloc", findEntry(data.map!, item)?.owner.id)} /></div>
+            : screen === "carte" ? <div key={screen} className="view view--ws scr-map"><MapScreen map={data.map} selected={item} select={(id) => go("carte", id)} enter={(id) => (["store", "channel"].includes(data.map!.model.nodes.find((n) => n.id === id)?.role ?? "") ? go("donnees", id) : go("bloc", id))} openFlow={(id) => go("deroule", id)} openData={(id) => go("donnees", id)} /></div>
+            : screen === "bloc" && data.map.model.nodes.find((n) => n.id === item) ? <div key={`${screen}/${item ?? ""}`} className="view view--ws scr-bk"><BlockScreen map={data.map} block={data.map.model.nodes.find((n) => n.id === item)!} openFlow={(id) => go("deroule", id)} {...backTo(() => go("carte", item))} /></div>
+            : screen === "deroule" && item ? <div key={`${screen}/${item ?? ""}`} className="view view--ws scr-fl"><FlowScreen map={data.map} entryId={item} found={findEntry(data.map, item)} {...backTo(() => go("carte", findEntry(data.map!, item)?.owner.id))} toBlock={() => go("bloc", findEntry(data.map!, item)?.owner.id)} /></div>
             : screen === "mecanismes" ? <div key={screen} className="view view--ws scr-mc"><MechanismsScreen map={data.map} item={item} open={(id) => go("mecanismes", id)} /></div>
             : screen === "acces" ? <div key={screen} className="view view--ws scr-ax"><AccessScreen map={data.map} openFlow={(id) => go("deroule", id)} /></div>
             : screen === "taches" ? <div key={screen} className="view view--ws scr-tk"><TasksScreen map={data.map} openFlow={(id) => go("deroule", id)} /></div>
