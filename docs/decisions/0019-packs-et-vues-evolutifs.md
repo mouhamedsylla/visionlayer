@@ -90,7 +90,7 @@ VisionLayer ne lance pas d'agent lui-même ([ADR 0013](./0013-visionlayer-contro
    - les tests de forme ;
    - la règle « le moteur ne connaît aucune pile » ;
    - la différence de faits sur le projet ouvert : faits gagnés, faits perdus, constats nouveaux.
-6. **Accord humain** sur l'écran Packs. Le pack passe dans `.vision/packs/` et dans `.vision/packs.yaml`, et le domaine isolé est fusionné. Un refus retire le pack, et la carte reste celle d'avant.
+6. **Chargement seul** (décidé le 03/11/2026, à la place de l'accord humain). Quand le schéma, les tests de forme, la règle « le moteur ne connaît aucune pile » et « charger puis retirer = jamais chargé » passent, le pack passe de lui-même dans `.vision/packs/` et `.vision/packs.yaml`, et le domaine isolé est fusionné. L'écran Packs le montre « Lu », écrit par Muse, avec ce qu'il a ajouté à la carte. Un clic sur « Retirer » l'enlève, et la carte redevient celle d'avant. Un pack qui échoue à une vérification n'est jamais chargé : sa technologie reste « non lue ».
 
 ### 2. Le rechargement à chaud
 
