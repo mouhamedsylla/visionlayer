@@ -38,7 +38,7 @@ flowchart LR
 | **Interface** | serveur HTTP local et écrans ; ne lit que la carte v2, et ne la recalcule que sur un clic | `vision/web`, `ui/` |
 | **Serveur MCP** | donne la carte aux agents, en lecture seule | `integrations/agents/server.ts` |
 | **Activité** | reçoit des hooks des agents les fichiers qu'une session a modifiés et ses compteurs de tokens | `vision/activity` |
-| **Connaissance** | lit les affirmations que les agents écrivent dans le dépôt, ancrées au code | `vision/knowledge` |
+| **Connaissance** | lit les affirmations que les agents écrivent dans le dépôt, ancrées au code ; et les règles écrites dans une section « Règles », « Rules » ou « Invariants » du README ou de `docs/`, telles qu'écrites, sans ancrage ni vérification (`documents.ts`) | `vision/knowledge` |
 
 ## Ce que VisionLayer écrit
 
