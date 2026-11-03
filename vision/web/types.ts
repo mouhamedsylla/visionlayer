@@ -2,6 +2,7 @@ import type { PackState } from "../facts/registry.js";
 import type { ArchModelV2, Proof } from "../arch/types.js";
 import type { DeployModel } from "../deploy/types.js";
 import type { KnowledgeReport } from "../knowledge/types.js";
+import type { DocumentRule } from "../knowledge/documents.js";
 import type { StackModel } from "../stack/types.js";
 
 /**
@@ -77,6 +78,8 @@ export interface DeployPayload {
 /** La connaissance déclarée par les agents et les humains, et son état contre le code. */
 export interface KnowledgePayload {
   report: KnowledgeReport;
+  /** Les règles écrites dans un document (README, docs/), sans ancrage ni vérification. */
+  documents: DocumentRule[];
   /** Les notes à jour au démarrage du serveur qui ne le sont plus. */
   sinceStart: string[];
   builtAt: string;

@@ -1,5 +1,6 @@
 import type { ArchModelV2 } from "../arch/types.js";
 import { buildKnowledge } from "../knowledge/build.js";
+import { documentRules } from "../knowledge/documents.js";
 import type { KnowledgeReport } from "../knowledge/types.js";
 import type { KnowledgePayload } from "./types.js";
 
@@ -26,13 +27,13 @@ export class KnowledgeSource {
     const report = buildKnowledge(this.root, featureEntries(model));
     const now = outdated(report);
     this.start ??= now;
-    this.current = { report, sinceStart: [...now].filter((id) => !this.start!.has(id)).sort(), builtAt };
+    this.current = { report, documents: documentRules(this.root), sinceStart: [...now].filter((id) => !this.start!.has(id)).sort(), builtAt };
     return this.current;
   }
 
   /** Les fichiers de connaissance et le code qu'ils ancrent : l'aperçu de code peut les ouvrir. */
   cited(builtAt: string): Set<string> {
     if (this.current?.builtAt !== builtAt) return new Set();
-    return new Set(this.current.report.concepts.flatMap((c) => [c.file, ...c.claims.flatMap((k) => k.anchors.flatMap((a) => (a.at ? [a.at.path] : [])))]));
+    return new Set([...this.current.report.concepts.flatMap((c) => [c.file, ...c.claims.flatMap((k) => k.anchors.flatMap((a) => (a.at ? [a.at.path] : [])))]), ...this.current.documents.map((d) => d.path)]);
   }
 }
