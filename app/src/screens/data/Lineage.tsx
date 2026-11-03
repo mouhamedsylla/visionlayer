@@ -32,7 +32,7 @@ export function Lineage({ table, list, openFlow }: { table: string; list: L[]; o
       </div>
       <div className="ln__foot">
         {l.deletes.length
-          ? <><span className="pill">effacé : {l.deletes.length} endroit{l.deletes.length > 1 ? "s" : ""}</span>{l.deletes.slice(0, 3).map((d, i) => <span key={i} className="ln__del">{d.fn ?? "?"} <Ref proof={d.proof} /></span>)}</>
+          ? <><span className="pill">effacé : {l.deletes.length} endroit{l.deletes.length > 1 ? "s" : ""}</span>{l.deletes.slice(0, 3).map((d, i) => <span key={i} className="ln__del">{d.fn ? `${d.fn} ` : ""}<Ref proof={d.proof} /></span>)}</>
           : <><span className="pill pill--o">effacé : jamais</span><span className="ln__note">aucune suppression de ligne de {table} dans le code lu</span></>}
         {l.whole > 0 && <span className="ln__note">et lu avec toute sa ligne par {l.whole} autre{l.whole > 1 ? "s" : ""} point{l.whole > 1 ? "s" : ""} d'entrée</span>}
       </div>

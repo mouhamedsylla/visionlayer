@@ -118,6 +118,7 @@ export const CATALOG: CatalogEntry[] = [
   { id: "nodemailer", name: "Nodemailer", category: "backend", npm: ["nodemailer", "@types/nodemailer"] },
   { id: "bullmq", name: "BullMQ", category: "backend", npm: ["bullmq", "bull"] },
   { id: "nodecron", name: "node-cron", category: "backend", npm: ["node-cron", "@types/node-cron", "cron"] },
+  { id: "betterauth", name: "Better Auth", category: "backend", npm: ["better-auth"] },
   { id: "fastify", name: "Fastify", category: "backend", icon: "fastify", npm: ["fastify"] },
   { id: "hono", name: "Hono", category: "backend", icon: "hono", npm: ["hono"] },
   { id: "nestjs", name: "NestJS", category: "backend", icon: "nestjs", npm: ["@nestjs/*"] },

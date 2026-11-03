@@ -1,0 +1,23 @@
+id: better-auth
+name: Better Auth
+tech: [betterauth]
+languages: [javascript, typescript]
+# Pas de `when` : l'instance est souvent importée d'un module du projet (lib/auth.ts), pas de better-auth.
+script: better-auth.ts
+rules: |
+  % L'instance, là où elle est créée et partout où elle est importée.
+  ba_in(F, V) :- ba_auth(F, V).
+  ba_in(F, V) :- imports(F, V, G, I), ba_in(G, I).
+
+  % Le gestionnaire monté écrit les tables de Better Auth ; seulement les champs que le schéma du projet déclare.
+  ba_at(F, L) :- ba_mount(F, V, L), ba_in(F, V).
+  entity_write(T, N, C, V, F, L) :- ba_at(F, L), ba_field(_, M, C, V), ba_model(_, M, N), entity_field(T, N, C, _, _).
+  entity_delete(T, N, "", F, L) :- ba_at(F, L), ba_drop(_, M), ba_model(_, M, N), entity_def(T, _, N, _).
+  accesses(F, write, T, N, L) :- ba_at(F, L), ba_model(_, _, N), entity_def(T, _, N, _).
+
+  % getSession lit la session et son utilisateur, lignes entières.
+  ba_reads("user").
+  ba_reads("session").
+  ba_session_at(F, L) :- ba_get_session(F, V, L), ba_in(F, V).
+  entity_read(T, N, "*", F, L) :- ba_session_at(F, L), ba_reads(M), ba_model(_, M, N), entity_def(T, _, N, _).
+  accesses(F, read, T, N, L) :- ba_session_at(F, L), ba_reads(M), ba_model(_, M, N), entity_def(T, _, N, _).
