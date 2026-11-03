@@ -1,0 +1,25 @@
+import type { RaceView } from "../../model/race";
+import { Rep } from "../../lang/Rep";
+import { Ref } from "../../ui/Ref";
+import { Rich } from "../../ui/Rich";
+
+/** T2, la frise de course : deux couloirs, le temps de haut en bas, au centre la valeur de la donnée après chaque étape. */
+export function Race({ race }: { race: RaceView }) {
+  return (
+    <Rep code="T2" name="Frise de course" question="Et si deux exécutions se croisent ?" sentence={<Rich text={race.sentence} />}
+      reads="de haut en bas, dans l'ordre du temps. À gauche et à droite, les deux exécutions ; au centre, la valeur de la donnée après chaque étape. En rouge, l'écriture que rien n'empêche.">
+      <div className="rc">
+        <span /><span className="vl-label">{race.left}</span><span /><span className="vl-label rc__mid">{race.subject}</span><span /><span className="vl-label rc__r">{race.right}</span>
+        {race.steps.map((s, i) => [
+          <span key={`n${i}`} className="rc__n">{i + 1}</span>,
+          <span key={`l${i}`} className={`rc__t${s.bad && s.side === "l" ? " rc__t--bad" : ""}`}>{s.side === "l" && <>{s.text} <Ref proof={s.proof} /></>}</span>,
+          <span key={`a${i}`} className={`rc__a${s.side === "l" ? ` rc__a--l${s.bad ? " rc__a--bad" : ""}` : ""}`} />,
+          <span key={`v${i}`} className={`rc__v${s.bad ? " rc__v--bad" : ""}`}>{s.value}</span>,
+          <span key={`b${i}`} className={`rc__a${s.side === "r" ? ` rc__a--r${s.bad ? " rc__a--bad" : ""}` : ""}`} />,
+          <span key={`r${i}`} className={`rc__t rc__r${s.bad && s.side === "r" ? " rc__t--bad" : ""}`}>{s.side === "r" && <>{s.text} <Ref proof={s.proof} /></>}</span>,
+        ])}
+      </div>
+      <p className="rc__verdict"><Rich text={race.verdict} /></p>
+    </Rep>
+  );
+}

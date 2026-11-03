@@ -63,3 +63,21 @@
 .tb5__quote p { font-size: 13px; line-height: 18px; }
 .tiles { margin-bottom: 16px; }
 }
+
+/* T2, la frise de course. */
+.rc { display: grid; grid-template-columns: 26px minmax(0, 1fr) 54px 110px 54px minmax(0, 1fr); row-gap: 10px; align-items: center; }
+.rc__mid, .rc__v { justify-self: center; }
+.rc__r { text-align: right; justify-self: end; }
+.rc__n { width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--line-strong); display: grid; place-items: center; font: 600 10.5px/1 var(--font-mono); }
+.rc__t { font-size: 12.5px; line-height: 17px; display: inline-flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.rc__t--bad { color: var(--critical-ink); }
+.rc__a { height: 0; position: relative; }
+.rc__a--l, .rc__a--r { border-top: 2.5px solid var(--ink); }
+.rc__a--l::after { content: ""; position: absolute; right: -1px; top: -6px; border-left: 8px solid var(--ink); border-top: 4.5px solid transparent; border-bottom: 4.5px solid transparent; }
+.rc__a--r::after { content: ""; position: absolute; left: -1px; top: -6px; border-right: 8px solid var(--ink); border-top: 4.5px solid transparent; border-bottom: 4.5px solid transparent; }
+.rc__a--bad { border-top-color: var(--critical); }
+.rc__a--l.rc__a--bad::after { border-left-color: var(--critical); }
+.rc__a--r.rc__a--bad::after { border-right-color: var(--critical); }
+.rc__v { font: 500 12px/1 var(--font-mono); padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line-strong); background: #fff; }
+.rc__v--bad { background: var(--critical); color: #fff; border-color: var(--critical); }
+.rc__verdict { margin-top: 14px; padding: 10px 12px; border-radius: 8px; background: var(--critical-soft); color: var(--critical-ink); font-size: 12.5px; line-height: 18px; }

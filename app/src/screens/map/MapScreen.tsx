@@ -7,6 +7,7 @@ import { Panel } from "./Panel";
 import { StyleBar } from "./StyleBar";
 import { Rep } from "../../lang/Rep";
 import { Workspace } from "../../ui/Workspace";
+import { ZoomPan } from "../../ui/ZoomPan";
 import "./map.css";
 
 /** Planche 03, Carte : quelles unités s'exécutent, et comment elles communiquent. */
@@ -22,8 +23,8 @@ export function MapScreen({ map, selected, select, enter, openFlow, openData }: 
       {hero && <MapHero hero={hero} onPick={select} />}
       <StyleBar map={map} />
       <Rep code="S1" name="Carte" question="De quoi le système est-il fait ?" sentence={mapSentence(map)} flush
-        reads="de gauche à droite : ce qui appelle, ce qui tourne, ce qui est touché. Une file se lit de haut en bas, de qui y dépose à qui la consomme. Choisir un bloc montre ses liens ; double-clic pour entrer.">
-        <MapGridView grid={grid} tech={map.tech} selected={chosen?.id} chosen={chosen} select={select} enter={enter} />
+        reads="de gauche à droite : ce qui appelle, ce qui tourne, ce qui est touché. Une file se lit de haut en bas, de qui y dépose à qui la consomme. Choisir un bloc montre ses liens ; double-clic pour entrer. Ctrl ou ⌘ et la molette zooment, glisser déplace.">
+        <ZoomPan><MapGridView grid={grid} tech={map.tech} selected={chosen?.id} chosen={chosen} select={select} enter={enter} /></ZoomPan>
         <div className="mp__legend">
           <span className="lg"><span className="a sw"><i /></span>appel</span>
           <span className="lg"><span className="a a--w sw"><i /></span>écriture</span>

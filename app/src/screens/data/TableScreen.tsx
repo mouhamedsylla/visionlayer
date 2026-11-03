@@ -10,6 +10,8 @@ import { Workspace } from "../../ui/Workspace";
 import { plural } from "../../model/words";
 import { FlowLanes } from "../flow/FlowLanes";
 import { Lifecycle } from "./Lifecycle";
+import { Race } from "./Race";
+import { races } from "../../model/race";
 import "./data.css";
 import "../flow/flow.css";
 
@@ -94,6 +96,8 @@ export function TableScreen({ map, store, entity, knowledge, back, backLabel, op
           );
         })}
       </Rep>
+
+      {races(entity, v.watch).map((r, i) => <Race key={i} race={r} />)}
 
       {v.life && <Lifecycle name={entity.name} life={v.life} />}
 

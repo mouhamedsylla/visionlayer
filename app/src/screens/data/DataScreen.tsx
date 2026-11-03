@@ -97,6 +97,7 @@ function Side({ map, store, row, findings, openFlow, openTable }: { openFlow: (i
             <b>Lue puis réécrite sans revérifier</b>
             <p><Rich text={race.message.replace(/^./, (c) => c.toUpperCase())} />.</p>
             <span className="dx__refs">{race.proof.slice(0, 3).map((x, i) => <Ref key={i} proof={x} />)}</span>
+            <button className="vl-btn vl-btn--light vl-btn--sm" style={{ alignSelf: "flex-start" }} onClick={openTable}>Voir la course</button>
           </div>
         )}
       </section>

@@ -6,3 +6,12 @@
 .code__line--on { background: var(--night-2); box-shadow: inset 3px 0 0 var(--signal); }
 .code__n { display: inline-block; width: 52px; padding-right: 14px; text-align: right; color: var(--on-night-muted); user-select: none; }
 .code__err { padding: 14px; color: var(--on-night-muted); }
+
+/* La toile qu'on zoome et qu'on déplace (ZoomPan). */
+.zp { position: relative; overflow: hidden; cursor: grab; touch-action: none; user-select: none; background: radial-gradient(circle, var(--line) 1px, transparent 1px) 0 0 / 18px 18px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.zp:active { cursor: grabbing; }
+.zp__inner { position: absolute; left: 0; top: 0; transform-origin: 0 0; width: max-content; background: transparent; }
+.zp__tools { position: absolute; right: 12px; bottom: 12px; display: flex; gap: 2px; padding: 3px; border-radius: 9px; background: var(--surface); border: 1px solid var(--line-strong); box-shadow: 0 2px 8px rgba(18, 18, 17, .08); }
+.zp__tools button { height: 26px; min-width: 26px; padding: 0 8px; border: 0; border-radius: 6px; background: none; font: 500 12px/1 var(--font-sans); color: var(--ink-2); cursor: pointer; }
+.zp__tools button:hover { background: var(--surface-sunken); color: var(--ink); }
+.zp__pct { font-family: var(--font-mono) !important; min-width: 52px !important; }
