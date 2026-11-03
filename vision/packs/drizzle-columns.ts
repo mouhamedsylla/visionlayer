@@ -10,6 +10,9 @@ import { args, isFunction, literal, resolveIdentifier, templateParts, unwrap, ty
  * tbl_cons(Fichier, Table, Genre, Nom, Colonnes, Où)    primary, unique, index, check ; Colonnes séparées par des virgules ;
  *                                                       Où : la condition partielle d'un index, ou la condition d'un check
  * col_ref(Fichier, Table, Colonnes, Variable)           une clé étrangère vers la table de cette variable
+ * col_on_delete(Fichier, Table, Colonnes, Action)       ce que fait la base à la suppression de la ligne visée (Cascade, SetNull…)
+ * col_comment(Fichier, Table, Colonne, Texte)           le commentaire de l'auteur au-dessus de la colonne, ou en fin de ligne
+ * cons_comment(Fichier, Table, Genre, Colonnes, Texte)  le commentaire de l'auteur au-dessus d'une contrainte
  */
 type Fact = (rel: string, args: (string | number)[], line: number) => FileFact;
 
@@ -38,6 +41,10 @@ export function tableColumns(file: string, table: string, call: Node, fact: Fact
     const ref = has("references");
     const target = ref ? refTable(ref.args[0]) : undefined;
     if (target) out.push(fact("col_ref", [file, table, name, target], line(p)));
+    const action = target ? onDeleteOf(ref!.args[1]) : undefined;
+    if (action) out.push(fact("col_on_delete", [file, table, name, action], line(p)));
+    const said = commentOf(p);
+    if (said) out.push(fact("col_comment", [file, table, name, said], line(p)));
   }
 
   // Le troisième argument : (t) => [uniqueIndex(…).on(t.a), …], ou un objet de contraintes (forme plus ancienne).
@@ -57,7 +64,10 @@ export function tableColumns(file: string, table: string, call: Node, fact: Fact
     const where = c.calls.find((x) => x.method === "where");
     if (c.head === "uniqueIndex" || c.head === "index" || c.head === "unique") {
       const kind = c.head === "index" ? "index" : "unique";
-      out.push(fact("tbl_cons", [file, table, kind, literal(c.args[0]) ?? "", colsOf(on?.args ?? []).join(","), where ? sqlText(where.args[0]) : ""], at));
+      const cols = colsOf(on?.args ?? []).join(",");
+      out.push(fact("tbl_cons", [file, table, kind, literal(c.args[0]) ?? "", cols, where ? sqlText(where.args[0]) : ""], at));
+      const said = commentOf(item!);
+      if (said) out.push(fact("cons_comment", [file, table, kind, cols, said], at));
     } else if (c.head === "primaryKey") {
       out.push(fact("tbl_cons", [file, table, "primary", literal(pair(c.args[0], "name")) ?? "", colsOf(arrayOf(pair(c.args[0], "columns"))).join(","), ""], at));
     } else if (c.head === "check") {
@@ -107,6 +117,36 @@ function constraintChain(n: Node | undefined): { head: string; args: Node[]; cal
     cur = unwrap(fn.childForFieldName("object"));
   }
   return undefined;
+}
+
+const ON_DELETE: Record<string, string> = { cascade: "Cascade", "set null": "SetNull", "set default": "SetDefault", restrict: "Restrict", "no action": "NoAction" };
+/** { onDelete: "cascade" } → Cascade, au même nom que Prisma. */
+function onDeleteOf(n: Node | undefined): string | undefined {
+  const v = literal(pair(n, "onDelete"));
+  return v ? ON_DELETE[v.toLowerCase()] : undefined;
+}
+
+/** Le texte d'un commentaire, sans ses marques ni ses filets de décoration. */
+function commentText(c: Node): string {
+  return c.text.replace(/^\/\*\*?|\*\/$/g, "").split("\n").map((l) => l.replace(/^\s*(\/\/\/?|\*)?\s?/, "").replace(/[─━=\-*#]{3,}/g, "").trim()).filter(Boolean).join(" ").trim();
+}
+
+/**
+ * Ce que l'auteur dit d'un élément : les commentaires collés au-dessus (sans ligne vide, et pas ceux qui finissent la
+ * ligne d'avant), puis celui qui finit sa ligne.
+ */
+export function commentOf(n: Node): string {
+  const above: string[] = [];
+  let row = n.startPosition.row;
+  for (let c = n.previousNamedSibling; c?.type === "comment" && c.endPosition.row === row - 1; c = c.previousNamedSibling) {
+    const before = c.previousNamedSibling;
+    if (before && before.type !== "comment" && before.endPosition.row === c.startPosition.row) break;
+    above.unshift(commentText(c));
+    row = c.startPosition.row;
+  }
+  const next = n.nextNamedSibling;
+  const trailing = next?.type === "comment" && next.startPosition.row === n.endPosition.row ? commentText(next) : "";
+  return [...above, trailing].filter(Boolean).join(" ");
 }
 
 /** () => users.id → users. */

@@ -275,6 +275,8 @@ export interface Constraint {
   references?: string;
   /** Ce que fait la base quand la ligne visée est supprimée : Cascade, Restrict, SetNull… */
   onDelete?: string;
+  /** Ce que l'auteur en dit, en commentaire au-dessus de la contrainte. */
+  comment?: string;
   proof: Proof;
 }
 

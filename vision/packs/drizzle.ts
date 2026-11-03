@@ -3,7 +3,7 @@ import type { FileFact } from "../facts/types.js";
 import { args, isFunction, literal, resolveIdentifier, templateParts, unwrap, walkAll, type Node } from "../arch/ast.js";
 import { packageName } from "../stack/build.js";
 import { sqlTables } from "./sql.js";
-import { tableColumns } from "./drizzle-columns.js";
+import { commentOf, tableColumns } from "./drizzle-columns.js";
 
 /**
  * Drizzle ORM, d'après son inventaire (docs/fonctionnement/packs/drizzle.md).
@@ -95,6 +95,11 @@ const script: PackScript = ({ file, root, imports, fact }) => {
     const t = tableOf(value);
     if (!t) return;
     out.push(fact("table", [file.path, v.text, t.name, t.fn], line(n)));
+    // Ce que l'auteur dit de la table : au-dessus de sa déclaration (export const x = pgTable(…)).
+    let stmt: typeof n | null = n.parent;
+    if (stmt?.parent?.type === "export_statement") stmt = stmt.parent;
+    const said = stmt ? commentOf(stmt) : "";
+    if (said) out.push(fact("tbl_comment", [file.path, v.text, said], line(n)));
     if (t.view) { views.push([t.view.startIndex, t.view.endIndex]); return; }
     // Les colonnes : leurs noms, types et contraintes ; leurs valeurs permises et leur valeur par défaut.
     const call = unwrap(value);

@@ -59,7 +59,7 @@ export function TableScreen({ map, store, entity, knowledge, back, backLabel, op
         </section>
         <section className="card">
           <div className="hd"><h2>Ce que la base garantit</h2><span>{plural(v.base.length, "règle", "règles")}</span></div>
-          {v.base.map((g, i) => <div key={i} className="tb5__g"><span><Rich text={g.text} /></span><Ref proof={g.proof} /></div>)}
+          {v.base.map((g, i) => <div key={i} className="tb5__g"><span><Rich text={g.text} />{g.said ? <em className="tb5__gsaid">« {g.said} », dit l'auteur</em> : null}</span><Ref proof={g.proof} /></div>)}
           {v.base.length === 0 && <p className="foot">Aucune contrainte lue sur cette table, en dehors de sa clé.</p>}
         </section>
         {v.watch.length > 0 && (

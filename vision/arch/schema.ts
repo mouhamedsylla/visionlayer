@@ -81,6 +81,7 @@ const constraint = S({
   where: z.string().optional(),
   references: z.string().optional(),
   onDelete: z.string().optional(),
+  comment: z.string().optional(),
   proof,
 });
 

@@ -10,7 +10,7 @@ import { plural } from "./words";
  */
 
 export interface Said { who: "author" | "agent"; text: string; about?: string; proof?: Pick<Proof, "path" | "line">; state?: string; type?: string }
-export interface Guarantee { text: string; proof: Proof }
+export interface Guarantee { text: string; proof: Proof; said?: string }
 
 export interface TableView {
   store: ArchNode; entity: Entity;
@@ -50,6 +50,7 @@ function said(entity: Entity, knowledge?: KnowledgePayload): Said[] {
   const out: Said[] = [];
   if (entity.comment) out.push({ who: "author", text: entity.comment, ...(entity.proof ? { proof: entity.proof } : {}) });
   for (const f of entity.fields ?? []) if (f.comment) out.push({ who: "author", text: f.comment, about: f.name, ...(f.proof ? { proof: f.proof } : {}) });
+  for (const c of entity.constraints ?? []) if (c.comment) out.push({ who: "author", text: c.comment, about: c.name ?? c.fields.join(", "), proof: c.proof });
   const names = new Set([entity.name.toLowerCase()]);
   for (const c of knowledge?.report.concepts ?? []) {
     const mine = c.kind === "entity" && names.has(c.name.toLowerCase());
@@ -68,6 +69,7 @@ function guarantees(store: ArchNode, entity: Entity): Guarantee[] {
   const out: Guarantee[] = [];
   const code = (s: string) => `\`${s}\``;
   for (const c of entity.constraints ?? []) {
+    const at = out.length;
     if (c.kind === "unique" && !c.where) out.push({ text: c.fields.length > 1 ? `Une seule ligne par ${c.fields.map(code).join(" et ")}.` : `Deux lignes n'ont jamais le même ${code(c.fields[0]!)}.`, proof: c.proof });
     if ((c.kind === "unique" || c.kind === "index") && c.where) out.push({ text: `Une seule ligne par ${c.fields.map(code).join(" et ")}, si ${code(c.where)}.`, proof: c.proof });
     if (c.kind === "check" && c.where) out.push({ text: `Toujours vrai : ${code(c.where)}.`, proof: c.proof });
@@ -79,6 +81,7 @@ function guarantees(store: ArchNode, entity: Entity): Guarantee[] {
         : `Renvoie toujours à une ligne de ${r}.`;
       out.push({ text: t, proof: c.proof });
     }
+    if (c.comment && out[at]) out[at]!.said = c.comment;
   }
   // Les tables qui la visent : ce que sa suppression leur fait.
   for (const other of store.facets.data?.entities ?? []) {

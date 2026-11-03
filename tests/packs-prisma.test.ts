@@ -56,7 +56,7 @@ const entity = (m: Awaited<ReturnType<typeof mapOf>>, name: string) => m.nodes.f
 test("prisma-schema S1 à S8 : entités, champs, états, défauts, contraintes, relations, commentaires", async () => {
   const m = await mapOf(BASE);
   const store = m.nodes.find((n) => n.facets.data?.entities.some((e) => e.name === "order"));
-  assert.equal(store?.tech[0], "postgresql");
+  assert.equal(store?.tech?.[0], "postgresql");
   assert.equal(store?.facets.data?.shape, "relational");
   const order = entity(m, "order")!;
   assert.equal(order.proof?.path, "prisma/schema.prisma");

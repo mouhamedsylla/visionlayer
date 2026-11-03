@@ -220,3 +220,34 @@ test("drizzle R1 à R5 : les colonnes que rend une lecture", async () => {
   // R5 : sessions.id n'est que dans la condition de r5 ; seul user_id est rendu.
   assert.deepEqual(reads("sessions", "user_id"), ["9"]);
 });
+
+test("drizzle C10 C11 : ce que l'auteur dit d'une table, d'une colonne, d'une contrainte ; ce que fait une suppression", async () => {
+  const m = await mapOf({ ...SERVER,
+    "schema.ts": [
+      `import { pgTable, text, uuid, uniqueIndex } from "drizzle-orm/pg-core";`,
+      `// ── Comptes ──────────────`,
+      ``,
+      `export const users = pgTable("users", { id: uuid("id").primaryKey() });`,
+      ``,
+      `// Seule l'API écrit ici.`,
+      `export const orders = pgTable("orders", {`,
+      `  id: uuid("id").primaryKey(),`,
+      `  /** le client qui commande */`,
+      `  userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),`,
+      `  note: text("note"), // libre, jamais lue`,
+      `  ref: text("ref"),`,
+      `}, (t) => [`,
+      `  // une commande par référence et par client`,
+      `  uniqueIndex("one").on(t.ref, t.userId),`,
+      `]);`,
+    ].join("\n"),
+  });
+  const o = entity(m, "orders");
+  assert.equal(o.comment, "Seule l'API écrit ici.");
+  assert.equal(entity(m, "users").comment, undefined);
+  const f = Object.fromEntries((o.fields ?? []).map((x) => [x.name, x.comment]));
+  assert.deepEqual(f, { id: undefined, user_id: "le client qui commande", note: "libre, jamais lue", ref: undefined });
+  const fk = o.constraints?.find((c) => c.kind === "foreign");
+  assert.equal(fk?.onDelete, "Cascade");
+  assert.equal(o.constraints?.find((c) => c.kind === "unique")?.comment, "une commande par référence et par client");
+});

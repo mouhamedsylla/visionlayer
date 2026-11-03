@@ -51,6 +51,7 @@
 .tb5__field em { color: var(--on-night-muted); }
 .tb5__g { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 9px 16px; border-top: 1px solid var(--line); font-size: 12.5px; line-height: 18px; color: var(--ink-2); }
 .tb5__watch .tb5__g { color: var(--critical-ink); }
+.tb5__gsaid { display: block; margin-top: 2px; font-size: 12px; color: var(--ink-3); }
 .tb5__flow { border-top: 1px solid var(--line); }
 .tb5__fhead { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--surface-sunken); }
 .tb5__toggle { border: 0; background: none; cursor: pointer; font-size: 12px; color: var(--muted); width: 16px; }

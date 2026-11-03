@@ -45,6 +45,8 @@ Lues par [vision/packs/drizzle-columns.ts](../../../vision/packs/drizzle-columns
 | C7 | un index partiel | `` uniqueIndex("nom").on(t.a).where(sql`status = 'open'`) `` : la condition telle qu'écrite | lu |
 | C8 | une règle de vérification | `` check("nom", sql`${t.qty} > 0`) `` : la règle telle qu'écrite | lu |
 | C9 | une table en fonction qui renvoie un bloc | `(t) => { return [...] }` | à faire : ses contraintes ne sont pas lues |
+| C10 | ce que fait une suppression | `.references(() => users.id, { onDelete: "cascade" })` : `Cascade`, `SetNull`, `SetDefault`, `Restrict`, `NoAction`, aux mêmes noms que Prisma | lu |
+| C11 | un commentaire de l'auteur | `// …` ou `/** … */` collé au-dessus de la table, d'une colonne ou d'une contrainte (sans ligne vide), ou en fin de ligne d'une colonne : ce que l'auteur en dit. Un titre de section séparé par une ligne vide n'est pas le commentaire de la table qui suit ; les filets (`──`, `===`) sont retirés | lu |
 
 ## Où le code écrit chaque colonne (cycle de vie)
 

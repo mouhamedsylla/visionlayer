@@ -21,6 +21,11 @@ rules: |
   entity_constraint(Tech, N, K, Name, Cols, W) :- tbl_cons(F, T, K, Name, Cols, W), table(F, T, N, Fn), table_tech(Fn, Tech, _).
   entity_ref(Tech, N, Cols, R) :- col_ref(F, T, Cols, V), table(F, T, N, Fn), table_tech(Fn, Tech, _), table_in(F, V, R, _).
   entity_default(Tech, N, Db, V) :- col_default(F, T, K, V), col_key(F, T, K, Db), table(F, T, N, Fn), table_tech(Fn, Tech, _).
+  entity_on_delete(Tech, N, Cols, A) :- col_on_delete(F, T, Cols, A), table(F, T, N, Fn), table_tech(Fn, Tech, _).
+  % Ce que l'auteur en dit : sur la table (""), une colonne, une contrainte.
+  entity_comment(Tech, N, "", X) :- tbl_comment(F, T, X), table(F, T, N, Fn), table_tech(Fn, Tech, _).
+  entity_comment(Tech, N, C, X) :- col_comment(F, T, C, X), table(F, T, N, Fn), table_tech(Fn, Tech, _).
+  entity_constraint_comment(Tech, N, K, Cols, X) :- cons_comment(F, T, K, Cols, X), table(F, T, N, Fn), table_tech(Fn, Tech, _).
 
   % Où le code écrit chaque colonne : la valeur quand elle est littérale, "" sinon.
   entity_write(Tech, N, Db, V, G, L) :- db_set_val(G, Tv, K, V, L), table_in(G, Tv, N, Fn), table(F, T, N, Fn), col_key(F, T, K, Db), table_tech(Fn, Tech, _).
