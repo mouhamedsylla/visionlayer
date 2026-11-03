@@ -1,4 +1,3 @@
-import { useState } from "react";
 import type { MapPayload } from "../../api/types";
 import { accessMatrix, actors, layers, levelsText, plural, reachByResource, type ActorRow } from "../../model/access";
 import { Rep } from "../../lang/Rep";
@@ -15,12 +14,19 @@ import "./access.css";
 const GROUPS = [["people", "Personnes"], ["outside", "Service extérieur"], ["system", "Le système lui-même"]] as const;
 
 /** Planche 04, Accès par acteur : qui peut entrer, comment il le prouve, ce qu'il atteint. */
-export function AccessScreen({ map, openFlow }: { map: MapPayload; openFlow: (id: string) => void }) {
+/**
+ * L'adresse garde ce qui est choisi (#/acces/<acteur>, ou #/acces/entrees pour la vue par point d'entrée) : revenir
+ * d'un déroulé ramène à la même ligne.
+ */
+export function AccessScreen({ map, item, open, openFlow }: { map: MapPayload; item?: string; open: (id: string) => void; openFlow: (id: string) => void }) {
   const a = actors(map);
-  const [chosen, setChosen] = useState<string>(a.rows.find((r) => r.id === "authenticated")?.id ?? a.rows[0]?.id ?? "");
-  const row = a.rows.find((r) => r.id === chosen) ?? a.rows[0];
   const people = a.rows.filter((r) => r.group === "people" && r.id !== "unknown").length;
-  const [tab, setTab] = useState<"actors" | "entries">(people ? "actors" : "entries");
+  const picked = a.rows.find((r) => r.id === item)?.id;
+  const chosen = picked ?? a.rows.find((r) => r.id === "authenticated")?.id ?? a.rows[0]?.id ?? "";
+  const row = a.rows.find((r) => r.id === chosen) ?? a.rows[0];
+  const tab: "actors" | "entries" = item === "entrees" || (!picked && !people) ? "entries" : "actors";
+  const setChosen = (id: string) => open(id);
+  const setTab = (t: "actors" | "entries") => open(t === "entries" ? "entrees" : chosen);
   const allRoutes = map.model.nodes.filter((n) => n.level === "deployable").flatMap((n) => (n.facets.entrypoints ?? []).filter((e) => e.kind === "http" || e.kind === "rpc"));
   const humans = a.rows.filter((r) => r.group === "people").length, outside = a.rows.filter((r) => r.group === "outside").length, system = a.rows.filter((r) => r.group === "system").length;
   const m = accessMatrix(a.rows);
