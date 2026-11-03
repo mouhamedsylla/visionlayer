@@ -1,0 +1,24 @@
+id: prisma-schema
+name: Schéma Prisma
+tech: [prisma]
+files: ["*.prisma"]
+script: prisma-schema.ts
+rules: |
+  % La technologie et la forme des données, d'après le fournisseur de la source de données (S1).
+  prisma_tech("postgresql", postgresql, relational).
+  prisma_tech("cockroachdb", postgresql, relational).
+  prisma_tech("mysql", mysql, relational).
+  prisma_tech("sqlite", sqlite, relational).
+  prisma_tech("sqlserver", sqlserver, relational).
+  prisma_tech("mongodb", mongodb, document).
+  prisma_db(T, S) :- prisma_provider(_, P), prisma_tech(P, T, S).
+
+  % Les modèles et leur détail, rendus en relations neutres.
+  entity_def(T, S, N, F) :- prisma_model(F, N), prisma_db(T, S).
+  entity_field(T, N, C, Ty, Nl) :- prisma_field(_, N, C, Ty, Nl), prisma_db(T, _).
+  entity_value(T, N, C, V) :- prisma_value(_, N, C, V), prisma_db(T, _).
+  entity_default(T, N, C, V) :- prisma_default(_, N, C, V), prisma_db(T, _).
+  entity_constraint(T, N, K, "", Cs, "") :- prisma_cons(_, N, K, Cs), prisma_db(T, _).
+  entity_ref(T, N, Cs, R) :- prisma_ref(_, N, Cs, R, _), prisma_db(T, _).
+  entity_on_delete(T, N, Cs, A) :- prisma_ref(_, N, Cs, _, A), prisma_db(T, _), A != "".
+  entity_comment(T, N, C, X) :- prisma_comment(_, N, C, X), prisma_db(T, _).

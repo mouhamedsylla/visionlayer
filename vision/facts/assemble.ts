@@ -676,6 +676,7 @@ function findingMessage(code: string, detail: string, subject: string): string {
     dead_code: { fn: `\`${subject}\` est exportée, mais aucun fichier du dépôt ne l'importe et son fichier ne l'emploie pas` },
   };
   // Le détail est ici la valeur elle-même, ou la colonne (table.colonne).
+  if (code === "read_outside_tx") return `\`${subject}\` lit ${detail} avant sa transaction, puis l'écrit dedans : ce qu'elle a décidé d'après cette lecture n'est pas protégé, une autre exécution peut la changer entre-temps`;
   if (code === "unused_value") return `${subject} accepte « ${detail} », que rien n'écrit`;
   if (code === "race_read_then_write") {
     const [table, col] = [detail.slice(0, detail.lastIndexOf(".")), detail.slice(detail.lastIndexOf(".") + 1)];

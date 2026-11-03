@@ -24,13 +24,13 @@ export const EDGE_VERB: Record<EdgeKind, string> = {
 
 /** L'écran qui répond à un constat : où aller le comprendre. */
 export const FINDING_SCREEN: Partial<Record<FindingCode, "acces" | "donnees" | "carte" | "taches">> = {
-  unguarded_route: "acces", personal_data_logged: "donnees", unused_value: "donnees", race_read_then_write: "donnees",
+  unguarded_route: "acces", personal_data_logged: "donnees", unused_value: "donnees", race_read_then_write: "donnees", read_outside_tx: "donnees",
   write_then_enqueue: "donnees", scheduled_on_every_instance: "taches", missing_timeout: "carte", uncalled_entry: "carte", dead_code: "carte",
 };
 
 /** Un constat porte une preuve dans le code : rouge. Une hygiène (code mort, valeur jamais écrite) : à surveiller. */
 export const FINDING_TONE: Record<FindingCode, "critical" | "signal"> = {
-  unguarded_route: "critical", personal_data_logged: "critical", race_read_then_write: "critical", write_then_enqueue: "critical",
+  unguarded_route: "critical", personal_data_logged: "critical", race_read_then_write: "critical", read_outside_tx: "critical", write_then_enqueue: "critical",
   scheduled_on_every_instance: "critical", missing_timeout: "critical", doc_contradiction: "critical", order_assumption: "critical",
   uncalled_entry: "signal", unknown_callable: "signal", unresolved_target: "signal", dynamic_path: "signal", unused_value: "signal", dead_code: "signal",
 };

@@ -27,7 +27,7 @@ export function Overview({ map, project, claims, go }: { map: MapPayload; projec
           <button className="vl-btn vl-btn--primary" disabled title="Réglages des agents : à venir">{Icon.plus}Brancher un agent</button>
         </div>
       </div>
-      {hero && <HeroCard hero={hero} onMap={() => go("carte")} />}
+      {hero && <HeroCard hero={hero} onMap={(to) => (to ? go(to.screen, to.item) : go("carte"))} />}
       <StatStrip stats={overviewStats(map, claims)} />
       <div className="ov__body">
         <CoverageCard map={map} />

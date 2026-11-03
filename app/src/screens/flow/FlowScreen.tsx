@@ -3,7 +3,7 @@ import { api } from "../../api/client";
 import type { MapPayload, SourceExcerpt } from "../../api/types";
 import { flowView, type findEntry, type FlowRow } from "../../model/flow";
 import { Entry } from "../../lang/objects";
-import { Effect, Moment, Step } from "../../lang/marks";
+import { FlowLanes } from "./FlowLanes";
 import { Rep } from "../../lang/Rep";
 import { Ref } from "../../ui/Ref";
 import { Rich } from "../../ui/Rich";
@@ -13,11 +13,9 @@ import "./flow.css";
 /** Le déroulé d'un point d'entrée : F1 (le déroulé), A1 (l'algorithme indexé), A2 (l'aiguillage), du catalogue. */
 export function FlowScreen({ map, entryId, found, back, backLabel, toBlock }: { map: MapPayload; entryId: string; found: ReturnType<typeof findEntry>; back: () => void; backLabel?: string; toBlock: () => void }) {
   const [pick, setPick] = useState(1);
-  const [closed, setClosed] = useState<Set<string>>(new Set());
   if (!found) return <div className="page"><p className="fl__empty">Ce point d'entrée n'est plus sur la carte ({entryId}).</p></div>;
   const v = flowView(map, found.entry, found.owner);
   const row = v.rows.find((r) => r.n === pick) ?? v.rows[0];
-  const n = v.cols.length;
   return (
     <Workspace panelWidth={460}
       panel={<>
@@ -47,47 +45,10 @@ export function FlowScreen({ map, entryId, found, back, backLabel, toBlock }: { 
         <Rep code="F1" name="Déroulé" question="Que fait cette exécution, dans quel ordre ?" sentence={<Rich text={v.sentence} />} flush
           reads="de haut en bas, dans l'ordre. Chaque flèche part du code vers ce qu'il touche : épaisse, il écrit ; grise, il lit ; pointillée, il met en file. Choisir une étape montre son code.">
           {v.rows.length === 0 ? <p className="fl__empty">Aucune étape lue : son code n'appelle ni stockage, ni file, ni service, et ne refuse rien qu'un pack sache lire.</p> : <>
-            <div className="fl__cols" style={{ gridTemplateColumns: `minmax(220px, 1.1fr) repeat(${n}, minmax(64px, 1fr))` }}>
-              <span className="vl-label">Étape</span>
-              {v.cols.map((c) => <span key={c.id} className={`fl__col fl__col--${c.kind}`}><b>{c.name}</b><small>{c.sub}</small></span>)}
-            </div>
-            {v.moments.map((m, mi) => {
-              const key = `${mi}:${m.title}`;
-              return (
-                <Moment key={key} title={m.title} count={m.rows.length} open={!closed.has(key)} toggle={() => setClosed((s) => { const x = new Set(s); x.has(key) ? x.delete(key) : x.add(key); return x; })}>
-                  {m.rows.map((r) => <StepRow key={r.n} r={r} n={n} on={r.n === row?.n} pick={() => setPick(r.n)} />)}
-                </Moment>
-              );
-            })}
+            <FlowLanes v={v} pick={setPick} picked={row?.n} />
           </>}
         </Rep>
     </Workspace>
-  );
-}
-
-function StepRow({ r, n, on, pick }: { r: FlowRow; n: number; on: boolean; pick: () => void }) {
-  const x = (k: number) => `${((k + 0.5) / n) * 100}%`;
-  const s = r.step;
-  return (
-    <button className={`fl__row${on ? " is-on" : ""}`} style={{ gridTemplateColumns: `minmax(220px, 1.1fr) minmax(0, ${n}fr)` }} onClick={pick}>
-      <span className="fl__label" style={{ paddingLeft: s.depth * 12 }}>
-        <Step n={r.n} tone={r.tone === "refuse" ? "refuse" : r.tone === "effect" || r.tone === "reply" ? undefined : "quiet"} />
-        <span className="fl__what">
-          {r.tone === "effect" ? <Effect kind={s.kind as "write"} what={r.what} />
-            : r.tone === "refuse" ? <Effect kind="refuse" what={[s.status, s.code ?? s.name].filter(Boolean).join(" ")} />
-            : r.tone === "invoke" ? <span className="fl__inv">appelle <code>{s.name}()</code></span>
-            : r.tone === "reply" ? <span className="fl__inv">répond <code>{[s.status, s.name].filter(Boolean).join(" ")}</code></span>
-            : <span className="fl__inv">s'arrête</span>}
-          {s.when && <small>si <code>{s.when}</code></small>}
-          {s.onError && <small>quand l'appel juste avant échoue</small>}
-        </span>
-      </span>
-      <span className="fl__lanes">
-        {Array.from({ length: n }, (_, k) => <i key={k} className="fl__life" style={{ left: x(k) }} />)}
-        {r.to !== undefined ? <span className={`fl__arrow fl__arrow--${s.kind}${r.to < r.from ? " fl__arrow--back" : ""}`} style={{ left: x(Math.min(r.from, r.to)), width: `${(Math.abs(r.to - r.from) / n) * 100}%` }} />
-          : <span className={`fl__dot fl__dot--${r.tone}`} style={{ left: x(r.from) }} />}
-      </span>
-    </button>
   );
 }
 

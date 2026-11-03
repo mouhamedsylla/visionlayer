@@ -23,7 +23,7 @@ export function Panel({ map, node, links, select, enter, openFlow, openData }: {
         {line && <p className="mp__pline">{line}</p>}
         {node.proof[0] && node.proof[0].line > 0 && <Ref proof={node.proof[0]} className="mp__pref" />}
         {(node.facets.entrypoints?.length ?? 0) > 1 && <button className="vl-btn vl-btn--primary mp__enter" onClick={() => enter(node.id)}>Entrer dans {node.name}</button>}
-        {(node.facets.data?.entities.length || node.facets.channel?.topics.length) ? <button className="vl-btn vl-btn--primary mp__enter" onClick={() => openData(node.id)}>Qui lit et écrit {node.facets.data ? `ses ${node.facets.data.entities.length} tables` : "ses files"}</button> : null}
+        {(node.facets.data?.entities.length || node.facets.channel?.topics.length) ? <button className="vl-btn vl-btn--primary mp__enter" onClick={() => (node.facets.data?.entities.length ? openData(node.id) : enter(node.id))}>{node.facets.data?.entities.length ? `Qui lit et écrit ses ${node.facets.data.entities.length} tables` : `Le trajet de ${node.facets.channel!.topics[0]!.name}`}</button> : null}
         {isUnread(node) && !node.facets.entrypoints?.length && <p className="mp__pempty">Rien à ouvrir : aucun pack ne lit sa technologie.</p>}
       </div>
       {(node.facets.entrypoints ?? []).filter((e) => e.kind !== "main").length > 0 && <>

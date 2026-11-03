@@ -7,7 +7,7 @@ import type { ArchNode, Entrypoint, FlowStep, MapPayload } from "../api/types";
  */
 
 export interface Col { id: string; name: string; sub: string; kind: "code" | "module" | "target" }
-export interface FlowRow { n: number; step: FlowStep; from: number; to?: number; tone: "effect" | "refuse" | "invoke" | "return" | "reply"; what: string }
+export interface FlowRow { n: number; step: FlowStep; from: number; to?: number; tone: "effect" | "refuse" | "invoke" | "return" | "reply"; what: string; danger?: boolean }
 export interface MomentRows { title: string; rows: FlowRow[] }
 export interface Gate { n: number; question: string; refusal: string; leaves: string[] }
 
@@ -19,6 +19,8 @@ export function findEntry(p: MapPayload, id: string): { entry: Entrypoint; owner
 export function flowView(p: MapPayload, entry: Entrypoint, owner: ArchNode) {
   const steps = entry.flow ?? [];
   const nodes = new Map(p.model.nodes.map((n) => [n.id, n]));
+  // Les lectures qu'un constat met en cause : lue hors de la transaction qui l'écrit, lue puis réécrite sans revérifier.
+  const flagged = new Set(p.model.findings.filter((f) => f.code === "read_outside_tx" || f.code === "race_read_then_write").map((f) => `${f.proof[0]?.path}:${f.proof[0]?.line}`));
   const modules = p.model.nodes.filter((n) => n.parent === owner.id && n.level === "component");
   const moduleOf = (path: string) => modules.find((m) => (m.files ?? []).includes(path));
   const home = moduleOf(entry.handler?.path ?? entry.proof.path);
@@ -33,7 +35,7 @@ export function flowView(p: MapPayload, entry: Entrypoint, owner: ArchNode) {
     if (s.target && ["read", "write", "message", "request", "call", "trigger", "use"].includes(s.kind)) {
       const n = nodes.get(s.target.node);
       const to = col(s.target.node, () => ({ id: s.target!.node, name: n?.name ?? s.target!.node, sub: n?.tech?.map((t) => p.tech[t]?.name ?? t)[0] ?? "", kind: "target" }));
-      return { n: i + 1, step: s, from, to, tone: "effect", what };
+      return { n: i + 1, step: s, from, to, tone: "effect", what, ...(s.kind === "read" && flagged.has(`${s.proof.path}:${s.proof.line}`) ? { danger: true } : {}) };
     }
     const tone = s.kind === "refuse" ? "refuse" : s.kind === "invoke" ? "invoke" : s.kind === "reply" ? "reply" : "return";
     return { n: i + 1, step: s, from, tone, what: s.name ?? "" };
@@ -85,4 +87,16 @@ function sentence(entry: Entrypoint, rows: FlowRow[], nodes: Map<string, ArchNod
     reply ? `répond ${reply}` : "",
   ].filter(Boolean);
   return parts.length ? `${entry.key} ${parts.join(", ")}.` : `${entry.key} : aucun effet lu dans son code.`;
+}
+
+/** Les étapes d'un moment, découpées par transaction : une suite d'étapes dans la même transaction forme un cadre. */
+export function txRuns(rows: FlowRow[]): { tx?: NonNullable<FlowStep["tx"]>; rows: FlowRow[] }[] {
+  const out: { tx?: NonNullable<FlowStep["tx"]>; rows: FlowRow[] }[] = [];
+  const key = (r: FlowRow) => (r.step.tx ? `${r.step.tx.path}:${r.step.tx.from}` : "");
+  for (const r of rows) {
+    const last = out[out.length - 1];
+    if (last && (last.tx ? `${last.tx.path}:${last.tx.from}` : "") === key(r)) last.rows.push(r);
+    else out.push({ ...(r.step.tx ? { tx: r.step.tx } : {}), rows: [r] });
+  }
+  return out;
 }

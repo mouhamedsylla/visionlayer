@@ -89,5 +89,11 @@ rules: |
   finding_proof(race_read_then_write, Fn, D, F, R, F, L) :- race_hit(F, Fn, D, R, _, N, C), col_updater(N, C, F, L), fn_span(F, Fn, S, E), L < S.
   finding_proof(race_read_then_write, Fn, D, F, R, F, L) :- race_hit(F, Fn, D, R, _, N, C), col_updater(N, C, F, L), fn_span(F, Fn, S, E), L > E.
 
+  % Constat read_outside_tx : une fonction lit une entité avant sa transaction, puis l'écrit dedans.
+  % Ce qu'elle a décidé d'après cette lecture (un stock suffisant, un état) n'est pas protégé par la transaction. Un verrou le fait taire.
+  rot(F, Fn, N, R, W) :- accesses(F, read, _, N, R), accesses(F, write, _, N, W), R < W, fn_span(F, Fn, S, E), R >= S, W <= E, tx_span(F, TS, TE), W >= TS, W <= TE, R < TS, not locked(F, R).
+  finding(read_outside_tx, Fn, N, F, R) :- rot(F, Fn, N, R, _).
+  finding_proof(read_outside_tx, Fn, N, F, R, F, W) :- rot(F, Fn, N, R, W).
+
   % Un nom de variable d'environnement lu sur l'objet qui les déclare (env.EMAIL_PROVIDER).
   env_read(F, K, L) :- member_upper(F, V, K, L), resolves(F, V, G, _), env(G, K).

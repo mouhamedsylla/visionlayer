@@ -42,6 +42,7 @@ const flowStep = S({
   when: z.string().optional(),
   onError: z.boolean().optional(),
   why: S({ text: z.string().min(1), proof }).optional(),
+  tx: S({ path: z.string(), from: z.number().int(), to: z.number().int() }).optional(),
 });
 
 const entrypoint = S({
@@ -63,6 +64,7 @@ const field = S({
   nullable: z.boolean().optional(),
   values: z.array(z.string()).optional(),
   default: z.string().optional(),
+  comment: z.string().optional(),
   writes: z.array(S({
     value: z.string().optional(), fn: z.string().optional(), node: z.string().optional(), entrypoints: z.array(z.string()).optional(), proof,
   })).optional(),
@@ -78,12 +80,14 @@ const constraint = S({
   fields: z.array(z.string()),
   where: z.string().optional(),
   references: z.string().optional(),
+  onDelete: z.string().optional(),
   proof,
 });
 
 const entity = S({
   name: z.string().min(1),
   group: z.string().optional(),
+  comment: z.string().optional(),
   fields: z.array(field).optional(),
   constraints: z.array(constraint).optional(),
   rule: proof.optional(),
@@ -194,7 +198,7 @@ const finding = S({
     "uncalled_entry", "unknown_callable", "unresolved_target", "dynamic_path",
     "unguarded_route", "race_read_then_write", "write_then_enqueue", "order_assumption",
     "personal_data_logged", "scheduled_on_every_instance", "doc_contradiction",
-    "unused_value", "dead_code", "missing_timeout",
+    "unused_value", "dead_code", "missing_timeout", "read_outside_tx",
   ]),
   message: z.string().min(1),
   proof: z.array(proof),

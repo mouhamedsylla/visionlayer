@@ -23,6 +23,12 @@ export function attributeFlows(nodes: ArchNode[], edges: ArchEdge[], rows: Rows)
   const { walk, spans } = flowWalker(edges, rows);
   const entries = nodes.flatMap((node) => (node.facets.entrypoints ?? []).map((entry) => ({ node, entry })));
   const at = handlerSpans(entries.map((x) => x.entry), spans);
+  // Les transactions (tx_span) : une étape écrite entre leurs bornes est protégée par elles.
+  const txs = new Map<string, { from: number; to: number }[]>();
+  for (const t of rows("tx_span")) {
+    const path = String(t.args[0]);
+    (txs.get(path) ?? txs.set(path, []).get(path)!).push({ from: Number(t.args[1]), to: Number(t.args[2]) });
+  }
   for (const { node, entry } of entries) {
     const h = entry.handler;
     const found = at.get(entry);
@@ -30,6 +36,10 @@ export function attributeFlows(nodes: ArchNode[], edges: ArchEdge[], rows: Rows)
     // son déroulé est celui de toutes ses branches à la fois, aucun n'est le sien.
     if (!h || !found || found.shared) continue;
     const flow = walk(node.id, h.path, found.span, 0, new Set()).slice(0, MAX_STEPS);
+    for (const step of flow) {
+      const tx = txs.get(step.proof.path)?.filter((x) => x.from <= step.proof.line && step.proof.line <= x.to).sort((a, b) => b.from - a.from)[0];
+      if (tx) step.tx = { path: step.proof.path, ...tx };
+    }
     if (flow.length) entry.flow = flow;
   }
 }

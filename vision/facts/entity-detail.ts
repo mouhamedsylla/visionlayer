@@ -11,13 +11,15 @@ import type { Database, Value } from "./datalog.js";
  *   entity_default(Tech, Entité, Champ, Valeur)                  la valeur par défaut posée par la base
  *   entity_write(Tech, Entité, Champ, Valeur|"", Fichier, Ligne) une écriture du champ par le code ; "" quand la valeur est calculée
  *   entity_read(Tech, Entité, Champ|"*", Fichier, Ligne)        une lecture du champ par le code ; "*" quand elle rend la ligne entière
+ *   entity_on_delete(Tech, Entité, Champs, Action)               ce que fait la base à la suppression de la ligne visée
+ *   entity_comment(Tech, Entité, Champ|"", Texte)                ce que l'auteur dit d'un champ, ou de l'entité ("")
  *   entity_trigger(Entité, Nom, Opérations)                      du code de la base qui s'exécute quand elle change
  *   trigger_writes(Nom, Entité)                                  ce que ce code écrit
  *
  * Un déclencheur lu dans un fichier SQL ne dit pas sa base : il revient à
  * l'entité de ce nom, quel que soit son stockage.
  */
-export type EntityDetail = Pick<Entity, "fields" | "constraints" | "triggers">;
+export type EntityDetail = Pick<Entity, "fields" | "constraints" | "triggers" | "comment">;
 
 export function entityDetails(db: Database): (tech: string, entity: string) => EntityDetail {
   const s = (v: Value | undefined) => String(v);
@@ -29,6 +31,8 @@ export function entityDetails(db: Database): (tech: string, entity: string) => E
   for (const t of db.get("entity_value")) list(values, `${key(s(t.args[0]), s(t.args[1]))}\0${s(t.args[2])}`).push(s(t.args[3]));
 
   const defaults = new Map(db.get("entity_default").map((t) => [`${key(s(t.args[0]), s(t.args[1]))}\0${s(t.args[2])}`, s(t.args[3])]));
+  const comments = new Map(db.get("entity_comment").map((t) => [`${key(s(t.args[0]), s(t.args[1]))}\0${s(t.args[2])}`, s(t.args[3])]));
+  const onDelete = new Map(db.get("entity_on_delete").map((t) => [`${key(s(t.args[0]), s(t.args[1]))}\0${s(t.args[2])}`, s(t.args[3])]));
   const writes = fieldWrites(db);
   const reads = fieldReads(db);
 
@@ -38,11 +42,12 @@ export function entityDetails(db: Database): (tech: string, entity: string) => E
     const name = s(t.args[2]);
     const vals = values.get(`${k}\0${name}`);
     const def = defaults.get(`${k}\0${name}`);
+    const comment = comments.get(`${k}\0${name}`);
     const w = writes.get(`${k}\0${name}`);
     const r = [...(reads.get(`${k}\0${name}`) ?? []), ...(reads.get(`${k}\0*`) ?? []).map((x) => ({ ...x, whole: true }))];
     const f: Field = {
       name, type: s(t.args[3]), nullable: s(t.args[4]) === "null", ...(vals ? { values: [...new Set(vals)] } : {}),
-      ...(def !== undefined ? { default: def } : {}), ...(w ? { writes: w } : {}), ...(r.length ? { reads: r } : {}), proof: t.proof[0]!,
+      ...(def !== undefined ? { default: def } : {}), ...(comment ? { comment } : {}), ...(w ? { writes: w } : {}), ...(r.length ? { reads: r } : {}), proof: t.proof[0]!,
     };
     const own = list(fields, k);
     if (!own.some((x) => x.name === name)) own.push(f);
@@ -60,7 +65,9 @@ export function entityDetails(db: Database): (tech: string, entity: string) => E
     });
   }
   for (const t of db.get("entity_ref")) {
-    addConstraint(key(s(t.args[0]), s(t.args[1])), { kind: "foreign", fields: split(t.args[2]), references: s(t.args[3]), proof: t.proof[0]! });
+    const k = key(s(t.args[0]), s(t.args[1]));
+    const action = onDelete.get(`${k}\0${s(t.args[2])}`);
+    addConstraint(k, { kind: "foreign", fields: split(t.args[2]), references: s(t.args[3]), ...(action ? { onDelete: action } : {}), proof: t.proof[0]! });
   }
 
   const trigWrites = new Map<string, string[]>();
@@ -74,8 +81,8 @@ export function entityDetails(db: Database): (tech: string, entity: string) => E
 
   return (tech, entity) => {
     const k = key(tech, entity);
-    const f = fields.get(k), c = constraints.get(k), tr = triggers.get(entity);
-    return { ...(f?.length ? { fields: f } : {}), ...(c?.length ? { constraints: c } : {}), ...(tr?.length ? { triggers: tr } : {}) };
+    const f = fields.get(k), c = constraints.get(k), tr = triggers.get(entity), said = comments.get(`${k}\0`);
+    return { ...(said ? { comment: said } : {}), ...(f?.length ? { fields: f } : {}), ...(c?.length ? { constraints: c } : {}), ...(tr?.length ? { triggers: tr } : {}) };
   };
 }
 

@@ -1,9 +1,7 @@
-import { useState } from "react";
 import type { MapPayload } from "../../api/types";
 import { dataTable, lifecycle, stores, writers } from "../../model/data";
 import { Rep } from "../../lang/Rep";
-import { State } from "../../lang/objects";
-import { Arrow } from "../../lang/marks";
+import { Lifecycle } from "./Lifecycle";
 import { Workspace } from "../../ui/Workspace";
 import { plural } from "../../model/words";
 import { Ref } from "../../ui/Ref";
@@ -12,10 +10,11 @@ import { Method } from "./Method";
 import "./data.css";
 
 /** Planche 05, Données : qui lit, qui écrit, et sous quel contrôle. */
-export function DataScreen({ map, item, open, openFlow }: { map: MapPayload; item?: string; open: (id?: string) => void; openFlow: (id: string) => void }) {
+export function DataScreen({ map, item, open, openFlow, openTable }: { map: MapPayload; item?: string; open: (id?: string, replace?: boolean) => void; openFlow: (id: string) => void; openTable: (id: string) => void }) {
   const list = stores(map);
-  const store = list.find((s) => s.id === item || s.name === item) ?? list.find((s) => s.facets.data?.entities.length) ?? list[0];
-  const [chosen, setChosen] = useState<string>();
+  // L'adresse porte le stockage et la table choisie (`postgres/order`) : le retour ramène à la même ligne.
+  const [storeKey, chosen] = item?.includes("/") ? [item.slice(0, item.indexOf("/")), item.slice(item.indexOf("/") + 1)] : [item, undefined];
+  const store = list.find((s) => s.id === storeKey || s.name === storeKey) ?? list.find((s) => s.facets.data?.entities.length) ?? list[0];
   if (!store) return <div className="page"><h1 className="dx__title">Qui lit, qui écrit, et sous quel contrôle</h1><p className="dx__lead">Aucun stockage n'est lu sur ce projet.</p></div>;
   const t = dataTable(map, store);
   const race = t.rows.find((r) => r.seeTone === "cr");
@@ -32,7 +31,7 @@ export function DataScreen({ map, item, open, openFlow }: { map: MapPayload; ite
         <h1 className="dx__title">Qui lit, qui écrit, et sous quel contrôle</h1>
         <p className="dx__lead">Les {plural(t.rows.length, "table", "tables")} de {store.name}{decl ? `, déclarées dans ${decl.path}` : ""}, croisées avec le code qui les touche. Chaque case renvoie à sa ligne. Ce que contient la base en production n'est pas lu.</p>
       </div>}
-      panel={row && <Side map={map} store={store} row={row} findings={t.findings} openFlow={openFlow} />}>
+      panel={row && <Side map={map} store={store} row={row} findings={t.findings} openFlow={openFlow} openTable={() => openTable(`${store.id}/${row.entity.name}`)} />}>
       <div className="tiles">
         <div className="tile"><small>Les tables</small><b>{plural(t.rows.length, "table", "tables")}</b><span>{groups.length > 1 ? `en ${groups.length} groupes : ${groups.join(", ").toLowerCase()}` : "déclarées dans le code"}</span></div>
         <div className="tile"><small>Qui les touche</small><b>{plural(t.columns.length, "partie du code", "parties du code")}</b><span>{t.columns.map((c) => c.label.toLowerCase()).join(", ")}</span></div>
@@ -41,7 +40,7 @@ export function DataScreen({ map, item, open, openFlow }: { map: MapPayload; ite
       </div>
         <Rep code="X1" name="Matrice d'accès" question="Qui touche quoi ?" flush
           sentence={`${plural(t.rows.length, "table", "tables")} de ${store.name}, touchées par ${plural(t.columns.length, "partie du code", "parties du code")} ; ${writing} y écri${writing > 1 ? "vent" : "t"}.`}
-          reads="par ligne : une table, et ce que chaque partie du code y fait. Noir, elle écrit ; à filet, elle lit. En rouge, ce qu'il faut aller voir. Choisir une ligne montre son cycle de vie et qui l'écrit.">
+          reads="par ligne : une table, et ce que chaque partie du code y fait. Noir, elle écrit ; à filet, elle lit. En rouge, ce qu'il faut aller voir. Choisir une ligne montre son cycle de vie et qui l'écrit ; un double clic ouvre ce qu'elle veut dire.">
           <div className="tabs">
             {list.map((s) => <button key={s.id} className={`seg${s.id === store.id ? " seg--on" : ""}`} onClick={() => open(s.id)}>{s.name} <span className="vl-count">{s.facets.data?.entities.length ?? s.facets.channel?.topics.length ?? 0}</span></button>)}
             <span className="note"><span className="rw"><i>lit</i><i className="w">écrit</i></span></span>
@@ -51,7 +50,7 @@ export function DataScreen({ map, item, open, openFlow }: { map: MapPayload; ite
             <div key={g}>
               {groups.length > 1 && <div className="grp">{g} <span>{t.rows.filter((r) => r.group === g).length}</span></div>}
               {t.rows.filter((r) => r.group === g).map((r) => (
-                <button key={r.entity.name} className={`dt dt--row${r === row ? " dt--on" : ""}`} style={grid} onClick={() => setChosen(r.entity.name)}>
+                <button key={r.entity.name} className={`dt dt--row${r === row ? " dt--on" : ""}`} style={grid} onClick={() => open(`${store.id}/${r.entity.name}`, true)} onDoubleClick={() => openTable(`${store.id}/${r.entity.name}`)}>
                   <code>{r.entity.name}</code>
                   {t.columns.map((c) => <span key={c.id} className="rw">{r.cells[c.id]?.read && <i>lit</i>}{r.cells[c.id]?.write && <i className="w">écrit</i>}</span>)}
                   <span className="ct">{r.constraint ?? ""}</span>
@@ -67,25 +66,7 @@ export function DataScreen({ map, item, open, openFlow }: { map: MapPayload; ite
   );
 }
 
-/** T1, le cycle de vie : l'état de départ, chaque écriture vers un état avec sa fonction et sa ligne, les états jamais écrits. */
-function Lifecycle({ name, life }: { name: string; life: NonNullable<ReturnType<typeof lifecycle>> }) {
-  const rows = Math.max(1, life.steps.length);
-  return (
-    <Rep code="T1" name="Cycle de vie" question="Par quels états passe cette donnée ?" sentence={<Rich text={life.sentence} />}
-      reads={<>en suivant les flèches : chacune est une écriture de <code>{name}.{life.field.name}</code>, avec la fonction et la ligne qui la font{life.start ? ", depuis l'état que la base pose à la création" : ""}. En pointillé, un état permis que rien n'écrit.</>}>
-      <div className="dx__life">
-        <div className="dx__start" style={{ gridRow: `1 / span ${rows}` }}>{life.start ? <><State value={life.start} /><small>posé par la base</small></> : <small>écrit par le code</small>}</div>
-        {life.steps.map((s, i) => [
-          <div key={`a${s.value}`} className="dx__arrow" style={{ gridRow: i + 1 }}><Arrow kind="write" label={s.fns.slice(0, 2).join(", ") || "écrit"} /></div>,
-          <div key={`s${s.value}`} className="dx__to" style={{ gridRow: i + 1 }}><State value={s.value} /><Ref proof={s.proof} /></div>,
-        ])}
-        {life.never.length > 0 && <div className="dx__never" style={{ gridRow: rows + 1 }}>{life.never.map((v) => <State key={v} value={`${v}, jamais écrit`} never />)}</div>}
-      </div>
-    </Rep>
-  );
-}
-
-function Side({ map, store, row, findings, openFlow }: { openFlow: (id: string) => void; map: MapPayload; store: Parameters<typeof writers>[1]; row: ReturnType<typeof dataTable>["rows"][number]; findings: ReturnType<typeof dataTable>["findings"] }) {
+function Side({ map, store, row, findings, openFlow, openTable }: { openFlow: (id: string) => void; openTable: () => void; map: MapPayload; store: Parameters<typeof writers>[1]; row: ReturnType<typeof dataTable>["rows"][number]; findings: ReturnType<typeof dataTable>["findings"] }) {
   const e = row.entity;
   const w = writers(map, store, e);
   const lines = (k: "read" | "write") => map.model.edges.filter((x) => x.to === store.id && x.kind === k && x.target?.entity === e.name).reduce((n, x) => n + x.count, 0);
@@ -100,6 +81,7 @@ function Side({ map, store, row, findings, openFlow }: { openFlow: (id: string) 
           <h2>{e.name}</h2>
           <p className="sub">{plural(e.fields?.length ?? 0, "champ", "champs")}{e.proof ? `, déclarée à ${e.proof.path.split("/").pop()}:${e.proof.line}` : ""}</p>
         </div>
+        <button className="vl-btn vl-btn--light vl-btn--sm" style={{ alignSelf: "flex-start" }} onClick={openTable}>Ce qu'elle veut dire ›</button>
         <div className="nst">
           <div><b>{lines("write")}</b><span>lignes qui l'écrivent</span></div>
           <div><b>{lines("read")}</b><span>lignes qui la lisent</span></div>

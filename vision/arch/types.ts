@@ -228,6 +228,8 @@ export interface FlowStep {
   onError?: boolean;
   /** Le commentaire de l'auteur juste au-dessus de l'instruction. */
   why?: { text: string; proof: Proof };
+  /** L'étape est dans une transaction : ses bornes, pour dessiner le cadre de cohérence. */
+  tx?: { path: string; from: number; to: number };
 }
 
 export interface Field {
@@ -238,6 +240,8 @@ export interface Field {
   values?: string[];
   /** Valeur par défaut posée par la base, quand elle est littérale. */
   default?: string;
+  /** Ce que l'auteur dit du champ, en commentaire là où il le déclare. */
+  comment?: string;
   /** Les lignes du code qui écrivent ce champ. */
   writes?: FieldWrite[];
   /** Les lignes du code qui lisent ce champ : nommé dans la lecture, ou rendu avec toute la ligne (`whole`). */
@@ -269,6 +273,8 @@ export interface Constraint {
   where?: string;
   /** L'entité visée par une clé étrangère. */
   references?: string;
+  /** Ce que fait la base quand la ligne visée est supprimée : Cascade, Restrict, SetNull… */
+  onDelete?: string;
   proof: Proof;
 }
 
@@ -277,6 +283,8 @@ export interface Entity {
   name: string;
   /** La section du fichier où elle est déclarée, d'après un commentaire de séparation (`// ── Paiements ──`). */
   group?: string;
+  /** Ce que l'auteur dit de l'entité, en commentaire au-dessus de sa déclaration. */
+  comment?: string;
   fields?: Field[];
   constraints?: Constraint[];
   /** Règle d'accès écrite près des données (règles de sécurité, politiques de ligne). */
@@ -462,7 +470,7 @@ export type FindingCode =
   | "uncalled_entry" | "unknown_callable" | "unresolved_target" | "dynamic_path"
   | "unguarded_route" | "race_read_then_write" | "write_then_enqueue" | "order_assumption"
   | "personal_data_logged" | "scheduled_on_every_instance" | "doc_contradiction"
-  | "unused_value" | "dead_code" | "missing_timeout";
+  | "unused_value" | "dead_code" | "missing_timeout" | "read_outside_tx";
 
 export interface Finding {
   code: FindingCode;

@@ -4,7 +4,7 @@ import { Ref } from "../../ui/Ref";
 import { Rich } from "../../ui/Rich";
 
 /** La carte noire de la planche : la phrase et deux gestes à gauche, la liste mono qui la prouve à droite. */
-export function HeroCard({ hero, onMap }: { hero: Hero; onMap: () => void }) {
+export function HeroCard({ hero, onMap }: { hero: Hero; onMap: (go?: Hero["go"]) => void }) {
   return (
     <section className="ovh" aria-label={hero.kind === "unread" ? "Technologie non lue" : "Constat"}>
       <div className="ovh__main">
@@ -16,7 +16,7 @@ export function HeroCard({ hero, onMap }: { hero: Hero; onMap: () => void }) {
         {hero.text && <p className="ovh__text"><Rich text={hero.text} /></p>}
         <div className="ovh__actions">
           {hero.kind === "unread" && <a className="vl-btn vl-btn--light" href="#/packs">{Icon.packs}Écrire le pack avec Muse</a>}
-          <button className="vl-btn vl-btn--ghost-night" onClick={onMap}>{hero.kind === "unread" ? "Voir ce qui n'est pas lu" : "Voir sur la carte"}</button>
+          <button className="vl-btn vl-btn--ghost-night" onClick={() => onMap(hero.go)}>{hero.kind === "unread" ? "Voir ce qui n'est pas lu" : hero.go?.label ?? "Voir sur la carte"}</button>
         </div>
       </div>
       <div className="ovh__side">

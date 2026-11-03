@@ -81,21 +81,28 @@ export function writers(p: MapPayload, store: ArchNode, entity: Entity): Writer[
 
 /**
  * T1, le cycle de vie d'une table : son champ d'état, l'état que la base pose à la création, puis chaque valeur
- * écrite par le code, avec les fonctions qui l'écrivent et la ligne ; les valeurs permises que rien n'écrit.
+ * écrite par le code, avec les fonctions qui l'écrivent et la ligne ; les écritures d'une valeur calculée
+ * (`status: next`), qui peuvent poser n'importe quel état permis ; les valeurs que rien n'écrit.
+ * Seul le code d'un programme compte : un script (une graine de données, une migration) n'est pas le système.
  */
 export function lifecycle(entity: Entity) {
-  const field = entity.fields?.find((f) => f.values?.length && f.writes?.some((w) => w.value));
+  const field = entity.fields?.find((f) => f.values?.length && f.writes?.some((w) => w.node));
   if (!field) return undefined;
+  const shipped = (field.writes ?? []).filter((w) => w.node);
   const written = new Map<string, { fns: string[]; proof: Proof }>();
-  for (const w of field.writes ?? []) {
-    if (!w.value) continue;
+  const open: { fns: string[]; proofs: Proof[] } = { fns: [], proofs: [] };
+  for (const w of shipped) {
+    if (!w.value) { if (w.fn && !open.fns.includes(w.fn)) open.fns.push(w.fn); open.proofs.push(w.proof); continue; }
     const at = written.get(w.value) ?? written.set(w.value, { fns: [], proof: w.proof }).get(w.value)!;
     if (w.fn && !at.fns.includes(w.fn)) at.fns.push(w.fn);
   }
   const start = field.default && field.values!.includes(field.default) ? field.default : undefined;
   const steps = field.values!.filter((v) => written.has(v) && v !== start).map((v) => ({ value: v, ...written.get(v)! }));
-  const never = field.values!.filter((v) => !written.has(v) && v !== start);
+  const rest = field.values!.filter((v) => !written.has(v) && v !== start);
+  // Une valeur calculée peut poser n'importe quel état : rien n'est « jamais écrit » quand il y en a une.
+  const never = open.proofs.length ? [] : rest;
+  const anyOf = open.proofs.length ? rest : [];
   const tail = (fns: string[]) => fns.length > 1 ? `${fns.slice(0, -1).join(", ")} ou ${fns.at(-1)}` : fns[0] ?? "le code";
-  const sentence = `${start ? `Une ligne de \`${entity.name}\` naît \`${start}\`` : `\`${entity.name}.${field.name}\` est écrit par le code`}${steps.length ? ` ; ${steps.map((s) => `\`${tail(s.fns)}\` la passe à \`${s.value}\``).slice(0, 3).join(", ")}` : ""}.${never.length ? ` ${never.map((v) => `\`${v}\``).join(", ")} ${never.length > 1 ? "ne sont jamais écrits" : "n'est jamais écrit"}.` : ""}`;
-  return { field, start, steps, never, sentence };
+  const sentence = `${start ? `Une ligne de \`${entity.name}\` naît \`${start}\`` : `\`${entity.name}.${field.name}\` est écrit par le code`}${steps.length ? ` ; ${steps.map((s) => `\`${tail(s.fns)}\` la passe à \`${s.value}\``).slice(0, 3).join(", ")}` : ""}${open.proofs.length ? ` ; \`${tail(open.fns)}\` y écrit une valeur calculée : n'importe lequel des ${field.values!.length} états, dans n'importe quel ordre d'après ce qui est lu` : ""}.${never.length ? ` ${never.map((v) => `\`${v}\``).join(", ")} ${never.length > 1 ? "ne sont jamais écrits" : "n'est jamais écrit"}.` : ""}`;
+  return { field, start, steps, never, anyOf, open, sentence };
 }

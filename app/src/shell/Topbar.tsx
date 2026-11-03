@@ -2,14 +2,15 @@ import type { MapPayload, ProjectInfo } from "../api/types";
 import { Icon } from "./icons";
 
 /** La barre du haut de la planche : le fil d'Ariane, la pastille de fraîcheur (date, heure, commit), relancer l'analyse. */
-export function Topbar({ project, map, title, refreshing, onRefresh }: { project?: ProjectInfo; map?: MapPayload; title: string; refreshing: boolean; onRefresh: () => void }) {
+export function Topbar({ project, map, crumbs, refreshing, onRefresh }: { project?: ProjectInfo; map?: MapPayload; crumbs: { label: string; back: number }[]; refreshing: boolean; onRefresh: () => void }) {
   const at = map ? new Date(map.builtAt) : undefined;
   const day = at?.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }).toUpperCase().replace(/\./g, ".");
   return (
     <header className="top">
       <div className="top__crumbs">
         {Icon.side}
-        <span>{project?.name ?? "…"}</span><span aria-hidden="true">›</span><span className="top__here">{title}</span>
+        <span>{project?.name ?? "…"}</span>
+        {crumbs.map((c, i) => <span key={i} className="top__crumb"><span aria-hidden="true">›</span>{c.back ? <button className="top__link" onClick={() => window.history.go(-c.back)}>{c.label}</button> : <span className="top__here">{c.label}</span>}</span>)}
       </div>
       <div className="top__right">
         {at && (

@@ -23,8 +23,8 @@ export function Moment({ title, count, open, toggle, children }: { title: string
 }
 
 /** Cadre de cohérence : pointillé autour des étapes qu'il protège (transaction, verrou, clé d'idempotence). */
-export const Frame = ({ label, children }: { label: string; children: ReactNode }) =>
-  <div className="lx-frame"><span className="vl-tag vl-tag--neutral lx-frame__tag">{label}</span>{children}</div>;
+export const Frame = ({ label, children, className }: { label: string; children: ReactNode; className?: string }) =>
+  <div className={`lx-frame${className ? ` ${className}` : ""}`}><span className="vl-tag vl-tag--neutral lx-frame__tag">{label}</span>{children}</div>;
 
 /** Provenance : d'où vient un fait. Rien ne vient du modèle de langage. */
 export function Provenance({ kind, who }: { kind: "read" | "declared" | "proposed" | "unread"; who?: string }) {

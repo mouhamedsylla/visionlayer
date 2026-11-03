@@ -1,5 +1,5 @@
 import type { ArchNode, Finding, FindingCode, MapPayload, Proof } from "../api/types";
-import { FINDING_TONE, plural } from "./words";
+import { FINDING_SCREEN, FINDING_TONE, plural } from "./words";
 
 /**
  * Ce que la planche 01 (Vue d'ensemble) montre, calculé depuis la carte. Chaque nombre, chaque case et
@@ -60,6 +60,8 @@ export interface Hero {
   lead: string; code?: string; second?: string;
   text: string;
   side: { title: string; note: string; rows: { idx: string; code: string; what: string; tag: string; proof?: Proof }[]; more?: string };
+  /** Où le comprendre (planche L6 : un constat ouvre l'écran de sa question, l'élément choisi). */
+  go?: { screen: "acces" | "donnees" | "taches" | "carte" | "table"; item?: string; label: string };
 }
 
 /**
@@ -90,8 +92,14 @@ export function overviewHero(p: MapPayload): Hero | undefined {
   }
   const f = byGravity(p.model.findings)[0];
   if (!f) return undefined;
+  // Une table nommée par le constat : il s'ouvre sur elle ; sinon sur l'écran de sa question.
+  const table = FINDING_SCREEN[f.code] === "donnees" ? p.model.nodes.flatMap((n) => (n.facets.data?.entities ?? []).map((e) => ({ n, e })))
+    .find(({ e }) => new RegExp(`(^|[^\\w])${e.name}([^\\w]|$)`).test(f.message)) : undefined;
+  const screen = FINDING_SCREEN[f.code] ?? "carte";
+  const go = table ? { screen: "table" as const, item: `${table.n.id}/${table.e.name}`, label: `Voir ce que dit ${table.e.name}` }
+    : { screen, label: `Voir dans ${{ acces: "Accès", donnees: "Données", taches: "Tâches planifiées", carte: "la carte" }[screen]}` };
   return {
-    kind: "finding", tag: `Constat, ${f.proof[0]!.path}:${f.proof[0]!.line}`,
+    kind: "finding", tag: `Constat, ${f.proof[0]!.path}:${f.proof[0]!.line}`, go,
     lead: sentence(f.message), text: rest(f.message),
     side: {
       title: "Les lignes qui le prouvent", note: plural(f.proof.length, "ligne", "lignes"),
@@ -101,7 +109,7 @@ export function overviewHero(p: MapPayload): Hero | undefined {
   };
 }
 
-const ORDER: FindingCode[] = ["unguarded_route", "race_read_then_write", "personal_data_logged", "write_then_enqueue", "scheduled_on_every_instance", "missing_timeout"];
+const ORDER: FindingCode[] = ["unguarded_route", "race_read_then_write", "read_outside_tx", "personal_data_logged", "write_then_enqueue", "scheduled_on_every_instance", "missing_timeout"];
 const rank = (f: Finding) => { const i = ORDER.indexOf(f.code); return i < 0 ? ORDER.length + (FINDING_TONE[f.code] === "critical" ? 0 : 1) : i; };
 export const byGravity = (list: Finding[]) => [...list].sort((a, b) => rank(a) - rank(b));
 
@@ -268,6 +276,7 @@ export interface Attention { tone: "critical" | "signal"; icon: string; title: s
 const ICON: Partial<Record<FindingCode, string>> & { other: string } = {
   unguarded_route: "M4 7.5h8v6H4zM5.8 7.5V5.2a2.2 2.2 0 0 1 4.4 0v2.3",
   race_read_then_write: "M8 2.5v4l2.5 1.5M13.5 8a5.5 5.5 0 1 1-2-4.2",
+  read_outside_tx: "M8 2.5v4l2.5 1.5M13.5 8a5.5 5.5 0 1 1-2-4.2",
   scheduled_on_every_instance: "M8 2.5v4l2.5 1.5M13.5 8a5.5 5.5 0 1 1-2-4.2",
   missing_timeout: "M8 2.5v4l2.5 1.5M13.5 8a5.5 5.5 0 1 1-2-4.2",
   doc_contradiction: "M3 4h10M3 8h6M3 12h8",
@@ -276,7 +285,7 @@ const ICON: Partial<Record<FindingCode, string>> & { other: string } = {
   other: "M8 4.5v4.5M8 11.5v.01M8 1.8l6.5 11.4H1.5z",
 };
 const ACTION: Partial<Record<FindingCode, string>> = {
-  unguarded_route: "Accès", personal_data_logged: "Données", race_read_then_write: "Rejouer", write_then_enqueue: "Données",
+  unguarded_route: "Accès", personal_data_logged: "Données", race_read_then_write: "Rejouer", read_outside_tx: "Données", write_then_enqueue: "Données",
   unused_value: "Données", scheduled_on_every_instance: "Tâches", doc_contradiction: "Comparer",
 };
 
