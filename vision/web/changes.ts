@@ -19,6 +19,11 @@ function items(model: ArchModelV2): Map<string, { text: string; proof?: Proof }>
     }
     for (const entity of n.facets.data?.entities ?? []) addEntity(out, n, entity);
     for (const m of n.facets.trust?.mechanisms ?? []) out.set(`trust:${n.id}:${m.name}`, { text: `${n.name} reconnaît ses appelants par ${m.name}`, proof: m.proof });
+    for (const c of n.facets.contract ?? []) {
+      for (const i of c.implementations) out.set(`impl:${c.name}:${i.name}`, { text: `${i.name} implémente ${c.name}`, proof: { path: i.path, line: i.line, source: "syntax" } });
+      for (const b of c.bindings ?? []) out.set(`bind:${c.name}:${b.implementation}:${b.proof.path}`, { text: `${c.name} reçoit ${b.implementation}`, proof: b.proof });
+      for (const k of c.consumers ?? []) out.set(`recv:${c.name}:${k.name}`, { text: `${k.name} reçoit ${c.name}`, proof: k.proof });
+    }
   }
   for (const e of model.edges) {
     const target = e.target?.entity ?? e.target?.topic ?? e.target?.entrypoint;

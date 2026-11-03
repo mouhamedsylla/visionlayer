@@ -28,6 +28,8 @@ export interface BriefInput {
   builtins: Pack[];
   /** Un pack local accepté, montré comme exemple. */
   example: string;
+  /** Une capture : la question posée au code (planche L5). Le pack ne lit alors que ce qui y répond. */
+  question?: string;
 }
 
 /** Au-delà, une documentation est coupée : un .d.ts généré peut faire des mégaoctets. */
@@ -44,7 +46,13 @@ export function packBrief(input: BriefInput): Brief {
 
 Tu écris un pack pour VisionLayer, un lecteur statique de code qui dessine la carte d'un système : ses programmes, leurs portes d'entrée, leurs données, leurs liens, et comment un appelant prouve qui il est. Un pack dit ce que veut dire une technologie, comme des données : des motifs de l'arbre syntaxique qui émettent des faits, et des règles qui les joignent.
 
-## Ce qui compte
+${input.question ? `## La question : ce pack est une capture
+
+Quelqu'un a posé cette question sur des projets qui emploient \`${pkg}\` : « ${input.question} ».
+
+Tu n'écris pas l'inventaire de toute la technologie : seulement les formes qui répondent à cette question, avec un test par forme. Et ta capture doit remplir une représentation que la carte sait dessiner, avec le vocabulaire plus bas. Quand la question porte sur l'injection (qui reçoit quoi d'un conteneur), c'est le contrat (X3) : produis \`binds\` là où le framework branche une classe sur un contrat, et \`receives\` là où une classe le reçoit. Un contrat est une interface ou une classe abstraite du dépôt. Si aucune relation du vocabulaire ne permet de répondre, dis-le dans ta page de documentation plutôt que d'inventer.
+
+` : ""}## Ce qui compte
 
 - **La technologie, jamais un projet.** Tu ne vois aucun projet, et c'est voulu. Tout vient de la documentation ci-dessous. N'invente aucune API qu'elle ne montre pas.
 - **Ce que la carte sait montrer.** Un pack qui décrit des appels de fonctions ne change rien. Demande-toi ce que la technologie change au programme qui l'emploie : une porte d'entrée, une lecture de données, un appel sortant, une façon de reconnaître l'appelant. Puis exprime-le avec le vocabulaire plus bas.

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export type Screen = "vue" | "carte" | "bloc" | "deroule" | "acces" | "donnees" | "taches" | "regles" | "agents" | "packs" | "couverture" | "replays" | "reglages";
+export type Screen = "vue" | "carte" | "bloc" | "deroule" | "mecanismes" | "acces" | "donnees" | "taches" | "regles" | "agents" | "packs" | "couverture" | "replays" | "reglages";
 
 /** Les écrans des planches, dans l'ordre de la barre latérale. `built` : codé ; les autres restent visibles, sans lien. */
 export const SCREENS: { id: Screen; label: string; group: string; built?: boolean }[] = [
@@ -8,6 +8,7 @@ export const SCREENS: { id: Screen; label: string; group: string; built?: boolea
   { id: "carte", label: "Carte", group: "Système", built: true },
   { id: "bloc", label: "Intérieur d'un bloc", group: "", built: true },
   { id: "deroule", label: "Déroulé", group: "", built: true },
+  { id: "mecanismes", label: "Mécanismes", group: "Système", built: true },
   { id: "acces", label: "Accès", group: "Système", built: true },
   { id: "donnees", label: "Données", group: "Système", built: true },
   { id: "taches", label: "Tâches planifiées", group: "Système", built: true },

@@ -430,7 +430,10 @@ export function assemble(db: Database, opts: AssembleOptions): ArchModelV2 {
           ...(d.summary ? { summary: d.summary } : {}),
           operations: d.operations.length ? d.operations : rows("interface_member").filter((t) => s(t.args[0]) === file && s(t.args[1]) === iface).map((t) => ({ name: s(t.args[2]), line: Number(t.args[3]) })),
           implementations: d.implementations,
-          ...(sel ? { selector: { symbol: { path: selFile!, line: selLine, name: s(sel.args[1]) }, ...(config.length ? { config } : {}), ...(d.choices ? { choices: d.choices } : {}) } } : {}),
+          ...((b) => (b.length ? { bindings: b } : {}))(rows("binds_at").filter((t) => s(t.args[2]) === file && s(t.args[3]) === iface).map((t) => ({ implementation: s(t.args[1]), proof: at(s(t.args[0]), Number(t.args[4]), t.proof) }))),
+          ...((c) => (c.length ? { consumers: c } : {}))(rows("receives_at").filter((t) => s(t.args[2]) === file && s(t.args[3]) === iface).map((t) => ({ name: s(t.args[1]), proof: at(s(t.args[0]), Number(t.args[4]), t.proof) }))),
+          ...(sel ? { selector: { symbol: { path: selFile!, line: selLine, name: s(sel.args[1]) }, ...(config.length ? { config } : {}), ...(d.choices ? { choices: d.choices } : {}) } }
+            : ((p) => (p.length ? { selector: { symbol: { path: s(p[0]!.args[0]), line: Number(p[0]!.args[7]), name: s(p[0]!.args[1]) }, config: [s(p[0]!.args[2])], choices: p.filter((t, i) => p.findIndex((u) => s(u.args[2]) === s(t.args[2]) && s(u.args[3]) === s(t.args[3]) && s(u.args[4]) === s(t.args[4])) === i).map((t) => ({ ...(s(t.args[3]) === "yes" ? { when: s(t.args[2]) } : {}), implementation: s(t.args[4]), proof: at(s(t.args[0]), Number(t.args[7]), t.proof) })) } } : {}))(rows("picks_at").filter((t) => s(t.args[5]) === file && s(t.args[6]) === iface).sort((a, b) => s(a.args[0]).length - s(b.args[0]).length))),
           ...(d.sealed ? { sealed: d.sealed } : {}),
         }))(contractOf({ file, iface, impls: list, ...(sel ? { selector: { file: selFile!, fn: s(sel.args[1]) } } : {}) }))],
       },

@@ -27,11 +27,23 @@ import type { FileFact } from "./types.js";
  *   implements(Fichier, Classe, Interface, Ligne)         class ResendSender implements EmailSender
  *   instantiates(Fichier, Fonction, Classe, Ligne)        new SmtpSender(…) dans la fonction getSender
  *   section(Fichier, Titre, Ligne)                        // ── Paiements ──── : un commentaire de séparation au premier niveau
+ *   cond_pick(Fichier, Nom, Condition, Choisi, yes|no, Ligne)
+ *                                                         const m = cfg.isDocument ? DocModule : SqlModule : au premier niveau,
+ *                                                         deux noms choisis par une condition (son dernier membre)
  */
 /** Le titre d'un commentaire de séparation : `// ── Paiements ──`, `/* ==== Comptes ==== *\/`, `// --- Catalogue`. */
 const SEPARATOR = /^(?:\/\/+|\/\*+)\s*[─━═=\-~#*]{2,}\s*([^─━═=~#*\n]*?[\p{L}][^─━═=~#*\n]*?)\s*[─━═=\-~#*]*\s*(?:\*+\/)?$/u;
 export function sectionTitle(comment: string): string | undefined {
   return SEPARATOR.exec(comment.trim())?.[1]?.trim() || undefined;
+}
+
+/** La condition d'un choix, dite par son dernier nom : `(databaseConfig() as DatabaseConfig).isDocumentDatabase` → isDocumentDatabase. */
+function unwrapCond(n: Node | null): string {
+  if (!n) return "";
+  let t = n;
+  while (t.type === "parenthesized_expression" && t.namedChildren[0]) t = t.namedChildren[0];
+  if (t.type === "member_expression") return t.childForFieldName("property")?.text ?? t.text;
+  return t.text.replace(/\s+/g, " ").slice(0, 80);
 }
 
 const VITE_BUILTINS = new Set(["MODE", "DEV", "PROD", "SSR", "BASE_URL"]);
@@ -74,11 +86,12 @@ export function syntaxFacts(path: string, root: Node, fact: (rel: string, args: 
       const name = decl.childForFieldName("name")?.text;
       if (name) out.push(fact("defines", [path, name, line(decl)], line(decl)));
       if (isExport && stmt.text.startsWith("export default") && name) out.push(fact("defines", [path, "default", line(decl)], line(decl)));
-      if (decl.type === "interface_declaration" && name) {
+      // Une classe abstraite promet, comme une interface, ce que ses sous-classes fournissent : c'est un contrat.
+      if ((decl.type === "interface_declaration" || decl.type === "abstract_class_declaration") && name) {
         out.push(fact("interface_def", [path, name, line(decl)], line(decl)));
         for (const m of decl.childForFieldName("body")?.namedChildren ?? []) {
           const member = m.childForFieldName("name")?.text;
-          if (member && (m.type === "method_signature" || m.type === "property_signature")) out.push(fact("interface_member", [path, name, member, line(m)], line(m)));
+          if (member && (m.type === "method_signature" || m.type === "property_signature" || m.type === "abstract_method_signature")) out.push(fact("interface_member", [path, name, member, line(m)], line(m)));
         }
       }
       if ((decl.type === "class_declaration" || decl.type === "abstract_class_declaration") && name) {
@@ -98,6 +111,14 @@ export function syntaxFacts(path: string, root: Node, fact: (rel: string, args: 
         const value = d.type === "variable_declarator" ? d.childForFieldName("value") : null;
         const str = value && (value.type === "string" || value.type === "template_string") ? literal(value) : undefined;
         if (name?.type === "identifier" && str !== undefined) out.push(fact("const_str", [path, name.text, str], line(d)));
+        // Un choix écrit au chargement du module : selon la condition, l'un ou l'autre nom (un module, une classe).
+        const cond = value?.type === "ternary_expression" || value?.type === "conditional_expression" ? value : null;
+        const yes = cond?.childForFieldName("consequence"), no = cond?.childForFieldName("alternative");
+        if (name?.type === "identifier" && cond && yes?.type === "identifier" && no?.type === "identifier") {
+          const test = unwrapCond(cond.childForFieldName("condition"));
+          out.push(fact("cond_pick", [path, name.text, test, yes.text, "yes", line(d)], line(d)));
+          out.push(fact("cond_pick", [path, name.text, test, no.text, "no", line(d)], line(d)));
+        }
       }
     }
   }

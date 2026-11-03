@@ -45,6 +45,8 @@ export const PRODUCIBLE: Relation[] = [
   { name: "inbound_from", args: ["Fichier", "Paquet", "Ligne"], meaning: "le code vérifie la signature d'un appel entrant de ce service" },
   { name: "env_read", args: ["Fichier", "Nom", "Ligne"], meaning: "une variable de configuration lue à cette ligne" },
   { name: "env_required", args: ["Fichier", "Nom", "yes|no"], meaning: "la variable est obligatoire ou non, d'après le code" },
+  { name: "binds", args: ["Fichier", "Contrat", "Implémentation", "Ligne"], meaning: "un conteneur d'injection donne cette classe à qui demande ce contrat ; Fichier est là où le lien est écrit. Le contrat est une interface ou une classe abstraite du dépôt. La carte dessine le contrat (X3) avec ses implémentations et l'endroit où chacune est branchée", example: 'binds("users/users.module.ts", "UserRepository", "UsersRelationalRepository", 12)' },
+  { name: "receives", args: ["Fichier", "Classe", "Contrat", "Ligne"], meaning: "cette classe reçoit ce contrat du conteneur, sans le construire elle-même (par son constructeur, le plus souvent) ; la carte la montre parmi ceux qui emploient le contrat", example: 'receives("users/users.service.ts", "UsersService", "UserRepository", 25)' },
   { name: "unresolved", args: ["Fichier", "Genre", "Ligne"], meaning: "reconnu sans pouvoir le relier : un trou de couverture (path_dynamic, target_unknown)" },
 ];
 

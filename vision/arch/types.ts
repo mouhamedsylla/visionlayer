@@ -315,6 +315,10 @@ export interface ContractFacet {
     /** Les paquets externes que son fichier importe. */
     packages?: string[];
   }[];
+  /** Là où un conteneur d'injection branche chaque implémentation sur le contrat (`{ provide: X, useClass: Y }`). */
+  bindings?: { implementation: string; proof: Proof }[];
+  /** Les classes qui reçoivent le contrat du conteneur, sans le construire. */
+  consumers?: { name: string; proof: Proof }[];
   /** Ce qui choisit l'implémentation : une fabrique, la configuration qu'elle lit, et quelle valeur mène à quelle classe (sans valeur : le cas par défaut). */
   selector?: { symbol: SymbolRef; config?: string[]; choices?: { when?: string; implementation: string; proof: Proof }[] };
   /** Les paquets des implémentations, et chaque import de l'un d'eux hors du module. */

@@ -23,11 +23,14 @@ import { parse as parseYaml } from "yaml";
 const args = cliArgs();
 const docAt = args.indexOf("--doc");
 const docArg = docAt >= 0 ? args[docAt + 1] : undefined;
-const [verb, name, path] = args.filter((a, i) => !a.startsWith("--") && (docAt < 0 || i !== docAt + 1));
+// Une capture : la question qu'on pose au code, au lieu de l'inventaire de toute la technologie (planche L5).
+const questionAt = args.indexOf("--question");
+const question = questionAt >= 0 ? args[questionAt + 1] : undefined;
+const [verb, name, path] = args.filter((a, i) => !a.startsWith("--") && (docAt < 0 || i !== docAt + 1) && (questionAt < 0 || i !== questionAt + 1));
 const root = resolve(path ?? ".");
 const proposes = join(root, ".vision", "packs", "proposes");
 if (!verb || !name || !existsSync(root)) {
-  console.error("usage: vision pack write|fiche <paquet> [chemin] [--doc fichier] | accept|reject <id> [chemin]");
+  console.error("usage: vision pack write|fiche <paquet> [chemin] [--doc fichier] [--question texte] | accept|reject <id> [chemin]");
   process.exit(1);
 }
 
@@ -53,7 +56,7 @@ if (verb === "accept" || verb === "reject") {
 
 const builtins = await loadPacks();
 const example = readFileSync(join(import.meta.dirname, "..", "vision", "writer", "example-pack.yaml"), "utf8");
-const brief = packBrief({ root, pkg: name, builtins, example, ...(docArg ? { docs: [{ source: docArg, text: readFileSync(docArg, "utf8") }] } : {}) });
+const brief = packBrief({ root, pkg: name, builtins, example, ...(question ? { question } : {}), ...(docArg ? { docs: [{ source: docArg, text: readFileSync(docArg, "utf8") }] } : {}) });
 mkdirSync(proposes, { recursive: true });
 const id = name.replace(/^@/, "").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
 writeFileSync(join(proposes, `${id}.fiche.md`), brief.text);

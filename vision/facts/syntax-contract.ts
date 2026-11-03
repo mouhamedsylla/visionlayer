@@ -83,7 +83,8 @@ export function contractFacts(path: string, root: Node, fact: (rel: string, args
     const decl = stmt.type === "export_statement" ? stmt.childForFieldName("declaration") ?? stmt.namedChildren[0] : stmt;
     const name = decl?.childForFieldName("name")?.text;
     if (!decl || !name) continue;
-    const body = decl.type === "interface_declaration" ? decl.childForFieldName("body")
+    const contract = decl.type === "interface_declaration" || decl.type === "abstract_class_declaration";
+    const body = contract ? decl.childForFieldName("body")
       : decl.type === "type_alias_declaration" && decl.childForFieldName("value")?.type === "object_type" ? decl.childForFieldName("value") : null;
     for (const m of body?.namedChildren ?? []) {
       const member = m.childForFieldName("name")?.text;
@@ -91,7 +92,7 @@ export function contractFacts(path: string, root: Node, fact: (rel: string, args
       if (m.type === "property_signature") {
         const type = bare(m.childForFieldName("type")?.text ?? "");
         out.push(fact("type_field", [path, name, member, type, m.children.some((x) => x.type === "?") ? "opt" : "req", commentOf(m), line(m)], line(m)));
-      } else if (m.type === "method_signature" && decl.type === "interface_declaration") {
+      } else if ((m.type === "method_signature" || m.type === "abstract_method_signature") && contract) {
         const param = m.childForFieldName("parameters")?.namedChildren[0]?.childForFieldName("type")?.text ?? "";
         out.push(fact("iface_op", [path, name, member, bare(param), bare(m.childForFieldName("return_type")?.text ?? ""), commentOf(m), line(m)], line(m)));
       }

@@ -1,0 +1,40 @@
+/* Planche L6, Mécanismes : X3 Contrat repris du catalogue (L2), avec les objets et les traits de L1. */
+.scr-mc {
+.mc__intro { display: flex; flex-direction: column; gap: 6px; max-width: 880px; }
+.mc__title { font: 600 22px/28px var(--font-sans); letter-spacing: -.02em; }
+.mc__lead { color: var(--ink-2); font-size: 13px; line-height: 19px; }
+.mc__empty { padding: 16px; font-size: 13px; color: var(--muted); }
+.mc__row { width: 100%; display: grid; grid-template-columns: 180px minmax(0, 1.4fr) 130px minmax(0, 1fr); gap: 12px; align-items: start; padding: 10px 16px; border: 0; border-top: 1px solid var(--line); background: none; text-align: left; font: inherit; font-size: 12.5px; line-height: 17px; color: inherit; cursor: pointer; }
+.mc__row--h { border-top: 0; background: var(--surface-sunken); font: 500 10.5px/14px var(--font-mono); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); cursor: default; }
+.mc__row--on { background: var(--surface-sunken); box-shadow: inset 3px 0 0 var(--ink); }
+.mc__row code { font: 500 12.5px/17px var(--font-mono); color: var(--ink); overflow: hidden; text-overflow: ellipsis; }
+.mc__fig { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+.mc__top { display: grid; grid-template-columns: minmax(0, auto) 80px minmax(0, auto); justify-content: start; align-items: center; gap: 10px; }
+.mc__recv { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.mc__top .lx-a { width: 80px; }
+.mc__tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; table-layout: fixed; }
+.mc__tbl th { font: 500 10.5px/14px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 0 8px 8px; }
+.mc__tbl td { padding: 8px; border-top: 1px solid var(--line); vertical-align: middle; }
+.mc__tbl .mc__c1 { width: 23%; }
+.mc__tbl .mc__c2 { width: 27%; }
+.mc__tbl td { overflow: hidden; }
+.mc__when { font: 500 12px/16px var(--font-mono); padding: 2px 6px; border-radius: 5px; background: var(--surface-sunken); border: 1px solid var(--line); }
+.mc__tbl .vl-ref { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc__arrow { width: 64px; }
+.mc__arrow .lx-a { width: 100%; }
+.mc__k, .mc__iface, .mc__cls { display: inline-flex; flex-direction: column; gap: 4px; padding: 8px 10px; border-radius: 8px; background: #fff; border: 1px solid var(--line-strong); min-width: 0; }
+.mc__k b, .mc__iface b, .mc__cls b { font: 500 12.5px/16px var(--font-mono); overflow-wrap: anywhere; }
+.mc__iface { border: 1.5px solid var(--ink); }
+.mc__iface small, .mc__cls small { font-size: 11.5px; color: var(--muted); }
+.mc__tbl .mc__cls { display: flex; max-width: 100%; }
+.mc__cls--o { border: 1.5px dashed var(--line-strong); background: transparent; }
+.mc__none { font-size: 12px; color: var(--muted); }
+.mc__side { display: flex; flex-direction: column; gap: 14px; min-width: 0; padding: 14px; }
+.mc__ops { display: flex; flex-direction: column; }
+.mc__ops div { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-top: 1px solid #2f2e2b; font-size: 12.5px; }
+.mc__ops b { font: 500 12.5px/17px var(--font-mono); overflow-wrap: anywhere; }
+.mc__ops span { font: 400 11.5px/17px var(--font-mono); color: var(--on-night-muted); white-space: nowrap; }
+.mc__how { padding: 0 16px 10px; font-size: 12.5px; line-height: 18px; color: var(--ink-2); }
+.mc__how b { font-family: var(--font-mono); font-weight: 500; margin: 0 3px; }
+.mc__prov { padding: 0 16px 14px; display: flex; gap: 8px; flex-wrap: wrap; }
+}

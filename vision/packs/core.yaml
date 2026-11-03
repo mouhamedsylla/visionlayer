@@ -26,6 +26,14 @@ rules: |
   % Une classe qui implémente une interface du dépôt ; une fonction qui fabrique ses implémentations.
   implements_at(F, C, G, I, L) :- implements(F, C, I, L), resolves(F, I, G, _), interface_def(G, I, _).
   selects(S, Fn, G, I) :- instantiates(S, Fn, C, _), resolves(S, C, F, _), implements_at(F, C, G, I, _).
+  % Un conteneur qui donne une classe à qui demande un contrat (binds, produit par le pack d'un framework) :
+  % la classe implémente ce contrat même sans `implements`, et l'on garde où le lien est écrit.
+  implements_at(H, C, G, I, L) :- binds(F, I, C, _), resolves(F, C, H, L), resolves(F, I, G, _), interface_def(G, I, _).
+  binds_at(F, C, G, I, L) :- binds(F, I, C, L), resolves(F, I, G, _), interface_def(G, I, _).
+  % Un choix au chargement (cond_pick) entre deux modules dont chacun branche une implémentation du même contrat.
+  picks_at(F, V, Cond, Br, C, G, I, L) :- cond_pick(F, V, Cond, M, Br, L), resolves(F, M, MF, _), binds_at(MF, C, G, I, _).
+  % Une classe qui reçoit un contrat du conteneur, par son constructeur (receives).
+  receives_at(F, K, G, I, L) :- receives(F, K, I, L), resolves(F, I, G, _), interface_def(G, I, _).
 
   % Constat dead_code (docs/fonctionnement/constats.md) : une fonction exportée que rien n'emploie.
   fn_used(F, N) :- export_fn(F, N, _), imports(_, _, F, N).
