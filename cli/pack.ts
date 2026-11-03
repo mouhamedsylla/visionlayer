@@ -77,6 +77,8 @@ if (!result.yaml) {
 
 // Le pack rendu garde son identifiant ; c'est sous ce nom qu'il est proposé.
 const packId = result.yaml.match(/^id:\s*([a-z0-9-]+)/m)?.[1] ?? id;
+// Une capture porte sa question : la couverture sait alors qu'elle ne lit pas toute la technologie.
+if (question && !/^question:/m.test(result.yaml)) result.yaml = result.yaml.replace(/^(name:.*)$/m, `$1\nquestion: ${JSON.stringify(question)}`);
 writeFileSync(join(proposes, `${packId}.yaml`), result.yaml);
 writeFileSync(join(proposes, `${packId}.md`), result.doc ?? "");
 writeFileSync(join(proposes, `${packId}.steps.json`), JSON.stringify({ usage: u, steps: result.steps }, null, 2));

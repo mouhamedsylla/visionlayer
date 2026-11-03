@@ -46,3 +46,21 @@ test("contrat : une classe abstraite, ce qu'un conteneur y branche, qui la reço
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test("couverture : un pack écrit pour un paquet couvre sa technologie, une capture non", async () => {
+  const root = mkdtempSync(join(tmpdir(), "vl-cover-"));
+  try {
+    writeFileSync(join(root, "db.ts"), 'import { PrismaClient } from "@prisma/client";\nexport const prisma = new PrismaClient();\n');
+    const gaps = async (extra: string) => {
+      const packs = [...(await loadPacks()), await loadPackText(extra, "local.yaml")];
+      const base = new FactBase(root, packs);
+      base.refresh();
+      return assemble(base.database(), { name: "cover", packs }).coverage.flatMap((c) => c.gaps).filter((g) => g.kind === "pack_missing").map((g) => g.subject);
+    };
+    const pack = 'id: prisma-client\nname: "@prisma/client"\nlanguages: [typescript]\nprovides: [uses_store]\nrules: |\n  uses_store(F, postgresql) :- import_raw(F, _, "@prisma/client", _).\n';
+    assert.ok(!(await gaps(pack)).includes("Prisma"), "le pack du paquet couvre Prisma");
+    assert.ok((await gaps(pack.replace("languages:", 'question: "où est le client ?"\nlanguages:'))).includes("Prisma"), "une capture ne couvre pas toute la technologie");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});

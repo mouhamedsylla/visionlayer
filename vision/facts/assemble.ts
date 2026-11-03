@@ -648,7 +648,10 @@ function packageName(rows: (rel: string) => readonly { args: readonly Value[] }[
 
 /** Les technologies que les packs lisent : celles qu'ils déclarent, et celle qui porte leur identifiant (un pack écrit pour `meilisearch`). */
 function packTechOf(packs: Pack[]): Set<string> {
-  return new Set(packs.flatMap((p) => [...p.tech, p.id]));
+  // Un pack écrit pour un paquet (`name: "@prisma/client"`, `when: { imports: [...] }`) couvre les technologies de ce paquet,
+  // même s'il ne les déclare pas : sans cela, la couverture le dirait encore « non lu ». Une capture ne lit qu'une question : non.
+  const pkgs = (p: Pack) => [p.name, ...(p.imports ?? [])].filter((x): x is string => typeof x === "string" && /^(@[\w.-]+\/)?[\w.-]+$/.test(x));
+  return new Set(packs.flatMap((p) => [...p.tech, p.id, ...(p.question ? [] : pkgs(p).flatMap((x) => techsForPackage("npm", x).map((e) => e.id)))]));
 }
 
 /** Le texte d'un constat établi par les règles : son code, le détail que la règle donne, le nom de ce qu'il concerne. */

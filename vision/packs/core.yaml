@@ -42,6 +42,8 @@ rules: |
   whole_import(F) :- imports(_, X, F, "*"), X != "*".
   whole_import(F) :- imports(_, "", F, "").
   fn_used(F, N) :- export_fn(F, N, _), whole_import(F).
+  % Un fichier qu'un framework charge par convention (une page, une route, une mise en page) : c'est le framework qui emploie ses exports.
+  fn_used(F, N) :- export_fn(F, N, _), loads(_, F).
   % Un fichier qui ré-exporte tout : la fonction sert si le nom est employé à travers lui.
   fn_used(F, N) :- export_fn(F, N, _), imports(G, "*", F, "*"), reexp_used(G, N).
   reexp_used(G, N) :- imports(_, _, G, N), imports(G, "*", _, "*").

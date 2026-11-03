@@ -60,6 +60,8 @@ const PackFile = z.strictObject({
   /** Ses manifestes disent comment une unité est lancée ou où elle tourne (écran Déploiement), pas seulement qu'elle existe. */
   deploys: z.boolean().optional(),
   when: z.strictObject({ imports: z.array(z.string()) }).optional(),
+  /** Une capture (planche L5) : la question à laquelle il répond. Il ne lit que cela de sa technologie, qui reste « non lue » en couverture. */
+  question: z.string().optional(),
   match: z.array(Match).default([]),
   script: z.string().optional(),
   rules: z.string().optional(),
@@ -96,6 +98,7 @@ export interface Pack {
   languages?: Language[];
   files?: string[];
   imports?: string[];
+  question?: string;
   matches: { id: string; query: string; where: Record<string, z.infer<typeof Where>>; at?: string; emit: Emit[] }[];
   script?: PackScript;
   rules: Rule[];
@@ -168,6 +171,7 @@ export async function loadPackText(text: string, path: string, opts: { allowScri
     ...(languages ? { languages } : {}),
     ...(p.files ? { files: p.files } : {}),
     ...(p.when ? { imports: p.when.imports } : {}),
+    ...(p.question ? { question: p.question } : {}),
     matches: p.match.map((m, i) => ({
       id: m.id ?? `${p.id}#${i + 1}`,
       query: m.query,
