@@ -293,6 +293,8 @@ export interface Entity {
   rule?: Proof;
   /** Code qui s'exécute quand l'entité change, dans le stockage ou ailleurs. */
   triggers?: { name: string; on: ("insert" | "update" | "delete" | "write")[]; proof: Proof; writes?: string[] }[];
+  /** Les lignes du code qui suppriment des lignes de l'entité. Absent : aucune suppression lue. */
+  deletes?: Omit<FieldWrite, "value">[];
   proof?: Proof;
 }
 

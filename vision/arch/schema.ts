@@ -93,6 +93,7 @@ const entity = S({
   constraints: z.array(constraint).optional(),
   rule: proof.optional(),
   triggers: z.array(S({ name: z.string(), on: z.array(z.enum(["insert", "update", "delete", "write"])), proof, writes: z.array(z.string()).optional() })).optional(),
+  deletes: z.array(S({ fn: z.string().optional(), node: z.string().optional(), entrypoints: z.array(z.string()).optional(), proof })).optional(),
   proof: proof.optional(),
 });
 

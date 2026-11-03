@@ -35,6 +35,10 @@ rules: |
   entity_read(Tech, N, Db, G, L) :- read_col(G, Tv, K, L), table_in(G, Tv, N, Fn), table(F, T, N, Fn), col_key(F, T, K, Db), table_tech(Fn, Tech, _).
   entity_read(Tech, N, "*", G, L) :- read_whole(G, Tv, L), table_in(G, Tv, N, Fn), table_tech(Fn, Tech, _).
 
+  % Une suppression de lignes : db.delete(users).
+  entity_delete(Tech, N, "", F, L) :- db_delete(F, V, L), table_in(F, V, N, Fn), table_tech(Fn, Tech, _).
+  entity_delete(Tech, N, "", F, L) :- db_delete_ns(F, NS, P, L), imports(F, NS, G, "*"), table_in(G, P, N, Fn), table_tech(Fn, Tech, _).
+
   % Une opération ne compte que si son argument est vraiment une table déclarée.
   accesses(F, Op, Tech, Name, L) :- db_op(F, Op, V, L), table_in(F, V, Name, Fn), table_tech(Fn, Tech, _).
   accesses(F, Op, Tech, Name, L) :- db_op_ns(F, Op, NS, P, L), imports(F, NS, G, "*"), table_in(G, P, Name, Fn), table_tech(Fn, Tech, _).

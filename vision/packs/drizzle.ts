@@ -220,10 +220,12 @@ const script: PackScript = ({ file, root, imports, fact }) => {
       if (!kind || !a) return;
       if (kind === "write") out.push(fact("write_ctx", [file.path, line(n), receiverKind(fn.childForFieldName("object"))], line(n)));
       if (a.type === "identifier") out.push(fact("db_op", [file.path, kind, a.text, line(n)], line(n)));
+      if (op === "delete" && a.type === "identifier") out.push(fact("db_delete", [file.path, a.text, line(n)], line(n)));
       else if (a.type === "member_expression") {
         const o = a.childForFieldName("object");
         const p = a.childForFieldName("property")?.text;
         if (o?.type === "identifier" && p) out.push(fact("db_op_ns", [file.path, kind, o.text, p, line(n)], line(n)));
+        if (op === "delete" && o?.type === "identifier" && p) out.push(fact("db_delete_ns", [file.path, o.text, p, line(n)], line(n)));
       }
       return;
     }

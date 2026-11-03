@@ -33,5 +33,7 @@ Ce pack ne lit pas les types composites de MongoDB (`type Adresse { … }`), les
 | C3 plusieurs lignes | `createMany({ data: items.map((i) => ({ … })) })`, ou un tableau d'objets | les champs de l'objet rendu, à leur ligne |
 | C4 une transaction interactive | `x.$transaction(async (tx) => { … })` | les lignes de la transaction |
 | C5 une transaction en lot | `x.$transaction([x.a.update(…), x.b.create(…)])` | les lignes du tableau |
+| C6 une suppression | `x.order.delete(…)`, `x.order.deleteMany(…)` | une suppression de lignes de `order`, à sa ligne |
+| C7 une lecture | `x.user.findMany({ select: { email: true } })` ; `findUnique`, `findFirst` sans `select` | les champs nommés dans `select`, ou toute la ligne. `include` et les `select` imbriqués dans une relation ne sont pas lus |
 
 Une écriture n'est retenue que si son modèle est déclaré dans un schéma Prisma du dépôt. Un objet `data` qu'on ne voit pas (`data: input`, `data: { ...patch }`) n'écrit aucun champ connu, et rien n'est affirmé sur ses champs. Les écritures imbriquées dans une relation (`items: { create: […] }`) ne sont pas lues.

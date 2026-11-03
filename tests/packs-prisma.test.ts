@@ -101,3 +101,32 @@ test("prisma C1 à C5 : écritures de champ, valeurs calculées, plusieurs ligne
   assert.deepEqual(writes("orderItem", "sku"), ["? place:5"]);
   assert.equal(entity(m, "ghost"), undefined);
 });
+
+test("prisma C6 : une suppression de lignes", async () => {
+  const m = await mapOf({ ...BASE,
+    "orders.ts": [
+      `import { prisma } from "./lib/prisma";`,
+      `export async function drop(id) {`,
+      `  await prisma.orderItem.deleteMany({ where: { orderId: id } });`,
+      `  await prisma.order.delete({ where: { id } });`,
+      `  await prisma.ghost.delete({ where: { id } });`,
+      `}`,
+    ].join("\n"),
+  });
+  assert.deepEqual(entity(m, "order")?.deletes?.map((d) => `${d.fn}:${d.proof.line}`), ["drop:4"]);
+  assert.deepEqual(entity(m, "orderItem")?.deletes?.map((d) => `${d.fn}:${d.proof.line}`), ["drop:3"]);
+  assert.equal(entity(m, "user")?.deletes, undefined);
+});
+
+test("prisma C7 : les champs que rend une lecture", async () => {
+  const m = await mapOf({ ...BASE,
+    "orders.ts": [
+      `import { prisma } from "./lib/prisma";`,
+      `export const refs = () => prisma.order.findMany({ select: { ref: true, total: true, user: { select: { id: true } } } });`,
+      `export const one = (id) => prisma.order.findUnique({ where: { id } });`,
+    ].join("\n"),
+  });
+  const reads = (f: string) => (entity(m, "order")?.fields?.find((x) => x.name === f)?.reads ?? []).map((r) => `${r.fn}:${r.proof.line}${r.whole ? " *" : ""}`);
+  assert.deepEqual(reads("ref"), ["refs:2", "one:3 *"]);
+  assert.deepEqual(reads("status"), ["one:3 *"]);
+});

@@ -119,8 +119,8 @@ function owners(
  */
 export function attributeFieldWrites(nodes: ArchNode[], importers: (path: string, fn: string) => string[], owners: Owners): void {
   const runs = nodes.filter((n) => n.level === "deployable" && n.files?.length);
-  for (const store of nodes) for (const entity of store.facets.data?.entities ?? []) for (const field of entity.fields ?? []) {
-    for (const w of [...(field.writes ?? []), ...(field.reads ?? [])]) {
+  for (const store of nodes) for (const entity of store.facets.data?.entities ?? []) for (const field of [...(entity.fields ?? []), { name: "", writes: entity.deletes }]) {
+    for (const w of [...(field.writes ?? []), ...("reads" in field ? field.reads ?? [] : [])]) {
       // Un fichier partagé par plusieurs déployables revient au premier dont un point d'entrée l'atteint.
       const found = runs.filter((n) => n.files!.includes(w.proof.path)).map((n) => {
         const entries = (n.facets.entrypoints ?? []).filter((e) => e.kind !== "main" && e.handler);

@@ -8,3 +8,6 @@ rules: |
   % Une écriture d'un champ, seulement pour un modèle déclaré dans un schéma Prisma (C1 à C3).
   entity_write(T, N, C, V, F, L) :- prisma_set(F, N, C, V, L), prisma_model(G, N), entity_def(T, _, N, G).
   entity_write(T, N, C, "", F, L) :- prisma_set_any(F, N, C, L), prisma_model(G, N), entity_def(T, _, N, G).
+  entity_read(T, N, C, F, L) :- prisma_read(F, N, C, L), prisma_model(G, N), entity_def(T, _, N, G).
+  entity_read(T, N, "*", F, L) :- prisma_read_whole(F, N, L), prisma_model(G, N), entity_def(T, _, N, G).
+  entity_delete(T, N, "", F, L) :- prisma_delete(F, N, L), prisma_model(G, N), entity_def(T, _, N, G).

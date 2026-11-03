@@ -13,6 +13,7 @@ import type { Database, Value } from "./datalog.js";
  *   entity_read(Tech, Entité, Champ|"*", Fichier, Ligne)        une lecture du champ par le code ; "*" quand elle rend la ligne entière
  *   entity_on_delete(Tech, Entité, Champs, Action)               ce que fait la base à la suppression de la ligne visée
  *   entity_comment(Tech, Entité, Champ|"", Texte)                ce que l'auteur dit d'un champ, ou de l'entité ("")
+ *   entity_delete(Tech, Entité, "", Fichier, Ligne)             une ligne du code qui supprime des lignes de l'entité
  *   entity_constraint_comment(Tech, Entité, Genre, Champs, Texte) ce que l'auteur dit d'une contrainte
  *   entity_trigger(Entité, Nom, Opérations)                      du code de la base qui s'exécute quand elle change
  *   trigger_writes(Nom, Entité)                                  ce que ce code écrit
@@ -36,6 +37,7 @@ export function entityDetails(db: Database): (tech: string, entity: string) => E
   const consSaid = new Map(db.get("entity_constraint_comment").map((t) => [`${key(s(t.args[0]), s(t.args[1]))}\0${s(t.args[2])}\0${s(t.args[3])}`, s(t.args[4])]));
   const onDelete = new Map(db.get("entity_on_delete").map((t) => [`${key(s(t.args[0]), s(t.args[1]))}\0${s(t.args[2])}`, s(t.args[3])]));
   const writes = fieldWrites(db);
+  const deletes = located(db, "entity_delete", 3);
   const reads = fieldReads(db);
 
   const fields = new Map<string, Field[]>();
@@ -86,7 +88,8 @@ export function entityDetails(db: Database): (tech: string, entity: string) => E
   return (tech, entity) => {
     const k = key(tech, entity);
     const f = fields.get(k), c = constraints.get(k), tr = triggers.get(entity), said = comments.get(`${k}\0`);
-    return { ...(said ? { comment: said } : {}), ...(f?.length ? { fields: f } : {}), ...(c?.length ? { constraints: c } : {}), ...(tr?.length ? { triggers: tr } : {}) };
+    const d = deletes.get(`${k}\0`)?.map(({ proof, fn }) => ({ proof, ...(fn ? { fn } : {}) }));
+    return { ...(said ? { comment: said } : {}), ...(f?.length ? { fields: f } : {}), ...(c?.length ? { constraints: c } : {}), ...(tr?.length ? { triggers: tr } : {}), ...(d?.length ? { deletes: d } : {}) };
   };
 }
 

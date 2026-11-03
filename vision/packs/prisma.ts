@@ -8,10 +8,20 @@ import { args, isFunction, literal, returnedExpressions, unwrap, walkAll, type N
  *
  * prisma_set(Fichier, Entité, Champ, Valeur, Ligne)   x.order.create({ data: { status: "PENDING" } }) : une valeur littérale
  * prisma_set_any(Fichier, Entité, Champ, Ligne)       data: { status }, data: { stock: { decrement: n } } : une valeur calculée
+ * prisma_read(Fichier, Entité, Champ, Ligne)          x.user.findMany({ select: { email: true } }) : un champ nommé dans la lecture
+ * prisma_read_whole(Fichier, Entité, Ligne)          x.user.findUnique({ where }) : toute la ligne
+ * prisma_delete(Fichier, Entité, Ligne)              x.order.delete(…), x.order.deleteMany(…) : une suppression de lignes
  * tx_span(Fichier, Début, Fin)                        x.$transaction(async (tx) => …), x.$transaction([…]) : les lignes protégées
  */
 const WRITES = new Set(["create", "createMany", "createManyAndReturn", "update", "updateMany", "updateManyAndReturn", "upsert"]);
+const READS = new Set(["findUnique", "findUniqueOrThrow", "findFirst", "findFirstOrThrow", "findMany"]);
 const NUMBER = /^-?\d+(\.\d+)?$/;
+
+function pairOf(o: Node | undefined, key: string): Node | undefined {
+  if (o?.type !== "object") return undefined;
+  for (const p of o.namedChildren) if (p.type === "pair" && p.childForFieldName("key")?.text === key) return unwrap(p.childForFieldName("value") ?? undefined);
+  return undefined;
+}
 
 const script: PackScript = ({ file, root, fact }) => {
   if (!root) return [];
@@ -55,10 +65,22 @@ const script: PackScript = ({ file, root, fact }) => {
       if (a && (isFunction(a) || a.type === "array")) out.push(fact("tx_span", [file.path, line(a), a.endPosition.row + 1], line(n)));
       return;
     }
-    if (!WRITES.has(op)) return;
     const model = fn.childForFieldName("object");
     if (model?.type !== "member_expression") return;
     const entity = model.childForFieldName("property")?.text;
+    if (entity && (op === "delete" || op === "deleteMany")) { out.push(fact("prisma_delete", [file.path, entity, line(n)], line(n))); return; }
+    if (entity && READS.has(op)) {
+      // select: { email: true } : les champs nommés ; sans select, toute la ligne.
+      const sel = pairOf(unwrap(args(n)[0]), "select");
+      if (sel?.type === "object") {
+        for (const p of sel.namedChildren) {
+          const key = p.type === "pair" ? p.childForFieldName("key")?.text.replace(/['"]/g, "") : undefined;
+          if (key && unwrap(p.childForFieldName("value") ?? undefined)?.text === "true") out.push(fact("prisma_read", [file.path, entity, key, line(n)], line(n)));
+        }
+      } else out.push(fact("prisma_read_whole", [file.path, entity, line(n)], line(n)));
+      return;
+    }
+    if (!WRITES.has(op)) return;
     const arg = unwrap(args(n)[0]);
     if (!entity || arg?.type !== "object") return;
     for (const p of arg.namedChildren) {

@@ -251,3 +251,21 @@ test("drizzle C10 C11 : ce que l'auteur dit d'une table, d'une colonne, d'une co
   assert.equal(fk?.onDelete, "Cascade");
   assert.equal(o.constraints?.find((c) => c.kind === "unique")?.comment, "une commande par référence et par client");
 });
+
+test("drizzle Q12 : une suppression de lignes", async () => {
+  const m = await mapOf({ ...SERVER,
+    "schema.ts": `import { pgTable, text } from "drizzle-orm/pg-core";\nexport const users = pgTable("users", { id: text("id") });\nexport const orders = pgTable("orders", { id: text("id") });\n`,
+    "server.ts": [
+      `import { drizzle } from "drizzle-orm/node-postgres";`,
+      `import { eq } from "drizzle-orm";`,
+      `import * as s from "./schema";`,
+      `import { orders } from "./schema";`,
+      `const db = drizzle(process.env.DATABASE_URL!);`,
+      `export const forget = (id: string) => db.delete(s.users).where(eq(s.users.id, id));`,
+      `export const purge = () => db.delete(orders);`,
+      `export const keep = () => db.update(orders).set({ id: "x" });`,
+    ].join("\n"),
+  });
+  assert.deepEqual(entity(m, "users").deletes?.map((d) => `${d.fn}:${d.proof.line}`), ["forget:6"]);
+  assert.deepEqual(entity(m, "orders").deletes?.map((d) => `${d.fn}:${d.proof.line}`), ["purge:7"]);
+});
