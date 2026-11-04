@@ -289,24 +289,85 @@ export class ReplayStore {
       mkdirSync(dirname(join(path, t)), { recursive: true });
       writeFileSync(join(path, t), readFileSync(join(testsDir, t)));
     }
-    if (existsSync(join(this.root, "node_modules")) && !existsSync(join(path, "node_modules"))) symlinkSync(join(this.root, "node_modules"), join(path, "node_modules"));
+    // Les dépendances déjà installées : à la racine, et dans le paquet de chaque test (un monorepo).
+    for (const d of new Set([".", ...listFiles(testsDir).map((t) => packageOf(path, t))])) {
+      if (existsSync(join(this.root, d, "node_modules")) && !existsSync(join(path, d, "node_modules"))) symlinkSync(join(this.root, d, "node_modules"), join(path, d, "node_modules"));
+    }
     return path;
   }
   private drop(path: string) { spawnSync("git", ["worktree", "remove", "--force", path], { cwd: this.root }); }
 
   /** Lancer les tests du Replay avec le lanceur du projet ; le résultat par test. */
   private runTests(cwd: string, tests: string[]): ReplayTest[] {
-    const file = join(cwd, ".replay-result.json");
+    return runProjectTests(cwd, tests);
+  }
+}
+
+/** Le paquet qui contient un test : le dossier du `package.json` le plus proche. */
+function packageOf(cwd: string, test: string): string {
+  for (let d = dirname(test); ; d = dirname(d)) {
+    if (existsSync(join(cwd, d, "package.json"))) return d;
+    if (d === "." || d === "/") return ".";
+  }
+}
+
+/** Le lanceur que le paquet déclare dans son script `test`. Sans indication : vitest, puis jest si le paquet l'emploie. */
+function runnerOf(cwd: string): "vitest" | "jest" | "tsx" | "node" {
+  let pkg: { scripts?: Record<string, string>; devDependencies?: Record<string, string>; dependencies?: Record<string, string> } = {};
+  try { pkg = JSON.parse(readFileSync(join(cwd, "package.json"), "utf8")); } catch { /* sans manifeste */ }
+  const script = pkg.scripts?.test ?? "";
+  if (/\bvitest\b/.test(script)) return "vitest";
+  if (/\bjest\b/.test(script)) return "jest";
+  if (/\btsx\b.*--test/.test(script)) return "tsx";
+  if (/\bnode\b.*--test/.test(script)) return "node";
+  return { ...pkg.dependencies, ...pkg.devDependencies }.jest ? "jest" : "vitest";
+}
+
+/** Le rapport TAP de node:test : un résultat par test, sans les suites qui les regroupent. */
+function parseTap(text: string): ReplayTest[] {
+  const lines = text.split("\n");
+  const out: { depth: number; test: ReplayTest }[] = [];
+  lines.forEach((l, i) => {
+    const m = /^(\s*)(not ok|ok) \d+ - (.+)$/.exec(l);
+    if (!m) return;
+    const ok = m[2] === "ok";
+    const error = ok ? undefined : lines.slice(i + 1, i + 14).find((x) => /^\s*error: /.test(x))?.replace(/^\s*error: /, "").replace(/^['|>-]+\s*/, "").slice(0, 300);
+    out.push({ depth: m[1]!.length, test: { name: m[3]!, ok, ...(error ? { message: error } : {}) } });
+  });
+  // Un test suivi d'un plus profond juste avant lui est une suite : le rapport écrit la suite après ses tests.
+  return out.filter((x, i) => !(i > 0 && out[i - 1]!.depth > x.depth)).map((x) => x.test);
+}
+
+/** Lancer des tests avec le lanceur de chacun de leurs paquets ; le résultat par test. */
+export function runProjectTests(cwd: string, tests: string[]): ReplayTest[] {
+  const byPackage = new Map<string, string[]>();
+  for (const t of tests) { const p = packageOf(cwd, t); byPackage.set(p, [...(byPackage.get(p) ?? []), p === "." ? t : t.slice(p.length + 1)]); }
+  const out: ReplayTest[] = [];
+  for (const [pkg, files] of byPackage) {
+    const dir = join(cwd, pkg);
+    const runner = runnerOf(dir);
+    if (runner === "tsx" || runner === "node") {
+      const [cmd, args] = runner === "tsx" ? ["npx", ["tsx", "--test", "--test-reporter=tap", ...files]] as const : ["node", ["--test", "--test-reporter=tap", ...files]] as const;
+      // Lancé depuis un autre test, node:test changerait de format : on lui rend un environnement neutre.
+      const { NODE_TEST_CONTEXT: _, ...env } = process.env;
+      const run = spawnSync(cmd, [...args], { cwd: dir, env, encoding: "utf8", maxBuffer: 64 << 20, timeout: 120_000 });
+      const parsed = parseTap(run.stdout ?? "");
+      out.push(...(parsed.length ? parsed : [{ name: "les tests n'ont pas pu tourner", ok: false }]));
+      continue;
+    }
+    const file = join(dir, ".replay-result.json");
     rmSync(file, { force: true });
-    spawnSync("npx", ["vitest", "run", ...tests, "--reporter=json", `--outputFile=${file}`], { cwd, encoding: "utf8", maxBuffer: 64 << 20, timeout: 120_000 });
+    const args = runner === "jest" ? ["jest", ...files, "--json", `--outputFile=${file}`] : ["vitest", "run", ...files, "--reporter=json", `--outputFile=${file}`];
+    spawnSync("npx", args, { cwd: dir, encoding: "utf8", maxBuffer: 64 << 20, timeout: 120_000 });
     try {
       const data = JSON.parse(readFileSync(file, "utf8")) as { testResults: { assertionResults: { title: string; status: string; failureMessages?: string[] }[] }[] };
       // Le message d'échec, sans la pile d'appels ni les codes de couleur du terminal.
       const why = (m?: string[]) => m?.[0]?.replace(/\u001b\[[0-9;]*m/g, "").split("\n").filter((l) => !/^\s+at /.test(l)).slice(0, 6).join("\n").trim();
-      return data.testResults.flatMap((f) => f.assertionResults.map((a) => ({ name: a.title, ok: a.status === "passed", ...(a.status !== "passed" && why(a.failureMessages) ? { message: why(a.failureMessages)! } : {}) })));
-    } catch { return [{ name: "les tests n'ont pas pu tourner", ok: false }]; }
+      out.push(...data.testResults.flatMap((f) => f.assertionResults.map((a) => ({ name: a.title, ok: a.status === "passed", ...(a.status !== "passed" && why(a.failureMessages) ? { message: why(a.failureMessages)! } : {}) }))));
+    } catch { out.push({ name: "les tests n'ont pas pu tourner", ok: false }); }
     finally { rmSync(file, { force: true }); }
   }
+  return out;
 }
 
 function listFiles(dir: string, rel = ""): string[] {
