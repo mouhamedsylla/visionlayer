@@ -1,6 +1,7 @@
 import type { ArchNode, MapPayload, ProjectInfo } from "../api/types";
 import type { Crumb } from "./route";
 import { Icon } from "./icons";
+import { PROJECTS, SNAPSHOT, snapshotProject } from "../api/snapshot";
 
 /** La barre du haut de la planche : le fil d'Ariane, la pastille de fraîcheur (date, heure, commit), relancer l'analyse. */
 export function Topbar({ project, map, crumbs, back, backLabel, block, clearBlock, refreshing, onRefresh }: { project?: ProjectInfo; map?: MapPayload; crumbs: Crumb[]; back?: () => void; backLabel?: string; block?: ArchNode; clearBlock?: () => void; refreshing: boolean; onRefresh: () => void }) {
@@ -17,6 +18,9 @@ export function Topbar({ project, map, crumbs, back, backLabel, block, clearBloc
         {block && clearBlock && <button className="top__chip" title="Revenir à tout le système" onClick={clearBlock}>du bloc {block.name} <i>×</i></button>}
       </div>
       <div className="top__right">
+        {SNAPSHOT && <span className="top__demo">Démonstration en lecture seule
+          <select aria-label="Projet" value={snapshotProject()} onChange={(e) => { window.location.search = `?p=${e.target.value}`; }}>{PROJECTS.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select>
+        </span>}
         {at && (
           <span className="vl-pill">
             <i className="vl-dot vl-dot--live" />{day}<span className="vl-pill__sep" />
