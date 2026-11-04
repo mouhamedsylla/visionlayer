@@ -212,6 +212,19 @@ Then open **Replays**, choose the replay, edit the code, run the tests until the
 
 In **Réglages**, press **Relier** next to Muse Code, Claude Code or Codex. This writes the MCP server into the project's agent settings (`.mcp.json` for Muse Code and Claude Code) and a short contract into `AGENTS.md` or `CLAUDE.md`; **Délier** removes them. For Muse Code, sign in with `muse login` or set `META_API_KEY`, then start `muse` in that project. The tools are `vision_summary`, `vision_slice`, `vision_reach` and `vision_source`.
 
+### On a project it has never seen
+
+We opened two public repositories it had never read, by their GitHub address, with no configuration. Reading took about a second.
+
+| Project | What it found |
+|---|---|
+| [node-express-realworld-example-app](https://github.com/gothinkster/node-express-realworld-example-app) (Express, Prisma) | 21 routes, 18 with a readable flow, 4 tables |
+| [node-express-boilerplate](https://github.com/hagopj13/node-express-boilerplate) (Express, Mongoose) | 15 routes, **no flow and no table**: there is no Mongoose pack yet, and no warning says so on the map. Write the pack first. |
+
+So discovery depends on packs. VisionLayer ships packs for a small stack (Express, Fastify, Prisma, Drizzle, BullMQ, node-cron, Stripe...). For another technology, the screens stay thin until the pack writer has written its pack. Only JavaScript and TypeScript are read.
+
+**Knowledge does not fill itself.** On a new project the rules and sessions are empty. They come from a coding agent you link: it reads the map, then declares what the code does not say in `.vision/knowledge/`. We checked this with Muse Code on Atelier API: it called the four tools and wrote a rule anchored to `cancelBooking`. Without a linked agent, only the rules written in the project's own README are picked up.
+
 Run the tests with `pnpm test`.
 
 ## Built before and during the hackathon
