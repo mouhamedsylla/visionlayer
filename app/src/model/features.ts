@@ -20,7 +20,7 @@ export function chainOf(steps: FlowStep[], name: (node: string) => string = (x) 
   for (const s of steps) {
     let kind: LinkKind, value: string;
     if (s.kind === "refuse") { kind = "refuse"; value = s.status ? String(s.status) : "erreur"; }
-    else if (s.kind === "reply") { kind = "reply"; value = s.status ? String(s.status) : "200"; }
+    else if (s.kind === "reply") { kind = Number(s.status) >= 400 ? "refuse" : "reply"; value = s.status ? String(s.status) : "200"; }
     else if (TARGETED.has(s.kind) && s.target) { kind = s.kind as LinkKind; value = s.target.entity ?? s.target.topic ?? name(s.target.node); }
     else continue;
     const tx = !!s.tx, last = out[out.length - 1];
@@ -54,7 +54,7 @@ const fixedSegments = (key: string) => (key.split(" ")[1] ?? key).split("/").fil
 
 /**
  * Le nom du groupe de chaque route. Un espace d'adresses comme `/admin` n'est pas une ressource : quand toutes ses
- * routes ont un second segment fixe, et qu'il y en a au moins deux différents, c'est ce second segment qui groupe.
+ * routes ont un second segment fixe, qu'il y en a plusieurs et que l'un au moins revient, c'est ce second segment qui groupe.
  */
 export function resourceNames(keys: string[]): Map<string, string> {
   const byFirst = new Map<string, string[][]>();
@@ -62,7 +62,8 @@ export function resourceNames(keys: string[]): Map<string, string> {
   const out = new Map<string, string>();
   for (const k of keys) {
     const seg = fixedSegments(k), first = seg[0] ?? resourceOf(k), all = byFirst.get(first)!;
-    const split = all.every((x) => x[1]) && new Set(all.map((x) => x[1])).size > 1;
+    const subs = all.map((x) => x[1]);
+    const split = subs.every(Boolean) && new Set(subs).size > 1 && new Set(subs).size < subs.length;
     out.set(k, split ? `/${first}/${seg[1]}` : first === "/" ? "/" : `/${first}`);
   }
   return out;
