@@ -1,0 +1,1 @@
+{"name":"mini-erp-crm","branch":"main","commit":"ff54f1a","lastChange":{"commit":"ff54f1a","subject":"fix: resolve PermissionRoute guard for Accounts, harden RBAC ownership, patch inventory stock bypass & add automated test suite"},"user":"Mouhamed Sylla"}
