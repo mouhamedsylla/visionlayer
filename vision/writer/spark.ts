@@ -48,9 +48,10 @@ const TOOLS = [
 
 export function apiKey(): string {
   if (process.env.MODEL_API_KEY) return process.env.MODEL_API_KEY;
+  if (process.env.META_API_KEY) return process.env.META_API_KEY;
   const file = join(homedir(), ".visionlayer.env");
   const key = existsSync(file) ? readFileSync(file, "utf8").match(/^MODEL_API_KEY=(.*)$/m)?.[1]?.trim() : undefined;
-  if (!key) throw new Error("clé MODEL_API_KEY absente : ni dans l'environnement, ni dans ~/.visionlayer.env");
+  if (!key) throw new Error("clé absente : ni MODEL_API_KEY ou META_API_KEY dans l'environnement, ni MODEL_API_KEY dans ~/.visionlayer.env");
   return key;
 }
 

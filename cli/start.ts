@@ -4,9 +4,11 @@ import { join, resolve } from "node:path";
 import { execFileSync } from "node:child_process";
 import { createHub, demoProjects } from "../vision/web/hub.js";
 import { cliArgs } from "../vision/cli/args.js";
+import { prepareExamples } from "./examples.js";
 
 /**
  * `pnpm start` : ouvre VisionLayer ; on y choisit un projet, un dossier ou une adresse GitHub.
+ * `pnpm start --examples` : clone les projets d'exemple et les propose.
  * `pnpm start --demo <dossier>` : la démonstration publique, bornée (PORT et HOST viennent de l'environnement).
  */
 const args = cliArgs();
@@ -18,7 +20,8 @@ const host = process.env.HOST ?? (demo ? "0.0.0.0" : "127.0.0.1");
 const dist = join(import.meta.dirname, "..", "app", "dist");
 if (!existsSync(join(dist, "index.html"))) execFileSync("pnpm", ["-s", "app:build"], { cwd: join(import.meta.dirname, ".."), stdio: "inherit" });
 if (demo) process.env.VISION_DEMO = "1";
-const projects = demo ? demoProjects(resolve(args[demoAt + 1] ?? "demo")) : [];
+const examples = args.includes("--examples") ? prepareExamples(join(import.meta.dirname, "..")) : undefined;
+const projects = demo ? demoProjects(resolve(args[demoAt + 1] ?? "demo")) : examples ? demoProjects(examples) : [];
 createHub({ staticDir: dist, projects, demo }).listen(port, host, () => {
   console.log(`VisionLayer : http://${host === "0.0.0.0" ? "localhost" : host}:${port}${demo ? `  (démonstration, ${projects.length} projets)` : ""}`);
 });
