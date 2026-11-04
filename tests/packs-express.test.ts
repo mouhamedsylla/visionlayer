@@ -215,3 +215,26 @@ test("express : un 403 qui ne parle pas d'une personne (anti-CSRF) ne garde pas 
   assert.equal(level("POST /admin"), "role");
   assert.equal(level("POST /admin2"), "role");
 });
+
+test("express : une garde qui lève une classe d'erreur nommée, et un routeur exporté sous un autre nom", async () => {
+  const { mapOf } = await import("./pack-fixture.js");
+  const m = await mapOf({
+    Dockerfile: `FROM node:20\nCMD ["node", "main.ts"]\n`,
+    "package.json": `{ "name": "x", "dependencies": { "express": "4" } }\n`,
+    "main.ts": `import express from "express";\nimport { apiRouter } from "./api";\nconst app = express();\napp.use("/v1", apiRouter);\napp.listen(1);\n`,
+    "api.ts": `import { Router } from "express";\nimport { a } from "./a";\nimport { b } from "./b";\nconst router = Router();\nrouter.use("/a", a);\nrouter.use("/b", b);\nexport const apiRouter = router;\n`,
+    "a.ts": `import { Router } from "express";\nimport { requireAuth, requireAdmin, viaFactory } from "./guards";\nconst router = Router();\nrouter.get("/one", requireAuth, (q, r) => r.end());\nrouter.get("/two", requireAdmin, (q, r) => r.end());\nrouter.get("/three", viaFactory, (q, r) => r.end());\nrouter.get("/open", (q, r) => r.end());\nexport const a = router;\n`,
+    "b.ts": `import { Router } from "express";\nconst r = Router();\nr.get("/x", (q, s) => s.end());\nexport { r as b };\n`,
+    "guards.ts": [
+      `export function requireAuth(req, res, next) { if (!req.cookies.t) throw new UnauthorizedError(); next(); }`,
+      `export function requireAdmin(req, res, next) { if (req.user.role !== "a") next(new ForbiddenError("no")); else next(); }`,
+      `export function viaFactory(req, res, next) { if (!req.user) throw ApiError.unauthorized(); next(); }`,
+    ].join("\n"),
+  });
+  const level = (k: string) => m.nodes.flatMap((n) => n.facets.entrypoints ?? []).find((e) => e.key === k)?.access?.level;
+  assert.equal(level("GET /v1/a/one"), "authenticated");
+  assert.equal(level("GET /v1/a/two"), "role");
+  assert.equal(level("GET /v1/a/three"), "authenticated");
+  assert.equal(level("GET /v1/a/open"), "public");
+  assert.ok(m.nodes.flatMap((n) => n.facets.entrypoints ?? []).some((e) => e.key === "GET /v1/b/x"));
+});

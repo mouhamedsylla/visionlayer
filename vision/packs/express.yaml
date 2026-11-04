@@ -9,6 +9,7 @@ rules: |
   ex_obj(F, V, F, V) :- express_obj(F, V, _, _).
   ex_obj(F, D, G, N) :- export_default(F, V), ex_obj(F, V, G, N), D = "default".
   ex_obj(F, V, G, N) :- imports(F, V, H, I), ex_obj(H, I, G, N).
+  ex_obj(F, A, G, N) :- ex_alias(F, A, B), ex_obj(F, B, G, N).
   % Une fonction qui fabrique un routeur désigne ce routeur ; une variable qui garde son appel aussi.
   ex_obj(F, Fn, F, R) :- ex_returns(F, Fn, R), express_obj(F, R, _, _).
   ex_obj(F, V, G, N) :- ex_call_bind(F, V, C), ex_obj(F, C, G, N).

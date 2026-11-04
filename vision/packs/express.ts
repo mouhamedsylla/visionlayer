@@ -56,6 +56,14 @@ const script: PackScript = ({ file, root, imports, fact }) => {
         const name = n.childForFieldName("name");
         const k = kindOf(n.childForFieldName("value") ?? undefined);
         if (name?.type === "identifier" && k) out.push(fact("express_obj", [file.path, name.text, k, line(n)], line(n)));
+        // export const authRouter = router : le même objet sous un autre nom.
+        const same = unwrap(n.childForFieldName("value") ?? undefined);
+        if (name?.type === "identifier" && same?.type === "identifier") out.push(fact("ex_alias", [file.path, name.text, same.text], line(n)));
+      }
+      // export { router as authRouter }
+      if (n.type === "export_specifier" && n.parent?.parent?.type === "export_statement" && !n.parent.parent.childForFieldName("source")) {
+        const from = n.childForFieldName("name")?.text, to = n.childForFieldName("alias")?.text;
+        if (from && to) out.push(fact("ex_alias", [file.path, to, from], line(n)));
       }
       if (n.type === "export_statement" && n.text.startsWith("export default")) {
         const v = n.namedChildren.at(-1);
@@ -184,12 +192,22 @@ const script: PackScript = ({ file, root, imports, fact }) => {
     const seen = new Set<string>();
     // Le premier statut qu'elle répond : un 401 ou un 403 écrit d'abord est une garde ; après une validation (400), un refus de connexion.
     let first: Node | undefined;
-    walkAll(body, (x) => { if (x.type === "number" && /^[1-5]\d\d$/.test(x.text) && x.parent?.type === "arguments" && (!first || x.startIndex < first.startIndex)) first = x; });
+    let firstCode = "";
+    walkAll(body, (x) => {
+      const code = x.type === "number" && /^[1-5]\d\d$/.test(x.text) && x.parent?.type === "arguments" ? x.text : namedStatus(x);
+      if (code && (!first || x.startIndex < first.startIndex)) { first = x; firstCode = code; }
+    });
     // Un 403 ne garde une identité que si la fonction parle d'elle : un jeton anti-CSRF ou une limite refusent une requête, pas une personne.
     const aboutWho = IDENTITY.test(body.text);
-    if (first && (first.text === "401" || (first.text === "403" && aboutWho))) out.push(fact("first_status", [file.path, at, first.text], line(first)));
+    if (first && (firstCode === "401" || (firstCode === "403" && aboutWho))) out.push(fact("first_status", [file.path, at, firstCode], line(first)));
     walkAll(body, (x) => {
       if (x.type === "number" && /^[45]\d\d$/.test(x.text) && x.parent?.type === "arguments") out.push(fact("fn_status", [file.path, at, x.text, line(x)], line(x)));
+      // Le code dit par le nom : new UnauthorizedError(), ApiError.forbidden(), createError.Unauthorized().
+      const named = namedStatus(x);
+      if (named) {
+        out.push(fact("fn_status", [file.path, at, named, line(x)], line(x)));
+        if ((named === "401" || aboutWho) && !seen.has(named)) { seen.add(named); out.push(fact("status_in", [file.path, at, named], line(x))); }
+      }
       if (x.type === "call_expression") {
         const f = x.childForFieldName("function");
         if (f?.type === "identifier" && !seen.has(f.text)) { seen.add(f.text); out.push(fact("calls_in", [file.path, at, f.text, line(x)], line(x))); }
@@ -202,6 +220,17 @@ const script: PackScript = ({ file, root, imports, fact }) => {
   }
   return out;
 };
+
+/** Le code qu'une erreur dit par son nom : une classe (`new UnauthorizedError()`) ou une fabrique (`ApiError.forbidden()`). */
+function namedStatus(x: Node): string | undefined {
+  let name: string | undefined;
+  if (x.type === "new_expression") name = x.childForFieldName("constructor")?.text;
+  else if (x.type === "call_expression") { const f = x.childForFieldName("function"); if (f?.type === "member_expression") name = f.childForFieldName("property")?.text; }
+  if (!name) return undefined;
+  if (/^(un(authori[sz]ed|authenticated)|notauthenticated|notauthori[sz]ed)(error|exception)?$/i.test(name)) return "401";
+  if (/^(forbidden|accessdenied|permissiondenied)(error|exception)?$/i.test(name)) return "403";
+  return undefined;
+}
 
 /** Ce qui dit qu'une fonction juge une personne : son compte, sa session, son rôle, ses droits. */
 const IDENTITY = /user|session|role|permission|admin|account|owner|\bauth|scope|tenant/i;
