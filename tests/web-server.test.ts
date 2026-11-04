@@ -59,7 +59,7 @@ test("web : un passage d'un fichier cité par la carte ; refus hors carte, hors 
     const ok = await (await fetch(`${base}/api/source?path=src/db/schema.ts&from=71&to=73`)).json();
     assert.equal(ok.from, 71);
     assert.deepEqual(ok.lines, ["// Seule l'API écrit ici : jamais l'app web, jamais le worker.", `export const payments = pgTable("payments", {`, "  id: id(),"]);
-    assert.equal((await fetch(`${base}/api/source?path=package.json`)).status, 404);
+    assert.equal((await fetch(`${base}/api/source?path=tsconfig.json`)).status, 404);
     assert.equal((await fetch(`${base}/api/source?path=../../package.json`)).status, 404);
     assert.equal((await fetch(`${base}/api/source?path=.env`)).status, 403);
     assert.equal((await fetch(`${base}/api/source`)).status, 400);
@@ -74,8 +74,6 @@ test("web : un passage masque ce qui ressemble à un secret, pas une lecture de 
 
 test("web : GET /api/stack donne les technologies lues, et le code de leurs lignes", async () => {
   await withServer(undefined, async (base) => {
-    const before = await fetch(`${base}/api/source?path=package.json&from=29&to=29`);
-    assert.equal(before.status, 404, "inventaire pas encore calculé : le manifeste n'est pas cité");
     const s = await (await fetch(`${base}/api/stack`)).json();
     const stripe = s.stack.technologies.find((t: { id: string }) => t.id === "stripe");
     assert.ok(stripe, "Stripe vient du manifeste");

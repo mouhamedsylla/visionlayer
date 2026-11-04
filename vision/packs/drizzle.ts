@@ -12,6 +12,8 @@ import { commentOf, tableColumns } from "./drizzle-columns.js";
  *                                               un créateur de tables ; une vue. Fonction : pgTable, mysqlTable, sqliteTable
  * db_op(Fichier, read|write, Variable, Ligne)   x.select().from(users), x.insert(users), x.$count(users)…
  * db_op_ns(Fichier, read|write, Module, Membre, Ligne)   x.from(schema.users)
+ * obj_member(Fichier, Objet, Clé, Variable)     export const schema = { users } : un membre d'un objet
+ * tbl_member(Fichier, Objet, Membre, Texte)     schema.users employé comme une table, dans une requête
  * rq_op(Fichier, Clé, Ligne)                    x.query.users.findMany()
  * sql_table(Fichier, read|write, Nom, Ligne)    sql`SELECT … FROM slots` ; INSERT INTO, UPDATE, DELETE FROM : écriture
  * sql_table_var(Fichier, read|write, Variable, Ligne)    sql`DELETE FROM ${notes}`
@@ -87,11 +89,27 @@ const script: PackScript = ({ file, root, imports, fact }) => {
     return undefined;
   };
 
+  /** Une table nommée : `users`, ou `schema.users` (un module entier, ou un objet de tables), rendu par son texte. */
+  const tableRef = (t: Node): string | undefined => {
+    if (t.type === "identifier") return t.text;
+    if (t.type !== "member_expression") return undefined;
+    const o = unwrap(t.childForFieldName("object")), p = t.childForFieldName("property")?.text;
+    if (o?.type !== "identifier" || !p) return undefined;
+    out.push(fact("tbl_member", [file.path, o.text, p, t.text], line(t)));
+    return t.text;
+  };
+
   walkAll(root, (n) => {
     if (n.type !== "variable_declarator") return;
     const v = n.childForFieldName("name");
     const value = n.childForFieldName("value");
     if (v?.type !== "identifier" || !value) return;
+    // export const schema = { users, commandes: orders } : un objet de tables.
+    const lit = unwrap(value);
+    if (lit?.type === "object") for (const p of lit.namedChildren) {
+      if (p.type === "shorthand_property_identifier") out.push(fact("obj_member", [file.path, v.text, p.text, p.text], line(p)));
+      else if (p.type === "pair" && unwrap(p.childForFieldName("value") ?? undefined)?.type === "identifier") out.push(fact("obj_member", [file.path, v.text, p.childForFieldName("key")!.text.replace(/['"]/g, ""), unwrap(p.childForFieldName("value") ?? undefined)!.text], line(p)));
+    }
     const t = tableOf(value);
     if (!t) return;
     out.push(fact("table", [file.path, v.text, t.name, t.fn], line(n)));
@@ -158,7 +176,7 @@ const script: PackScript = ({ file, root, imports, fact }) => {
         const tf = target?.type === "call_expression" ? target.childForFieldName("function") : undefined;
         const want = op === "set" ? "update" : "insert";
         const table = tf?.type === "member_expression" && tf.childForFieldName("property")?.text === want ? unwrap(args(target!)[0]) : undefined;
-        if (table?.type === "identifier") {
+        if (table && tableRef(table)) {
           const a = unwrap(args(n)[0]);
           const objs = a?.type === "array" ? a.namedChildren.map((x) => unwrap(x)) : [a];
           for (const o of objs) {
@@ -184,7 +202,7 @@ const script: PackScript = ({ file, root, imports, fact }) => {
         const chain = chainOf(fn.childForFieldName("object"));
         const from = chain.find((c) => c.prop === "from"), upd = chain.find((c) => c.prop === "update");
         const tv = unwrap(args((upd ?? from)?.call ?? n)[0]);
-        if (tv?.type === "identifier" && (from || upd)) {
+        if (tv && tableRef(tv) && (from || upd)) {
           const cols = columnsOf(args(n)[0], tv.text);
           if (upd) for (const c of cols) out.push(fact("upd_where", [file.path, tv.text, c, upd.line], upd.line));
           else {
@@ -201,14 +219,16 @@ const script: PackScript = ({ file, root, imports, fact }) => {
       if (op === "update") {
         const tv = unwrap(args(n)[0]);
         const at = (fn.childForFieldName("property")?.startPosition.row ?? 0) + 1;
-        if (tv?.type === "identifier") out.push(fact("upd_at", [file.path, tv.text, at], at));
+        if (tv && tableRef(tv)) out.push(fact("upd_at", [file.path, tv.text, at], at));
       }
       // Ce qu'une lecture rend : les colonnes nommées dans select({ … }), ou toute la ligne pour select() ; jointures comprises.
       if (READ.has(op) && op !== "$count") {
         const tv = unwrap(args(n)[0]);
         const sel = chainOf(fn.childForFieldName("object")).find((c) => c.prop === "select" || c.prop === "selectDistinct");
-        if (tv?.type === "identifier" && sel) {
-          const shape = unwrap(args(sel.call)[0]);
+        if (tv && tableRef(tv) && sel) {
+          // select(colonnes), une constante du fichier : son objet.
+          const given = unwrap(args(sel.call)[0]);
+          const shape = given?.type === "identifier" ? unwrap(resolveIdentifier(given)) : given;
           // select() ou select({ user: users }) : la ligne entière de la table.
           const whole = !shape || (shape.type === "object" && shape.namedChildren.some((p) => p.type === "pair" && unwrap(p.childForFieldName("value") ?? undefined)?.text === tv.text));
           if (whole) out.push(fact("read_whole", [file.path, tv.text, line(n)], line(n)));

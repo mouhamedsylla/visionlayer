@@ -7,6 +7,7 @@ import { dirOf, runTargets, sourceCandidates } from "./runs.js";
  * Paquet Node, d'après son inventaire (docs/fonctionnement/packs/node-package.md).
  *
  * pkg_main(Dossier, Fichier)   le fichier que désigne `main` (ou `module`)
+ * pkg_program(PackageJson, Script)   un script qui lance le programme : start, dev, serve, server, prod, worker (P1)
  * pkg_name(PackageJson, Nom)   son nom (`@app/web`) : un script d'un autre paquet le désigne ainsi
  * pkg_script(PackageJson, Script, Fichier)  le fichier que lance un script (`"start": "tsx src/index.ts"`), ou sa source
  * pkg_calls(PackageJson, Script, Autre)                 `npm run autre`, `pnpm autre`, `run-p a b` : un script du même paquet
@@ -24,6 +25,9 @@ import { dirOf, runTargets, sourceCandidates } from "./runs.js";
  * Toutes les places possibles sont émises ; les règles du pack ne gardent que
  * celles qui existent (`present`), la source avant le compilé.
  */
+/** Les scripts qui lancent le programme lui-même, pas un outil (test, build, migration, seed…). */
+const PROGRAM = /^(start|dev|serve|server|prod|worker)(:.*)?$/;
+
 const script: PackScript = ({ file, fact }) => {
   let doc: Record<string, unknown>;
   try { doc = JSON.parse(file.source) as Record<string, unknown>; } catch { return []; }
@@ -46,6 +50,7 @@ const script: PackScript = ({ file, fact }) => {
   if (scripts && typeof scripts === "object") for (const [name, cmd] of Object.entries(scripts as Record<string, unknown>)) {
     if (typeof cmd !== "string") continue;
     const line = lines.findIndex((l) => l.includes(`"${name}"`)) + 1 || 1;
+    if (PROGRAM.test(name)) out.push(fact("pkg_program", [file.path, name], line));
     for (const t of runTargets(cmd, dir)) for (const c of [t, ...sourceCandidates(t)]) out.push(fact("pkg_script", [file.path, name, c], line));
     for (const c of scriptCalls(cmd)) {
       if (c.filters) {

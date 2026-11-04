@@ -25,4 +25,10 @@ Relations rendues : `pkg_main(Dossier, Fichier)`, `pkg_src(Dossier, Fichier)`, `
 | S7 | plusieurs paquets à la fois | `pnpm --filter "./packages/*" dev`, `pnpm --filter "@app/*" start`, `pnpm -r dev`, `--filter "!./packages/enterprise"`, plusieurs `--filter` | lu : les paquets du dépôt que désigne chaque motif (dossier `x/*` ou `x/**`, nom `@scope/*` ou exact), moins ceux qu'une exclusion de la même commande retire ; les sélecteurs de graphe (`foo...`, `[origin/main]`) ne sont pas lus |
 | S8 | l'exécutable d'un cadre | `next start`, `vite`, `nest start` | hors pack : le pack du cadre sait où est son entrée |
 
+## Un programme sans manifeste
+
+| # | Forme | Exemple | État |
+|---|---|---|---|
+| P1 | un script qui lance le programme | `"dev": "tsx src/server.ts"`, `"start": "node dist/server.js"`, aussi `serve`, `server`, `prod`, `worker` et `start:x` | lu : un programme au nom du paquet, si le fichier est présent. Sans Dockerfile ni hébergeur, c'est ainsi qu'on sait ce qui tourne. Un manifeste qui lance le même fichier se fond avec lui, et son nom l'emporte. `test`, `build`, `db:*` ne déclarent rien |
+
 Un script qui s'appelle lui-même, directement ou en boucle, ne lance rien de plus : la règle s'arrête sur ce qui est déjà connu.

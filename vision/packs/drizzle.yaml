@@ -15,6 +15,13 @@ rules: |
   table_in(G, V, N, Fn) :- imports(G, V, H, I), table_in(H, I, N, Fn).
   table_in(G, V, N, Fn) :- imports(G, "*", H, "*"), table_in(H, V, N, Fn).
 
+  % Un objet de tables (export const schema = { users }), importé par son nom ; schema.users vaut alors la table.
+  obj_in(F, V, P, N, Fn) :- obj_member(F, V, P, X), table_in(F, X, N, Fn).
+  obj_in(F, V, P, N, Fn) :- imports(F, V, G, I), obj_in(G, I, P, N, Fn).
+  obj_in(F, V, P, N, Fn) :- imports(F, "*", G, "*"), obj_in(G, V, P, N, Fn).
+  table_in(F, X, N, Fn) :- tbl_member(F, O, P, X), obj_in(F, O, P, N, Fn).
+  table_in(F, X, N, Fn) :- tbl_member(F, O, P, X), imports(F, O, G, "*"), table_in(G, P, N, Fn).
+
   % Les colonnes et les contraintes d'une table (drizzle-columns.ts), rendues en relations neutres.
   entity_field(Tech, N, C, Type, Null) :- col_def(F, T, C, Type, Null), table(F, T, N, Fn), table_tech(Fn, Tech, _).
   entity_value(Tech, N, Db, V) :- col_enum(F, T, K, V, _), col_key(F, T, K, Db), table(F, T, N, Fn), table_tech(Fn, Tech, _).
@@ -38,10 +45,12 @@ rules: |
   % Une suppression de lignes : db.delete(users).
   entity_delete(Tech, N, "", F, L) :- db_delete(F, V, L), table_in(F, V, N, Fn), table_tech(Fn, Tech, _).
   entity_delete(Tech, N, "", F, L) :- db_delete_ns(F, NS, P, L), imports(F, NS, G, "*"), table_in(G, P, N, Fn), table_tech(Fn, Tech, _).
+  entity_delete(Tech, N, "", F, L) :- db_delete_ns(F, NS, P, L), obj_in(F, NS, P, N, Fn), table_tech(Fn, Tech, _).
 
   % Une opération ne compte que si son argument est vraiment une table déclarée.
   accesses(F, Op, Tech, Name, L) :- db_op(F, Op, V, L), table_in(F, V, Name, Fn), table_tech(Fn, Tech, _).
   accesses(F, Op, Tech, Name, L) :- db_op_ns(F, Op, NS, P, L), imports(F, NS, G, "*"), table_in(G, P, Name, Fn), table_tech(Fn, Tech, _).
+  accesses(F, Op, Tech, Name, L) :- db_op_ns(F, Op, NS, P, L), obj_in(F, NS, P, Name, Fn), table_tech(Fn, Tech, _).
   accesses(F, Op, Tech, Name, L) :- sql_table_var(F, Op, V, L), table_in(F, V, Name, Fn), table_tech(Fn, Tech, _).
   % L'API relationnelle et le SQL brut nomment la table : par le nom exporté, par le nom en base.
   accesses(F, read, Tech, Name, L) :- rq_op(F, K, L), table(_, K, Name, Fn), table_tech(Fn, Tech, _).

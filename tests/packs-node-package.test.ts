@@ -99,3 +99,16 @@ test("node-package : une image qui lance un script qui en lance d'autres a ses p
   const entries = m.nodes.flatMap((n) => n.facets.entrypoints ?? []).map((e) => `${e.kind} ${e.key}`).sort();
   assert.ok(entries.includes("http GET /health"), entries.join(", "));
 });
+
+test("node-package P1 : un script de lancement déclare le programme ; un outil, non ; un manifeste du même fichier s'y fond", async () => {
+  const pkg = JSON.stringify({ name: "shop", scripts: { dev: "tsx watch --env-file .env src/server.ts", test: "vitest run", seed: "tsx src/seed.ts", "db:migrate": "tsx src/migrate.ts" } });
+  const files = { "package.json": pkg, "src/server.ts": "export {};\n", "src/seed.ts": "export {};\n", "src/migrate.ts": "export {};\n" };
+  const alone = await mapOf(files);
+  assert.deepEqual(alone.nodes.filter((n) => n.level === "deployable").map((n) => n.id), ["shop"]);
+  const both = await mapOf({ ...files, Dockerfile: `FROM node:20\nCOPY . .\nCMD ["tsx", "src/server.ts"]\n` });
+  const deployables = both.nodes.filter((n) => n.level === "deployable").map((n) => n.id);
+  assert.equal(deployables.length, 1);
+  assert.notEqual(deployables[0], "shop");
+  const none = await mapOf({ "package.json": JSON.stringify({ name: "lib", main: "index.js", scripts: { test: "vitest" } }), "index.js": "export {};\n" });
+  assert.deepEqual(none.nodes.filter((n) => n.level === "deployable").map((n) => n.id), []);
+});

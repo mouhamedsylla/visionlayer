@@ -43,7 +43,7 @@ import type { Pack } from "./packs.js";
 
 /** Catégories du catalogue qui disent l'architecture (pas les outils de test ni de style). */
 const TECH_CATEGORIES = new Set(["framework", "backend", "database", "ai", "cloud"]);
-const UNIT_PRIORITY = ["service", "function", "process", "page", "image"];
+const UNIT_PRIORITY = ["service", "function", "process", "page", "image", "package"];
 const KIND_ORDER: EntrypointKind[] = ["main", "http", "rpc", "event", "message", "schedule", "cli"];
 /** Extensions de code qu'aucun lecteur n'ouvre encore : un trou « langage non lu », jamais un « rien ». */
 const UNREAD_CODE = /\.(py|go|rb|java|kt|rs|php|cs|swift|c|cc|cpp|h|hpp|scala|ex|exs|dart|svelte|vue|astro)$/;

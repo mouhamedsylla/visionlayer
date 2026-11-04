@@ -29,6 +29,8 @@ Chaque forme a un exemple dans [tests/packs-drizzle.test.ts](../../../tests/pack
 | Q9 | du SQL brut avec une table nommée | `` tx.execute(sql`SELECT … FROM slots WHERE … FOR UPDATE`) `` : lecture de `slots` ; `INSERT INTO`, `UPDATE`, `DELETE FROM` : écriture | lu |
 | Q10 | du SQL brut avec la table en variable | `` sql`select * from ${users}` `` | lu |
 | Q11 | du SQL brut avec une table qu'aucun fichier ne déclare | une table créée seulement par une migration | à faire : doit apparaître comme non lue, pas disparaître |
+| Q13 | une table prise dans un objet ou un module | `export const schema = { users }`, importé par son nom, puis `db.insert(schema.users).values({ … })`, `db.select(colonnes).from(schema.users)` ; aussi `import * as schema` | lu : la table, ses colonnes écrites et lues, comme pour `users` seul |
+| Q14 | des colonnes nommées dans une constante | `const colonnes = { id: users.id }`, puis `db.select(colonnes).from(users)` | lu, si la constante est dans le fichier |
 | Q12 | une suppression de lignes | `db.delete(users).where(…)`, `db.delete(schema.users)` | lu : la ligne et sa fonction (`Entity.deletes`). Une table sans suppression lue n'est jamais effacée par le code lu (une migration, un déclencheur ou un outil hors dépôt peuvent le faire) |
 
 ## Les colonnes et les contraintes

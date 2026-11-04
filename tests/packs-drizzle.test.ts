@@ -269,3 +269,29 @@ test("drizzle Q12 : une suppression de lignes", async () => {
   assert.deepEqual(entity(m, "users").deletes?.map((d) => `${d.fn}:${d.proof.line}`), ["forget:6"]);
   assert.deepEqual(entity(m, "orders").deletes?.map((d) => `${d.fn}:${d.proof.line}`), ["purge:7"]);
 });
+
+test("drizzle Q13 Q14 : une table prise dans un objet ou un module, des colonnes dans une constante", async () => {
+  const m = await mapOf({ ...SERVER,
+    "db/uploads.ts": `import { pgTable, text } from "drizzle-orm/pg-core";\nexport const uploads = pgTable("uploads", { id: text("id"), name: text("name"), remoteKey: text("remote_key") });\n`,
+    "db/index.ts": `import { uploads } from "./uploads";\nexport const schema = { uploads };\n`,
+    "server.ts": [
+      `import { drizzle } from "drizzle-orm/node-postgres";`,
+      `import { eq } from "drizzle-orm";`,
+      `import { schema } from "./db/index";`,
+      `import * as raw from "./db/uploads";`,
+      `const db = drizzle(process.env.DATABASE_URL!);`,
+      `const taken = { id: schema.uploads.id, name: schema.uploads.name };`,
+      `export const add = (name: string) => db.insert(schema.uploads).values({ name, remoteKey: "k" });`,
+      `export const list = () => db.select(taken).from(schema.uploads);`,
+      `export const rename = (id: string) => db.update(raw.uploads).set({ name: "x" }).where(eq(raw.uploads.id, id));`,
+      `export const drop = () => db.delete(schema.uploads);`,
+    ].join("\n"),
+  });
+  assert.deepEqual(access(m), ["read postgresql uploads", "write postgresql uploads"]);
+  const f = (n: string) => entity(m, "uploads").fields!.find((x) => x.name === n)!;
+  assert.deepEqual(f("name").writes!.map((w) => `${w.value ?? "?"} ${w.fn}`), ["? add", "x rename"]);
+  assert.deepEqual(f("remote_key").writes!.map((w) => `${w.value} ${w.fn}`), ["k add"]);
+  assert.deepEqual(f("name").reads!.map((r) => r.fn), ["list"]);
+  assert.deepEqual(f("remote_key").reads ?? [], []);
+  assert.deepEqual(entity(m, "uploads").deletes!.map((d) => d.fn), ["drop"]);
+});
