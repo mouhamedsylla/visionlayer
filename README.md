@@ -76,6 +76,8 @@ atelier-api is a real Express, Postgres and Stripe application we use as a test 
 
 ## Tested on projects it had never seen
 
+**[Open the read-only demo](https://mouhamedsylla.github.io/visionlayer/)**: what the engine returned for two of these projects, frozen as it was. Actions that need execution (free questions to Vigie, writing a pack, playing a Replay) run when you start VisionLayer on your own project.
+
 A tool that only works on the project it was tuned on is useless. So we drew 11 public Express projects at random, ran the engine with **no change to its code** at measure time, and compared it with an independent count of their sources.
 
 | Project | Routes (engine / source) | Tables | Routes whose flow shows an effect |

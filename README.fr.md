@@ -58,6 +58,8 @@ atelier-api est une vraie application Express, Postgres et Stripe qui nous sert 
 
 ## Essayé sur des projets jamais vus
 
+**[Ouvrir la démonstration en lecture seule](https://mouhamedsylla.github.io/visionlayer/)** : ce que le moteur a rendu pour deux de ces projets, figé tel quel. Les gestes qui demandent une exécution tournent quand VisionLayer est lancé sur ton projet.
+
 Nous avons tiré au hasard 11 projets Express publics et lancé le moteur **sans toucher à son code au moment de la mesure**, puis comparé à un décompte indépendant de leurs sources : 7 sur 11 se lisent bien (par exemple mini-erp-crm : 20 routes sur 20, 7 tables sur 7, un effet lu sur 19 routes). 2 ont révélé des défauts généraux, corrigés puis remesurés. Les interfaces injectées restent non lues, et un très gros dépôt à plusieurs applications n'est pas concluant.
 
 **La boucle complète sur mini-erp-crm :** VisionLayer signale une lecture hors transaction sur `POST /challans/:id/confirm` ; Muse Code lit la carte, corrige la double décrémentation du stock et ajoute un test ; sa session apparaît, ses règles sont vérifiées, le constat disparaît, et le correctif devient un Replay.
