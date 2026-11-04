@@ -78,6 +78,11 @@ export function syntaxFacts(path: string, root: Node, fact: (rel: string, args: 
     const decl = isExport ? stmt.childForFieldName("declaration") ?? stmt.namedChildren[0] : stmt;
     if (!decl) continue;
     // export default async (job) => { … } : une fonction sans nom, que ses importateurs appellent par le nom qu'ils lui donnent.
+    // export default { find() {} } : un objet de fonctions, que ses importateurs appellent par le nom qu'ils lui donnent.
+    if (isExport && stmt.text.startsWith("export default") && decl.type === "object") {
+      out.push(fact("defines", [path, "default", line(decl)], line(decl)));
+      continue;
+    }
     if (isExport && stmt.text.startsWith("export default") && isFunction(decl) && !decl.childForFieldName("name")) {
       out.push(fact("defines", [path, "default", line(decl)], line(decl)));
       continue;
@@ -127,6 +132,13 @@ export function syntaxFacts(path: string, root: Node, fact: (rel: string, args: 
   if (root.namedChildren.length && root.namedChildren.every((c) => c.type === "comment" || c.type === "import_statement" || (c.type === "export_statement" && c.childForFieldName("source")))) out.push(fact("reexports_only", [path], 1));
   if (/(^|\/)(__tests__|tests?)\/|\.(test|spec)\.[cm]?[jt]sx?$/.test(path)) out.push(fact("test_file", [path], 1));
   if (/\.config\.[cm]?[jt]s$/.test(path)) out.push(fact("config_file", [path], 1));
+  if (/(^|\/)(examples?|samples?|demos?|fixtures?|scripts?|bench(marks?)?|e2e|tools?)\//.test(path)) out.push(fact("sample_file", [path], 1));
+  // Un serveur démarré : x.listen(3000), x.listen(PORT, cb).
+  walkAll(root, (n) => {
+    if (n.type !== "call_expression") return;
+    const f = n.childForFieldName("function");
+    if (f?.type === "member_expression" && f.childForFieldName("property")?.text === "listen") out.push(fact("listens", [path], line(n)));
+  });
   if (path.includes("/")) out.push(fact("top_dir", [path, path.slice(0, path.indexOf("/"))], 1));
 
   // Les fonctions exportées par leur nom, et celles que leur propre fichier emploie.

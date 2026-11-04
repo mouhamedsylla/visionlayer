@@ -11,6 +11,9 @@ import type { Tuple, Value } from "./datalog.js";
  *   typed(F, Portée, Nom, Type, L)             le type d'un paramètre, d'un champ, d'une valeur `new C()`
  *   defines / resolves                          où une classe est déclarée, depuis le fichier qui la nomme
  *
+ * Un objet de fonctions (`export const svc = { list() {} }`) se lit comme une classe ; un import de module entier
+ * (`import * as svc from "./svc"`) mène à la fonction du fichier.
+ *
  * Ce qui n'est pas suivi : un type qui est une interface implémentée par plusieurs classes (le Contrat le
  * montre), une instance fabriquée par une fonction, un appel dont le nom est calculé.
  */
@@ -23,6 +26,7 @@ export function methodResolver(rows: (rel: string) => readonly Tuple[]) {
   for (const t of rows("fn_span")) (spans.get(s(t.args[0])) ?? spans.set(s(t.args[0]), []).get(s(t.args[0]))!).push({ name: s(t.args[1]), start: Number(t.args[2]), end: Number(t.args[3]) });
   const resolves = new Map(rows("resolves").map((t) => [`${s(t.args[0])}\0${s(t.args[1])}`, { path: s(t.args[2]), line: Number(t.args[3]) }]));
   const definedAt = new Map(rows("defines").map((t) => [`${s(t.args[0])}\0${s(t.args[2])}`, s(t.args[1])]));
+  const modules = new Map(rows("imports").filter((t) => s(t.args[3]) === "*" && s(t.args[1]) !== "*").map((t) => [`${s(t.args[0])}\0${s(t.args[1])}`, s(t.args[2])]));
   const typed = new Map<string, string>();
   for (const t of rows("typed")) {
     const k = `${s(t.args[0])}\0${s(t.args[1])}\0${s(t.args[2])}`;
@@ -69,6 +73,10 @@ export function methodResolver(rows: (rel: string) => readonly Tuple[]) {
       if (second) return method(classOfValue(file, cls, first!), second);
       return method({ path: file, cls }, first);
     }
-    return method(classOfValue(file, "", root), first);
+    const found = method(classOfValue(file, "", root), first);
+    if (found) return found;
+    const mod = modules.get(`${file}\0${root}`);
+    const fn = mod && !second ? spans.get(mod)?.find((x) => x.name === first) : undefined;
+    return fn ? { path: mod!, name: fn.name, start: fn.start } : undefined;
   };
 }

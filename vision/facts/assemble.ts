@@ -47,7 +47,7 @@ import type { Pack } from "./packs.js";
 
 /** Catégories du catalogue qui disent l'architecture (pas les outils de test ni de style). */
 const TECH_CATEGORIES = new Set(["framework", "backend", "database", "ai", "cloud"]);
-const UNIT_PRIORITY = ["service", "function", "process", "page", "image", "package"];
+const UNIT_PRIORITY = ["service", "function", "process", "page", "image", "package", "inferred"];
 const KIND_ORDER: EntrypointKind[] = ["main", "http", "rpc", "event", "message", "schedule", "cli"];
 /** Extensions de code qu'aucun lecteur n'ouvre encore : un trou « langage non lu », jamais un « rien ». */
 const UNREAD_CODE = /\.(py|go|rb|java|kt|rs|php|cs|swift|c|cc|cpp|h|hpp|scala|ex|exs|dart|svelte|vue|astro)$/;
@@ -109,7 +109,11 @@ export function assemble(db: Database, opts: AssembleOptions): ArchModelV2 {
   for (const [target, list] of [...units].sort(([a], [b]) => a.localeCompare(b))) {
     const best = [...list].sort((a, b) => UNIT_PRIORITY.indexOf(a.kind) - UNIT_PRIORITY.indexOf(b.kind))[0]!;
     // Une page s'appelle souvent `index` : le nom du programme est celui de son paquet.
-    const pkg = best.kind === "page" && best.name === "index" ? packageNames.filter((x) => !x.dir || best.proof[0]?.path.startsWith(`${x.dir}/`)).sort((a, b) => b.dir.length - a.dir.length)[0] : undefined;
+    // Un programme déduit prend le nom de son paquet, ou celui de son fichier.
+    const inPackage = (path: string) => packageNames.filter((x) => !x.dir || path.startsWith(`${x.dir}/`)).sort((a, b) => b.dir.length - a.dir.length)[0];
+    const stem = target.split("/").at(-1)!.replace(/\.[^.]+$/, "");
+    const pkg = best.kind === "page" && best.name === "index" ? inPackage(best.proof[0]?.path ?? target)
+      : best.kind === "inferred" ? inPackage(target) ?? { dir: "", name: stem } : undefined;
     let id = pkg?.name ?? best.name;
     if (usedIds.has(id)) id = `${id}:${target}`;
     usedIds.add(id);

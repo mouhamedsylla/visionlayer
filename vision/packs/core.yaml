@@ -11,6 +11,15 @@ rules: |
   % Un fichier que le framework charge par convention quand un autre tourne (une page, une route par fichier), sans import.
   reach(R, H) :- reach(R, G), loads(G, H).
 
+  % Un fichier que personne n'importe et qui démarre quelque chose (un serveur, un consommateur, une tâche planifiée) est un
+  % programme, même si aucun script ni manifeste ne le dit.
+  imported(F) :- depends(_, F).
+  self_start(F) :- listens(F).
+  self_start(F) :- entrypoint(F, message, _, _, _).
+  self_start(F) :- entrypoint(F, schedule, _, _, _).
+  unit(F, F, "inferred") :- self_start(F), not imported(F), not test_file(F), not sample_file(F).
+  unit_runs(F, F, F) :- self_start(F), not imported(F), not test_file(F), not sample_file(F).
+
   % Le code derrière un nom : défini dans le fichier, ou importé d'un autre fichier du dépôt.
   resolves(F, N, F, L) :- defines(F, N, L).
   resolves(F, N, G, L) :- imports(F, N, G, I), defines(G, I, L).

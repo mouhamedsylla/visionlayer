@@ -110,3 +110,41 @@ test("contrat d'une route : la chaîne dans l'ordre, sans les paquets, le schém
   assert.ok(e("PATCH /api/items").contract!.input!.fields.every((f) => !f.required), "partial : rien n'est requis");
   assert.equal(e("PUT /api/items").contract!.input?.schema, "schema", "schéma appliqué dans le handler");
 });
+
+const API = { "package.json": `{ "name": "x", "scripts": { "start": "tsx main.ts" }, "dependencies": { "express": "4", "@prisma/client": "5" } }\n`,
+  "schema.prisma": `datasource db {\n  provider = "postgresql"\n  url = env("X")\n}\nmodel User {\n  id String @id\n}\n`,
+  "db.ts": `import { PrismaClient } from "@prisma/client";\nexport const prisma = new PrismaClient();\n` };
+const reads = (m: Awaited<ReturnType<typeof mapOf>>, k: string) => m.nodes.flatMap((n) => n.facets.entrypoints ?? []).find((e) => e.key === k)?.flow?.filter((s) => s.target?.entity).map((s) => `${s.kind} ${s.target?.entity}`);
+
+test("couches : route, contrôleur, service en objet, dépôt en objet, jusqu'à la table", async () => {
+  const m = await mapOf({ ...API,
+    "main.ts": `import express from "express";\nimport { list, one, viaDefault, viaNs } from "./ctrl";\nconst app = express();\napp.get("/a", list);\napp.get("/b", one);\napp.get("/c", viaDefault);\napp.get("/d", viaNs);\napp.listen(3000);\n`,
+    "ctrl.ts": [`import { svc } from "./svc";`, `import other from "./other";`, `import * as ns from "./ns";`,
+      `export const list = async (req, res) => { res.json(await svc.list()); };`,
+      `export const one = async (req, res) => { res.json(await svc.named()); };`,
+      `export const viaDefault = async (req, res) => { res.json(await other.find()); };`,
+      `export const viaNs = async (req, res) => { res.json(await ns.find()); };`].join("\n"),
+    "svc.ts": `import { repo } from "./repo";\nasync function named() { return repo.find(); }\nexport const svc = { async list() { return repo.find(); }, named };\n`,
+    "repo.ts": `import { prisma } from "./db";\nexport const repo = { find: async () => prisma.user.findMany() };\n`,
+    "other.ts": `import { prisma } from "./db";\nexport default { find() { return prisma.user.findMany(); } };\n`,
+    "ns.ts": `import { prisma } from "./db";\nexport async function find() { return prisma.user.findMany(); }\n`,
+  });
+  for (const k of ["GET /a", "GET /b", "GET /c", "GET /d"]) assert.deepEqual(reads(m, k), ["read user"], k);
+});
+
+test("un paquet sans nom reste un programme, nommé d'après son dossier", async () => {
+  const m = await mapOf({ "api/package.json": `{ "scripts": { "start": "tsx main.ts" }, "dependencies": { "express": "4" } }\n`, "api/main.ts": `import express from "express";\nconst app = express();\napp.get("/a", (q, r) => r.end());\napp.listen(3000);\n` });
+  assert.deepEqual(m.nodes.filter((n) => n.level === "deployable").map((n) => n.name), ["api"]);
+  assert.equal(m.nodes.find((n) => n.name === "api")?.facets.entrypoints?.some((e) => e.key === "GET /a"), true);
+});
+
+test("un fichier que personne n'importe et qui démarre quelque chose est un programme, sans script", async () => {
+  const m = await mapOf({ "worker/package.json": `{ "name": "worker", "dependencies": { "bullmq": "5" } }\n`,
+    "worker/src/worker.ts": `import { Worker } from "bullmq";\nnew Worker("mails", async (job) => { console.log(job); }, {});\n`,
+    "server/package.json": `{ "dependencies": { "express": "4" } }\n`,
+    "server/index.ts": `import express from "express";\nexport const app = express();\napp.listen(3000);\n`,
+    "scripts/tool.ts": `import { Worker } from "bullmq";\nnew Worker("t", async () => {}, {});\n`,
+  });
+  const dep = m.nodes.filter((n) => n.level === "deployable" && !["store", "channel", "external"].includes(n.role));
+  assert.deepEqual(dep.map((n) => `${n.name} ${n.role}`).sort(), ["index service", "worker worker"]);
+});

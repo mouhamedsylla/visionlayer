@@ -151,7 +151,44 @@ export function classMembers(root: Node): Map<string, Node> {
 
 /** Les fonctions de premier niveau, puis les méthodes des classes de premier niveau. */
 export function functionsAndMethods(root: Node, wrapped = false): Map<string, Node> {
-  return new Map([...topLevelFunctions(root, wrapped), ...classMembers(root), ...(wrapped ? registeredCallbacks(root) : [])]);
+  return new Map([...topLevelFunctions(root, wrapped), ...classMembers(root), ...(wrapped ? [...objectMembers(root), ...registeredCallbacks(root)] : [])]);
+}
+
+/**
+ * Les fonctions d'un objet de premier niveau, nommées `objet.membre` comme les méthodes d'une classe : c'est ainsi qu'on
+ * écrit souvent un service. `export const svc = { list() {}, get: async () => {}, find: wrap(async () => {}), create, remove: removeOne }`
+ * et `export default { … }`, qui s'appelle `default`.
+ */
+export function objectMembers(root: Node): Map<string, Node> {
+  const out = new Map<string, Node>();
+  const tops = topLevelFunctions(root, true);
+  const read = (name: string, obj: Node) => {
+    for (const m of obj.namedChildren) {
+      if (m.type === "method_definition") { const k = m.childForFieldName("name")?.text; if (k) out.set(`${name}.${k}`, m); continue; }
+      if (m.type === "shorthand_property_identifier") { const f = tops.get(m.text); if (f) out.set(`${name}.${m.text}`, f); continue; }
+      if (m.type !== "pair") continue;
+      const k = m.childForFieldName("key")?.text.replace(/['"]/g, "");
+      let v = m.childForFieldName("value");
+      if (v?.type === "call_expression") v = v.childForFieldName("arguments")?.namedChildren.at(-1) ?? v;
+      if (!k || !v) continue;
+      if (isFunction(v)) out.set(`${name}.${k}`, v);
+      else if (v.type === "identifier" && tops.get(v.text)) out.set(`${name}.${k}`, tops.get(v.text)!);
+    }
+  };
+  for (const stmt of root.namedChildren) {
+    if (stmt.type === "export_statement" && stmt.text.startsWith("export default")) {
+      const v = stmt.childForFieldName("value") ?? stmt.namedChildren[0];
+      if (v?.type === "object") read("default", v);
+      continue;
+    }
+    const decl = stmt.type === "export_statement" ? stmt.childForFieldName("declaration") ?? stmt.namedChildren[0] : stmt;
+    if (decl?.type !== "lexical_declaration" && decl?.type !== "variable_declaration") continue;
+    for (const d of decl.namedChildren) {
+      const name = d.childForFieldName("name")?.text, value = d.childForFieldName("value");
+      if (name && value?.type === "object") read(name, value);
+    }
+  }
+  return out;
 }
 
 /**

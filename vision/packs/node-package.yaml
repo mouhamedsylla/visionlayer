@@ -17,8 +17,8 @@ rules: |
 
   % P1 : un script qui lance un fichier de code présent déclare un programme, sans Dockerfile ni hébergeur. Il se fond avec
   % ce qu'un manifeste dit lancer le même fichier : les déployables sont un par fichier lancé.
-  unit(K, N, "package") :- pkg_program(K, S), pkg_script(K, S, T), present(T), pkg_name(K, N).
-  unit_runs(K, N, T) :- pkg_program(K, S), pkg_script(K, S, T), present(T), pkg_name(K, N).
+  unit(K, N, "package") :- pkg_program(K, S), pkg_script(K, S, T), present(T), pkg_label(K, N).
+  unit_runs(K, N, T) :- pkg_program(K, S), pkg_script(K, S, T), present(T), pkg_label(K, N).
 
   % S7 : les paquets que désigne un filtre (motif, nom, dossier, -r), moins ceux qu'une exclusion de la même commande retire.
   pkg_skip(K, S, G, K2) :- pkg_calls_except(K, S, G, Kd, P), pkg_glob(K2, Kd, P).

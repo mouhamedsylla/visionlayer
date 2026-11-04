@@ -46,6 +46,8 @@ const script: PackScript = ({ file, fact }) => {
     for (const c of sourceCandidates(rel)) if (!at(c).startsWith("..")) out.push(fact("pkg_src", [dir, at(c)], line));
   }
   const nameLine = lines.findIndex((l) => l.includes(`"name"`)) + 1 || 1;
+  // Un paquet sans nom reste un programme : il prend le nom de son dossier.
+  out.push(fact("pkg_label", [file.path, typeof doc.name === "string" ? doc.name : dir && dir !== "." ? dir.split("/").at(-1)! : "app"], nameLine));
   if (typeof doc.name === "string") out.push(fact("pkg_name", [file.path, doc.name], nameLine));
   for (const [kind, key] of globKeys(dir, typeof doc.name === "string" ? doc.name : undefined)) out.push(fact("pkg_glob", [file.path, kind, key], nameLine));
   const scripts = doc.scripts;
