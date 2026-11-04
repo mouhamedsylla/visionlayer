@@ -1,3 +1,4 @@
+import { Obj } from "../../ui/open";
 import { useState } from "react";
 import type { FlowRow, flowView } from "../../model/flow";
 import { txRuns } from "../../model/flow";
@@ -55,7 +56,7 @@ export function StepRow({ r, n, on, pick }: { r: FlowRow; n: number; on: boolean
       <span className="fl__label" style={{ paddingLeft: s.depth * 12 }}>
         <Step n={r.n} tone={r.tone === "refuse" ? "refuse" : r.tone === "effect" || r.tone === "reply" ? undefined : "quiet"} />
         <span className="fl__what">
-          {r.tone === "effect" ? <Effect kind={s.kind as "write"} what={r.what} />
+          {r.tone === "effect" ? <Obj to={s.target?.entity ? { entity: s.target.entity, node: s.target.node } : s.target?.topic ? { topic: s.target.topic, node: s.target.node } : s.target ? { service: s.target.node } : undefined}><Effect kind={s.kind as "write"} what={r.what} /></Obj>
             : r.tone === "refuse" ? <Effect kind="refuse" what={[s.status, s.code ?? s.name].filter(Boolean).join(" ")} />
             : r.tone === "invoke" ? <span className="fl__inv">appelle <code>{s.name}()</code></span>
             : r.tone === "reply" ? <span className="fl__inv">répond <code>{[s.status, s.name].filter(Boolean).join(" ")}</code></span>

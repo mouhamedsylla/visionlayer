@@ -56,14 +56,18 @@ async function versionManifest(pkg: string, version: string | undefined, get: ty
 }
 
 /** README, types et docs/ du paquet publié, et de son @types s'il existe. Sans réseau ou sans paquet : rien. */
-export async function publishedDocs(pkg: string, version?: string, get: typeof fetch = fetch): Promise<Doc[]> {
+export async function publishedDocs(pkg: string, version?: string, get: typeof fetch = fetch, retryWait = 3000): Promise<Doc[]> {
   const typesName = `@types/${pkg.startsWith("@") ? pkg.slice(1).replace("/", "__") : pkg}`;
   const out: Doc[] = [];
+  // Une coupure passagère n'enlève pas sa documentation à l'écrivain.
+  const again = (async (url: string) => {
+    for (let i = 1; ; i++) { try { return await get(url); } catch (e) { if (i >= 3) throw e; await new Promise((ok) => setTimeout(ok, retryWait * i)); } }
+  }) as unknown as typeof fetch;
   for (const name of [pkg, typesName]) {
     try {
-      const m = await versionManifest(name, name === pkg ? version : undefined, get);
+      const m = await versionManifest(name, name === pkg ? version : undefined, again);
       if (!m?.dist?.tarball) continue;
-      const r = await get(m.dist.tarball);
+      const r = await again(m.dist.tarball);
       if (!r.ok) continue;
       const files = untar(gunzipSync(Buffer.from(await r.arrayBuffer())));
       const label = (p: string) => `npm : ${name}@${m.version}/${p}`;

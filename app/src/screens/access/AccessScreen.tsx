@@ -1,3 +1,4 @@
+import { Obj } from "../../ui/open";
 import type { MapPayload } from "../../api/types";
 import { accessMatrix, actors, layers, levelsText, plural, reachByResource, type ActorRow } from "../../model/access";
 import { Rep } from "../../lang/Rep";
@@ -71,7 +72,7 @@ export function AccessScreen({ map, item, open, openFlow }: { map: MapPayload; i
             reads="par ligne : une table, et ce que chaque acteur peut y faire par les routes qu'il atteint. Noir, il écrit ; à filet, il lit. Déduit des déroulés : une route dont le code n'est pas lu n'y figure pas.">
             <table className="ax__mx">
               <thead><tr><th>Table</th>{m.actors.map((x) => <th key={x.id} className={x.id === row?.id ? "is-on" : ""}><button onClick={() => setChosen(x.id)}>{x.name}</button></th>)}</tr></thead>
-              <tbody>{m.tables.map((t) => <tr key={t}><td><code>{t}</code></td>{m.actors.map((x) => { const k = m.cell(t, x.id); return <td key={x.id} className={x.id === row?.id ? "is-on" : ""}>{k && <Effect kind={k} what="" />}</td>; })}</tr>)}</tbody>
+              <tbody>{m.tables.map((t) => <tr key={t}><td><Obj to={{ entity: t }}><code>{t}</code></Obj></td>{m.actors.map((x) => { const k = m.cell(t, x.id); return <td key={x.id} className={x.id === row?.id ? "is-on" : ""}>{k && <Effect kind={k} what="" />}</td>; })}</tr>)}</tbody>
             </table>
           </Rep>
         )}

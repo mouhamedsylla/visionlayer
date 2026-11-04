@@ -1,3 +1,4 @@
+import { techsForPackage } from "../stack/catalog.js";
 import { selectDocs } from "./published-docs.js";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
@@ -29,8 +30,22 @@ export interface BriefInput {
   builtins: Pack[];
   /** Un pack local accepté, montré comme exemple. */
   example: string;
+  /** Les autres paquets de la même technologie que le projet déclare : le pack doit les couvrir aussi. */
+  also?: string[];
   /** Une capture : la question posée au code (planche L5). Le pack ne lit alors que ce qui y répond. */
   question?: string;
+}
+
+/** Les autres paquets de la même technologie que le projet déclare : `@aws-sdk/client-s3` et `@aws-sdk/lib-storage`. Le manifeste seul, jamais le code. */
+export function siblingPackages(root: string, pkg: string): string[] {
+  const techs = new Set(techsForPackage("npm", pkg).map((t) => t.id));
+  if (!techs.size) return [];
+  try {
+    const m = JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as { dependencies?: Record<string, string> };
+    return Object.keys(m.dependencies ?? {}).filter((d) => d !== pkg && techsForPackage("npm", d).some((t) => techs.has(t.id)));
+  } catch {
+    return [];
+  }
 }
 
 /** La documentation qu'on trouve dans node_modules ; vide : le paquet n'est pas installé. */
@@ -151,7 +166,9 @@ ${vocabularyText(input.builtins)}
 ${input.example.trim()}
 \`\`\`
 
-## La documentation de \`${pkg}\`
+## La documentation de \`${pkg}\`${input.also?.length ? `
+
+Cette technologie passe aussi par ${input.also.map((a) => `\`${a}\``).join(", ")} : leur documentation est ci-dessous. Un projet peut n'employer que l'un de ces paquets : couvre-les tous, dans \`when.imports\` et dans tes formes.` : ""}
 
 ${docs.length ? docs.map((d) => `### ${d.source}\n\n${d.text.length > DOC_LIMIT ? `${d.text.slice(0, DOC_LIMIT)}\n\n[… coupé à ${DOC_LIMIT} caractères]` : d.text}`).join("\n\n") : "Aucune documentation trouvée : ni dans node_modules, ni publiée sur npm, ni fournie. N'écris rien que tu ne puisses fonder ; rends un pack vide plutôt qu'un pack deviné."}
 `;
@@ -173,7 +190,7 @@ export function versionOf(root: string, pkg: string): string | undefined {
  * dans celui d'un paquet du dépôt (un monorepo installe souvent une bibliothèque dans le paquet qui l'emploie).
  * Les types sont ceux que nomme le champ `types` du paquet, sinon les .d.ts posés à sa racine.
  */
-function installedDocs(root: string, pkg: string): { source: string; text: string }[] {
+export function installedDocs(root: string, pkg: string): { source: string; text: string }[] {
   const out: { source: string; text: string }[] = [];
   const typesName = `@types/${pkg.startsWith("@") ? pkg.slice(1).replace("/", "__") : pkg}`;
   for (const name of [pkg, typesName]) {

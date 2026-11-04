@@ -1,3 +1,4 @@
+import { Obj } from "../../ui/open";
 import type { CSSProperties } from "react";
 import type { ArchNode, MapPayload } from "../../api/types";
 import { blockLines, tableGroups, type MapLink } from "../../model/map";
@@ -19,7 +20,7 @@ export function Block({ node, tech, state, select, enter, style, links, selected
       <Resource name={node.name} kind={node.role === "channel" ? "queue" : "store"} meta={tables ? `${tables} tables` : node.facets.channel?.topics.map((x) => `file ${x.name}`).join(", ")} on={common.on} far={common.far} onClick={common.onClick}>
         {unread}
         {groups.map((g) => (
-          <span key={g.label} className="tgroup"><span className="tg">{g.label}</span><span className="tl">{g.tables.map((x) => <Entity key={x} name={x} write={g.cls === "w"} />)}</span></span>
+          <span key={g.label} className="tgroup"><span className="tg">{g.label}</span><span className="tl">{g.tables.map((x) => <Obj key={x} to={{ entity: x, node: node.id }}><Entity name={x} write={g.cls === "w"} /></Obj>)}</span></span>
         ))}
       </Resource>
     );

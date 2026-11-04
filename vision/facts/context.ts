@@ -67,7 +67,9 @@ export function describe(nodes: ArchNode[], edges: ArchEdge[]): void {
     const consumes = ep.filter((e) => e.kind === "message" || e.kind === "event").map((e) => `« ${e.key} »`);
     if (consumes.length) parts.push(`consomme ${list(consumes)}`);
     const out = edges.filter((e) => e.from === n.id);
-    const entities = (kind: string) => new Set(out.filter((e) => e.kind === kind && e.target?.entity).map((e) => e.target!.entity!)).size;
+    // Les tables seulement : une famille de clés Redis n'en est pas une.
+    const relational = (id: string) => !!nodes.find((x) => x.id === id)?.facets.data?.shape;
+    const entities = (kind: string) => new Set(out.filter((e) => e.kind === kind && e.target?.entity && relational(e.to)).map((e) => e.target!.entity!)).size;
     const [w, r] = [entities("write"), entities("read")];
     if (w || r) parts.push(w && r ? `écrit dans ${plural(w, "table", "tables")} et en lit ${r}` : w ? `écrit dans ${plural(w, "table", "tables")}` : `lit ${plural(r, "table", "tables")}`);
     const topics = [...new Set(out.filter((e) => e.kind === "message" && e.target?.topic).map((e) => `« ${e.target!.topic} »`))];

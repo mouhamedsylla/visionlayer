@@ -12,6 +12,7 @@ export interface Relation { name: string; args: string[]; meaning: string; examp
 
 export const READABLE: Relation[] = [
   { name: "import_raw", args: ["Fichier", "Local", "Spécificateur", "Importé"], meaning: "un import tel qu'écrit", example: 'import cron from "node-cron" → import_raw("jobs.ts", "cron", "node-cron", "default")' },
+  { name: "imports_pkg", args: ["Fichier", "Local", "Paquet", "Importé"], meaning: "un import d'un paquet, par son nom : pour savoir si le projet emploie le paquet quelque part, même dans un autre fichier", example: 'imports_pkg(_, _, "fastify", _)' },
   { name: "imports", args: ["Fichier", "Local", "FichierCible", "Importé"], meaning: "un import résolu vers un fichier du dépôt" },
   { name: "defines", args: ["Fichier", "Nom", "Ligne"], meaning: "function f, const f = …, class C" },
   { name: "export_fn", args: ["Fichier", "Nom", "Ligne"], meaning: "une fonction exportée" },

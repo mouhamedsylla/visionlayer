@@ -54,22 +54,51 @@ export function apiKey(): string {
   return key;
 }
 
-export async function writePack(brief: Brief, builtins: Pack[], opts: { onStep?: (s: Step) => void } = {}): Promise<WriteResult> {
+/**
+ * L'essai d'un pack sur le projet ouvert, à part : s'il n'ajoute rien, le pack est rendu à l'agent avec des comptes,
+ * jamais une ligne du projet. `previous` : un pack déjà écrit qui n'ajoutait rien, à corriger plutôt qu'à réécrire.
+ */
+export interface WriteOptions {
+  onStep?: (s: Step) => void;
+  tryOnProject?: (yaml: string) => Promise<{ adds: boolean; feedback: string }>;
+  previous?: { yaml: string; feedback: string };
+}
+
+/** Une coupure réseau ou une erreur passagère du service ne coûte pas tout le travail déjà fait. */
+export async function withRetry(call: () => Promise<Response>, tries = 4, wait = 5000): Promise<Response> {
+  for (let i = 1; ; i++) {
+    try {
+      const r = await call();
+      if ((r.status !== 429 && r.status < 500) || i >= tries) return r;
+    } catch (e) {
+      if (i >= tries) throw e;
+    }
+    await new Promise((ok) => setTimeout(ok, wait * i));
+  }
+}
+
+/** Combien de fois un pack qui n'ajoute rien lui est rendu, avant de s'arrêter. */
+const MAX_RETURNS = 3;
+
+export async function writePack(brief: Brief, builtins: Pack[], opts: WriteOptions = {}): Promise<WriteResult> {
   const key = apiKey();
   const t0 = Date.now();
   const steps: Step[] = [];
   const usage = { input: 0, output: 0, cost: 0, turns: 0, seconds: 0 };
   let previous: string | undefined;
-  let input: unknown[] = [{ role: "user", content: `Écris le pack de \`${brief.pkg}\` en suivant la fiche. Termine par submit_pack.` }];
+  let returned = 0;
+  let input: unknown[] = [{ role: "user", content: opts.previous
+    ? `Voici ton pack de \`${brief.pkg}\`. Il passe ses tests, mais il n'ajoute rien sur le projet où il a été essayé.\n\n${opts.previous.feedback}\n\nCorrige-le, sans repartir de zéro, puis termine par submit_pack.\n\n\`\`\`yaml\n${opts.previous.yaml}\n\`\`\``
+    : `Écris le pack de \`${brief.pkg}\` en suivant la fiche. Termine par submit_pack.` }];
   let result: WriteResult | undefined;
   let said: string | undefined;
 
   for (let turn = 1; turn <= MAX_TURNS && !result; turn++) {
-    const res = await fetch(ENDPOINT, {
+    const res = await withRetry(() => fetch(ENDPOINT, {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
       body: JSON.stringify({ model: MODEL, instructions: brief.text, input, tools: TOOLS, ...(previous ? { previous_response_id: previous } : {}) }),
-    });
+    }));
     const data = await res.json() as { id: string; output: { type: string; call_id?: string; name?: string; arguments?: string; content?: { text?: string }[] }[]; usage: { input_tokens: number; output_tokens: number } };
     if (!res.ok) throw new Error(`Muse Spark : ${res.status} ${JSON.stringify(data).slice(0, 400)}`);
     previous = data.id;
@@ -94,7 +123,11 @@ export async function writePack(brief: Brief, builtins: Pack[], opts: { onStep?:
         else if (c.name === "submit_pack") {
           const check = await checkForAgent(args.yaml!, builtins);
           output = check.ok ? "Pack reçu." : `Refusé, corrige puis rends-le de nouveau :\n${check.text}`;
-          if (check.ok) result = { yaml: args.yaml!, doc: args.doc!, steps, usage };
+          if (check.ok) {
+            const tried = returned < MAX_RETURNS ? await opts.tryOnProject?.(args.yaml!) : undefined;
+            if (tried && !tried.adds) { returned++; output = `Refusé : il passe ses tests, mais il n'ajoute rien sur le projet où il a été essayé.\n\n${tried.feedback}\n\nCorrige-le puis rends-le de nouveau.`; }
+            else result = { yaml: args.yaml!, doc: args.doc!, steps, usage };
+          }
         } else output = `outil inconnu : ${c.name}`;
       } catch (e) {
         output = `erreur : ${(e as Error).message}`;

@@ -1,7 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { gzipSync } from "node:zlib";
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { publishedDocs, selectDocs, untar } from "../vision/writer/published-docs.js";
+import { siblingPackages } from "../vision/writer/brief.js";
 
 /** Une archive tar écrite à la main : le même format que npm. */
 function tar(files: Record<string, string>): Buffer {
@@ -42,5 +46,13 @@ test("écrivain : la version déclarée par le projet, sinon la dernière ; sans
   assert.deepEqual(docs, [{ source: "npm : fastify@5.6.2/README.md", text: "doc" }]);
   assert.equal(asked[0], "https://registry.npmjs.org/fastify/5.6.2");
   const down = (async () => { throw new Error("hors ligne"); }) as unknown as typeof fetch;
-  assert.deepEqual(await publishedDocs("fastify", undefined, down), []);
+  assert.deepEqual(await publishedDocs("fastify", undefined, down, 0), []);
+});
+
+test("écrivain : les paquets de la même technologie que le projet déclare, pas les autres", () => {
+  const dir = mkdtempSync(join(tmpdir(), "vision-also-"));
+  writeFileSync(join(dir, "package.json"), JSON.stringify({ dependencies: { "@aws-sdk/client-s3": "1", "@aws-sdk/lib-storage": "1", fastify: "5" } }));
+  assert.deepEqual(siblingPackages(dir, "@aws-sdk/client-s3"), ["@aws-sdk/lib-storage"]);
+  assert.deepEqual(siblingPackages(dir, "fastify"), []);
+  assert.deepEqual(siblingPackages(dir, "multer"), []);
 });

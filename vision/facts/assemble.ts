@@ -602,7 +602,7 @@ export function assemble(db: Database, opts: AssembleOptions): ArchModelV2 {
     }
   }
   // Les bibliothèques que le code des programmes importe, hors catalogue et sans pack : la carte ne dit pas ce qu'elles font, et elle le dit.
-  const covered = new Set(opts.packs.flatMap((p) => [p.id, ...(p.imports ?? [])]));
+  const covered = new Set(opts.packs.flatMap((p) => [p.id, ...p.tech, ...(p.imports ?? [])]));
   const executed = new Set([...reachOf.values()].flat());
   const libraries = new Map<string, Proof[]>();
   for (const t of rows("imports_pkg")) {

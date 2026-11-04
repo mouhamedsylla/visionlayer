@@ -1,3 +1,5 @@
+import { findingPlace, type Place } from "./destinations";
+import type { Screen } from "../shell/route";
 import type { ArchNode, Finding, FindingCode, MapPayload, Proof } from "../api/types";
 import { FINDING_SCREEN, FINDING_TONE, plural } from "./words";
 
@@ -61,7 +63,7 @@ export interface Hero {
   text: string;
   side: { title: string; note: string; rows: { idx: string; code: string; what: string; tag: string; proof?: Proof }[]; more?: string };
   /** Où le comprendre (planche L6 : un constat ouvre l'écran de sa question, l'élément choisi). */
-  go?: { screen: "acces" | "donnees" | "taches" | "carte" | "table"; item?: string; label: string };
+  go?: Place;
 }
 
 /**
@@ -92,12 +94,8 @@ export function overviewHero(p: MapPayload): Hero | undefined {
   }
   const f = byGravity(p.model.findings)[0];
   if (!f) return undefined;
-  // Une table nommée par le constat : il s'ouvre sur elle ; sinon sur l'écran de sa question.
-  const table = FINDING_SCREEN[f.code] === "donnees" ? p.model.nodes.flatMap((n) => (n.facets.data?.entities ?? []).map((e) => ({ n, e })))
-    .find(({ e }) => new RegExp(`(^|[^\\w])${e.name}([^\\w]|$)`).test(f.message)) : undefined;
-  const screen = FINDING_SCREEN[f.code] ?? "carte";
-  const go = table ? { screen: "table" as const, item: `${table.n.id}/${table.e.name}`, label: `Voir ce que dit ${table.e.name}` }
-    : { screen, label: `Voir dans ${{ acces: "Accès", donnees: "Données", taches: "Tâches planifiées", carte: "la carte" }[screen]}` };
+  // L'écran de sa question, l'élément choisi.
+  const go = findingPlace(p, f);
   return {
     kind: "finding", tag: `Constat, ${f.proof[0]!.path}:${f.proof[0]!.line}`, go,
     lead: sentence(f.message), text: rest(f.message),
@@ -270,7 +268,7 @@ export function shortName(name: string): string {
 
 /* --- À savoir --------------------------------------------------------------------------------- */
 
-export interface Attention { tone: "critical" | "signal"; icon: string; title: string; sub: string; proof: Proof; action: string; screen: "acces" | "donnees" | "taches" | "carte"; node?: string }
+export interface Attention { tone: "critical" | "signal"; icon: string; title: string; sub: string; proof: Proof; action: string; go: Place }
 
 /** Les icônes de la planche, par famille de constat : un cadenas, une horloge, un document, un journal. */
 const ICON: Partial<Record<FindingCode, string>> & { other: string } = {
@@ -284,15 +282,12 @@ const ICON: Partial<Record<FindingCode, string>> & { other: string } = {
   write_then_enqueue: "M2.5 5h7l-2-2M13.5 11h-7l2 2",
   other: "M8 4.5v4.5M8 11.5v.01M8 1.8l6.5 11.4H1.5z",
 };
-const ACTION: Partial<Record<FindingCode, string>> = {
-  unguarded_route: "Accès", personal_data_logged: "Données", race_read_then_write: "Rejouer", read_outside_tx: "Données", write_then_enqueue: "Données",
-  unused_value: "Données", scheduled_on_every_instance: "Tâches", doc_contradiction: "Comparer",
-};
+const ACTION: Partial<Record<Screen, string>> = { acces: "Accès", donnees: "Données", table: "Données", taches: "Tâches", mecanismes: "Mécanismes", bloc: "Le bloc", carte: "Carte" };
 
 export function attention(p: MapPayload): Attention[] {
   return byGravity(p.model.findings).map((f) => ({
     tone: FINDING_TONE[f.code], icon: ICON[f.code] ?? ICON.other,
     title: sentence(f.message), sub: rest(f.message), proof: f.proof[0]!,
-    action: ACTION[f.code] ?? "Carte", screen: ({ Accès: "acces", Données: "donnees", Tâches: "taches", Rejouer: "donnees" } as const)[ACTION[f.code] as "Accès"] ?? "carte", ...(f.nodes?.[0] ? { node: f.nodes[0] } : {}),
+    action: ACTION[findingPlace(p, f).screen] ?? "Carte", go: findingPlace(p, f),
   }));
 }

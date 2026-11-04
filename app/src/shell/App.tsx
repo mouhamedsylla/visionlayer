@@ -1,3 +1,4 @@
+import { OpenProvider } from "../ui/open";
 import { useData } from "../api/useData";
 import { CodeProvider } from "../ui/code";
 import { VigieProvider } from "../vigie/Vigie";
@@ -27,7 +28,7 @@ export function App() {
   const backTo = (fallback: () => void) => ({ back: back ?? fallback, backLabel: from ? placeLabel(from) : undefined });
   return (
     <CodeProvider>
-      <VigieProvider map={data.map}>
+      <VigieProvider map={data.map}><OpenProvider map={data.map} go={go}>
       <div className="vl app">
         <Sidebar project={data.project} map={data.map} screen={origin} go={go} />
         <main className="main">
@@ -56,7 +57,7 @@ export function App() {
             : <div key={screen} className="view scr-ov"><Overview map={data.map} project={data.project} claims={data.claims} go={go} /></div>}
         </main>
       </div>
-      </VigieProvider>
+      </OpenProvider></VigieProvider>
     </CodeProvider>
   );
 }

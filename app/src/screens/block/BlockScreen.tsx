@@ -1,3 +1,4 @@
+import { Obj } from "../../ui/open";
 import { useState, type CSSProperties } from "react";
 import type { ArchNode, MapPayload } from "../../api/types";
 import { blockView, COLUMN, entryGroups, focusSentence, focusView, offered, type Column, type FocusLink, type ModuleCard } from "../../model/block";
@@ -123,7 +124,7 @@ function Offered({ block, m, openFlow }: { block: ArchNode; m: ModuleCard; openF
               <td><button className="bk__fn" onClick={() => open(x.fn.proof)}>{x.fn.name}</button></td>
               <td>{x.callers > 0 ? <span className="bk__callers"><i style={{ width: `${Math.max(4, (x.callers / max) * 96)}px` }} />{x.callers} ligne{x.callers > 1 ? "s" : ""}</span>
                 : x.route ? <button className="bk__route" onClick={() => openFlow(x.route!.id)}>la route <code>{x.route.key}</code> ›</button> : <span className="q">aucune ligne lue</span>}</td>
-              <td><span className="bk__fx">{x.effects.slice(0, 3).map((e, i) => <Effect key={i} kind={e.kind} what={e.what} />)}{!x.effects.length && <span className="q">aucun</span>}</span></td>
+              <td><span className="bk__fx">{x.effects.slice(0, 3).map((e, i) => <Obj key={i} to={e.kind === "message" ? { topic: e.what } : e.kind === "read" || e.kind === "write" ? { entity: e.what } : { service: e.what }}><Effect kind={e.kind} what={e.what} /></Obj>)}{!x.effects.length && <span className="q">aucun</span>}</span></td>
             </tr>
           ))}
         </tbody>
@@ -145,7 +146,7 @@ function ModulePanel({ map, m, openFlow }: { map: MapPayload; m: ModuleCard; ope
       {m.node.subtitle && <p className="bk__pline">{m.node.subtitle}</p>}
       {touches.length > 0 && <>
         <div className="bk__sec"><span className="vl-label">Ce qu'il touche</span></div>
-        <div className="bk__chips">{touches.map((t, i) => <Effect key={i} kind={t.kind} what={`${t.entity ?? t.topic}, ${name(t.node)}`} />)}</div>
+        <div className="bk__chips">{touches.map((t, i) => <Obj key={i} to={t.entity ? { entity: t.entity, node: t.node } : t.topic ? { topic: t.topic, node: t.node } : undefined}><Effect kind={t.kind} what={`${t.entity ?? t.topic}, ${name(t.node)}`} /></Obj>)}</div>
       </>}
       <div className="bk__sec"><span className="vl-label">Sert {m.serves} entrée{m.serves > 1 ? "s" : ""} sur {m.of}</span></div>
       {m.entries.slice(0, 8).map((e) => <button key={e.id} className="bk__pentry" onClick={() => openFlow(e.id)}><code>{e.key}</code><span>{e.flow?.length ? `${e.flow.length} étapes ›` : "›"}</span></button>)}

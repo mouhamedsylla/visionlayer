@@ -1,11 +1,12 @@
 import { useState } from "react";
 import type { MapPayload } from "../../api/types";
 import { attention } from "../../model/overview";
+import type { Screen } from "../../shell/route";
 import { Ref } from "../../ui/Ref";
 import { Rich } from "../../ui/Rich";
 
 /** À savoir, comme sur la planche : une icône dans son cercle, le titre, la sous-ligne avec sa preuve, une action. */
-export function AttentionCard({ map, go }: { map: MapPayload; go: (screen: "acces" | "donnees" | "taches" | "carte", item?: string) => void }) {
+export function AttentionCard({ map, go }: { map: MapPayload; go: (screen: Screen, item?: string) => void }) {
   const list = attention(map);
   const [all, setAll] = useState(false);
   const shown = all ? list : list.slice(0, 5);
@@ -24,7 +25,7 @@ export function AttentionCard({ map, go }: { map: MapPayload; go: (screen: "acce
             <p className="vl-att__title"><Rich text={a.title} /></p>
             <p className="vl-att__sub">{a.sub && <><Rich text={a.sub} />, </>}<Ref proof={a.proof} /></p>
           </div>
-          <button className="vl-btn vl-btn--secondary vl-btn--sm" onClick={() => go(a.screen, a.screen === "carte" ? a.node : undefined)}>{a.action === "Rejouer" ? "Données" : a.action}</button>
+          <button className="vl-btn vl-btn--secondary vl-btn--sm" onClick={() => go(a.go.screen, a.go.item)}>{a.action}</button>
         </div>
       ))}
       <div className="vl-card__foot"><span>{watch} à surveiller</span>{!all && list.length > 5 && <button className="vl-link ov__linkbtn" onClick={() => setAll(true)}>Voir les {list.length - 5} autres ›</button>}</div>

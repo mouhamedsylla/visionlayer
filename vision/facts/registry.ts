@@ -106,7 +106,7 @@ export class PackRegistry {
    * « acceptée + proposé » calculée sur une copie de la base. Rend ce qu'il ajouterait ou retirerait ;
    * la carte acceptée n'est pas touchée, et rien n'est écrit.
    */
-  async preview(base: FactBase, text: string, name = "propose.yaml"): Promise<{ state: PackState; changes: MapChange[] }> {
+  async preview(base: FactBase, text: string, name = "propose.yaml"): Promise<{ state: PackState; changes: MapChange[]; counts?: Record<string, number> }> {
     const entry = await this.check(join(this.dir, "proposes", name), text, "preview", false);
     if (!entry.pack) return { state: entry.state, changes: [] };
     const trial = base.clone();
@@ -115,7 +115,10 @@ export class PackRegistry {
       const label = { name: "preview", packs: [] as Pack[] };
       const before = assemble(base.database(), { ...label, packs: [...base.packs] });
       const after = assemble(trial.database(), { ...label, packs: [...trial.packs] });
-      return { state: entry.state, changes: mapChanges(before, after) };
+      // Les comptes de ce que le pack a produit sur le projet : ni un nom ni une ligne, de quoi corriger sans voir le code.
+      const db = trial.database();
+      const counts = Object.fromEntries(producedRelations(entry.pack).map((r) => [r, db.get(r).length]));
+      return { state: entry.state, changes: mapChanges(before, after), counts };
     } catch (e) {
       return { state: { ...entry.state, status: "failed", reason: `chargement : ${(e as Error).message.split("\n")[0]}` }, changes: [] };
     }

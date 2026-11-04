@@ -15,3 +15,8 @@
 .zp__tools button { height: 26px; min-width: 26px; padding: 0 8px; border: 0; border-radius: 6px; background: none; font: 500 12px/1 var(--font-sans); color: var(--ink-2); cursor: pointer; }
 .zp__tools button:hover { background: var(--surface-sunken); color: var(--ink); }
 .zp__pct { font-family: var(--font-mono) !important; min-width: 52px !important; }
+
+/* Un objet dessiné qui s'ouvre (planche L6). */
+.obj { cursor: pointer; display: inline-flex; border-radius: 5px; }
+.obj:hover { outline: 1.5px solid var(--ink); outline-offset: 1px; }
+.obj:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
