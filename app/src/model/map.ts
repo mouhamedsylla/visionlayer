@@ -57,16 +57,19 @@ export function mapGrid(p: MapPayload): MapGrid {
   const channels = nodes.filter((n) => n.role === "channel");
   const mids = nodes.filter(underWorker);
   const order: ArchNode[] = [...services, ...channels, ...workers, ...mids];
-  const right = nodes.filter((n) => !left.includes(n) && !order.includes(n));
+  // Un système sans serveur (une app seule) : ce qui appelle est aussi ce qui tourne ; sans cela, il ne serait dessiné nulle part.
+  const incoming = order.length ? left : [];
+  if (!order.length) order.push(...left);
+  const right = nodes.filter((n) => !incoming.includes(n) && !order.includes(n));
 
   const arrow = (l: MapLink, back: boolean, named: boolean): Arrow => ({ link: l, back, label: countLabel(l.kind, l.count), ...(named ? { target: byId.get(back ? l.from : l.to)?.name } : {}) });
   const home = new Map<string, number>();
-  for (const n of left) {
+  for (const n of incoming) {
     const target = order.findIndex((m) => links.some((l) => (l.from === n.id && l.to === m.id) || (l.to === n.id && l.from === m.id)));
     home.set(n.id, target < 0 ? 0 : target);
   }
   const middle: Middle[] = order.map((node, i) => {
-    const mine = left.filter((n) => home.get(n.id) === i);
+    const mine = incoming.filter((n) => home.get(n.id) === i);
     const rows: Row[] = (mine.length ? mine : [undefined]).map((l) => ({
       ...(l ? { left: l } : {}),
       leftArrows: l ? [

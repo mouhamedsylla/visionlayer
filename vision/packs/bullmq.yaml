@@ -29,6 +29,9 @@ rules: |
   worker_topic(F, T, H, HL) :- worker_new(F, T, H, HL, _).
   worker_topic(F, T, H, HL) :- worker_ref(F, C, H, HL, _), const_in(F, C, T).
   entrypoint(F, message, T, H, HL) :- worker_topic(F, T, H, HL).
+  % Le nom de la file ne se lit pas dans le code : elle est consommée, sous le nom écrit là.
+  worker_named(F, C) :- worker_ref(F, C, _, _, _), const_in(F, C, _).
+  entrypoint(F, message, K, H, HL) :- worker_ref(F, C, H, HL, _), not worker_named(F, C), K = cat("nom calculé : ", C).
   subscribes(F, T) :- worker_topic(F, T, _, _).
   channel_topic(F, T, redis) :- worker_topic(F, T, _, _).
 

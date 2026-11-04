@@ -45,11 +45,16 @@ export function entityWords(node: ArchNode): [string, string] {
   return shape === "relational" ? ["table", "tables"] : shape === "document" ? ["collection", "collections"] : shape === "key-value" ? ["famille de clés", "familles de clés"] : ["donnée", "données"];
 }
 
-const entities = (map: MapPayload, names: string[]) => {
-  const stored = map.model.nodes.flatMap((n) => (n.facets.data?.entities ?? []).map((e) => ({ name: e.name, words: entityWords(n) })));
-  const words = stored.filter((s) => names.includes(s.name)).map((s) => s.words);
-  return plural(names.length, words.every((w) => w[0] === words[0]?.[0]) ? words[0]?.[0] ?? "donnée" : "donnée", words.every((w) => w[0] === words[0]?.[0]) ? words[0]?.[1] ?? "données" : "données");
-};
+/** « 3 tables et 1 donnée » : chaque stockage touché, avec le mot de sa forme. */
+function touchedText(map: MapPayload, node: ArchNode, kind: "read" | "write"): string {
+  const by = new Map<string, Set<string>>();
+  for (const e of map.model.edges.filter((x) => x.from === node.id && x.kind === kind && x.target?.entity)) {
+    const store = map.model.nodes.find((n) => n.id === e.to);
+    const [one, many] = store ? entityWords(store) : ["donnée", "données"];
+    (by.get(`${one}|${many}`) ?? by.set(`${one}|${many}`, new Set()).get(`${one}|${many}`)!).add(e.target!.entity!);
+  }
+  return [...by].map(([w, names]) => plural(names.size, w.split("|")[0]!, w.split("|")[1]!)).join(" et ");
+}
 
 export function blockQuestions(map: MapPayload, knowledge: KnowledgePayload | undefined, node: ArchNode): { questions: Question[]; others: Finding[] } {
   const id = node.id;
@@ -89,7 +94,7 @@ export function blockQuestions(map: MapPayload, knowledge: KnowledgePayload | un
   // Ce qu'il touche.
   const { reads, writes } = touchedBy(map, node);
   if (stores(map, node).length && !stores(map).includes(node)) {
-    const fact = [writes.length && `écrit ${entities(map, writes)}`, reads.length && `en lit ${reads.length}`].filter(Boolean).join(", ")
+    const fact = [writes.length && `écrit ${touchedText(map, node, "write")}`, reads.length && `lit ${touchedText(map, node, "read")}`].filter(Boolean).join(", ")
       || `touche ${stores(map, node).map((s) => s.name).join(", ")}`;
     out.push({ id: "touches", text: "Que touche-t-il ?", fact, go: "Données", screen: "donnees", ...(stores(map, node).length === 1 ? { item: stores(map, node)[0]!.id } : {}), scope: id, mark: mark("donnees") });
   }

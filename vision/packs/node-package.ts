@@ -27,6 +27,8 @@ import { dirOf, runTargets, sourceCandidates } from "./runs.js";
  */
 /** Les scripts qui lancent le programme lui-même, pas un outil (test, build, migration, seed…). */
 const PROGRAM = /^(start|dev|serve|server|prod|worker)(:.*)?$/;
+/** Un paquet rangé là montre ou éprouve le système ; il n'en fait pas partie. */
+const NOT_THE_SYSTEM = /(^|\/)(examples?|samples?|demos?|fixtures?|tests?|__tests__|e2e|bench(marks?)?)\//;
 
 const script: PackScript = ({ file, fact }) => {
   let doc: Record<string, unknown>;
@@ -50,7 +52,7 @@ const script: PackScript = ({ file, fact }) => {
   if (scripts && typeof scripts === "object") for (const [name, cmd] of Object.entries(scripts as Record<string, unknown>)) {
     if (typeof cmd !== "string") continue;
     const line = lines.findIndex((l) => l.includes(`"${name}"`)) + 1 || 1;
-    if (PROGRAM.test(name)) out.push(fact("pkg_program", [file.path, name], line));
+    if (PROGRAM.test(name) && !NOT_THE_SYSTEM.test(file.path)) out.push(fact("pkg_program", [file.path, name], line));
     for (const t of runTargets(cmd, dir)) for (const c of [t, ...sourceCandidates(t)]) out.push(fact("pkg_script", [file.path, name, c], line));
     for (const c of scriptCalls(cmd)) {
       if (c.filters) {

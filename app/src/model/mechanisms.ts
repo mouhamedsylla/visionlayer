@@ -82,21 +82,27 @@ export interface OutageView {
 
 export function outages(map: MapPayload): OutageView[] {
   const byId = new Map(map.model.nodes.map((n) => [n.id, n]));
-  return map.model.findings.filter((f) => f.code === "missing_timeout").map((f, i) => {
-    const dep = (f.nodes ?? []).map((id) => byId.get(id)).find((n) => n && ["store", "channel", "external"].includes(n.role))!;
-    // Ceux qui l'appellent, et ceux qu'elle réveille (le worker d'une file) : les deux attendent quand elle tombe.
-    const edges = map.model.edges.filter((e) => e.to === dep?.id || (e.from === dep?.id && e.kind === "trigger"));
-    const other = (e: (typeof edges)[number]) => (e.to === dep?.id ? e.from : e.to);
-    const froms = [...new Set(edges.map(other))];
+  const out = new Map<string, OutageView>();
+  map.model.findings.filter((f) => f.code === "missing_timeout").forEach((f, i) => {
+    const dep = (f.nodes ?? []).map((id) => byId.get(id)).find((n) => n && ["store", "channel", "external"].includes(n.role));
+    if (!dep) return;
+    // Une dépendance sans délai n'est dite qu'une fois, quel que soit le nombre de lignes qui la créent.
+    if (out.has(dep.id)) return;
+    // Ceux qui l'appellent, ceux qu'elle réveille (le worker d'une file), ceux que le constat nomme : tous attendent quand elle tombe.
+    const edges = map.model.edges.filter((e) => e.to === dep.id || (e.from === dep.id && e.kind === "trigger"));
+    const other = (e: (typeof edges)[number]) => (e.to === dep.id ? e.from : e.to);
+    const named = map.model.findings.filter((x) => x.code === "missing_timeout" && x.nodes?.includes(dep.id)).flatMap((x) => x.nodes ?? []).filter((id) => id !== dep.id);
+    const froms = [...new Set([...edges.map(other), ...named])];
     const dependents = froms.map((id) => {
       const mine = edges.filter((e) => other(e) === id);
-      const kinds = [...new Set(mine.map((e) => (e.kind === "trigger" ? "la consomme" : VERB[e.kind] ?? e.kind)))].join(", ");
+      const kinds = [...new Set(mine.map((e) => (e.kind === "trigger" ? "la consomme" : VERB[e.kind] ?? e.kind)))].join(", ") || "s'y connecte";
       const entries = [...new Set(mine.flatMap((e) => (e.kind === "trigger" && e.target?.entrypoint ? [e.target.entrypoint] : e.occurrences.flatMap((o) => o.entrypoints ?? []))))].map((x) => findEntry(map, x)?.entry.key ?? x);
       return { node: byId.get(id)!, how: kinds, entries };
     }).filter((d) => d.node);
-    const leftover = dep?.role === "channel" ? map.model.findings.filter((x) => x.code === "write_then_enqueue").map((x) => ({ message: x.message, proof: x.proof[0]! })) : [];
-    return { id: `${dep?.id ?? i}`, dep: dep!, message: f.message, proof: f.proof[0]!, dependents, leftover };
-  }).filter((o) => o.dep);
+    const leftover = dep.role === "channel" ? map.model.findings.filter((x) => x.code === "write_then_enqueue").map((x) => ({ message: x.message, proof: x.proof[0]! })) : [];
+    out.set(dep.id, { id: dep.id ?? String(i), dep, message: f.message, proof: f.proof[0]!, dependents, leftover });
+  });
+  return [...out.values()];
 }
 
 /**

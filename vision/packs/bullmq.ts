@@ -36,9 +36,11 @@ const script: PackScript = ({ file, root, imports, fact }) => {
       }
       if (fromBull(ctor.text, "FlowProducer") && decl) out.push(fact("flow_def", [file.path, decl], line(n)));
       if (fromBull(ctor.text, "Worker")) {
-        const name = nameOf(a[0]);
+        const given = unwrap(a[0]);
         const h = unwrap(a[1]);
-        if (!name || !h) return;
+        if (!given || !h) return;
+        // Un nom calculé (`job.name`) reste une file consommée : on garde ce qui est écrit.
+        const name = nameOf(a[0]) ?? { ref: given.text };
         const processor = codeFilePath(h);
         const sym = processor ?? (h.type === "identifier" ? h.text : "");
         const hl = line(h);

@@ -52,3 +52,9 @@ test("Carte, panneau d'un bloc : le bloc suivi limite chaque écran à ce qui le
   assert.ok(!ids.includes("access"), "un worker sans route n'a pas de porte");
   assert.ok(ids.includes("tasks"));
 });
+
+test("Carte : une app seule, sans serveur, est dessinée", async () => {
+  const { mapGrid } = await import("../app/src/model/map.js");
+  const grid = mapGrid({ model: { system: { name: "x" }, nodes: [{ id: "a", name: "a", level: "deployable", role: "app", status: "live", proof: [], facets: {} }], edges: [], findings: [], coverage: [] }, tech: {} } as unknown as MapPayload);
+  assert.deepEqual(grid.middle.map((m) => m.node.name), ["a"]);
+});

@@ -58,3 +58,10 @@ test("bullmq P6 P7 P8 C3 : tâche répétée, planificateur, flux, processeur is
   // Le fichier du processeur fait partie du déployable.
   assert.ok(m.nodes.find((n) => n.id === "image")?.files?.includes("processors/report.ts"));
 });
+
+test("bullmq : un travailleur dont le nom de file est calculé reste une file consommée, sous le nom écrit", async () => {
+  const m = await mapOf({ ...SERVER, "main.ts": [`import { Worker } from "bullmq";`, `import * as jobs from "./jobs";`, `for (const job of Object.values(jobs)) new Worker(job.name, job.run, {});`].join("\n"), "jobs.ts": `export const a = { name: "a", run() {} };\n` });
+  const entries = (m.nodes.find((n) => n.id === "image")?.facets.entrypoints ?? []).filter((e) => e.kind === "message").map((e) => e.key);
+  assert.deepEqual(entries, ["nom calculé : job.name"]);
+  assert.equal(m.nodes.find((n) => n.id === "image")?.role, "worker");
+});

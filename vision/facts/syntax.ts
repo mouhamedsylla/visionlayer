@@ -123,6 +123,8 @@ export function syntaxFacts(path: string, root: Node, fact: (rel: string, args: 
     }
   }
 
+  // Un fichier qui ne fait que ré-exporter (un `index.ts` de paquet) : ses imports ne disent pas ce qui est employé.
+  if (root.namedChildren.length && root.namedChildren.every((c) => c.type === "comment" || c.type === "import_statement" || (c.type === "export_statement" && c.childForFieldName("source")))) out.push(fact("reexports_only", [path], 1));
   if (/(^|\/)(__tests__|tests?)\/|\.(test|spec)\.[cm]?[jt]sx?$/.test(path)) out.push(fact("test_file", [path], 1));
   if (/\.config\.[cm]?[jt]s$/.test(path)) out.push(fact("config_file", [path], 1));
   if (path.includes("/")) out.push(fact("top_dir", [path, path.slice(0, path.indexOf("/"))], 1));

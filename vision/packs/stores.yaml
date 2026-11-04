@@ -84,8 +84,8 @@ rules: |
   pg_timeout("statement_timeout").
   pg_timeout("lock_timeout").
   pg_timed(F, L) :- db_conn_opt(F, L, K, _), pg_timeout(K).
-  finding(missing_timeout, T, "connect", F, L) :- db_conn(F, _, "pg", C, L), store_make("pg", C), db_conn_opts(F, L), not pg_timed(F, L), store_driver("pg", T).
+  finding(missing_timeout, T, "connect", F, L) :- db_conn(F, _, "pg", C, L), store_make("pg", C), db_conn_opts(F, L), not pg_timed(F, L), not test_file(F), store_driver("pg", T).
   % ioredis : maxRetriesPerRequest à null rejoue chaque commande sans limite ; sans commandTimeout, elle attend sans fin.
   redis_timed(F, L) :- db_conn_opt(F, L, "commandTimeout", _).
-  finding(missing_timeout, T, "retry", F, L) :- db_conn(F, _, "ioredis", C, L), store_make("ioredis", C), db_conn_opt(F, L, "maxRetriesPerRequest", "null"), not redis_timed(F, L), store_driver("ioredis", T).
+  finding(missing_timeout, T, "retry", F, L) :- db_conn(F, _, "ioredis", C, L), store_make("ioredis", C), db_conn_opt(F, L, "maxRetriesPerRequest", "null"), not redis_timed(F, L), not test_file(F), store_driver("ioredis", T).
   finding_store(missing_timeout, T, T) :- finding(missing_timeout, T, _, _, _).

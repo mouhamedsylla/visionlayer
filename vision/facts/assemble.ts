@@ -1,5 +1,6 @@
 import { isBuiltin } from "node:module";
 import { packageName as npmName } from "../stack/build.js";
+import { uncalledEntries } from "./entry-called.js";
 import { attributeEntrypoints, attributeFieldWrites } from "./entry-reach.js";
 import { attributeFlows } from "./flow.js";
 import { attributeFunctions } from "./functions.js";
@@ -101,16 +102,21 @@ export function assemble(db: Database, opts: AssembleOptions): ArchModelV2 {
   /** Les programmes nommés d'après un Dockerfile seul : son dossier (`docker`) ne dit pas ce qui tourne. */
   const fromImage = new Set<string>();
 
+  // Une route écrite dans une fonction exportée n'existe que pour les programmes qui emploient cette fonction.
+  const uncalled = uncalledEntries(rows, reachOf);
+  const packageNames = rows("pkg_name").map((t) => ({ dir: s(t.args[0]).split("/").slice(0, -1).join("/"), name: s(t.args[1]) }));
   for (const [target, list] of [...units].sort(([a], [b]) => a.localeCompare(b))) {
     const best = [...list].sort((a, b) => UNIT_PRIORITY.indexOf(a.kind) - UNIT_PRIORITY.indexOf(b.kind))[0]!;
-    let id = best.name;
-    if (usedIds.has(id)) id = `${best.name}:${target}`;
+    // Une page s'appelle souvent `index` : le nom du programme est celui de son paquet.
+    const pkg = best.kind === "page" && best.name === "index" ? packageNames.filter((x) => !x.dir || best.proof[0]?.path.startsWith(`${x.dir}/`)).sort((a, b) => b.dir.length - a.dir.length)[0] : undefined;
+    let id = pkg?.name ?? best.name;
+    if (usedIds.has(id)) id = `${id}:${target}`;
     usedIds.add(id);
     nodeIdOf.set(target, id);
     const files = (reachOf.get(target) ?? []).filter((f) => read.has(f)).sort();
 
     const entrypoints: Entrypoint[] = rows("entry_in")
-      .filter((t) => s(t.args[0]) === target)
+      .filter((t) => s(t.args[0]) === target && !uncalled(target, entryFacts.get(`${s(t.args[1])}\0${s(t.args[3])}`)))
       .map((t) => {
         const [, file, kind, key] = t.args.map(s) as [string, string, EntrypointKind, string];
         const fact = entryFacts.get(`${file}\0${key}`)!;
@@ -188,7 +194,7 @@ export function assemble(db: Database, opts: AssembleOptions): ArchModelV2 {
 
     const node: ArchNode = {
       id,
-      name: best.name,
+      name: pkg?.name ?? best.name,
       level: "deployable",
       role,
       ...(tech.size ? { tech: [...tech].sort() } : {}),
