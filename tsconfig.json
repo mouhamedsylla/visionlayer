@@ -17,6 +17,7 @@
   ],
   "exclude": [
     "tests/fixtures",
+    "tests/block-questions.test.ts",
     "tests/stack-fixtures",
     "tests/arch-fixtures",
     "tests/corpus",

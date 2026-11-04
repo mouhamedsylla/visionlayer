@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../../api/client";
-import type { MapPayload, SourceExcerpt } from "../../api/types";
+import type { ArchNode, MapPayload, SourceExcerpt } from "../../api/types";
 import { triggers, type Trigger } from "../../model/tasks";
 import { plural } from "../../model/words";
 import { Ref } from "../../ui/Ref";
@@ -10,8 +10,8 @@ import { Workspace } from "../../ui/Workspace";
 import "./tasks.css";
 
 /** Planche 06, Tâches planifiées : ce qui tourne sans que personne clique. */
-export function TasksScreen({ map, openFlow }: { map: MapPayload; openFlow: (id: string) => void }) {
-  const list = triggers(map);
+export function TasksScreen({ map, block, openFlow }: { map: MapPayload; block?: ArchNode; openFlow: (id: string) => void }) {
+  const list = triggers(map, block);
   const [chosen, setChosen] = useState<string>();
   const t = list.find((x) => x.id === chosen) ?? list.find((x) => x.seeTone === "cr") ?? list[0];
   const schedules = list.filter((x) => x.kind === "schedule"), queues = list.filter((x) => x.kind === "queue"), hooks = list.filter((x) => x.kind === "webhook");

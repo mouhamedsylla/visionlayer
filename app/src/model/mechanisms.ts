@@ -45,7 +45,7 @@ const findEntry = (map: MapPayload, id: string) => {
 /** F2 : une file, qui y dépose (et depuis quel point d'entrée), qui la consomme, et ce que fait le consommateur. */
 export interface QueueView {
   id: string; node: ArchNode; topic: string; proof: Proof;
-  producers: { proof: Proof; entries: string[]; risk?: string }[];
+  producers: { from: string; proof: Proof; entries: string[]; risk?: string }[];
   consumers: { node: ArchNode; entry: Entry; effects: { verb: string; what: string }[]; refuses: string[] }[];
 }
 
@@ -58,7 +58,7 @@ export function queues(map: MapPayload): QueueView[] {
     const producers = map.model.edges.filter((e) => e.to === node.id && e.kind === "message" && (e.target?.topic ?? t.name) === t.name)
       .flatMap((e) => e.occurrences.map((o) => {
         const f = map.model.findings.find((x) => x.code === "write_then_enqueue" && x.proof[0]?.path === o.path && x.proof[0]?.line === o.line);
-        return { proof: o as Proof, entries: (o.entrypoints ?? []).map((id) => findEntry(map, id)?.entry.key ?? id), ...(f ? { risk: f.message } : {}) };
+        return { from: e.from, proof: o as Proof, entries: (o.entrypoints ?? []).map((id) => findEntry(map, id)?.entry.key ?? id), ...(f ? { risk: f.message } : {}) };
       }));
     const consumers = map.model.edges.filter((e) => e.from === node.id && e.kind === "trigger" && e.target?.entrypoint)
       .map((e) => findEntry(map, e.target!.entrypoint!)).filter((x): x is NonNullable<typeof x> => !!x)
@@ -97,4 +97,20 @@ export function outages(map: MapPayload): OutageView[] {
     const leftover = dep?.role === "channel" ? map.model.findings.filter((x) => x.code === "write_then_enqueue").map((x) => ({ message: x.message, proof: x.proof[0]! })) : [];
     return { id: `${dep?.id ?? i}`, dep: dep!, message: f.message, proof: f.proof[0]!, dependents, leftover };
   }).filter((o) => o.dep);
+}
+
+/**
+ * Ce que Mécanismes montre pour un bloc : ses contrats, les files qu'il remplit, consomme ou porte, ses dépendances qui
+ * peuvent tomber et celles dont il dépend. Sans bloc, tout. Une file ou une panne reste entière : son trajet n'a de
+ * sens qu'en entier.
+ */
+export function mechanismsOf(map: MapPayload, scope?: ArchNode) {
+  const all = { contracts: contracts(map), queues: queues(map), outages: outages(map) };
+  if (!scope) return all;
+  const id = scope.id;
+  return {
+    contracts: all.contracts.filter((c) => c.node.id === id || c.node.parent === id),
+    queues: all.queues.filter((q) => q.node.id === id || q.producers.some((p) => p.from === id) || q.consumers.some((c) => c.node.id === id)),
+    outages: all.outages.filter((o) => o.dep.id === id || o.dependents.some((d) => d.node.id === id)),
+  };
 }

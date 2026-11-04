@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import type { KnowledgePayload } from "../../api/types";
+import type { ArchNode, KnowledgePayload, MapPayload } from "../../api/types";
 import { api } from "../../api/client";
-import { rules, type Evidence, type RuleRow } from "../../model/rules";
+import { rules, rulesOf, type Evidence, type RuleRow } from "../../model/rules";
 import { plural } from "../../model/words";
 import { Ref } from "../../ui/Ref";
 import "./rules.css";
@@ -10,8 +10,8 @@ import "./rules.css";
  * Planche Regles, Règles et décisions : ce qui est déclaré, par un agent ou dans un document, confronté au code.
  * L'adresse garde la règle choisie (#/regles/<id>).
  */
-export function RulesScreen({ knowledge, item, open }: { knowledge?: KnowledgePayload; item?: string; open: (id: string) => void }) {
-  const list = rules(knowledge);
+export function RulesScreen({ map, block, knowledge, item, open }: { map: MapPayload; block?: ArchNode; knowledge?: KnowledgePayload; item?: string; open: (id: string) => void }) {
+  const list = block ? rulesOf(rules(knowledge), map, block) : rules(knowledge);
   const sel = list.find((r) => r.id === item) ?? list[0];
   const agents = list.filter((r) => r.who === "agent"), docs = list.filter((r) => r.who === "document");
   const count = (t: RuleRow["tone"]) => agents.filter((r) => r.tone === t).length;

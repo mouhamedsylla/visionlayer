@@ -1,4 +1,4 @@
-import type { KnowledgePayload } from "../api/types";
+import type { ArchNode, KnowledgePayload, MapPayload } from "../api/types";
 
 /**
  * L'écran Règles et décisions (planche Regles) : ce qui est déclaré, confronté au code. Deux sources, jamais un
@@ -52,4 +52,10 @@ export function rules(k?: KnowledgePayload): RuleRow[] {
   // Les contredites d'abord, puis celles à reconfirmer ; l'ordre de déclaration sinon.
   const rank: Record<Tone, number> = { cr: 0, sg: 1, ok: 2, q: 3 };
   return out.map((r, i) => ({ r, i })).sort((a, b) => rank[a.r.tone] - rank[b.r.tone] || a.i - b.i).map((x) => x.r);
+}
+
+/** Les règles ancrées sur un bloc : un de leurs ancrages tombe dans ses fichiers ou ceux de ses modules. */
+export function rulesOf(list: RuleRow[], map: MapPayload, block: ArchNode): RuleRow[] {
+  const files = new Set([block, ...map.model.nodes.filter((n) => n.parent === block.id)].flatMap((n) => n.files ?? []));
+  return list.filter((r) => r.evidence.some((e) => files.has(e.path)));
 }

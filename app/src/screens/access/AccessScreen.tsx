@@ -1,6 +1,6 @@
 import { Obj } from "../../ui/open";
-import type { MapPayload } from "../../api/types";
-import { accessMatrix, actors, layers, levelsText, plural, reachByResource, type ActorRow } from "../../model/access";
+import type { ArchNode, MapPayload } from "../../api/types";
+import { accessMatrix, actors, layers, levelsText, plural, reachByResource, routesOf, type ActorRow } from "../../model/access";
 import { Rep } from "../../lang/Rep";
 import { Actor as ActorMark } from "../../lang/objects";
 import { Effect } from "../../lang/marks";
@@ -19,8 +19,8 @@ const GROUPS = [["people", "Personnes"], ["outside", "Service extérieur"], ["sy
  * L'adresse garde ce qui est choisi (#/acces/<acteur>, ou #/acces/entrees pour la vue par point d'entrée) : revenir
  * d'un déroulé ramène à la même ligne.
  */
-export function AccessScreen({ map, item, open, openFlow }: { map: MapPayload; item?: string; open: (id: string) => void; openFlow: (id: string) => void }) {
-  const a = actors(map);
+export function AccessScreen({ map, block, item, open, openFlow }: { map: MapPayload; block?: ArchNode; item?: string; open: (id: string) => void; openFlow: (id: string) => void }) {
+  const a = actors(map, block);
   const people = a.rows.filter((r) => r.group === "people" && r.id !== "unknown").length;
   const picked = a.rows.find((r) => r.id === item)?.id;
   const chosen = picked ?? a.rows.find((r) => r.id === "authenticated")?.id ?? a.rows[0]?.id ?? "";
@@ -28,9 +28,9 @@ export function AccessScreen({ map, item, open, openFlow }: { map: MapPayload; i
   const tab: "actors" | "entries" = item === "entrees" || (!picked && !people) ? "entries" : "actors";
   const setChosen = (id: string) => open(id);
   const setTab = (t: "actors" | "entries") => open(t === "entries" ? "entrees" : chosen);
-  const allRoutes = map.model.nodes.filter((n) => n.level === "deployable").flatMap((n) => (n.facets.entrypoints ?? []).filter((e) => e.kind === "http" || e.kind === "rpc"));
+  const allRoutes = routesOf(map, block);
   const humans = a.rows.filter((r) => r.group === "people").length, outside = a.rows.filter((r) => r.group === "outside").length, system = a.rows.filter((r) => r.group === "system").length;
-  const m = accessMatrix(a.rows);
+  const m = accessMatrix(a.rows, block?.facets.data?.entities.map((e) => e.name));
   const vigie = useVigie();
   return (
     <Workspace
@@ -39,7 +39,7 @@ export function AccessScreen({ map, item, open, openFlow }: { map: MapPayload; i
         <p className="ax__lead">Lu dans le code : qui appelle le système, comment chacun prouve qui il est, ce qu'il peut appeler et toucher. Les comptes réels et les rôles attribués en base ne sont pas lus.</p>
         <button className="vl-btn vl-btn--secondary vl-btn--sm ax__ask" onClick={() => vigie()}>Demander à Vigie</button>
       </div>}
-      panel={row && <Side map={map} row={row} />}>
+      panel={row && <Side map={map} row={row} {...(block ? { block } : {})} />}>
       <div className="tiles">
         <div className="tile"><small>Qui peut appeler</small><b>{plural(a.total, "point d'entrée", "points d'entrée")}</b><span>{levelsText(a.byLevel)}</span></div>
         <div className="tile"><small>Les acteurs</small><b>{plural(a.rows.length, "acteur", "acteurs")}</b><span>{[humans && plural(humans, "sorte de personne", "sortes de personnes"), outside && plural(outside, "service extérieur", "services extérieurs"), system && plural(system, "tâche du système", "tâches du système")].filter(Boolean).join(", ")}</span></div>
@@ -93,8 +93,8 @@ function Actor({ r, on, pick }: { r: ActorRow; on: boolean; pick: () => void }) 
   );
 }
 
-function Side({ map, row }: { map: MapPayload; row: ActorRow }) {
-  const res = reachByResource(map, row);
+function Side({ map, row, block }: { map: MapPayload; row: ActorRow; block?: ArchNode }) {
+  const res = reachByResource(map, row, block);
   return (
     <aside className="ax__side">
       <section className="night">

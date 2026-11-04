@@ -15,11 +15,21 @@ const part = (n: ArchNode, e: Entrypoint): Column =>
   : e.kind === "message" || e.kind === "event" ? { id: `${n.id}:message`, label: n.role === "worker" ? n.name : `${n.name}, files` }
   : { id: `${n.id}:http`, label: `Routes de ${n.name}` };
 
-export function stores(p: MapPayload): ArchNode[] {
-  return p.model.nodes.filter((n) => n.level === "deployable" && (n.role === "store" || n.role === "channel"));
+/** Sans bloc, tous les stockages ; pour un programme, ceux qu'il lit ou écrit. Une ressource n'en touche pas d'autres : son écran s'ouvre sur elle. */
+export function stores(p: MapPayload, scope?: ArchNode): ArchNode[] {
+  const all = p.model.nodes.filter((n) => n.level === "deployable" && (n.role === "store" || n.role === "channel"));
+  if (!scope || all.includes(scope)) return all;
+  return all.filter((s) => p.model.edges.some((e) => e.from === scope.id && e.to === s.id && (e.kind === "read" || e.kind === "write")));
 }
 
-export function dataTable(p: MapPayload, store: ArchNode): { columns: Column[]; rows: TableRow[]; findings: Finding[] } {
+/** Ce qu'un programme lit et écrit, table par table. */
+export function touchedBy(p: MapPayload, program: ArchNode): { reads: string[]; writes: string[] } {
+  const of = (k: string) => [...new Set(p.model.edges.filter((e) => e.from === program.id && e.kind === k && e.target?.entity).map((e) => e.target!.entity!))];
+  return { reads: of("read"), writes: of("write") };
+}
+
+export function dataTable(p: MapPayload, store: ArchNode, scope?: ArchNode): { columns: Column[]; rows: TableRow[]; findings: Finding[] } {
+  const only = scope && scope !== store ? touchedBy(p, scope) : undefined;
   const entries = new Map<string, { n: ArchNode; e: Entrypoint }>();
   for (const n of p.model.nodes) for (const e of n.facets.entrypoints ?? []) entries.set(e.id, { n, e });
   const columns = new Map<string, Column>();
@@ -28,7 +38,7 @@ export function dataTable(p: MapPayload, store: ArchNode): { columns: Column[]; 
     const t = edge.target!.entity!;
     for (const o of edge.occurrences) for (const id of o.entrypoints ?? []) {
       const at = entries.get(id);
-      if (!at) continue;
+      if (!at || (only && at.n.id !== scope!.id)) continue;
       const c = part(at.n, at.e);
       columns.set(c.id, c);
       const row = cells.get(t) ?? cells.set(t, {}).get(t)!;
@@ -40,7 +50,7 @@ export function dataTable(p: MapPayload, store: ArchNode): { columns: Column[]; 
   const cols = [...columns.values()].sort((a, b) => order(a) - order(b) || a.label.localeCompare(b.label));
   const findings = p.model.findings.filter((f) => f.nodes?.includes(store.id) || (store.facets.data?.entities ?? []).some((x) => f.message.includes(x.name)));
   const touched = (t: string, k: "read" | "write") => p.model.edges.some((e) => e.to === store.id && e.kind === k && e.target?.entity === t);
-  const rows: TableRow[] = (store.facets.data?.entities ?? []).map((entity) => {
+  const rows: TableRow[] = (store.facets.data?.entities ?? []).filter((x) => !only || only.reads.includes(x.name) || only.writes.includes(x.name)).map((entity) => {
     const race = findings.find((f) => f.code === "race_read_then_write" && f.message.includes(` ${entity.name} `));
     const unused = findings.find((f) => f.code === "unused_value" && f.message.startsWith(`${entity.name}.`));
     const [r, w] = [touched(entity.name, "read"), touched(entity.name, "write")];

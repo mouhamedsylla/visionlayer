@@ -20,9 +20,20 @@ export interface ActorRow {
 
 const http = (n: ArchNode) => (n.facets.entrypoints ?? []).filter((e) => e.kind === "http" || e.kind === "rpc");
 
-export function actors(p: MapPayload): { rows: ActorRow[]; total: number; byLevel: Record<string, number>; mechanism?: { name: string; proof: Proof } } {
-  const programs = p.model.nodes.filter((n) => n.level === "deployable" && http(n).length);
-  const routes = programs.flatMap(http);
+/**
+ * Les points d'entrée qui concernent un bloc : ceux d'un programme, ceux qu'appelle un service extérieur, ceux dont le
+ * déroulé touche une ressource. Sans bloc, tous.
+ */
+export function routesOf(p: MapPayload, scope?: ArchNode): Entrypoint[] {
+  const all = p.model.nodes.filter((n) => n.level === "deployable").flatMap(http);
+  if (!scope) return all;
+  if (http(scope).length) return http(scope);
+  return all.filter((e) => e.calledBy?.includes(scope.id) || (e.flow ?? []).some((s) => s.target?.node === scope.id));
+}
+
+export function actors(p: MapPayload, scope?: ArchNode): { rows: ActorRow[]; total: number; byLevel: Record<string, number>; mechanism?: { name: string; proof: Proof } } {
+  const routes = routesOf(p, scope);
+  const programs = p.model.nodes.filter((n) => n.level === "deployable" && http(n).some((e) => routes.includes(e)));
   const total = routes.length;
   const byLevel: Record<string, number> = {};
   for (const e of routes) byLevel[e.access?.level ?? "unknown"] = (byLevel[e.access?.level ?? "unknown"] ?? 0) + 1;
@@ -72,7 +83,7 @@ export function actors(p: MapPayload): { rows: ActorRow[]; total: number; byLeve
 
   // Le système lui-même : ce qui tourne sans appelant, tâches planifiées et consommateurs de file.
   const twice = p.model.findings.find((f) => f.code === "scheduled_on_every_instance");
-  for (const n of p.model.nodes.filter((x) => x.level === "deployable")) {
+  for (const n of p.model.nodes.filter((x) => x.level === "deployable" && (!scope || x.id === scope.id))) {
     for (const e of (n.facets.entrypoints ?? []).filter((x) => x.kind === "schedule" || x.kind === "message" || x.kind === "event")) {
       const machines = n.instances?.min ?? 1;
       rows.push({
@@ -87,8 +98,8 @@ export function actors(p: MapPayload): { rows: ActorRow[]; total: number; byLeve
 }
 
 /** Ce qu'un acteur atteint, rangé par premier segment de chemin : « /bookings 4 / 4 ». */
-export function reachByResource(p: MapPayload, row: ActorRow): { name: string; reached: number; of: number; danger: boolean }[] {
-  const all = p.model.nodes.filter((n) => n.level === "deployable").flatMap(http);
+export function reachByResource(p: MapPayload, row: ActorRow, scope?: ArchNode): { name: string; reached: number; of: number; danger: boolean }[] {
+  const all = routesOf(p, scope);
   const seg = (e: Entrypoint) => { const path = e.key.split(" ")[1] ?? e.key; const s = path.split("/").filter(Boolean)[0]; return s ? `/${s}` : "/"; };
   const flagged = new Set(p.model.findings.filter((f) => f.code === "unguarded_route").flatMap((f) => f.proof.map((x) => `${x.path}:${x.line}`)));
   const groups = new Map<string, { reached: number; of: number; danger: boolean }>();
@@ -111,14 +122,14 @@ export { plural };
  * X1, la matrice d'accès : pour chaque table, ce que chaque acteur peut y faire, déduit des déroulés des routes
  * qu'il atteint (une écriture l'emporte sur une lecture). Les tâches du système ne sont pas des acteurs ici.
  */
-export function accessMatrix(rows: ActorRow[]) {
+export function accessMatrix(rows: ActorRow[], only?: string[]) {
   const actorsIn = rows.filter((r) => r.group !== "system" && r.routes.length);
   const cells = new Map<string, Map<string, "write" | "read">>();
   for (const a of actorsIn) {
     for (const e of a.routes) {
       for (const s of e.flow ?? []) {
         const t = s.target?.entity;
-        if (!t || (s.kind !== "write" && s.kind !== "read")) continue;
+        if (!t || (s.kind !== "write" && s.kind !== "read") || (only && !only.includes(t))) continue;
         const row = cells.get(t) ?? cells.set(t, new Map()).get(t)!;
         if (row.get(a.id) !== "write") row.set(a.id, s.kind);
       }

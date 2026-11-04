@@ -1,4 +1,4 @@
-import type { MapPayload } from "../../api/types";
+import type { ArchNode, MapPayload } from "../../api/types";
 import { dataTable, lifecycle, stores, writers } from "../../model/data";
 import { Rep } from "../../lang/Rep";
 import { Lifecycle } from "./Lifecycle";
@@ -10,13 +10,13 @@ import { Method } from "./Method";
 import "./data.css";
 
 /** Planche 05, Données : qui lit, qui écrit, et sous quel contrôle. */
-export function DataScreen({ map, item, open, openFlow, openTable }: { map: MapPayload; item?: string; open: (id?: string, replace?: boolean) => void; openFlow: (id: string) => void; openTable: (id: string) => void }) {
-  const list = stores(map);
+export function DataScreen({ map, block, item, open, openFlow, openTable }: { map: MapPayload; block?: ArchNode; item?: string; open: (id?: string, replace?: boolean) => void; openFlow: (id: string) => void; openTable: (id: string) => void }) {
+  const list = stores(map, block);
   // L'adresse porte le stockage et la table choisie (`postgres/order`) : le retour ramène à la même ligne.
   const [storeKey, chosen] = item?.includes("/") ? [item.slice(0, item.indexOf("/")), item.slice(item.indexOf("/") + 1)] : [item, undefined];
   const store = list.find((s) => s.id === storeKey || s.name === storeKey) ?? list.find((s) => s.facets.data?.entities.length) ?? list[0];
   if (!store) return <div className="page"><h1 className="dx__title">Qui lit, qui écrit, et sous quel contrôle</h1><p className="dx__lead">Aucun stockage n'est lu sur ce projet.</p></div>;
-  const t = dataTable(map, store);
+  const t = dataTable(map, store, block);
   const race = t.rows.find((r) => r.seeTone === "cr");
   const row = t.rows.find((r) => r.entity.name === chosen) ?? race ?? t.rows[0];
   const groups = [...new Set(t.rows.map((r) => r.group))];

@@ -1,5 +1,5 @@
-import type { MapPayload } from "../../api/types";
-import { contracts, outages, queues, type ContractView, type OutageView, type QueueView } from "../../model/mechanisms";
+import type { ArchNode, MapPayload } from "../../api/types";
+import { mechanismsOf, type ContractView, type OutageView, type QueueView } from "../../model/mechanisms";
 import { plural } from "../../model/words";
 import { Ref } from "../../ui/Ref";
 import { Rep } from "../../lang/Rep";
@@ -12,10 +12,11 @@ type Tab = "contrats" | "files" | "pannes";
 const TABS: { id: Tab; label: string }[] = [{ id: "contrats", label: "Contrats" }, { id: "files", label: "Files" }, { id: "pannes", label: "Si une dépendance tombe" }];
 
 /** Planche L6, Mécanismes : comment le système choisit ce qui s'exécute. Les contrats (X3), les files (F2), les dépendances qui peuvent tomber (X4). */
-export function MechanismsScreen({ map, item, open }: { map: MapPayload; item?: string; open: (id: string) => void }) {
-  const list = contracts(map), qs = queues(map), outs = outages(map);
+export function MechanismsScreen({ map, block, item, open }: { map: MapPayload; block?: ArchNode; item?: string; open: (id: string) => void }) {
+  const { contracts: list, queues: qs, outages: outs } = mechanismsOf(map, block);
+  const has = (t: Tab) => (t === "contrats" ? list.length : t === "files" ? qs.length : outs.length) > 0;
   const [prefix, key] = item?.includes(":") && ["files", "pannes"].includes(item.split(":")[0]!) ? [item.split(":")[0] as Tab, item.slice(item.indexOf(":") + 1)] : ["contrats" as Tab, item];
-  const tab: Tab = item ? prefix : list.length ? "contrats" : qs.length ? "files" : "pannes";
+  const tab: Tab = item && has(prefix) ? prefix : list.length ? "contrats" : qs.length ? "files" : "pannes";
   const v = list.find((x) => x.id === key) ?? list[0];
   const q = qs.find((x) => x.id === key) ?? qs[0];
   const o = outs.find((x) => x.id === key) ?? outs[0];
@@ -32,7 +33,7 @@ export function MechanismsScreen({ map, item, open }: { map: MapPayload; item?: 
         <div className="tile"><small>Contrats</small><b>{plural(list.length, "contrat", "contrats")}</b><span>{received ? `reçus par ${plural(received, "classe", "classes")}` : "interfaces et classes abstraites remplies deux fois"}</span></div>
         <div className="tile"><small>Files</small><b>{qs.length ? qs.map((x) => x.topic).join(", ") : "aucune"}</b><span>{qs.length ? `${plural(qs.reduce((n, x) => n + x.producers.length, 0), "lieu y dépose", "lieux y déposent")}` : "aucune file lue"}</span></div>
         <div className={`tile${outs.length ? " tile--cr" : ""}`}><small>Attendent sans fin</small><b>{outs.length ? outs.map((x) => x.dep.name).join(", ") : "aucune trouvée"}</b><span>{outs.length ? "aucun délai maximum lu" : "aucune trouvée ; lu seulement pour les clients pg et ioredis"}</span></div>
-        <div className="tile"><small>Écrit puis met en file</small><b>{plural(map.model.findings.filter((f) => f.code === "write_then_enqueue").length, "lieu", "lieux")}</b><span>si la file tombe, l'écriture reste</span></div>
+        <div className="tile"><small>Écrit puis met en file</small><b>{plural(map.model.findings.filter((f) => f.code === "write_then_enqueue" && (!block || f.nodes?.includes(block.id))).length, "lieu", "lieux")}</b><span>si la file tombe, l'écriture reste</span></div>
       </div>
       <section className="card">
         <div className="tabs">{TABS.map((t) => <button key={t.id} className={`seg${t.id === tab ? " seg--on" : ""}`} onClick={() => open(t.id === "contrats" ? "" : `${t.id}:`)}>{t.label}<span className="vl-count">{count[t.id]}</span></button>)}</div>

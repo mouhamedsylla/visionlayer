@@ -44,12 +44,13 @@ function does(flow: FlowStep[] | undefined): string {
   return parts.length ? parts.join(", ") : "appelle des fonctions du dépôt, sans effet lu";
 }
 
-export function triggers(p: MapPayload): Trigger[] {
+/** Sans bloc, tout ce qui tourne ; pour un bloc, ce qui tourne en lui. */
+export function triggers(p: MapPayload, scope?: ArchNode): Trigger[] {
   const out: Trigger[] = [];
   const twice = p.model.findings.find((f) => f.code === "scheduled_on_every_instance");
   const byFn = (name?: string) => (name ? p.model.findings.find((f) => f.message.includes(`\`${name}\``)) : undefined);
   const settings = (topic: string) => p.model.nodes.flatMap((n) => n.facets.channel?.topics ?? []).find((t) => t.name === topic)?.settings ?? [];
-  for (const n of p.model.nodes.filter((x) => x.level === "deployable")) {
+  for (const n of p.model.nodes.filter((x) => x.level === "deployable" && (!scope || x.id === scope.id))) {
     const machines = n.instances?.min ?? 1;
     for (const e of n.facets.entrypoints ?? []) {
       const name = e.handler?.name && e.handler.name !== "fonction anonyme" ? e.handler.name : e.key;
