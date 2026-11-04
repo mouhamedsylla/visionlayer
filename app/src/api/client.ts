@@ -1,5 +1,5 @@
 import type { StackPayload } from "../../../vision/web/types";
-import type { AgentLink, AgentSession, Replay, ReplayTest, VigieAnswer, KnowledgePayload, MapPayload, PacksPayload, ProjectInfo, SourceExcerpt, WriterJob } from "./types";
+import type { AgentLink, AgentSession, Replay, ReplayTest, VigieAnswer, VigieStep, KnowledgePayload, MapPayload, PacksPayload, ProjectInfo, SourceExcerpt, WriterJob } from "./types";
 
 /** Un Replay tel que l'écran le voit : le correctif de l'agent seulement une fois le sien rendu. */
 export type ReplayView = Replay & { agentPatch?: string; yourDiff?: string };
@@ -27,6 +27,27 @@ export const api = {
   agents: () => get<AgentSession[]>("/api/agents"),
   /** Une question à Vigie : Muse Spark répond depuis la carte, preuves à l'appui. */
   vigie: (q: string) => post<VigieAnswer>(`/api/vigie?q=${encodeURIComponent(q)}`),
+  /** La question, avec chaque lecture de Vigie au moment où elle a lieu. */
+  vigieStream: async (q: string, onStep: (s: VigieStep) => void): Promise<VigieAnswer> => {
+    const res = await fetch(`/api/vigie/stream?q=${encodeURIComponent(q)}`, { method: "POST" });
+    if (!res.ok || !res.body) throw new Error(`${res.status}`);
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let rest = "";
+    for (;;) {
+      const { done, value } = await reader.read();
+      rest += dec.decode(value ?? new Uint8Array(), { stream: !done });
+      const lines = rest.split("\n");
+      rest = lines.pop() ?? "";
+      for (const l of lines.filter(Boolean)) {
+        const m = JSON.parse(l) as { step?: VigieStep; answer?: VigieAnswer; error?: string };
+        if (m.step) onStep(m.step);
+        if (m.error) throw new Error(m.error);
+        if (m.answer) return m.answer;
+      }
+      if (done) throw new Error("réponse interrompue");
+    }
+  },
   replays: () => get<Replay[]>("/api/replays"),
   replay: (id: string) => get<ReplayView>(`/api/replays/one?id=${id}`),
   /** Gestes humains du Replay : garder une session, ouvrir sa copie, lancer les tests, demander, rendre. */

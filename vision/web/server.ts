@@ -52,6 +52,19 @@ export function createWebServer(opts: WebServerOptions): Server {
       if (!q || q.length > 600) throw new Error("question vide ou trop longue");
       sendJson(res, 200, await askVigie(root, (await map.get()).model, q));
     },
+    // La même question, avec ce que Vigie lit au fur et à mesure : une ligne JSON par étape, puis la réponse.
+    "POST /api/vigie/stream": async (req, res) => {
+      const q = param(req, "q").trim();
+      if (!q || q.length > 600) throw new Error("question vide ou trop longue");
+      res.writeHead(200, { "Content-Type": "application/x-ndjson; charset=utf-8", "Cache-Control": "no-store" });
+      const line = (o: unknown) => res.write(`${JSON.stringify(o)}\n`);
+      try {
+        line({ answer: await askVigie(root, (await map.get()).model, q, undefined, (step) => line({ step })) });
+      } catch (err) {
+        line({ error: err instanceof Error ? err.message : String(err) });
+      }
+      res.end();
+    },
     "GET /api/replays": (_req, res) => sendJson(res, 200, replays.list()),
     "GET /api/replays/one": (req, res) => sendJson(res, 200, shown(param(req, "id"))),
     "POST /api/replays/create": async (req, res) => sendJson(res, 200, await replays.create(param(req, "session"))),

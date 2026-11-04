@@ -11,7 +11,7 @@ import { apiKey, MODEL } from "../writer/spark.js";
 const ENDPOINT = "https://api.meta.ai/v1/responses";
 const PRICE_IN = 1.25e-6, PRICE_OUT = 4.25e-6;
 /** Une garde contre une boucle, pas un plafond de travail : une question se règle en quelques appels. */
-const MAX_TURNS = 8;
+const MAX_TURNS = 12;
 const CAP = 6000;
 
 export interface VigieStep { tool: string; input: Record<string, unknown>; chars: number }
@@ -38,18 +38,22 @@ function fn(name: string, description: string, properties: Record<string, unknow
   return { type: "function", name, description, parameters: { type: "object", additionalProperties: false, properties, required: required.length ? required : Object.keys(properties) }, strict: Object.keys(properties).length === required.length };
 }
 
-/** Une erreur 5xx de l'API est passagère : on réessaie deux fois, avec 2 puis 5 secondes d'écart. */
+/** Une erreur 5xx ou une coupure du réseau sont passagères : on réessaie deux fois, avec 2 puis 5 secondes d'écart. */
 async function call(key: string, body: unknown): Promise<Response> {
   for (let i = 0; ; i++) {
-    const res = await fetch(ENDPOINT, { method: "POST", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    if (res.status < 500 || i === 2) return res;
+    try {
+      const res = await fetch(ENDPOINT, { method: "POST", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      if (res.status < 500 || i === 2) return res;
+    } catch (err) {
+      if (i === 2) throw err;
+    }
     await new Promise((r) => setTimeout(r, i ? 5000 : 2000));
   }
 }
 
 const at = (p?: Proof | { path: string; line: number }) => p ? `${p.path}:${p.line}` : "";
 
-export async function askVigie(root: string, model: ArchModelV2, question: string, instructions = INSTRUCTIONS): Promise<VigieAnswer> {
+export async function askVigie(root: string, model: ArchModelV2, question: string, instructions = INSTRUCTIONS, onStep?: (s: VigieStep) => void): Promise<VigieAnswer> {
   const key = apiKey();
   const t0 = Date.now();
   const steps: VigieStep[] = [];
@@ -59,7 +63,9 @@ export async function askVigie(root: string, model: ArchModelV2, question: strin
   let answer = "";
   for (let turn = 1; turn <= MAX_TURNS; turn++) {
     const last = turn === MAX_TURNS;
-    const res = await call(key, { model: MODEL, instructions, input, ...(last ? {} : { tools: TOOLS }), ...(previous ? { previous_response_id: previous } : {}) });
+    // Au dernier tour, plus d'outil : il répond avec ce qu'il a lu, et dit « non lu » pour le reste.
+    if (last) input.push({ role: "user", content: "Réponds maintenant avec ce que tu as déjà lu ; ce qui manque est « non lu »." });
+    const res = await call(key, { model: MODEL, instructions, input, tools: TOOLS, ...(last ? { tool_choice: "none" } : {}), ...(previous ? { previous_response_id: previous } : {}) });
     const data = await res.json() as { id: string; output: { type: string; call_id?: string; name?: string; arguments?: string; content?: { text?: string }[] }[]; usage: { input_tokens: number; output_tokens: number } };
     if (!res.ok) throw new Error(`Muse Spark : ${res.status} ${JSON.stringify(data).slice(0, 300)}`);
     previous = data.id;
@@ -74,6 +80,7 @@ export async function askVigie(root: string, model: ArchModelV2, question: strin
       try { out = run(root, model, c.name!, args); } catch (e) { out = `erreur : ${(e as Error).message}`; }
       if (out.length > CAP) out = out.slice(0, CAP) + "\n[tronqué]";
       steps.push({ tool: c.name!, input: args, chars: out.length });
+      onStep?.(steps.at(-1)!);
       input.push({ type: "function_call_output", call_id: c.call_id, output: out });
     }
   }

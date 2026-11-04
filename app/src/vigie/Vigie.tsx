@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { api } from "../api/client";
-import type { MapPayload, VigieAnswer } from "../api/types";
+import type { MapPayload, VigieAnswer, VigieStep } from "../api/types";
 import { CodeRef } from "../ui/CodeRef";
 import { useOpenCode } from "../ui/code";
 import "./vigie.css";
@@ -9,7 +9,7 @@ import "./vigie.css";
 const Ctx = createContext<(q?: string) => void>(() => {});
 export const useVigie = () => useContext(Ctx);
 
-interface Turn { q: string; a?: VigieAnswer; error?: string }
+interface Turn { q: string; a?: VigieAnswer; error?: string; reading?: VigieStep[] }
 
 export function VigieProvider({ map, children }: { map?: MapPayload; children: ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -20,7 +20,7 @@ export function VigieProvider({ map, children }: { map?: MapPayload; children: R
     if (!q.trim() || busy) return;
     setBusy(true); setDraft("");
     setTurns((t) => [...t, { q }]);
-    api.vigie(q).then((a) => setTurns((t) => t.map((x, i) => i === t.length - 1 ? { ...x, a } : x)))
+    api.vigieStream(q, (s) => setTurns((t) => t.map((x, i) => i === t.length - 1 ? { ...x, reading: [...(x.reading ?? []), s] } : x))).then((a) => setTurns((t) => t.map((x, i) => i === t.length - 1 ? { ...x, a } : x)))
       .catch((e) => setTurns((t) => t.map((x, i) => i === t.length - 1 ? { ...x, error: String(e.message ?? e) } : x)))
       .finally(() => setBusy(false));
   };
@@ -40,6 +40,9 @@ export function VigieProvider({ map, children }: { map?: MapPayload; children: R
     </Ctx.Provider>
   );
 }
+
+const TOOL_LABEL: Record<string, string> = { system_overview: "la carte", entrypoints: "les points d'entrée", flow: "le déroulé", findings: "les constats", table: "la table", source: "le code" };
+const stepLabel = (s: VigieStep) => `${TOOL_LABEL[s.tool] ?? s.tool} ${Object.values(s.input).filter((v) => v !== "" && v !== undefined && typeof v !== "number").map(String).join(" ")}`.trim();
 
 /** Trois questions d'exemple, tirées de la carte : la route la plus exposée, le déroulé le plus long, et une hors couverture. */
 function examples(map?: MapPayload): string[] {
@@ -76,7 +79,7 @@ function Panel({ map, turns, busy, draft, setDraft, ask, close }: { map?: MapPay
           <div key={i} className="vg__turn">
             <p className="vg__q">{t.q}</p>
             {t.error ? <p className="vg__err">Vigie n'a pas pu répondre : {t.error}</p>
-              : !t.a ? <p className="vg__wait">Vigie lit la carte…</p>
+              : !t.a ? <div className="vg__wait"><p>Vigie lit le système…</p>{t.reading?.map((s, k) => <code key={k}>{stepLabel(s)}</code>)}</div>
               : <Answer a={t.a} />}
           </div>
         ))}

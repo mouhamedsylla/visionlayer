@@ -30,3 +30,6 @@
 .vg__ask { display: flex; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--night-line); }
 .vg__ask input { flex: 1; min-width: 0; background: var(--night-2); border: 1px solid var(--night-line); border-radius: 8px; padding: 0 10px; height: 32px; color: var(--on-night); font: inherit; font-size: 13px; outline: none; }
 .vg__ask .vl-btn--primary { background: var(--on-night); color: var(--ink); }
+
+.vg__wait { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--on-night-muted); }
+.vg__wait code { font: 400 11.5px/16px var(--font-mono); color: var(--on-night); overflow-wrap: anywhere; }
