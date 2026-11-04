@@ -26,7 +26,18 @@ VisionLayer has already read this system: its programs, entry points, guards, ta
 2. Choose every element your task concerns and call \`vision_slice\` with their names. It gives the file:line of each relevant piece of code and what it reads, writes and calls.
 3. Read the file:line addresses the slice gives. To find where a symbol is declared and who calls it, call \`vision_source\`. Do not run broad searches to orient yourself.
 4. After changing code and before concluding, call \`vision_reach\`, and say for each finding it gives whether your change touches or worsens it.
-5. In your pull request, write in \`.vision/knowledge/\` what the code does not say: the business rule you followed, the decision you made and why. Anchor each note on the file or function it is about.
+5. Before concluding, write what the code does not say in a YAML file under \`.vision/knowledge/\`, anchored on the code. Only this format is read:
+
+\`\`\`yaml
+concept: order-confirmation
+kind: feature
+name: Order confirmation
+claims:
+  - id: order-confirmation.once
+    type: rule        # rule, invariant, decision, guarantee, limit or failure
+    text: An order is confirmed at most once.
+    anchor: src/orders/confirm.ts#confirmOrder
+\`\`\`
 ${END}`;
 
 function onPath(bin: string): boolean {

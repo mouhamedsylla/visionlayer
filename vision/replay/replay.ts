@@ -88,12 +88,15 @@ export class ReplayStore {
   async create(sessionId: string): Promise<Replay> {
     const s = agentSessions(this.root).find((x) => x.id === sessionId);
     if (!s) throw new Error("session inconnue");
-    const tests = s.writes.filter(isTest), fixFiles = s.writes.filter((f) => !isTest(f));
+    // Le correctif, c'est le code : les notes de l'agent (`.vision/`) n'en font pas partie.
+    const tests = s.writes.filter(isTest), fixFiles = s.writes.filter((f) => !isTest(f) && !f.startsWith(".vision/"));
     if (!tests.length || !fixFiles.length) throw new Error("il faut une session qui a écrit un test et du code");
     // Travail non commité : la base est HEAD. Sinon, le commit qui l'a apporté, et la base est son parent.
     const dirty = git(this.root, "status", "--porcelain", "--", ...fixFiles).trim().length > 0;
     const base = git(this.root, "rev-parse", dirty ? "HEAD" : "HEAD~1").trim();
-    const patch = git(this.root, "diff", base, "--", ...fixFiles);
+    // Un fichier nouveau, pas encore suivi par git, fait partie du correctif.
+    const fresh = git(this.root, "ls-files", "--others", "--exclude-standard", "--", ...fixFiles).split("\n").filter(Boolean);
+    const patch = git(this.root, "diff", base, "--", ...fixFiles) + fresh.map((f) => spawnSync("git", ["diff", "--no-index", "--", "/dev/null", f], { cwd: this.root, encoding: "utf8" }).stdout).join("");
     if (!patch.trim()) throw new Error("le correctif de l'agent n'est plus visible dans le dépôt");
     const id = `r-${String(this.list().length + 1).padStart(3, "0")}`;
     mkdirSync(this.dir, { recursive: true });
@@ -105,7 +108,13 @@ export class ReplayStore {
     let r: Replay;
     try {
       const before = (await new MapSource(probe).refresh()).model;
-      const finding = before.findings.find((f) => f.proof.some((p) => fixFiles.includes(p.path)));
+      // Le problème du Replay : ce que le correctif fait disparaître, le plus grave d'abord. Rien d'autre ne le désigne.
+      git(probe, "apply", this.file(id, ".patch"));
+      const after = (await new MapSource(probe).refresh()).model;
+      git(probe, "apply", "-R", this.file(id, ".patch"));
+      const gone = before.findings.filter((f) => f.proof.some((p) => fixFiles.includes(p.path)) && !after.findings.some((x) => x.code === f.code && x.message === f.message));
+      const HYGIENE = new Set(["uncalled_entry", "dead_code", "unused_value", "unknown_callable", "unresolved_target", "dynamic_path"]);
+      const finding = gone.find((f) => !HYGIENE.has(f.code));
       r = {
       id, title: finding ? sentence(finding.message) : `Ce que ${AGENT_NAME[s.agent]} a corrigé dans ${fixFiles.map((f) => basename(f)).join(", ")}`,
       brief: finding ? `Le test de l'agent décrit le problème ; à toi de le faire passer sans voir sa solution.` : "Fais passer le test que l'agent a écrit.",
@@ -146,12 +155,14 @@ export class ReplayStore {
   read(id: string, path: string): string {
     const r = this.get(id);
     if (!r.copy || !this.files(id).includes(path)) throw new Error("fichier hors du replay");
-    return readFileSync(join(r.copy, path), "utf8");
+    // Un fichier que le correctif de l'agent a créé n'existe pas encore dans la copie : il reste à écrire.
+    return existsSync(join(r.copy, path)) ? readFileSync(join(r.copy, path), "utf8") : "";
   }
   /** Écrire dans la copie : seulement un fichier du problème, jamais un test de l'agent. */
   write(id: string, path: string, text: string): void {
     const r = this.get(id);
     if (!r.copy || !this.files(id).includes(path) || r.tests.includes(path)) throw new Error("ce fichier ne s'édite pas ici");
+    mkdirSync(dirname(join(r.copy, path)), { recursive: true });
     writeFileSync(join(r.copy, path), text);
   }
 
