@@ -32,7 +32,7 @@ export function MechanismsScreen({ map, block, item, open }: { map: MapPayload; 
       <div className="tiles">
         <div className="tile"><small>Contrats</small><b>{plural(list.length, "contrat", "contrats")}</b><span>{received ? `reçus par ${plural(received, "classe", "classes")}` : "interfaces et classes abstraites remplies deux fois"}</span></div>
         <div className="tile"><small>Files</small><b>{qs.length ? qs.map((x) => x.topic).join(", ") : "aucune"}</b><span>{qs.length ? `${plural(qs.reduce((n, x) => n + x.producers.length, 0), "lieu y dépose", "lieux y déposent")}` : "aucune file lue"}</span></div>
-        <div className={`tile${outs.length ? " tile--cr" : ""}`}><small>Attendent sans fin</small><b>{outs.length ? outs.map((x) => x.dep.name).join(", ") : "aucune trouvée"}</b><span>{outs.length ? "aucun délai maximum lu" : "aucune trouvée ; lu seulement pour les clients pg et ioredis"}</span></div>
+        <div className={`tile${outs.length ? " tile--cr" : ""}`}><small>Attendent sans fin</small><b>{outs.length ? outs.map((x) => x.dep.name).join(", ") : "aucune trouvée"}</b><span>{outs.length ? "aucun délai maximum lu" : "aucune trouvée, parmi les clients dont un pack lit le délai"}</span></div>
         <div className="tile"><small>Écrit puis met en file</small><b>{plural(map.model.findings.filter((f) => f.code === "write_then_enqueue" && (!block || f.nodes?.includes(block.id))).length, "lieu", "lieux")}</b><span>si la file tombe, l'écriture reste</span></div>
       </div>
       <section className="card">
@@ -49,7 +49,7 @@ export function MechanismsScreen({ map, block, item, open }: { map: MapPayload; 
           ))}
         </>}
         {tab === "files" && <>
-          {qs.length === 0 && <p className="mc__empty">Aucune file lue : aucun pack de file (BullMQ…) ne trouve de file dans ce dépôt.</p>}
+          {qs.length === 0 && <p className="mc__empty">Aucune file lue : aucun pack de file ne trouve de file dans ce dépôt.</p>}
           {qs.map((x) => (
             <button key={x.id} className={`mc__row mc__row--q${x === q ? " mc__row--on" : ""}`} onClick={() => open(`files:${x.id}`)}>
               <code>{x.topic}</code><span>{x.node.name}</span><span>{plural(x.producers.length, "lieu y dépose", "lieux y déposent")}</span><span>{x.consumers.map((c) => `${c.node.name}, ${c.entry.handler?.name ?? c.entry.key}`).join(" ; ") || "personne ne la consomme"}</span>
@@ -57,7 +57,7 @@ export function MechanismsScreen({ map, block, item, open }: { map: MapPayload; 
           ))}
         </>}
         {tab === "pannes" && <>
-          {outs.length === 0 && <p className="mc__empty">Aucune trouvée. Le délai n'est lu que pour les clients pg (Postgres) et ioredis (Redis), d'après les valeurs par défaut de leur documentation ; un autre client (Prisma, Mongoose…) n'est pas vérifié.</p>}
+          {outs.length === 0 && <p className="mc__empty">Aucune trouvée. Le délai n'est lu que pour les clients dont un pack connaît les valeurs par défaut, d'après leur documentation ; un autre client n'est pas vérifié.</p>}
           {outs.map((x) => (
             <button key={x.id} className={`mc__row mc__row--q${x === o ? " mc__row--on" : ""}`} onClick={() => open(`pannes:${x.id}`)}>
               <code>{x.dep.name}</code><span>{x.dependents.map((d) => d.node.name).join(", ")}</span><span>{plural(x.dependents.reduce((n, d) => n + d.entries.length, 0), "point d'entrée", "points d'entrée")}</span><span className="see">aucun délai maximum</span>
@@ -138,7 +138,7 @@ function How({ tab }: { tab: Tab }) {
       <section className="card">
         <div className="hd"><h2>Comment c'est trouvé</h2></div>
         <p className="mc__how">{tab === "files"
-          ? "Par le pack de la technologie de file (BullMQ) : la file créée, chaque ajout et le worker qui la consomme. Le pack ne lit pas encore les réglages de reprise ni la clé d'unicité d'un message."
+          ? "Par le pack de la technologie de file : la file créée, chaque ajout et le worker qui la consomme. Le pack ne lit pas encore les réglages de reprise ni la clé d'unicité d'un message."
           : "Par les clients des dépendances : la connexion à la base et à la file, lue avec ses options. Aucun délai écrit, ou des reprises sans limite, et la panne bloque au lieu d'échouer."}</p>
         <div className="mc__prov"><Provenance kind="read" /></div>
       </section>

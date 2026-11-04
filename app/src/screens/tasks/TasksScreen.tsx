@@ -98,7 +98,7 @@ function Side({ t, openFlow }: { t: Trigger; openFlow: (id: string) => void }) {
       </section>
       <section className="card">
         <div className="hd"><h2>Comment c'est trouvé</h2></div>
-        <p className="tk__how">Par les appels aux planificateurs (node-cron), les consommateurs de file (BullMQ), les routes qu'un service extérieur appelle avec une signature, et le nombre de machines déclaré au déploiement. Chaque pack dit comment sa technologie se lance : node-cron tourne dans chaque processus qui le charge, alors qu'un CronJob Kubernetes part une fois par horaire.</p>
+        <p className="tk__how">Par les appels aux planificateurs, les consommateurs de file, les routes qu'un service extérieur appelle avec une signature, et le nombre de machines déclaré au déploiement. Chaque pack dit comment sa technologie se lance : un planificateur écrit dans le code tourne dans chaque processus qui le charge, une tâche déclarée au déploiement part une fois par horaire.</p>
       </section>
     </aside>
   );
