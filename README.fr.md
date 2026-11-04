@@ -56,6 +56,22 @@ atelier-api est une vraie application Express, Postgres et Stripe qui nous sert 
 | Une réservation est écrite, puis son email est mis en file **hors de la transaction** : si la mise en file échoue, l'écriture reste | `bookings/create.ts:28`, `bookings/create.ts:39` |
 | Les connexions à Postgres et à Redis n'ont **aucun délai maximum** : si l'une ne répond plus, les requêtes attendent sans fin | `db.ts:6`, `queue.ts:7` |
 
+## Essayé sur des projets jamais vus
+
+Nous avons tiré au hasard 11 projets Express publics et lancé le moteur **sans toucher à son code au moment de la mesure**, puis comparé à un décompte indépendant de leurs sources : 7 sur 11 se lisent bien (par exemple mini-erp-crm : 20 routes sur 20, 7 tables sur 7, un effet lu sur 19 routes). 2 ont révélé des défauts généraux, corrigés puis remesurés. Les interfaces injectées restent non lues, et un très gros dépôt à plusieurs applications n'est pas concluant.
+
+**La boucle complète sur mini-erp-crm :** VisionLayer signale une lecture hors transaction sur `POST /challans/:id/confirm` ; Muse Code lit la carte, corrige la double décrémentation du stock et ajoute un test ; sa session apparaît, ses règles sont vérifiées, le constat disparaît, et le correctif devient un Replay.
+
+## Le contexte des agents : ce que nous avons mesuré
+
+| Mesure | Résultat |
+|---|---|
+| Le déroulé complet d'une fonctionnalité, atelier-api | environ **1 250 tokens au lieu de 6 600** pour lire le fichier |
+| Même tâche sur atelier-api, 5 passages | **23 % de coût en moins**, 12 % d'appels en moins |
+| 8 vraies corrections sur OpenArchiver, 31 passages | recherches avant la première modification : **11,5 à 7,6**, mais **aucune économie au total** : coût médian 0,58 $ avec, 0,43 $ sans, correctifs de même qualité |
+
+Le grand test est le plus honnête : la carte aide l'agent à s'orienter, elle ne rend pas encore les passages moins chers sur un gros dépôt. Les benchmarks publics n'ont pas été lancés.
+
 ## Construit avec Meta
 
 La carte ne vient jamais d'un modèle. Elle vient des packs de technologie, qui lisent le code de façon déterministe, ou de ce que les agents ont déclaré. Les modèles de Meta font ce que les modèles font bien, dans ces limites.
@@ -81,7 +97,7 @@ VisionLayer se construit en public pendant le hackathon. Cette section dit ce qu
 
 | Partie | État |
 |---|---|
-| Moteur de lecture, packs, modèle neutre, constats | Marche aujourd'hui, couvert par 255 tests |
+| Moteur de lecture, packs, modèle neutre, constats | Marche aujourd'hui, couvert par 307 tests |
 | Serveur MCP pour les agents, crochets d'activité | Marche aujourd'hui |
 | Couche de connaissance : notes ancrées au code, vérifiées à chaque changement | Marche aujourd'hui |
 | Interface locale | En construction : l'ancienne est retirée, `pnpm ui` sert l'API de la carte |

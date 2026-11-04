@@ -8,7 +8,7 @@
 <p align="center">
   <a href="LICENSE"><img alt="License: Apache 2.0" src="https://img.shields.io/badge/license-Apache%202.0-121211?style=flat-square"></a>
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-121211?style=flat-square&logo=typescript&logoColor=white">
-  <img alt="255 tests passing" src="https://img.shields.io/badge/tests-255%20passing-2c9a57?style=flat-square">
+  <img alt="307 tests passing" src="https://img.shields.io/badge/tests-307%20passing-2c9a57?style=flat-square">
   <img alt="Built with Meta Muse" src="https://img.shields.io/badge/built%20with-Meta%20Muse-e2791d?style=flat-square">
   <img alt="Local first" src="https://img.shields.io/badge/local-first-121211?style=flat-square">
 </p>
@@ -74,6 +74,33 @@ atelier-api is a real Express, Postgres and Stripe application we use as a test 
 | A booking is written, then its email is queued **outside the transaction**: if queuing fails, the write stays | `bookings/create.ts:28`, `bookings/create.ts:39` |
 | The connections to Postgres and Redis have **no timeout**: if either stops answering, requests wait forever | `db.ts:6`, `queue.ts:7` |
 
+## Tested on projects it had never seen
+
+A tool that only works on the project it was tuned on is useless. So we drew 11 public Express projects at random, ran the engine with **no change to its code** at measure time, and compared it with an independent count of their sources.
+
+| Project | Routes (engine / source) | Tables | Routes whose flow shows an effect |
+|---|---|---|---|
+| [mini-erp-crm](https://github.com/Rahul03ll/mini-erp-crm) | 20 / 20 | 7 / 7 | 19 / 20 |
+| [school-management-system](https://github.com/wedbata/school-management-system) | 42 / 42 | 13 / 13 | 41 / 42 |
+| [Barbershop-Booking-System](https://github.com/MrTabaOfficial/Barbershop-Booking-System) | 33 / 33 | 8 / 8 | 30 / 33, plus 4 scheduled jobs |
+| kanban-fullstack | 12 / 12 | 4 / 4 | 11 / 12 |
+
+7 of the 11 read well. 2 revealed general defects, since fixed and then re-measured. Interfaces injected into controllers stay unread, and a very large multi-app repository was inconclusive. We re-read 12 random routes against their code and found one wrong guard, also fixed. Each fix targets a general form, with its own test, never one project.
+
+**The whole loop, on a project it had never seen (mini-erp-crm).** VisionLayer flags a read outside a transaction on `POST /challans/:id/confirm`. Muse Code reads the map before writing, fixes the double stock decrement with a conditional write, and adds a test. Its session appears, its rules are checked against the code, the finding disappears, and the fix becomes a Replay. **Vigie**, on Barbershop-Booking-System, answered 12 runs of 8 questions with 104 citations that all exist; on p95 latency it answered *not read*.
+
+## Agent context: what we measured
+
+We shrink what an agent has to read, and we measure it instead of assuming it.
+
+| Measure | Result |
+|---|---|
+| One feature's full flow, on atelier-api | about **1,250 tokens instead of 6,600** to read the file |
+| Same task on atelier-api, 5 runs | **23% cheaper**, 12% fewer model calls, 10% fewer tokens read |
+| 8 real fixes on OpenArchiver, 31 runs | searches before the first edit fall from **11.5 to 7.6**, but **no saving overall**: median cost $0.58 with VisionLayer, $0.43 without, and fixes of the same quality |
+
+The large test is the honest one. Pouring a map into an agent's window you do not control can cost more than it saves. The model bills mostly for what it rereads on each call, and the agent's own base weighs 29,000 tokens per call. The map helps it find its way; it does not yet make runs cheaper on large repositories. Public benchmarks (SWE-PolyBench, Agent Retrieval Bench) were not run.
+
 ## Built with Meta
 
 The map never comes from a model. It comes from technology packs that read the code deterministically, or from what agents declared. Meta's models do what models are good at, inside those limits.
@@ -99,7 +126,7 @@ VisionLayer is being built in the open during the hackathon. This section says w
 
 | Part | Status |
 |---|---|
-| Reading engine, packs, neutral model, findings | Works today, covered by 255 tests |
+| Reading engine, packs, neutral model, findings | Works today, covered by 307 tests |
 | MCP server for coding agents, activity hooks | Works today |
 | Knowledge layer: notes anchored to code, checked on every change | Works today |
 | Local interface | Being built: the previous one is removed, `pnpm ui` serves the map API |
@@ -178,6 +205,8 @@ VisionLayer is built for the Meta AI Developer Hackathon, Startup track, on top 
 
 ## Limits, honestly
 
+- **Static reading.** A protection that exists is not proof that it is enough. Concurrency, OpenAPI, GraphQL, gRPC and libraries with no running program are not represented yet.
+- **Replays trust the agent's test.** A solution can pass it while the route still calls the old code.
 - **One stack covered, not every stack.** TypeScript and JavaScript; Express, Drizzle and Postgres, BullMQ, node-cron, Stripe, Docker, Fly. Elsewhere VisionLayer says *no pack*.
 - **The code, not production.** It reads what code and configuration declare. What actually ran is not read.
 
