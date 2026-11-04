@@ -302,7 +302,8 @@ export class ReplayStore {
 
   private worktree(name: string, base: string, testsDir: string): string {
     const path = join(homedir(), ".visionlayer", "replays", `${basename(this.root)}-${name}`);
-    if (existsSync(path)) this.drop(path);
+    // Une copie laissée par un autre clone du projet : git ne la connaît pas ici.
+    if (existsSync(path)) { this.drop(path); rmSync(path, { recursive: true, force: true }); spawnSync("git", ["worktree", "prune"], { cwd: this.root }); }
     mkdirSync(dirname(path), { recursive: true });
     git(this.root, "worktree", "add", "--detach", path, base);
     for (const t of listFiles(testsDir)) {

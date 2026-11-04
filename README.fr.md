@@ -34,9 +34,9 @@ Quand les agents écrivent le code, quatre choses se perdent sans bruit.
 | Une feature | Que se passe-t-il, étape par étape, quand un client paie ? |
 | Une fonction, une ligne | Quel code fait exactement cela ? |
 
-**Voir ce que fait chaque fonctionnalité.** L'écran Fonctionnalités regroupe chaque point d'entrée par ressource et le dessine en chaîne, dans l'ordre du code : lectures, refus, écritures, bornes de transaction, réponses. Un clic ouvre son déroulé complet.
+**Voir ce que fait chaque fonctionnalité.** L'écran **Fonctionnalités** regroupe chaque point d'entrée par ressource et le dessine en chaîne, dans l'ordre du code : lectures, refus, écritures, bornes de transaction, réponses. Un clic ouvre son déroulé complet.
 
-**Suivre un processus à travers les routes.** L'écran Parcours prend une donnée à états, comme une réservation, ou une file, et montre ce qui la fait avancer : l'appel du client, le webhook Stripe, la tâche planifiée, chacun avec ses gardes, ses lectures et écritures, et ce qui reprend sur une file. Calculé depuis le code, sans modèle de langage.
+**Suivre un processus à travers les routes.** L'écran **Parcours** prend une donnée à états, comme une réservation, ou une file, et montre ce qui la fait avancer : l'appel du client, le webhook Stripe, la tâche planifiée, chacun avec ses gardes, ses lectures et écritures, et ce qui reprend sur une file. Calculé depuis le code, sans modèle de langage.
 
 **Lire l'algorithme quand il le faut.** Une feature est tracée dans l'ordre où le code l'exécute : la route, la garde, la lecture en base, l'écriture, le message mis en file. Chaque étape ouvre sa ligne.
 
@@ -84,7 +84,7 @@ La carte ne vient jamais d'un modèle. Elle vient des packs de technologie, qui 
 | | Modèle | Ce qu'il fait |
 |---|---|---|
 | **L'écrivain de packs** | Muse Spark 1.3, API Responses | Quand VisionLayer rencontre une technologie qu'il ne sait pas lire, Muse écrit le pack manquant à partir de la documentation de cette technologie, jamais de votre projet : l'inventaire des formes de l'API, un test par forme, puis les règles. VisionLayer le valide à part, le charge à chaud, et le retirer rend exactement la carte d'avant. |
-| **Vigie** | Muse Spark 1.3, et un modèle ouvert de Meta servi par Baseten | On pose une question depuis n'importe quel écran. Vigie répond par les outils de VisionLayer, cite les lignes derrière chaque point, et dit *non lu* au lieu de deviner. |
+| **Vigie** | Muse Spark 1.3, Responses API | On pose une question depuis n'importe quel écran. Vigie répond par les outils de VisionLayer, cite les lignes derrière chaque point, et dit *non lu* au lieu de deviner. |
 | **L'entraîneur des Replays** | Muse Spark 1.3 | Pose des questions et donne des indices gradués. Ne donne jamais la réponse, ne montre jamais la solution de l'agent. |
 | **L'agent de code du projet** | Muse Code | Code dans le projet, lit la carte par MCP avant sa tâche, et déclare ce qu'il a fait dans sa PR. |
 
@@ -108,8 +108,7 @@ Cette section dit ce qui marche aujourd'hui, et ce qui ne marche pas encore.
 | Interface locale : carte, fonctionnalités, déroulés, contrats, accès, données, mécanismes, tâches, règles, sessions | Marche aujourd'hui (`pnpm start`) |
 | Écrivain de packs avec Muse Spark | Marche aujourd'hui |
 | Vigie sur la Model API | Marche aujourd'hui : cite fichier et ligne ; demande ta clé |
-| Vigie sur Baseten | Pas encore lancée |
-| Replays | Un vrai replay vérifié de bout en bout, avec les tests du projet ; l'entraîneur reste limité |
+| Replays, avec Vigie en entraîneur | Un vrai replay joué de bout en bout depuis un clone neuf, avec le test du projet |
 
 ## Comment ça marche
 
@@ -129,38 +128,62 @@ flowchart LR
 - **Des faits, pas des suppositions.** tree-sitter transforme le TypeScript et le JavaScript en faits. Les packs, écrits en YAML, décrivent chacun le comportement documenté d'une technologie, et sont testés forme par forme.
 - **Un seul modèle pour toutes les piles.** Les règles assemblent un modèle neutre : blocs déployables, points d'entrée, déroulés entre fonctions, gardes d'accès, lectures et écritures de données, constats et couverture.
 - **Honnête sur ce qui manque.** Ce qui n'est pas lu est marqué *non lu*. Une technologie sans pack est marquée *sans pack*, et c'est exactement ce que l'écrivain de packs corrige.
-- **Tout en local.** Rien ne quitte votre machine, sauf une question posée à Vigie et les extraits qu'il cite. Avec un modèle ouvert, rien ne part du tout.
+- **Tout en local.** Rien ne quitte votre machine, sauf une question posée à Vigie et les extraits qu'il cite.
 
-## Démarrage rapide
+## Lancer en local
+
+Il faut Node 22.5 ou plus (testé sur la 24), pnpm et git. Rien à déployer : tout ce qui suit tourne sur ta machine.
 
 ```bash
 git clone https://github.com/mouhamedsylla/visionlayer && cd visionlayer
 pnpm install
+pnpm start --examples
 ```
 
-Lire l'exemple fourni, puis votre propre projet :
+Ouvre `http://127.0.0.1:4173`. Le premier lancement clone quatre projets d'exemple à un commit fixé dans `~/.visionlayer/examples` ([détails](examples/README.md)) ; leur code est seulement lu, jamais installé ni exécuté. Choisis-en un :
+
+| Projet | À regarder |
+|---|---|
+| **Atelier API** | **Parcours** : `bookings.status`, de l'appel du client au webhook Stripe et à la tâche planifiée |
+| **Barbershop Booking System** | **Parcours** : `booking.status` ; **Mécanismes** : `PaymentProvider` et ses implémentations |
+| **Lingua CRM** | **Fonctionnalités** : 125 points d'entrée par ressource ; **Parcours** : la file `automations` |
+| **Mini ERP CRM** | **Replays**, **Sessions d'agents**, **Règles et décisions** : une vraie session de Muse Code et ce qu'elle a laissé |
+
+Pour ouvrir ton projet : `pnpm start`, puis un dossier ou une adresse `https://github.com/propriétaire/dépôt`. `--port 5000` change le port.
+
+### Configurer Muse
+
+Sans clé, tout ce qui lit le code marche : carte, fonctionnalités, parcours, déroulés, contrats, accès, données, mécanismes, tâches, règles, et le code d'un Replay face à ses tests. **Vigie, l'écrivain de packs et l'entraîneur des Replays demandent une clé Meta Model API**, et le disent quand elle manque.
+
+Mets la clé dans `~/.visionlayer.env`, puis relance :
 
 ```bash
-pnpm facts tests/corpus/atelier-api
+echo "MODEL_API_KEY=ta-cle" > ~/.visionlayer.env
 ```
 
-Lance-le, puis choisis un projet : un dossier de ta machine ou une adresse GitHub. Le code est seulement lu, jamais installé ni exécuté. Pour poser des questions à Muse, mets ta clé dans `~/.visionlayer.env` : `MODEL_API_KEY=...`.
+`MODEL_API_KEY` ou `META_API_KEY` dans l'environnement marche aussi. VisionLayer appelle `https://api.meta.ai/v1/responses` avec `muse-spark-1.3`. Nous avons mesuré une question à Vigie à 37 secondes et environ 2 centimes ; tes chiffres varieront. Une question et les extraits que Vigie cite quittent ta machine.
+
+| Fonction | Pour l'essayer |
+|---|---|
+| **Vigie** | Dans un projet, **Demander à Vigie** (⌘J) : « Comment se déroule le paiement d'une réservation, du checkout à la confirmation ? » Chaque point cite un fichier et une ligne. |
+| **Écrivain de packs** | Dans **Packs**, choisis une technologie marquée *sans pack* et lance l'écrivain : plusieurs minutes et de nombreux appels au modèle. Tu acceptes ou refuses le pack proposé. |
+| **Replay** | Voir plus bas. Lui seul exécute du code tiers, et seulement une fois que tu l'as installé. |
+
+### Jouer le Replay
+
+Dans Mini ERP CRM, un Replay lance le test du projet sur ta machine. Installe d'abord ce projet :
 
 ```bash
-pnpm start
+cd ~/.visionlayer/examples/mini-erp-crm/backend && npm install && npx prisma generate
 ```
 
-L'interface s'ouvre sur `http://127.0.0.1:4173`. Les tests se lancent avec `pnpm test`.
+Puis ouvre **Replays**, choisis le replay, modifie le code, relance les tests jusqu'à ce qu'ils passent, et soumets. Avec une clé, Vigie donne des indices et compare ton correctif à celui de l'agent.
 
-### Relier vos agents de code
+### Relier un agent de code
 
-Donnez-leur la carte par MCP, en ajoutant ce serveur à la configuration de votre agent :
+Dans **Réglages**, appuie sur **Relier** à côté de Muse Code, Claude Code ou Codex. Cela écrit le serveur MCP dans les réglages de l'agent du projet (`.mcp.json` pour Muse Code et Claude Code) et un court contrat dans `AGENTS.md` ou `CLAUDE.md` ; **Délier** les retire. Pour Muse Code, connecte-toi avec `muse login` ou définis `META_API_KEY`, puis lance `muse` dans ce projet. Les outils sont `vision_summary`, `vision_slice`, `vision_reach` et `vision_source`.
 
-```json
-{ "mcpServers": { "visionlayer": { "command": "pnpm", "args": ["--dir", "/chemin/vers/visionlayer", "mcp"] } } }
-```
-
-Les outils sont `vision_summary`, `vision_slice`, `vision_reach` et `vision_source`.
+Les tests se lancent avec `pnpm test`.
 
 ## Construit avant et pendant le hackathon
 
@@ -169,7 +192,7 @@ VisionLayer est construit pour le Meta AI Developer Hackathon, parcours Startup,
 | Avant le 27 octobre | Pendant le hackathon |
 |---|---|
 | Le moteur de lecture : tree-sitter, moteur de règles, packs de technologie | L'écrivain de packs avec Muse Spark, chargement et retrait à chaud |
-| Le modèle neutre du système et la couche de connaissance | Vigie, sur la Model API et sur Baseten |
+| Le modèle neutre du système et la couche de connaissance | Vigie, sur la Model API |
 | Le serveur MCP et le contexte réduit des agents | Les Replays, avec Vigie en entraîneur |
 | Les crochets d'activité des agents | Muse Code comme agent du projet |
 | L'ancienne interface | La nouvelle interface et ses écrans |
