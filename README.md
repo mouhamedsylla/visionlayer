@@ -195,7 +195,7 @@ echo "MODEL_API_KEY=your-key" > ~/.visionlayer.env
 | Feature | Try it |
 |---|---|
 | **Vigie** | In any project, **Demander à Vigie** (⌘J): "How does the payment of a booking go, from checkout to confirmation?" Each point cites a file and line. |
-| **Pack writer** | In **Packs**, choose a technology marked *sans pack* and start the writer: it takes several minutes and many model calls. You accept or refuse the pack it proposes. |
+| **Pack writer** | In **Packs**, choose a technology marked *non lu* and press **Écrire le pack**: it takes several minutes and many model calls. You accept or refuse the pack it proposes. |
 | **Replay** | See below. Only this one runs third-party code, and only after you install it. |
 
 ### Play the Replay

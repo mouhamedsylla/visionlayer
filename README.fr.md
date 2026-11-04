@@ -166,7 +166,7 @@ echo "MODEL_API_KEY=ta-cle" > ~/.visionlayer.env
 | Fonction | Pour l'essayer |
 |---|---|
 | **Vigie** | Dans un projet, **Demander à Vigie** (⌘J) : « Comment se déroule le paiement d'une réservation, du checkout à la confirmation ? » Chaque point cite un fichier et une ligne. |
-| **Écrivain de packs** | Dans **Packs**, choisis une technologie marquée *sans pack* et lance l'écrivain : plusieurs minutes et de nombreux appels au modèle. Tu acceptes ou refuses le pack proposé. |
+| **Écrivain de packs** | Dans **Packs**, choisis une technologie marquée *non lu* et appuie sur **Écrire le pack** : plusieurs minutes et de nombreux appels au modèle. Tu acceptes ou refuses le pack proposé. |
 | **Replay** | Voir plus bas. Lui seul exécute du code tiers, et seulement une fois que tu l'as installé. |
 
 ### Jouer le Replay
