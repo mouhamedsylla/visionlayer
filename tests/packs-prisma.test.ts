@@ -130,3 +130,24 @@ test("prisma C7 : les champs que rend une lecture", async () => {
   assert.deepEqual(reads("ref"), ["refs:2", "one:3 *"]);
   assert.deepEqual(reads("status"), ["one:3 *"]);
 });
+
+test("prisma : chaque opération sur un modèle est un lien du code vers la table, et une étape du déroulé", async () => {
+  const m = await mapOf({ ...BASE,
+    "package.json": `{ "name": "x", "dependencies": { "express": "4" } }\n`,
+    "server.ts": [
+      `import express from "express";`,
+      `import { prisma } from "./lib/prisma";`,
+      `const app = express();`,
+      `app.get("/orders", async (req, res) => { const n = await prisma.order.count(); res.json(await prisma.order.findMany()); });`,
+      `app.post("/orders", async (req, res) => { res.status(201).json(await prisma.order.create({ data: req.body })); });`,
+      `app.delete("/orders/:id", async (req, res) => { await prisma.order.delete({ where: { id: req.params.id } }); res.status(204).end(); });`,
+      `app.post("/ghost", async (req, res) => { await prisma.ghost.create({ data: {} }); res.end(); });`,
+    ].join("\n"),
+    "lib/prisma.ts": `import { PrismaClient } from "@prisma/client";\nexport const prisma = new PrismaClient();\n`,
+  });
+  const flow = (k: string) => m.nodes.flatMap((n) => n.facets.entrypoints ?? []).find((e) => e.key === k)?.flow?.filter((s) => s.target).map((s) => `${s.kind} ${s.target?.entity}`);
+  assert.deepEqual([...new Set(flow("GET /orders"))], ["read order"]);
+  assert.deepEqual(flow("POST /orders"), ["write order"]);
+  assert.deepEqual(flow("DELETE /orders/:id"), ["write order"]);
+  assert.deepEqual(flow("POST /ghost"), [], "un modèle absent du schéma n'est pas une table");
+});

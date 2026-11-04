@@ -11,10 +11,12 @@ import { args, isFunction, literal, returnedExpressions, unwrap, walkAll, type N
  * prisma_read(Fichier, Entité, Champ, Ligne)          x.user.findMany({ select: { email: true } }) : un champ nommé dans la lecture
  * prisma_read_whole(Fichier, Entité, Ligne)          x.user.findUnique({ where }) : toute la ligne
  * prisma_delete(Fichier, Entité, Ligne)              x.order.delete(…), x.order.deleteMany(…) : une suppression de lignes
+ * prisma_op(Fichier, read|write, Entité, Ligne)       chaque opération sur un modèle : le lien du code vers la table
  * tx_span(Fichier, Début, Fin)                        x.$transaction(async (tx) => …), x.$transaction([…]) : les lignes protégées
  */
 const WRITES = new Set(["create", "createMany", "createManyAndReturn", "update", "updateMany", "updateManyAndReturn", "upsert"]);
 const READS = new Set(["findUnique", "findUniqueOrThrow", "findFirst", "findFirstOrThrow", "findMany"]);
+const COUNTS = new Set(["count", "aggregate", "groupBy"]);
 const NUMBER = /^-?\d+(\.\d+)?$/;
 
 function pairOf(o: Node | undefined, key: string): Node | undefined {
@@ -68,6 +70,8 @@ const script: PackScript = ({ file, root, fact }) => {
     const model = fn.childForFieldName("object");
     if (model?.type !== "member_expression") return;
     const entity = model.childForFieldName("property")?.text;
+    if (entity && (READS.has(op) || COUNTS.has(op))) out.push(fact("prisma_op", [file.path, "read", entity, line(n)], line(n)));
+    if (entity && (WRITES.has(op) || op === "delete" || op === "deleteMany")) out.push(fact("prisma_op", [file.path, "write", entity, line(n)], line(n)));
     if (entity && (op === "delete" || op === "deleteMany")) { out.push(fact("prisma_delete", [file.path, entity, line(n)], line(n))); return; }
     if (entity && READS.has(op)) {
       // select: { email: true } : les champs nommés ; sans select, toute la ligne.

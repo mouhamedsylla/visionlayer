@@ -151,7 +151,41 @@ export function classMembers(root: Node): Map<string, Node> {
 
 /** Les fonctions de premier niveau, puis les méthodes des classes de premier niveau. */
 export function functionsAndMethods(root: Node, wrapped = false): Map<string, Node> {
-  return new Map([...topLevelFunctions(root, wrapped), ...classMembers(root)]);
+  return new Map([...topLevelFunctions(root, wrapped), ...classMembers(root), ...(wrapped ? registeredCallbacks(root) : [])]);
+}
+
+/**
+ * Les fonctions sans nom données à un enregistrement, là où elles sont écrites : `router.get("/", async (req, res) => …)`,
+ * `app.post("/x", wrap(async () => …))`, `router.route("/x").get(async () => …)`, `cron.schedule("* * * * *", () => …)`.
+ * Sans framework : une instruction `objet.méthode(…)` dont le premier argument est un nom écrit, ou qui suit un tel appel,
+ * et dont le dernier argument est une fonction. Nommées comme elles sont écrites : `router.get("/")`.
+ */
+export function registeredCallbacks(root: Node): Map<string, Node> {
+  const out = new Map<string, Node>();
+  const named = (n: Node | undefined) => n?.type === "string" || n?.type === "template_string";
+  const statement = (n: Node) => { let cur = n; while (cur.parent?.type === "member_expression" && cur.parent.parent?.type === "call_expression") cur = cur.parent.parent; return cur.parent?.type === "expression_statement" || cur.parent?.type === "await_expression"; };
+  walkAll(root, (n) => {
+    // new Worker("emails", async (job) => …) : la même chose, à la construction ; le dernier argument peut être des options.
+    if (n.type === "new_expression") {
+      const given = n.childForFieldName("arguments")?.namedChildren ?? [];
+      const cb = given.find((x, i) => i > 0 && isFunction(x) && !x.childForFieldName("name"));
+      if (cb && (named(given[0]) || given[0]?.type === "identifier" || given[0]?.type === "member_expression")) out.set(`new ${n.childForFieldName("constructor")?.text}(${given[0]!.text.replace(/\s+/g, " ").slice(0, 60)})`, cb);
+      return;
+    }
+    if (n.type !== "call_expression") return;
+    const fn = n.childForFieldName("function");
+    if (fn?.type !== "member_expression") return;
+    const args = n.childForFieldName("arguments")?.namedChildren ?? [];
+    const lastArg = args.at(-1);
+    const last = lastArg?.type === "call_expression" ? lastArg.childForFieldName("arguments")?.namedChildren.at(-1) : lastArg;
+    if (args.length < 1 || !last || !isFunction(last) || last.childForFieldName("name") || !statement(n)) return;
+    const chained = fn.childForFieldName("object")?.type === "call_expression";
+    if (!chained && (args.length < 2 || !named(args[0]))) return;
+    const head = named(args[0]) ? args[0]!.text.replace(/\s+/g, " ").slice(0, 60) : "";
+    const name = `${fn.text.replace(/\s+/g, "").slice(-40)}(${head})`;
+    out.set(out.has(name) ? `${name}:${n.startPosition.row + 1}` : name, last);
+  });
+  return out;
 }
 
 /** Expressions renvoyées par une fonction (corps expression d'une flèche, ou chaque `return`). */

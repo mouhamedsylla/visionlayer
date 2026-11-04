@@ -22,6 +22,8 @@ rules: |
 
   % Ce qu'un code de route répond : un appel sur son deuxième paramètre (`res.status(409).json(…)`).
   http_reply(F, FL, L, P, N) :- handler_at(_, _, F, FL), param_call(F, FL, 1, P, N, L).
+  % Une route écrite en ligne : sa fonction commence à la ligne du gestionnaire.
+  http_reply(F, HL, L, P, N) :- ex_route(F, _, _, "", HL), param_call(F, HL, 1, P, N, L).
 
   % Les routes : la méthode, le préfixe de leur routeur, leur chemin.
   ex_route(F, M, Full, H, HL) :- http_on(F, O, M, Path, H, HL, _), ex_obj(F, O, G, N), ex_prefix(G, N, P), Path != "/", Full = cat(P, Path).
@@ -39,6 +41,8 @@ rules: |
   guard_at(G, L, auth) :- status_in(G, L, "401").
   guard_at(G, L, Lv) :- calls_in(G, L, C, _), resolves(G, C, H, M), guard_at(H, M, Lv).
   mw_guard(F, Mw, Lv, H, M) :- resolves(F, Mw, H, M), guard_at(H, M, Lv).
+  % const adminOnly = requirePermission("x") : la constante garde comme la fonction qui la fabrique.
+  mw_guard(F, Mw, Lv, H, M) :- ex_call_bind(F, Mw, C), resolves(F, C, H, M), guard_at(H, M, Lv).
 
   % Ce qui garde une route (la ligne qui la déclare), et la fonction qui la tient : G1 sur la route, G2 et G3 avant elle
   % sur son objet, G2 et G3 posés sur le parent avant que son routeur y soit monté, G4 dans son code.

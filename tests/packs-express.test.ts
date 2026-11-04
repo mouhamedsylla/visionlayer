@@ -192,3 +192,26 @@ test("express G7 : une garde écrite dans le gestionnaire ; un 401 après une va
   const a = Object.fromEntries((m.nodes.find((n) => n.id === "image")?.facets.entrypoints ?? []).filter((e) => e.kind === "http").map((e) => [e.key, e.access?.level]));
   assert.deepEqual(a, { "POST /auth/signin": "public", "DELETE /x": "authenticated", "POST /login": "public", "GET /y": "role" });
 });
+
+test("express : un 403 qui ne parle pas d'une personne (anti-CSRF) ne garde pas la route ; un droit vérifié, si", async () => {
+  const { mapOf } = await import("./pack-fixture.js");
+  const m = await mapOf({
+    Dockerfile: `FROM node:20\nCMD ["node", "main.ts"]\n`,
+    "package.json": `{ "name": "x", "dependencies": { "express": "4" } }\n`,
+    "main.ts": [
+      `import express from "express";`,
+      `const app = express();`,
+      `function csrfProtection(req, res, next) { if (req.headers["x-csrf-token"] !== "a") return res.status(403).json({ error: "bad" }); next(); }`,
+      `function requirePermission(p) { return (req, res, next) => { if (!req.user.permissions.includes(p)) return res.status(403).end(); next(); }; }`,
+      `app.use(csrfProtection);`,
+      `app.post("/login", (req, res) => { res.json({}); });`,
+      `app.post("/admin", requirePermission("x"), (req, res) => { res.json({}); });`,
+      `const adminOnly = requirePermission("y");`,
+      `app.post("/admin2", adminOnly, (req, res) => { res.json({}); });`,
+    ].join("\n"),
+  });
+  const level = (k: string) => m.nodes.flatMap((n) => n.facets.entrypoints ?? []).find((e) => e.key === k)?.access?.level;
+  assert.equal(level("POST /login"), "public");
+  assert.equal(level("POST /admin"), "role");
+  assert.equal(level("POST /admin2"), "role");
+});

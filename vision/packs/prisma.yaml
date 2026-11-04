@@ -11,3 +11,5 @@ rules: |
   entity_read(T, N, C, F, L) :- prisma_read(F, N, C, L), prisma_model(G, N), entity_def(T, _, N, G).
   entity_read(T, N, "*", F, L) :- prisma_read_whole(F, N, L), prisma_model(G, N), entity_def(T, _, N, G).
   entity_delete(T, N, "", F, L) :- prisma_delete(F, N, L), prisma_model(G, N), entity_def(T, _, N, G).
+  % Le lien du code vers la table : ce que dessinent la carte et les déroulés.
+  accesses(F, Op, T, N, L) :- prisma_op(F, Op, N, L), prisma_model(G, N), entity_def(T, _, N, G).

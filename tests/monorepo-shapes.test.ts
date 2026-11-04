@@ -41,3 +41,29 @@ test("constats : une connexion ouverte dans un test n'est pas celle du système"
   });
   assert.equal(m.findings.filter((f) => f.code === "missing_timeout").length, 0);
 });
+
+test("déroulé : une route écrite en ligne a son déroulé, enveloppée ou non", async () => {
+  const m = await mapOf({
+    Dockerfile: `FROM node:20\nCMD ["node", "main.ts"]\n`,
+    "package.json": `{ "name": "x", "dependencies": { "express": "4" } }\n`,
+    "main.ts": [
+      `import express from "express";`,
+      `import { wrap } from "./wrap";`,
+      `const app = express();`,
+      `app.get("/a", async (req, res) => {`,
+      `  if (!req.query.q) { throw new HttpError(400, "bad"); }`,
+      `  res.status(200).json({ ok: true });`,
+      `});`,
+      `app.post("/b", wrap(async (req, res) => {`,
+      `  res.status(201).json({ ok: true });`,
+      `}));`,
+      `app.route("/c").get(async (req, res) => { res.status(204).end(); });`,
+      `app.listen(3000);`,
+    ].join("\n"),
+    "wrap.ts": `export const wrap = (f: any) => f;\n`,
+  });
+  const flow = (k: string) => m.nodes.flatMap((n) => n.facets.entrypoints ?? []).find((e) => e.key === k)?.flow?.map((s) => `${s.kind} ${s.status ?? ""}`.trim());
+  assert.deepEqual(flow("GET /a"), ["refuse 400", "reply 200"]);
+  assert.deepEqual(flow("POST /b"), ["reply 201"]);
+  assert.ok(flow("GET /c")?.includes("reply 204"), String(flow("GET /c")));
+});

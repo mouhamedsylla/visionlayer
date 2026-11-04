@@ -174,13 +174,15 @@ const script: PackScript = ({ file, root, imports, fact }) => {
     // Le premier statut qu'elle répond : un 401 ou un 403 écrit d'abord est une garde ; après une validation (400), un refus de connexion.
     let first: Node | undefined;
     walkAll(body, (x) => { if (x.type === "number" && /^[1-5]\d\d$/.test(x.text) && x.parent?.type === "arguments" && (!first || x.startIndex < first.startIndex)) first = x; });
-    if (first && (first.text === "401" || first.text === "403")) out.push(fact("first_status", [file.path, at, first.text], line(first)));
+    // Un 403 ne garde une identité que si la fonction parle d'elle : un jeton anti-CSRF ou une limite refusent une requête, pas une personne.
+    const aboutWho = IDENTITY.test(body.text);
+    if (first && (first.text === "401" || (first.text === "403" && aboutWho))) out.push(fact("first_status", [file.path, at, first.text], line(first)));
     walkAll(body, (x) => {
       if (x.type === "call_expression") {
         const f = x.childForFieldName("function");
         if (f?.type === "identifier" && !seen.has(f.text)) { seen.add(f.text); out.push(fact("calls_in", [file.path, at, f.text, line(x)], line(x))); }
       }
-      if (x.type === "number" && (x.text === "401" || x.text === "403") && (x.parent?.type === "arguments" || x.parent?.type === "assignment_expression") && !seen.has(x.text)) {
+      if (x.type === "number" && (x.text === "401" || x.text === "403") && (x.text === "401" || aboutWho) && (x.parent?.type === "arguments" || x.parent?.type === "assignment_expression") && !seen.has(x.text)) {
         seen.add(x.text);
         out.push(fact("status_in", [file.path, at, x.text], line(x)));
       }
@@ -188,6 +190,9 @@ const script: PackScript = ({ file, root, imports, fact }) => {
   }
   return out;
 };
+
+/** Ce qui dit qu'une fonction juge une personne : son compte, sa session, son rôle, ses droits. */
+const IDENTITY = /user|session|role|permission|admin|account|owner|\bauth|scope|tenant/i;
 
 /** Une route dont le chemin dit qu'elle est l'entrée : on y arrive sans être connecté. */
 const ENTRANCE = /(^|\/)[^/]*(login|signin|sign-in|signup|sign-up|register|token|oauth|callback|reset)[^/]*(\/|$)/i;
