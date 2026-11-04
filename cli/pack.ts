@@ -4,7 +4,8 @@ import { join, resolve } from "node:path";
 import { FactBase } from "../vision/facts/base.js";
 import { loadPacks } from "../vision/facts/packs.js";
 import { PackRegistry } from "../vision/facts/registry.js";
-import { packBrief } from "../vision/writer/brief.js";
+import { hasInstalledDocs, installedDocs, packBrief, siblingPackages, versionOf } from "../vision/writer/brief.js";
+import { publishedDocs } from "../vision/writer/published-docs.js";
 import { writePack, MODEL } from "../vision/writer/spark.js";
 import { loadProposal } from "../vision/writer/load.js";
 import { cliArgs } from "../vision/cli/args.js";
@@ -56,15 +57,48 @@ if (verb === "accept" || verb === "reject") {
 
 const builtins = await loadPacks();
 const example = readFileSync(join(import.meta.dirname, "..", "vision", "writer", "example-pack.yaml"), "utf8");
-const brief = packBrief({ root, pkg: name, builtins, example, ...(question ? { question } : {}), ...(docArg ? { docs: [{ source: docArg, text: readFileSync(docArg, "utf8") }] } : {}) });
+// Une documentation fournie ; sinon celle qui est installée ; sinon celle que le paquet publie (un simple clone n'a pas de node_modules).
+const given = docArg ? [{ source: docArg, text: readFileSync(docArg, "utf8") }] : hasInstalledDocs(root, name) ? [] : await publishedDocs(name, versionOf(root, name));
+// Les autres paquets de la même technologie, installés ou publiés.
+const also = siblingPackages(root, name);
+for (const s of also) given.push(...(hasInstalledDocs(root, s) ? installedDocs(root, s) : await publishedDocs(s, versionOf(root, s))));
+const brief = packBrief({ root, pkg: name, builtins, example, ...(question ? { question } : {}), ...(also.length ? { also } : {}), docs: given });
 mkdirSync(proposes, { recursive: true });
 const id = name.replace(/^@/, "").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
 writeFileSync(join(proposes, `${id}.fiche.md`), brief.text);
 console.log(`Fiche écrite : ${join(proposes, `${id}.fiche.md`)} (documentation : ${brief.sources.join(", ") || "aucune"})`);
 if (verb === "fiche") process.exit(0);
+// Sans documentation, Muse ne peut que rendre un pack vide : on le dit sans dépenser un appel.
+if (!brief.sources.length) {
+  console.error("Pas de pack : aucune documentation trouvée, ni installée ni publiée sur npm (réseau coupé, ou paquet privé). --doc pour en fournir une.");
+  process.exit(2);
+}
 
 console.log(`${MODEL} écrit le pack…`);
+// L'essai sur le projet, à part : l'agent n'en reçoit que des comptes, jamais une ligne du code.
+const trial = new PackRegistry(root, builtins);
+let trialBase = new FactBase(root, builtins);
+trialBase.refresh();
+trialBase = await trial.sync(trialBase);
+const importers = new Set(trialBase.database().get("imports_pkg").filter((t) => [name, ...also].includes(String(t.args[2]))).map((t) => String(t.args[0]))).size;
+const codeFiles = trialBase.database().get("present").filter((t) => /\.[cm]?[jt]sx?$/.test(String(t.args[0]))).length;
+const feedbackOf = (counts: Record<string, number> = {}) => [
+  "Ce qu'il a produit sur ce projet, en comptes (tu ne verras jamais son code) :",
+  ...Object.entries(counts).map(([r, n]) => `- ${r} : ${n} fait${n > 1 ? "s" : ""}`),
+  `- le paquet est importé par ${importers} fichier${importers > 1 ? "s" : ""} sur ${codeFiles} fichiers de code`,
+  "Une relation intermédiaire qui a des faits alors que la relation finale (entrypoint, accesses, calls_external…) n'en a pas : une de tes conditions est trop stricte. Du code réel emploie souvent ce que le paquet fournit dans des fichiers qui ne l'importent pas : une fonction enregistrée reçoit l'instance en paramètre, un module reçoit un objet déjà créé. Ne demande pas l'import dans le même fichier ; distingue les faux amis par la forme de l'appel.",
+].join("\n");
+const tryOnProject = async (yaml: string) => {
+  const p = await trial.preview(trialBase, yaml, `${id}.yaml`);
+  return { adds: p.changes.some((c) => c.sign === "added"), feedback: feedbackOf(p.counts) };
+};
+// Un pack déjà écrit qui n'ajoutait rien : il se corrige, il ne se réécrit pas.
+const oldFile = join(proposes, `${id}.yaml`);
+const oldYaml = existsSync(oldFile) ? readFileSync(oldFile, "utf8") : undefined;
+const oldTry = oldYaml ? await tryOnProject(oldYaml).catch(() => undefined) : undefined;
 const result = await writePack(brief, builtins, {
+  tryOnProject,
+  ...(oldYaml && oldTry && !oldTry.adds ? { previous: { yaml: oldYaml, feedback: oldTry.feedback } } : {}),
   onStep: (s) => console.log(`  [${s.turn}] ${s.tool}${s.tool === "check_pack" || s.tool === "submit_pack" ? ` → ${s.output.split("\n")[0]}` : ""}`),
 });
 const u = result.usage;
@@ -101,7 +135,7 @@ if (preview.state.status === "failed") {
 // Un pack qui n'ajoute rien à la carte de ce projet n'apprend rien : il n'est pas chargé (souvent, la documentation
 // installée ne montre pas l'API ; lui en donner une avec --doc).
 if (!preview.changes.some((c) => c.sign === "added")) {
-  console.error("Pas chargé : ce pack n'ajoute rien à la carte de ce projet ; la documentation installée ne montre sans doute pas l'API (--doc pour en fournir une).");
+  console.error(`Pas chargé : ce pack n'ajoute rien à la carte de ce projet ; ${brief.sources.length ? "sa documentation ne montre sans doute pas l'API que ce projet emploie" : "aucune documentation trouvée, ni installée ni publiée"} (--doc pour en fournir une).`);
   process.exit(2);
 }
 const tests = ((parseYaml(result.yaml) as { tests?: unknown[] } | null)?.tests ?? []).length;
