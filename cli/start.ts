@@ -12,10 +12,12 @@ import { cliArgs } from "../vision/cli/args.js";
 const args = cliArgs();
 const demoAt = args.indexOf("--demo");
 const demo = demoAt >= 0;
-const port = Number(process.env.PORT ?? 4173);
+const portAt = args.indexOf("--port");
+const port = Number((portAt >= 0 ? args[portAt + 1] : undefined) ?? process.env.PORT ?? 4173);
 const host = process.env.HOST ?? (demo ? "0.0.0.0" : "127.0.0.1");
 const dist = join(import.meta.dirname, "..", "app", "dist");
 if (!existsSync(join(dist, "index.html"))) execFileSync("pnpm", ["-s", "app:build"], { cwd: join(import.meta.dirname, ".."), stdio: "inherit" });
+if (demo) process.env.VISION_DEMO = "1";
 const projects = demo ? demoProjects(resolve(args[demoAt + 1] ?? "demo")) : [];
 createHub({ staticDir: dist, projects, demo }).listen(port, host, () => {
   console.log(`VisionLayer : http://${host === "0.0.0.0" ? "localhost" : host}:${port}${demo ? `  (démonstration, ${projects.length} projets)` : ""}`);

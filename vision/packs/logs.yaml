@@ -23,4 +23,4 @@ rules: |
 
   % Constat personal_data_logged (docs/fonctionnement/constats.md), sur un journal qui ne masque rien.
   finding(personal_data_logged, "body", "body", F, L) :- log_req_body(F, R, HL, L), log_in(F, R, "no"), http_handler(F, HL).
-  finding(personal_data_logged, N, "field", F, L) :- log_personal(F, R, N, L), log_in(F, R, "no").
+  finding(personal_data_logged, N, "field", F, L) :- log_personal(F, R, N, L), log_in(F, R, "no"), not sample_file(F), not test_file(F).

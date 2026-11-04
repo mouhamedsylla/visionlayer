@@ -10,7 +10,8 @@ export function projectInfo(root: string): ProjectInfo {
     branch: currentBranch(root),
     commit: currentCommit(root)?.slice(0, 7),
     lastChange: lastCommitIn(root),
-    user: gitUser(root),
+    // Une démonstration publique ne salue personne : le nom vient de la machine qui la sert.
+    ...(process.env.VISION_DEMO ? {} : { user: gitUser(root) }),
   };
 }
 

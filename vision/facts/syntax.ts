@@ -132,7 +132,7 @@ export function syntaxFacts(path: string, root: Node, fact: (rel: string, args: 
   if (root.namedChildren.length && root.namedChildren.every((c) => c.type === "comment" || c.type === "import_statement" || (c.type === "export_statement" && c.childForFieldName("source")))) out.push(fact("reexports_only", [path], 1));
   if (/(^|\/)(__tests__|tests?)\/|\.(test|spec)\.[cm]?[jt]sx?$/.test(path)) out.push(fact("test_file", [path], 1));
   if (/\.config\.[cm]?[jt]s$/.test(path)) out.push(fact("config_file", [path], 1));
-  if (/(^|\/)(examples?|samples?|demos?|fixtures?|scripts?|bench(marks?)?|e2e|tools?)\//.test(path)) out.push(fact("sample_file", [path], 1));
+  if (/(^|\/)(examples?|samples?|demos?|fixtures?|scripts?|seeds?|bench(marks?)?|e2e|tools?)\/|(^|\/)seed[^/]*$/.test(path)) out.push(fact("sample_file", [path], 1));
   // Un serveur démarré : x.listen(3000), x.listen(PORT, cb).
   walkAll(root, (n) => {
     if (n.type !== "call_expression") return;
