@@ -238,3 +238,14 @@ test("express : une garde qui lève une classe d'erreur nommée, et un routeur e
   assert.equal(level("GET /v1/a/open"), "public");
   assert.ok(m.nodes.flatMap((n) => n.facets.entrypoints ?? []).some((e) => e.key === "GET /v1/b/x"));
 });
+
+test("express : une authentification facultative ne garde pas la route", async () => {
+  const { mapOf } = await import("./pack-fixture.js");
+  const m = await mapOf({
+    Dockerfile: `FROM node:20\nCMD ["node", "main.ts"]\n`, "package.json": `{ "name": "x", "dependencies": { "express": "4" } }\n`,
+    "main.ts": [`import express from "express";`, `const app = express();`, `const requireAuth = (req, res, next) => { if (!req.user) return res.status(401).end(); next(); };`, `const optionalAuth = (req, res, next) => { if (!req.get("authorization")) return next(); return requireAuth(req, res, next); };`, `app.get("/a", optionalAuth, (q, r) => r.end());`, `app.get("/b", requireAuth, (q, r) => r.end());`].join("\n"),
+  });
+  const level = (k: string) => m.nodes.flatMap((n) => n.facets.entrypoints ?? []).find((e) => e.key === k)?.access?.level;
+  assert.equal(level("GET /a"), "public");
+  assert.equal(level("GET /b"), "authenticated");
+});

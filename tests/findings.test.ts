@@ -24,7 +24,7 @@ test("uncalled_entry : une route qu'aucun code du dépôt n'appelle ; santé, we
     ...WEB(`export const list = () => fetch("/orders");\n`),
   });
   assert.deepEqual(found(m, "uncalled_entry"), ["api/main.ts:7 [api]"]);
-  assert.deepEqual(messages(m, "uncalled_entry"), ["« POST /orders/:id/cancel » : aucun code du dépôt n'appelle cette route"]);
+  assert.deepEqual(messages(m, "uncalled_entry"), ["« POST /orders/:id/cancel » : aucun appel lu vers cette route"]);
 
   // Aucun client dans le dépôt : rien à comparer, aucun constat.
   const alone = await mapOf(API([`app.get("/orders", h);`, `app.post("/orders/:id/cancel", h);`]));
@@ -36,7 +36,7 @@ test("uncalled_entry : un appel du dépôt qui n'a pas pu être lu est dit dans 
     ...API([`app.get("/orders", h);`, `app.post("/orders/:id/cancel", h);`]),
     ...WEB(`export const list = () => fetch("/orders");\nconst target = process.env.TARGET!;\nexport const any = () => fetch(target);\nexport const ext = () => fetch("https://api.github.com/x");\n`),
   });
-  assert.deepEqual(messages(m, "uncalled_entry"), ["« POST /orders/:id/cancel » : aucun code du dépôt n'appelle cette route, mais 1 appel HTTP du dépôt n'a pas pu être lu"]);
+  assert.deepEqual(messages(m, "uncalled_entry"), ["« POST /orders/:id/cancel » : aucun appel lu vers cette route, mais 1 appel HTTP du dépôt n'a pas pu être lu"]);
   const gaps = m.coverage.flatMap((c) => c.gaps).filter((g) => g.kind === "path_dynamic");
   assert.deepEqual(gaps.map((g) => `${g.count} ${g.proof?.path}:${g.proof?.line}`), ["1 web/main.ts:3"]);
 });

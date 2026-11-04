@@ -19,6 +19,15 @@ export function routeContracts(rows: (rel: string) => readonly Row[], entries: E
     const list = statusOf.get(k) ?? statusOf.set(k, []).get(k)!;
     if (!list.some((x) => x.code === code)) list.push({ code, proof: { path: s(t.args[0]), line: Number(t.args[3]), source: "syntax" } });
   }
+  // Une erreur fabriquée par une fonction du même fichier : `throw unauthenticated()`.
+  for (const t of rows("calls_in")) {
+    const [f, at, callee] = [s(t.args[0]), s(t.args[1]), s(t.args[2])];
+    const to = resolves.get(`${f}\0${callee}`);
+    const theirs = to && statusOf.get(`${to.path}:${to.line}`);
+    if (!theirs) continue;
+    const list = statusOf.get(`${f}:${at}`) ?? statusOf.set(`${f}:${at}`, []).get(`${f}:${at}`)!;
+    for (const x of theirs) if (!list.some((y) => y.code === x.code)) list.push(x);
+  }
   const fieldsOf = (path: string, schema: string, partial: boolean) => rows("schema_field").filter((t) => s(t.args[0]) === path && s(t.args[1]) === schema)
     .map((t) => ({ name: s(t.args[2]), type: s(t.args[3]), required: !partial && s(t.args[4]) === "yes", proof: { path, line: Number(t.args[5]), source: "syntax" as const } }));
   const spans = new Map<string, { start: number; end: number }[]>();
@@ -46,12 +55,14 @@ export function routeContracts(rows: (rel: string) => readonly Row[], entries: E
     const given = rows("route_input").find(here);
     if (given) {
       const [path, schema] = [s(given.args[2]), s(given.args[3])];
-      input = { schema, proof: { path: e.proof.path, line: e.proof.line, source: "syntax" }, fields: fieldsOf(path, schema, s(given.args[4]) === "partial") };
+      input = { schema, part: "body", proof: { path: e.proof.path, line: e.proof.line, source: "syntax" }, fields: fieldsOf(path, schema, s(given.args[4]) === "partial") };
     } else if (e.handler) {
       const span = spans.get(e.handler.path)?.find((x) => x.start === e.handler!.line);
-      const parsed = span && rows("schema_parse").find((t) => s(t.args[0]) === e.handler!.path && Number(t.args[2]) >= span.start && Number(t.args[2]) <= span.end);
+      const inSpan = span ? rows("schema_parse").filter((t) => s(t.args[0]) === e.handler!.path && Number(t.args[2]) >= span.start && Number(t.args[2]) <= span.end) : [];
+      const rank = (t: Row) => ["body", "query", "params"].indexOf(s(t.args[3]));
+      const parsed = [...inSpan].sort((a, b) => rank(a) - rank(b))[0];
       const ref = parsed && rows("schema_ref").find((t) => s(t.args[0]) === e.handler!.path && s(t.args[1]) === s(parsed.args[1]));
-      if (parsed && ref) input = { schema: s(ref.args[3]), proof: { path: e.handler.path, line: Number(parsed.args[2]), source: "syntax" }, fields: fieldsOf(s(ref.args[2]), s(ref.args[3]), false) };
+      if (parsed && ref) input = { schema: s(ref.args[3]), part: s(parsed.args[3]), proof: { path: e.handler.path, line: Number(parsed.args[2]), source: "syntax" }, fields: fieldsOf(s(ref.args[2]), s(ref.args[3]), false) };
     }
     if (chain.length || input) e.contract = { chain, ...(input ? { input } : {}) };
   }

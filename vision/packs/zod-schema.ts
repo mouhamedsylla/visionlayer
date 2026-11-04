@@ -7,7 +7,7 @@ import { args, importBindings, literal, unwrap, walkAll, type Node } from "../ar
  *
  * schema_def(Fichier, Schéma)                                const s = z.object({ … })
  * schema_field(Fichier, Schéma, Champ, Type, yes|no, Ligne)  name: z.string().min(1) → "string, min 1", requis
- * schema_parse(Fichier, Schéma, Ligne)                       s.parse(req.body), s.safeParse(request.body) dans une fonction
+ * schema_parse(Fichier, Schéma, Ligne, body|query|params)                       s.parse(req.body), s.safeParse(request.body) dans une fonction
  */
 const OBJECT = new Set(["object", "strictObject", "looseObject"]);
 const OPTIONAL = new Set(["optional", "nullish", "default", "catch", "prefault"]);
@@ -82,7 +82,8 @@ const script: PackScript = ({ file, root, fact }) => {
     if (fn?.type !== "member_expression" || !PARSE.has(fn.childForFieldName("property")?.text ?? "")) return;
     const given = args(n)[0]?.text ?? "";
     const { root: r } = chainOf(fn.childForFieldName("object") ?? undefined);
-    if (r && /\b(body|query|params)\b/.test(given)) out.push(fact("schema_parse", [file.path, r.text, line(n)], line(n)));
+    const part = /\bbody\b/.test(given) ? "body" : /\bquery\b/.test(given) ? "query" : /\bparams\b/.test(given) ? "params" : "";
+    if (r && part) out.push(fact("schema_parse", [file.path, r.text, line(n), part], line(n)));
   });
   return out;
 };

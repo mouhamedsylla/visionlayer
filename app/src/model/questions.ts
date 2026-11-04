@@ -23,7 +23,7 @@ export interface Question {
 
 /** Le mot d'un constat dans une marque, au singulier et au pluriel. */
 const WORD: Partial<Record<FindingCode, [string, string]>> = {
-  uncalled_entry: ["sans appelant", "sans appelant"], dead_code: ["code mort", "codes morts"], unguarded_route: ["sans rôle", "sans rôle"],
+  uncalled_entry: ["sans appel lu", "sans appel lu"], dead_code: ["code mort", "codes morts"], unguarded_route: ["sans rôle", "sans rôle"],
   missing_timeout: ["sans délai", "sans délai"], race_read_then_write: ["course", "courses"], write_then_enqueue: ["écrit puis met en file", "écrivent puis mettent en file"],
   personal_data_logged: ["donnée perso. journalisée", "données perso. journalisées"], unused_value: ["valeur jamais écrite", "valeurs jamais écrites"],
 };

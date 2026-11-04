@@ -92,7 +92,8 @@ export function overviewHero(p: MapPayload): Hero | undefined {
       },
     };
   }
-  const f = byGravity(p.model.findings)[0];
+  // Seul un constat grave porte le titre de la page : « sans appel lu » est une hygiène, pas une alerte.
+  const f = byGravity(p.model.findings).find((x) => FINDING_TONE[x.code] === "critical");
   if (!f) return undefined;
   // L'écran de sa question, l'élément choisi.
   const go = findingPlace(p, f);
@@ -159,7 +160,7 @@ export function overviewStats(p: MapPayload, claims: { total: number; contradict
     {
       label: "Points d'entrée", value: String(routes.length || entries(p).length), unit: routes.length ? "routes" : "entrées",
       mini: { kind: "bars", bars: bars.length ? bars : [{ cls: "q", height: 30 }] },
-      note: uncalled ? `${uncalled} qu'aucun code du dépôt n'appelle` : "toutes appelées dans le dépôt",
+      note: uncalled ? `${uncalled} sans appel lu` : "toutes appelées dans le dépôt",
     },
     {
       label: "Tables", value: String(entities.length),

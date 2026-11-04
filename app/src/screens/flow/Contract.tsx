@@ -21,7 +21,7 @@ export function Contract({ entry }: { entry: Entrypoint }) {
       </div>
       <div className="ct__two">
         <div>
-          <div className="hd"><h2>Corps de la requête</h2><span className="mono">{c?.input ? c.input.schema : ""}</span></div>
+          <div className="hd"><h2>{c?.input?.part === "query" ? "Requête, query" : c?.input?.part === "params" ? "Requête, params" : "Corps de la requête"}</h2><span className="mono">{c?.input ? c.input.schema : ""}</span></div>
           {c?.input?.fields.length ? <>
             <div className="ct__f ct__h"><span>Champ</span><span>Type</span><span>Requis</span></div>
             {c.input.fields.map((f) => <div key={f.name} className="ct__f"><code>{f.name}</code><code>{f.type}</code><span>{f.required ? "oui" : "non"}</span></div>)}

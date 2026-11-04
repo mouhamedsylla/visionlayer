@@ -47,7 +47,7 @@ const flowStep = S({
 
 const routeContract = S({
   chain: z.array(S({ name: z.string(), proof, def: proof.optional(), statuses: z.array(S({ code: z.string(), proof })) })),
-  input: S({ schema: z.string(), proof, fields: z.array(S({ name: z.string(), type: z.string(), required: z.boolean(), proof })) }).optional(),
+  input: S({ schema: z.string(), part: z.string().optional(), proof, fields: z.array(S({ name: z.string(), type: z.string(), required: z.boolean(), proof })) }).optional(),
 });
 
 const entrypoint = S({

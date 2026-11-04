@@ -555,7 +555,7 @@ export function assemble(db: Database, opts: AssembleOptions): ArchModelV2 {
     for (const e of http) {
       if (e.calledBy?.length || HEALTH.test(e.key.split(" ")[1] ?? "")) continue;
       const unread = unreadCalls ? `, mais ${unreadCalls} appel${unreadCalls > 1 ? "s" : ""} HTTP du dépôt n'${unreadCalls > 1 ? "ont" : "a"} pas pu être lu${unreadCalls > 1 ? "s" : ""}` : "";
-      findings.push({ code: "uncalled_entry", message: `« ${e.key} » : aucun code du dépôt n'appelle cette route${unread}`, proof: [e.proof], nodes: [n.id], source: e.proof.source });
+      findings.push({ code: "uncalled_entry", message: `« ${e.key} » : aucun appel lu vers cette route${unread}`, proof: [e.proof], nodes: [n.id], source: e.proof.source });
     }
   }
   // Des tâches planifiées sur un déployable à plusieurs instances : chacune s'exécute autant de fois.

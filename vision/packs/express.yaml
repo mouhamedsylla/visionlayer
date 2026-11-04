@@ -41,7 +41,7 @@ rules: |
   guard_at(G, L, role) :- status_in(G, L, "403").
   guard_at(G, L, auth) :- status_in(G, L, "401").
   guard_at(G, L, Lv) :- calls_in(G, L, C, _), resolves(G, C, H, M), guard_at(H, M, Lv).
-  mw_guard(F, Mw, Lv, H, M) :- resolves(F, Mw, H, M), guard_at(H, M, Lv).
+  mw_guard(F, Mw, Lv, H, M) :- resolves(F, Mw, H, M), guard_at(H, M, Lv), not soft_guard(H, M).
   % const adminOnly = requirePermission("x") : la constante garde comme la fonction qui la fabrique.
   mw_guard(F, Mw, Lv, H, M) :- ex_call_bind(F, Mw, C), resolves(F, C, H, M), guard_at(H, M, Lv).
 

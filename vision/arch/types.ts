@@ -183,7 +183,8 @@ export interface Guard {
 export interface RouteContract {
   /** Dans l'ordre où la requête les traverse ; `statuses` : ce que chacun peut répondre, quand son code est lu. */
   chain: { name: string; proof: Proof; def?: Proof; statuses: { code: string; proof: Proof }[] }[];
-  input?: { schema: string; proof: Proof; fields: { name: string; type: string; required: boolean; proof: Proof }[] };
+  /** La partie de la requête que le schéma valide : `body`, `query`, `params`. */
+  input?: { schema: string; part?: string; proof: Proof; fields: { name: string; type: string; required: boolean; proof: Proof }[] };
 }
 
 export interface Entrypoint {

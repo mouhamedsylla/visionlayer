@@ -188,6 +188,8 @@ const script: PackScript = ({ file, root, imports, fact }) => {
   const fnBodies: [number, Node][] = [];
   for (const [, decl] of topLevelFunctions(root)) fnBodies.push([line(decl), decl]);
   walkAll(root, (n) => { if (isFunction(n) && n.parent?.type === "arguments") fnBodies.push([line(n), n]); });
+  // optionalAuth : laisse passer sans preuve ; elle ne garde rien.
+  for (const [name, decl] of topLevelFunctions(root)) if (/^(optional|maybe|try)[A-Z_]/.test(name)) out.push(fact("soft_guard", [file.path, line(decl)], line(decl)));
   for (const [at, body] of fnBodies) {
     const seen = new Set<string>();
     // Le premier statut qu'elle répond : un 401 ou un 403 écrit d'abord est une garde ; après une validation (400), un refus de connexion.
