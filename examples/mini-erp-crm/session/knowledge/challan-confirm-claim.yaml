@@ -1,0 +1,16 @@
+concept: challan-confirm-claim
+kind: feature
+name: Challan confirmation atomic claim
+claims:
+  - id: challan-confirm-claim.once
+    type: rule
+    text: Confirming a delivery challan claims it with a single conditional write (updateMany where status is Draft) inside the transaction, so exactly one of two concurrent confirms proceeds and stock is decremented exactly once.
+    anchor: backend/src/lib/challanConfirm.ts#confirmChallan
+  - id: challan-confirm-claim.outer-read
+    type: invariant
+    text: The challan read before the transaction is a fast-path for 404/auth only; the status decision that protects stock is the atomic claim inside the transaction, not the outer read.
+    anchor: backend/src/lib/challanConfirm.ts#confirmChallan
+  - id: challan-confirm-claim.regression
+    type: guarantee
+    text: A DB-free regression test races two concurrent confirms against an in-memory Prisma stand-in with interleaving operations and per-transaction undo logging, and asserts exactly one success, one rejection, and a single stock decrement.
+    anchor: backend/src/lib/challanConfirm.test.ts#concurrent challan confirmation

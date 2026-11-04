@@ -25,7 +25,7 @@ export function prepareExamples(repoRoot: string, dir = join(homedir(), ".vision
     execFileSync("git", ["clone", "--quiet", p.repo, to], { stdio: "inherit" });
     execFileSync("git", ["checkout", "--quiet", p.commit], { cwd: to, stdio: "inherit" });
     writeFileSync(join(to, "demo.json"), JSON.stringify({ name: p.name, note: p.note }));
-    const bundle = join(repoRoot, "examples", p.dir, ".vision");
+    const bundle = join(repoRoot, "examples", p.dir, "session");
     if (existsSync(bundle)) {
       cpSync(bundle, join(to, ".vision"), { recursive: true });
       // L'état que la session a laissé : son correctif et son test.

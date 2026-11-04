@@ -1,0 +1,205 @@
+diff --git a/backend/src/routes/challans.ts b/backend/src/routes/challans.ts
+index 6da440e..93cda3f 100644
+--- a/backend/src/routes/challans.ts
++++ b/backend/src/routes/challans.ts
+@@ -1,7 +1,8 @@
+ import { Router } from 'express';
+ import { z } from 'zod';
+-import { ChallanStatus, MovementType } from '@prisma/client';
++import { ChallanStatus } from '@prisma/client';
+ import { prisma } from '../lib/prisma';
++import { confirmChallan } from '../lib/challanConfirm';
+ import { authenticate, authorize } from '../middleware/auth';
+ import { validateBody, AppError, getPagination, paramId } from '../middleware/errorHandler';
+ import { generateInvoicePDF } from '../lib/pdfGenerator';
+@@ -226,72 +227,10 @@ router.put('/:id', authorize('manage_challans'), validateBody(challanUpdateSchem
+ 
+ router.post('/:id/confirm', authorize('manage_challans'), async (req, res, next) => {
+   try {
+-    const challan = await prisma.challan.findUnique({
+-      where: { id: paramId(req.params.id) },
+-      include: { lineItems: true },
+-    });
+-
+-    if (!challan) throw new AppError(404, 'Challan not found');
+-    if (req.user!.role === 'Sales' && challan.createdBy !== req.user!.userId) {
+-      throw new AppError(403, 'Insufficient permissions to confirm this challan');
+-    }
+-    if (challan.status !== ChallanStatus.Draft) {
+-      throw new AppError(400, 'Only draft challans can be confirmed');
+-    }
+-
+-    const lineItems = challan.lineItems;
+-
+-    const result = await prisma.$transaction(async (tx) => {
+-      // Aggregate quantities per product to prevent multi-line stock check bypass
+-      const productQuantities = new Map<string, number>();
+-      for (const item of lineItems) {
+-        productQuantities.set(
+-          item.productId,
+-          (productQuantities.get(item.productId) || 0) + item.quantity
+-        );
+-      }
+-
+-      for (const [productId, totalRequested] of productQuantities.entries()) {
+-        const product = await tx.product.findUnique({ where: { id: productId } });
+-        if (!product) {
+-          throw new AppError(400, `Product not found: ${productId}`);
+-        }
+-        if (totalRequested > product.currentStock) {
+-          throw new AppError(
+-            400,
+-            `Insufficient stock for ${product.name}. Available: ${product.currentStock}, Total Requested: ${totalRequested}`
+-          );
+-        }
+-      }
+-
+-      for (const item of lineItems) {
+-        await tx.stockMovement.create({
+-          data: {
+-            productId: item.productId,
+-            quantityChanged: item.quantity,
+-            movementType: MovementType.OUT,
+-            reason: challan.challanNumber,
+-            createdBy: req.user!.userId,
+-          },
+-        });
+-
+-        await tx.product.update({
+-          where: { id: item.productId },
+-          data: { currentStock: { decrement: item.quantity } },
+-        });
+-      }
+-
+-      return tx.challan.update({
+-        where: { id: challan.id },
+-        data: { status: ChallanStatus.Confirmed },
+-        include: {
+-          lineItems: true,
+-          customer: { select: { id: true, name: true, businessName: true } },
+-          creator: { select: { id: true, name: true } },
+-        },
+-      });
++    const result = await confirmChallan(prisma, paramId(req.params.id), {
++      userId: req.user!.userId,
++      role: req.user!.role,
+     });
+-
+     res.json(result);
+   } catch (error) {
+     next(error);
+diff --git a/backend/src/lib/challanConfirm.ts b/backend/src/lib/challanConfirm.ts
+new file mode 100644
+index 0000000..0c39cb7
+--- /dev/null
++++ b/backend/src/lib/challanConfirm.ts
+@@ -0,0 +1,109 @@
++import { ChallanStatus, MovementType } from '@prisma/client';
++import { AppError } from '../middleware/errorHandler';
++
++export interface ConfirmUser {
++  userId: string;
++  role: string;
++}
++
++// Minimal structural type for the Prisma client surface used by confirmChallan.
++// Parameters and results are `any` so both the real PrismaClient and
++// in-memory fakes satisfy it; shapes are asserted at the use sites below.
++export interface ConfirmClient {
++  challan: {
++    findUnique(args: any): Promise<any>;
++  };
++  $transaction<T>(fn: (tx: any) => Promise<T>): Promise<T>;
++}
++
++interface ConfirmChallanRow {
++  id: string;
++  challanNumber: string;
++  status: ChallanStatus;
++  createdBy: string;
++  lineItems: { productId: string; quantity: number }[];
++}
++
++export async function confirmChallan(
++  client: ConfirmClient,
++  challanId: string,
++  user: ConfirmUser
++): Promise<unknown> {
++  const challan = (await client.challan.findUnique({
++    where: { id: challanId },
++    include: { lineItems: true },
++  })) as ConfirmChallanRow | null;
++
++  if (!challan) throw new AppError(404, 'Challan not found');
++  if (user.role === 'Sales' && challan.createdBy !== user.userId) {
++    throw new AppError(403, 'Insufficient permissions to confirm this challan');
++  }
++  // Fast-path check only. The authoritative guard is the atomic claim inside
++  // the transaction below: two concurrent confirms must not both proceed.
++  if (challan.status !== ChallanStatus.Draft) {
++    throw new AppError(400, 'Only draft challans can be confirmed');
++  }
++
++  const lineItems = challan.lineItems;
++
++  return client.$transaction(async (tx) => {
++    // Atomically claim the challan: exactly one concurrent transaction can
++    // flip Draft -> Confirmed. The loser sees count 0 and aborts, so its
++    // stock decrements are rolled back and stock is decremented only once.
++    const claimed = await tx.challan.updateMany({
++      where: { id: challan.id, status: ChallanStatus.Draft },
++      data: { status: ChallanStatus.Confirmed },
++    });
++    if (claimed.count === 0) {
++      throw new AppError(400, 'Only draft challans can be confirmed');
++    }
++
++    // Aggregate quantities per product to prevent multi-line stock check bypass
++    const productQuantities = new Map<string, number>();
++    for (const item of lineItems) {
++      productQuantities.set(
++        item.productId,
++        (productQuantities.get(item.productId) || 0) + item.quantity
++      );
++    }
++
++    for (const [productId, totalRequested] of productQuantities.entries()) {
++      const product = await tx.product.findUnique({ where: { id: productId } });
++      if (!product) {
++        throw new AppError(400, `Product not found: ${productId}`);
++      }
++      if (totalRequested > product.currentStock) {
++        throw new AppError(
++          400,
++          `Insufficient stock for ${product.name}. Available: ${product.currentStock}, Total Requested: ${totalRequested}`
++        );
++      }
++    }
++
++    for (const item of lineItems) {
++      await tx.stockMovement.create({
++        data: {
++          productId: item.productId,
++          quantityChanged: item.quantity,
++          movementType: MovementType.OUT,
++          reason: challan.challanNumber,
++          createdBy: user.userId,
++        },
++      });
++
++      await tx.product.update({
++        where: { id: item.productId },
++        data: { currentStock: { decrement: item.quantity } },
++      });
++    }
++
++    return tx.challan.findUnique({
++      where: { id: challan.id },
++      include: {
++        lineItems: true,
++        customer: { select: { id: true, name: true, businessName: true } },
++        creator: { select: { id: true, name: true } },
++      },
++    });
++  });
++}

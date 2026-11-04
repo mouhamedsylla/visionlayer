@@ -9,4 +9,4 @@
 | [lingua-crm](https://github.com/sergei-cmyk-web/lingua-crm) | Never seen before reading: 125 entry points, 3 queues | MIT |
 | [mini-erp-crm](https://github.com/Rahul03ll/mini-erp-crm) | Never seen before reading; carries one real agent session and its Replay | MIT |
 
-`mini-erp-crm/.vision` holds what that session left: the session record, the note it declared, and Replay `r-001` (the agent's patch, derived from the MIT-licensed project, and its test). The patch is applied after the clone.
+`mini-erp-crm/session`, copied to `.vision` in the clone, holds what that session left: the session record, the note it declared, and Replay `r-001` (the agent's patch, derived from the MIT-licensed project, and its test). The patch is applied after the clone.
