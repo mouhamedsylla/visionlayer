@@ -283,7 +283,7 @@ function Confront({ r, reopen, reset, back, prepare, busy, error }: { r: ReplayV
       {error && <p className="rp__err">{error}</p>}
       <div className="rp__two">
         <Side who={`${r.agent.name}, le ${DAY.format(new Date(r.agent.at))}`} av={AGENT[agentKey].mono} text={c?.agent} diff={r.agentPatch ?? ""} />
-        <Side who="Toi, aujourd'hui" av="TOI" mine text={c?.you} diff={r.yourDiff ?? ""} />
+        <Side who={r.submitted?.example ? "Exemple de solution rendue" : "Toi, aujourd'hui"} av="TOI" mine text={c?.you} diff={r.yourDiff ?? ""} />
       </div>
       {c && (
         <section className="card rp__cmp">

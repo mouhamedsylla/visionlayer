@@ -1,21 +1,21 @@
 import type { StackPayload } from "../../../vision/web/types";
 import type { AgentLink, AgentSession, Replay, ReplayTest, VigieAnswer, VigieStep, KnowledgePayload, MapPayload, PacksPayload, ProjectInfo, SourceExcerpt, WriterJob } from "./types";
-import { READ_ONLY, recordedQuestions, SNAPSHOT, snapshotGet } from "./snapshot";
 
 /** Un Replay tel que l'écran le voit : le correctif de l'agent seulement une fois le sien rendu. */
 export type ReplayView = Replay & { agentPatch?: string; yourDiff?: string };
 
+/** Sous l'entrée du produit, chaque projet vit à `/p/<id>/` ; lancé sur un seul projet, à la racine. */
+export const BASE = /^\/p\/[^/]+/.exec(window.location.pathname)?.[0] ?? "";
+
 async function get<T>(path: string): Promise<T> {
-  if (SNAPSHOT) return snapshotGet(path) as Promise<T>;
-  const res = await fetch(path);
+  const res = await fetch(`${BASE}${path}`);
   const body = await res.json();
   if (!res.ok) throw new Error(body?.error ?? `${res.status}`);
   return body as T;
 }
 
 async function post<T>(path: string): Promise<T> {
-  if (SNAPSHOT) throw new Error(READ_ONLY);
-  const res = await fetch(path, { method: "POST" });
+  const res = await fetch(`${BASE}${path}`, { method: "POST" });
   const body = await res.json();
   if (!res.ok) throw new Error(body?.error ?? `${res.status}`);
   return body as T;
@@ -32,14 +32,8 @@ export const api = {
   vigie: (q: string) => post<VigieAnswer>(`/api/vigie?q=${encodeURIComponent(q)}`),
   /** La question, avec chaque lecture de Vigie au moment où elle a lieu. */
   vigieStream: async (q: string, onStep: (s: VigieStep) => void): Promise<VigieAnswer> => {
-    if (SNAPSHOT) {
-      const hit = (await recordedQuestions()).find((x) => x.q === q);
-      if (!hit) throw new Error(READ_ONLY);
-      for (const s of hit.answer.steps) { await new Promise((r) => setTimeout(r, 180)); onStep(s); }
-      return hit.answer;
-    }
-    const res = await fetch(`/api/vigie/stream?q=${encodeURIComponent(q)}`, { method: "POST" });
-    if (!res.ok || !res.body) throw new Error(`${res.status}`);
+    const res = await fetch(`${BASE}/api/vigie/stream?q=${encodeURIComponent(q)}`, { method: "POST" });
+    if (!res.ok || !res.body) { const b = await res.json().catch(() => undefined) as { error?: string } | undefined; throw new Error(b?.error ?? `${res.status}`); }
     const reader = res.body.getReader();
     const dec = new TextDecoder();
     let rest = "";
@@ -66,8 +60,7 @@ export const api = {
   askReplay: (id: string, a: { q?: string; hint?: number }) => post<VigieAnswer>(`/api/replays/ask?id=${id}${a.hint ? `&hint=${a.hint}` : `&q=${encodeURIComponent(a.q ?? "")}`}`),
   replayFiles: (id: string) => get<{ path: string; test: boolean; text: string }[]>(`/api/replays/files?id=${id}`),
   saveReplayFile: async (id: string, path: string, text: string) => {
-    if (SNAPSHOT) throw new Error(READ_ONLY);
-    const res = await fetch(`/api/replays/save?id=${id}&path=${encodeURIComponent(path)}`, { method: "POST", body: text });
+    const res = await fetch(`${BASE}/api/replays/save?id=${id}&path=${encodeURIComponent(path)}`, { method: "POST", body: text });
     if (!res.ok) throw new Error((await res.json())?.error ?? `${res.status}`);
     return (await res.json()) as { ok: boolean; diff: string };
   },
@@ -92,8 +85,7 @@ export const api = {
   stack: () => get<StackPayload>("/api/stack"),
   /** Une action humaine : recalculer la carte (ADR 0009). */
   refresh: async () => {
-    if (SNAPSHOT) return api.map();
-    const res = await fetch("/api/map/refresh", { method: "POST" });
+    const res = await fetch(`${BASE}/api/map/refresh`, { method: "POST" });
     if (!res.ok) throw new Error(`${res.status}`);
     return (await res.json()) as MapPayload;
   },

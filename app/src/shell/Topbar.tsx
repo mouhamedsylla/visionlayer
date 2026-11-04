@@ -1,7 +1,7 @@
 import type { ArchNode, MapPayload, ProjectInfo } from "../api/types";
 import type { Crumb } from "./route";
 import { Icon } from "./icons";
-import { PROJECTS, SNAPSHOT, snapshotProject } from "../api/snapshot";
+import { BASE } from "../api/client";
 
 /** La barre du haut de la planche : le fil d'Ariane, la pastille de fraîcheur (date, heure, commit), relancer l'analyse. */
 export function Topbar({ project, map, crumbs, back, backLabel, block, clearBlock, refreshing, onRefresh }: { project?: ProjectInfo; map?: MapPayload; crumbs: Crumb[]; back?: () => void; backLabel?: string; block?: ArchNode; clearBlock?: () => void; refreshing: boolean; onRefresh: () => void }) {
@@ -13,14 +13,11 @@ export function Topbar({ project, map, crumbs, back, backLabel, block, clearBloc
       <div className="top__crumbs">
         {back && backLabel && <button className="vl-btn vl-btn--secondary vl-btn--sm" onClick={back}>‹ {name(backLabel)}</button>}
         {Icon.side}
-        <span>{project?.name ?? "…"}</span>
+        {BASE ? <a className="top__link" href="/" title="Changer de projet">{project?.name ?? "…"}</a> : <span>{project?.name ?? "…"}</span>}
         {crumbs.map((c, i) => <span key={i} className="top__crumb"><span aria-hidden="true">›</span>{c.back ? <button className="top__link" onClick={() => window.history.go(-c.back)}>{c.node ? name(c.node) : c.label}</button> : <span className={i === crumbs.length - 1 ? "top__here" : ""}>{c.node ? name(c.node) : c.label}</span>}</span>)}
         {block && clearBlock && <button className="top__chip" title="Revenir à tout le système" onClick={clearBlock}>du bloc {block.name} <i>×</i></button>}
       </div>
       <div className="top__right">
-        {SNAPSHOT && <span className="top__demo">Démonstration en lecture seule
-          <select aria-label="Projet" value={snapshotProject()} onChange={(e) => { window.location.search = `?p=${e.target.value}`; }}>{PROJECTS.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select>
-        </span>}
         {at && (
           <span className="vl-pill">
             <i className="vl-dot vl-dot--live" />{day}<span className="vl-pill__sep" />

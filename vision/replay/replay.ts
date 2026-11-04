@@ -56,7 +56,7 @@ export interface Replay {
   copy?: string;
   /** Le dernier passage des tests dans la copie. */
   last?: ReplayTest[];
-  submitted?: { at: string; result: ReplayTest[]; diff: string };
+  submitted?: { at: string; result: ReplayTest[]; diff: string; example?: boolean };
   /** Ramener ce que tu as trouvé dans le projet : les vérifications faites sur le projet à jour, puis la branche. */
   proposal?: Proposal;
   /** La confrontation, écrite par Muse une fois la solution rendue. */

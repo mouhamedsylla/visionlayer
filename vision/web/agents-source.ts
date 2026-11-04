@@ -13,6 +13,9 @@ import type { AgentSession } from "./types.js";
  * prompt, une commande ou un contenu.
  */
 export function agentSessions(root: string): AgentSession[] {
+  // Une démonstration emporte ses sessions : le journal de l'agent est resté sur la machine qui l'a lancé.
+  const frozen = join(root, ".vision", "sessions.json");
+  if (existsSync(frozen)) return JSON.parse(readFileSync(frozen, "utf8")) as AgentSession[];
   return [...museSessions(root), ...hookSessions(root)].sort((a, b) => b.started.localeCompare(a.started));
 }
 

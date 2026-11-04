@@ -3,7 +3,6 @@ import { api } from "../api/client";
 import type { MapPayload, VigieAnswer, VigieStep } from "../api/types";
 import { CodeRef } from "../ui/CodeRef";
 import { useOpenCode } from "../ui/code";
-import { recordedQuestions, SNAPSHOT } from "../api/snapshot";
 import "./vigie.css";
 
 /** Ouvrir Vigie depuis n'importe quel écran, avec une question déjà posée ou non. */
@@ -61,9 +60,6 @@ function examples(map?: MapPayload): string[] {
 
 function Panel({ map, turns, busy, draft, setDraft, ask, close }: { map?: MapPayload; turns: Turn[]; busy: boolean; draft: string; setDraft: (s: string) => void; ask: (q: string) => void; close: () => void }) {
   const end = useRef<HTMLDivElement>(null);
-  // En ligne : les questions réellement posées sur ce projet, avec leurs réponses enregistrées.
-  const [recorded, setRecorded] = useState<string[]>([]);
-  useEffect(() => { if (SNAPSHOT) recordedQuestions().then((l) => setRecorded(l.map((x) => x.q))); }, []);
   useEffect(() => { end.current?.scrollIntoView({ block: "end" }); }, [turns.length, busy]);
   return (
     <aside className="vg" aria-label="Vigie">
@@ -76,7 +72,7 @@ function Panel({ map, turns, busy, draft, setDraft, ask, close }: { map?: MapPay
         {turns.length === 0 && (
           <div className="vg__intro">
             <p>Pose une question sur le système. Vigie ne lit que ce que VisionLayer a lu : la carte, et le code qu'elle cite. Ce qu'elle ne couvre pas, il le dit « non lu ».</p>
-            {(recorded.length ? recorded : examples(map)).map((q) => <button key={q} className="vg__ex" onClick={() => ask(q)}>{q}</button>)}
+            {examples(map).map((q) => <button key={q} className="vg__ex" onClick={() => ask(q)}>{q}</button>)}
           </div>
         )}
         {turns.map((t, i) => (
