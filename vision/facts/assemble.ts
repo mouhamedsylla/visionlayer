@@ -1,3 +1,5 @@
+import { isBuiltin } from "node:module";
+import { packageName as npmName } from "../stack/build.js";
 import { attributeEntrypoints, attributeFieldWrites } from "./entry-reach.js";
 import { attributeFlows } from "./flow.js";
 import { attributeFunctions } from "./functions.js";
@@ -599,6 +601,16 @@ export function assemble(db: Database, opts: AssembleOptions): ArchModelV2 {
       else missing.set(entry.name, { count: 1, proof: t.proof[0]!, where: [t.proof[0]!] });
     }
   }
+  // Les bibliothèques que le code des programmes importe, hors catalogue et sans pack : la carte ne dit pas ce qu'elles font, et elle le dit.
+  const covered = new Set(opts.packs.flatMap((p) => [p.id, ...(p.imports ?? [])]));
+  const executed = new Set([...reachOf.values()].flat());
+  const libraries = new Map<string, Proof[]>();
+  for (const t of rows("imports_pkg")) {
+    const pkg = s(t.args[2]);
+    if (!executed.has(s(t.args[0])) || isBuiltin(pkg) || pkg.startsWith("@types/") || !npmName(pkg) || techsForPackage("npm", pkg).length) continue;
+    if (covered.has(pkg) || covered.has(pkg.replace(/^@/, "").replace(/[^a-z0-9]+/gi, "-").toLowerCase())) continue;
+    (libraries.get(pkg) ?? libraries.set(pkg, []).get(pkg)!).push(t.proof[0]!);
+  }
   const coverage: Coverage[] = [
     { level: "deployable", unit: "manifests", read: manifests.size, total: manifests.size, gaps: coverageGaps },
     {
@@ -610,6 +622,7 @@ export function assemble(db: Database, opts: AssembleOptions): ArchModelV2 {
       gaps: [
         ...[...byExt].sort().map(([ext, count]) => ({ kind: "language_not_read" as const, subject: `fichiers ${ext}`, count, where: unread.filter((f) => f.endsWith(ext)).sort().map((path) => ({ path, line: 0, source: "syntax" as const })) })),
         ...[...missing].sort(([a], [b]) => a.localeCompare(b)).map(([name, m]) => ({ kind: "pack_missing" as const, subject: name, count: m.count, proof: m.proof, where: dedupe(m.where) })),
+        ...[...libraries].sort(([a], [b]) => a.localeCompare(b)).map(([pkg, where]) => ({ kind: "library_not_read" as const, subject: pkg, count: dedupe(where).length, proof: where[0]!, where: dedupe(where) })),
         ...unreadGaps,
         ...unresolvedGaps(rows("unresolved")),
         // Un pack qui a échoué sur des fichiers : ce qu'il aurait lu là manque, et la carte le dit au lieu de tomber.

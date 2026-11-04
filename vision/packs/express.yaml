@@ -50,6 +50,12 @@ rules: |
   pguard(F, L, Lv, H, D) :- http_on(F, O, _, _, _, _, L), ex_obj(F, O, G, N), obj_guard(G, N, Lv, H, D).
   pguard(F, L, Lv, G, D) :- http_on(F, _, M, P, H, HL, L), H = "", calls_in(F, HL, C, _), resolves(F, C, G, D), guard_at(G, D, Lv).
   pguard(F, L, Lv, G2, D2) :- http_on(F, _, _, _, H, _, L), H != "", resolves(F, H, G, D), calls_in(G, D, C, _), resolves(G, C, G2, D2), guard_at(G2, D2, Lv).
+  % Une garde écrite dans le gestionnaire lui-même : son premier statut est un 401 ou un 403. Pas sur une route d'entrée :
+  % le 401 de POST /login dit un mauvais mot de passe, il ne garde rien.
+  first_guard(G, L, role) :- first_status(G, L, "403").
+  first_guard(G, L, auth) :- first_status(G, L, "401").
+  pguard(F, L, Lv, G, D) :- http_on(F, _, _, _, H, _, L), H != "", resolves(F, H, G, D), first_guard(G, D, Lv), not entrance_route(F, L).
+  pguard(F, L, Lv, F, HL) :- http_on(F, _, _, _, H, HL, L), H = "", first_guard(F, HL, Lv), not entrance_route(F, L).
   prot(F, L, Lv) :- pguard(F, L, Lv, _, _).
 
   % Garde d'un point d'entrée, en relation neutre : ce pack lit les gardes de chaque route qu'il déclare.

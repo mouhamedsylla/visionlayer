@@ -136,7 +136,8 @@ test("carte neutre d'atelier-api : produite par des règles, au niveau de l'orac
   // Rien de montré que l'oracle n'a pas, sauf ce qui a été relu et trouvé vrai.
   for (const l of lines) assert.deepEqual([...l.extra].sort(), [...(VERIFIED_EXTRA[l.what] ?? [])].sort(), `${l.what} : en plus`);
   // Rien n'est vide « par manque de lecteur » : tout ce dépôt est lu.
-  assert.ok(model.coverage.every((c) => c.read === c.total && c.gaps.length === 0), JSON.stringify(model.coverage));
+  // Une bibliothèque sans pack est dite (cookie-parser reste à lire) ; rien d'autre ne manque.
+  assert.ok(model.coverage.every((c) => c.read === c.total && c.gaps.every((g) => g.kind === "library_not_read")), JSON.stringify(model.coverage));
 });
 
 test("carte neutre d'atelier-api : chaque point d'entrée dit ce qu'il exécute, lit, écrit et appelle", async () => {

@@ -14,6 +14,7 @@ import { sqlTables, sqlTablesOfText, type SqlTable } from "./sql.js";
  * db_conn_opt(Fichier, Ligne, Clé, Valeur)            { connectionTimeoutMillis: 5000 }, { maxRetriesPerRequest: null }
  * db_derive(Fichier, Variable, Depuis, Ligne)         const client = await pool.connect() ; const db = client.db("app")
  * db_query(Fichier, Variable, read|write, Table, Ligne)   pool.query("SELECT … FROM users"), sql`…`, sql.unsafe("…")
+ * db_kv(Fichier, Variable, read|write, Clé, Ligne)    redis.setex(`session:${t}`, …) : une commande, et la famille de sa clé
  * db_coll(Fichier, Variable, Racine, Collection, Ligne)   const users = db.collection("users")
  * db_coll_op(Fichier, Racine, Collection, read|write, Ligne)   db.collection("orders").insertOne(…)
  * db_coll_var_op(Fichier, Variable, read|write, Ligne)   users.findOne(…)
@@ -22,6 +23,9 @@ import { sqlTables, sqlTablesOfText, type SqlTable } from "./sql.js";
  */
 const DERIVE = new Set(["connect", "getConnection", "promise", "db"]);
 const QUERY = new Set(["query", "execute", "unsafe"]);
+/** Les commandes d'un stockage clé-valeur (Redis : ioredis et node-redis, en minuscules). */
+const KV_READ = new Set(["get", "mget", "hget", "hgetall", "hmget", "exists", "ttl", "keys", "scan", "smembers", "sismember", "lrange", "llen", "zrange", "zscore"]);
+const KV_WRITE = new Set(["set", "setex", "psetex", "setnx", "mset", "del", "unlink", "expire", "expireat", "hset", "hmset", "hdel", "incr", "incrby", "decr", "decrby", "lpush", "rpush", "lpop", "rpop", "sadd", "srem", "zadd", "zrem"]);
 const COLL_READ = new Set(["find", "findOne", "aggregate", "countDocuments", "estimatedDocumentCount", "distinct", "watch"]);
 const COLL_WRITE = /^(insert|update|replace|delete|findOneAnd|bulkWrite$|drop$)/;
 
@@ -118,6 +122,9 @@ const script: PackScript = ({ file, root, imports, fact }) => {
     if (n.type === "export_statement" && n.text.startsWith("export default")) {
       const c = creation(n.namedChildren.at(-1));
       if (c) conn("default", c, line(n));
+      // export default redis : la connexion gardée dans cette variable.
+      const last = unwrap(n.namedChildren.at(-1));
+      if (last?.type === "identifier") out.push(fact("db_derive", [file.path, "default", last.text, line(n)], line(n)));
       return;
     }
     if (n.type === "assignment_expression") {
@@ -144,6 +151,10 @@ const script: PackScript = ({ file, root, imports, fact }) => {
     const obj = unwrap(fn.childForFieldName("object"));
     const op = COLL_READ.has(method) ? "read" : COLL_WRITE.test(method) ? "write" : undefined;
 
+    // Une commande clé-valeur : redis.setex(`session:${t}`, …) → la famille de clés session:*.
+    const kv = KV_READ.has(method.toLowerCase()) ? "read" : KV_WRITE.has(method.toLowerCase()) ? "write" : undefined;
+    if (kv && obj?.type === "identifier" && args(n).length) out.push(fact("db_kv", [file.path, obj.text, kv, kvKey(args(n)[0]), line(n)], line(n)));
+
     // Une requête SQL écrite : en texte, ou dans un objet { text } / { sql }.
     if (QUERY.has(method) && obj?.type === "identifier") {
       const sql = sqlText(args(n)[0]);
@@ -158,6 +169,16 @@ const script: PackScript = ({ file, root, imports, fact }) => {
   });
   return out;
 };
+
+/** La famille d'une clé : "a" → a ; `session:${t}` → session:* ; une clé calculée → "*". */
+function kvKey(n: Node | undefined): string {
+  const x = unwrap(n);
+  const lit = literal(x);
+  if (lit !== undefined) return lit;
+  if (x?.type !== "template_string") return "*";
+  const head = x.text.slice(1).split("${")[0]!;
+  return head ? `${head}*` : "*";
+}
 
 /** Le texte d'une requête : une chaîne, un gabarit sans substitution, ou la clé text / sql d'un objet. */
 function sqlText(n: Node | undefined): string | undefined {

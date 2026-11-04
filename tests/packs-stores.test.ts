@@ -141,3 +141,18 @@ test("stores D1 : le pool tiré du module, comme l'écrit la documentation de no
   assert.deepEqual(proofOf(m, "postgresql"), ["main.ts:3"]);
   assert.deepEqual(access(m), ["read postgresql users"]);
 });
+
+test("stores Q6 : une commande Redis, par famille de clés ; un autre objet ne compte pas", async () => {
+  const m = await mapOf({ ...SERVER,
+    "redis.ts": `import Redis from "ioredis";\nlet redis = null;\nredis = new Redis();\nexport default redis;\n`,
+    "main.ts": [`import redis from "./redis";`, `import "./other";`, `export const put = (t: string) => redis.setex(\`session:\${t}\`, 60, "u");`, `export const read = () => redis.get("flags");`].join("\n"),
+    "other.ts": `const cache = new Map();\nexport const c = () => cache.get("x");\n`,
+  });
+  assert.deepEqual(access(m), ["read redis flags", "write redis session:*"]);
+});
+
+test("couverture : une bibliothèque hors catalogue importée par le code est dite non lue, un module de Node non", async () => {
+  const m = await mapOf({ ...SERVER, "main.ts": `import { join } from "node:path";\nimport fs from "fs";\nimport multer from "multer";\nimport { a } from "./a";\nexport const x = [join, fs, multer, a];\n`, "a.ts": `export const a = 1;\n` });
+  const gaps = m.coverage.flatMap((c) => c.gaps).filter((g) => g.kind === "library_not_read").map((g) => `${g.subject} ${g.proof?.path}:${g.proof?.line}`);
+  assert.deepEqual(gaps, ["multer main.ts:3"]);
+});

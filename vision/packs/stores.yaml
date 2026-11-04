@@ -67,6 +67,10 @@ rules: |
   db_access(F, Op, T, N, L) :- db_coll_op(F, R, N, Op, L), conn_in(F, R, T).
   db_access(F, Op, T, N, L) :- db_coll_var_op(F, V, Op, L), coll_in(F, V, T, N).
 
+  % Une commande clé-valeur, seulement sur une connexion Redis.
+  kv_store(redis).
+  db_access(F, Op, T, N, L) :- db_kv(F, V, Op, N, L), conn_in(F, V, T), kv_store(T).
+
   accesses(F, Op, T, N, L) :- db_access(F, Op, T, N, L).
   % Une entité vue seulement à l'usage : là où elle est nommée.
   entity_seen(T, S, N, F) :- db_coll(F, V, R, N, _), conn_in(F, R, T), store_shape(T, S).

@@ -12,8 +12,9 @@ const DAY = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "numeric",
 /** Planche P2 : une ligne par technologie, son état bien visible, ce que la carte en tire, et une seule action. */
 export function PacksTable({ map, data, rows, write, dequeue, retire, busy }: { map: MapPayload; data: PacksPayload; rows: TechRow[]; write: (pkgs: string[]) => void; dequeue: (pkg: string) => void; retire: (id: string) => void; busy?: string }) {
   const open = useOpenCode();
-  const unread = rows.filter((r) => r.state !== "read");
-  const read = rows.filter((r) => r.state === "read");
+  const unread = rows.filter((r) => r.state !== "read" && !r.lib);
+  const libs = rows.filter((r) => r.lib);
+  const read = rows.filter((r) => r.state === "read" && !r.lib);
   const todo = unread.filter((r) => r.pkg && (r.state === "unread" || r.state === "failed")).map((r) => r.pkg!);
   const name = map.model.system.name;
   return (
@@ -21,7 +22,7 @@ export function PacksTable({ map, data, rows, write, dequeue, retire, busy }: { 
       <div className="pk2__head">
         <div className="pk2__intro">
           <h1 className="page__title">Packs</h1>
-          <p className="pk__sub">Les technologies que {name} emploie, et ce que VisionLayer sait en lire. <span className="pk__ink">{read.length} sur {rows.length} sont lues.{unread.length ? ` Sans ${unread.length > 1 ? `les ${unread.length} autres` : "l'autre"}, la carte ne dit rien de ${plural(unread.reduce((n, r) => n + r.files, 0), "fichier", "fichiers")}.` : " La carte lit tout ce que le code emploie."}</span></p>
+          <p className="pk__sub">Les technologies que {name} emploie, et ce que VisionLayer sait en lire. <span className="pk__ink">{read.length} sur {read.length + unread.length} sont lues.{unread.length ? ` Sans ${unread.length > 1 ? `les ${unread.length} autres` : "l'autre"}, la carte ne dit rien de ${plural(unread.reduce((n, r) => n + r.files, 0), "fichier", "fichiers")}.` : ""}{libs.length ? ` Le code importe aussi ${plural(libs.length, "bibliothèque", "bibliothèques")} sans pack : la carte ne dit pas ce qu'elles font.` : ""}{!unread.length && !libs.length ? " La carte lit tout ce que le code importe." : ""}</span></p>
         </div>
         {todo.length > 0 && <button className="vl-btn vl-btn--primary" disabled={!!busy} onClick={() => write(todo)}>{todo.length > 1 ? `Écrire les ${todo.length} packs manquants` : "Écrire le pack manquant"}</button>}
       </div>
@@ -33,9 +34,15 @@ export function PacksTable({ map, data, rows, write, dequeue, retire, busy }: { 
             : r.state === "writing" ? null
             : r.pkg ? <button className="vl-btn vl-btn--secondary vl-btn--sm" disabled={!!busy} onClick={() => write([r.pkg!])}>{r.state === "failed" ? "Réessayer" : "Écrire le pack"}</button> : null
         } />)}
+        {libs.length > 0 && <div className="pk2__grp"><b>Bibliothèques sans pack</b><span className="mono">{libs.length}</span></div>}
+        {libs.map((r) => <Row key={r.key} r={r} open={open} action={
+          r.state === "queued" ? <button className="vl-btn vl-btn--secondary vl-btn--sm" onClick={() => dequeue(r.pkg!)}>Retirer de la file</button>
+            : r.state === "writing" ? null
+            : <button className="vl-btn vl-btn--secondary vl-btn--sm" disabled={!!busy} onClick={() => write([r.pkg!])}>{r.state === "failed" ? "Réessayer" : "Écrire le pack"}</button>
+        } />)}
         <div className="pk2__grp"><b>Lues</b><span className="mono">{read.length}</span></div>
         {read.map((r) => <Row key={r.key} r={r} open={open} action={r.pack && r.pack.by !== "builtin" ? <button className="vl-btn vl-btn--secondary vl-btn--sm" disabled={busy === r.key} onClick={() => retire(r.pack!.id)}>{busy === r.key ? "…" : "Retirer"}</button> : null} />)}
-        <div className="vl-card__foot"><span>Un pack apprend à VisionLayer à lire une technologie. Muse Spark l'écrit depuis la documentation installée, jamais depuis ton code ; il se charge seul quand toutes ses vérifications passent, et se retire d'un clic.{data.job && !data.job.done ? ` En écriture : ${data.job.pkg}.` : ""}</span></div>
+        <div className="vl-card__foot"><span>Un pack apprend à VisionLayer à lire une technologie. Muse Spark l'écrit depuis la documentation de la technologie, installée ou publiée, jamais depuis ton code ; il se charge seul quand toutes ses vérifications passent, et se retire d'un clic.{data.job && !data.job.done ? ` En écriture : ${data.job.pkg}.` : ""}</span></div>
       </section>
     </div>
   );

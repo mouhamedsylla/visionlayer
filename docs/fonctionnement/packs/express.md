@@ -52,6 +52,7 @@ Nécessaire au constat `unguarded_route` ([Les constats](../constats.md)). Une *
 | G2 | un intermédiaire global, placé avant | `app.use(requireAuth)` puis les routes : l'ordre compte ; aussi pour un routeur monté après lui | lu |
 | G3 | un intermédiaire sur un routeur ou un préfixe | `router.use(requireAuth)`, `app.use("/admin", requireAdmin)` avant les routes ou le routeur de ce préfixe | lu |
 | G4 | une garde appelée dans le code de la route | `const user = await requireUser(req)` dans la fonction de la route, écrite sur place ou importée | lu |
+| G7 | une garde écrite dans le gestionnaire | `if (!user) return res.status(401).json(…)` en premier : le premier statut de la fonction est 401 ou 403 | lu. Un 401 qui suit une validation (`POST /login` : 400, puis 401 sur un mauvais mot de passe) n'est pas une garde, ni un 401 sur une route dont le chemin dit qu'elle est l'entrée (`login`, `signin`, `signup`, `register`, `token`, `oauth`, `callback`, `reset`) |
 | G5 | une garde appelée comme méthode d'un objet | `await auth.requireAdmin(req)` | à faire |
 | G6 | une garde d'une bibliothèque | `passport.authenticate("jwt")`, `expressjwt({ secret })` | à faire : aujourd'hui, elle n'est pas lue comme garde |
 

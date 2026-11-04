@@ -40,6 +40,7 @@ Importer un pilote ne suffit pas : `import type { Pool } from "pg"` ne connecte 
 | Q3 | Postgres.js, un gabarit étiqueté | `` sql`SELECT * FROM users WHERE id = ${id}` ``, `sql.unsafe("DELETE FROM sessions")` | lu |
 | Q4 | MongoDB, une collection nommée | `db.collection("users").findOne(…)`, `const users = db.collection("users"); users.insertOne(…)` : `find`, `findOne`, `aggregate`, `countDocuments`, `distinct` lisent ; `insert…`, `update…`, `replace…`, `delete…`, `findOneAnd…`, `bulkWrite` écrivent | lu |
 | Q5 | une table ou une collection vue seulement à l'usage | `SELECT … FROM audit_log`, sans schéma déclaré | lu : l'entité apparaît dans le stockage ; une table déclarée (Drizzle) garde sa déclaration comme preuve |
+| Q6 | une commande Redis | `redis.setex(\`session:${t}\`, ttl, id)`, `redis.get("x")`, `client.hSet(…)` sur une connexion ioredis ou node-redis, aussi importée ou `export default` | lu : une lecture ou une écriture de la famille de clés (`session:*`, `x` ; `*` si la clé est calculée). La connexion se suit ; un `client.get()` d'un autre objet ne compte pas |
 
 ## Les délais (constat `missing_timeout`)
 

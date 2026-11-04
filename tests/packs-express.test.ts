@@ -175,3 +175,20 @@ test("express G1 à G4 : les gardes d'une route, et le constat unguarded_route",
     "GET /admin/late": "role mwAdmin guards.ts:5",
   });
 });
+
+test("express G7 : une garde écrite dans le gestionnaire ; un 401 après une validation n'en est pas une", async () => {
+  const m = await mapOf({
+    Dockerfile: `FROM node:20\nCOPY . .\nCMD ["node", "main.ts"]\n`,
+    "ctrl.ts": [
+      `export const remove = async (req: any, res: any) => { const u = await who(req); if (!u) { res.status(401).json({}); return; } res.status(200).json({}); };`,
+      `export const login = async (req: any, res: any) => { if (!req.body) { res.status(400).json({}); return; } if (bad(req)) { res.status(401).json({}); return; } res.json({}); };`,
+      `async function who(req: any) { return req.cookies?.t; }`,
+      `function bad(req: any) { return true; }`,
+      `export const signin = async (req: any, res: any) => { if (bad(req)) throw new HttpError(401); res.json({}); };`,
+      `class HttpError extends Error { constructor(public status: number) { super(); } }`,
+    ].join("\n"),
+    "main.ts": [`import express from "express";`, `import { remove, login, signin } from "./ctrl";`, `const app = express();`, `app.post("/auth/signin", signin);`, `app.delete("/x", remove);`, `app.post("/login", login);`, `app.get("/y", (req, res) => { if (!req.user) return res.status(403).end(); res.end(); });`, `app.listen(3000);`].join("\n"),
+  });
+  const a = Object.fromEntries((m.nodes.find((n) => n.id === "image")?.facets.entrypoints ?? []).filter((e) => e.kind === "http").map((e) => [e.key, e.access?.level]));
+  assert.deepEqual(a, { "POST /auth/signin": "public", "DELETE /x": "authenticated", "POST /login": "public", "GET /y": "role" });
+});

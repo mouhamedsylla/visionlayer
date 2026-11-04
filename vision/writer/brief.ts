@@ -1,3 +1,4 @@
+import { selectDocs } from "./published-docs.js";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import type { Pack } from "../facts/packs.js";
@@ -30,6 +31,11 @@ export interface BriefInput {
   example: string;
   /** Une capture : la question posée au code (planche L5). Le pack ne lit alors que ce qui y répond. */
   question?: string;
+}
+
+/** La documentation qu'on trouve dans node_modules ; vide : le paquet n'est pas installé. */
+export function hasInstalledDocs(root: string, pkg: string): boolean {
+  return installedDocs(root, pkg).length > 0;
 }
 
 /** Au-delà, une documentation est coupée : un .d.ts généré peut faire des mégaoctets. */
@@ -147,13 +153,13 @@ ${input.example.trim()}
 
 ## La documentation de \`${pkg}\`
 
-${docs.length ? docs.map((d) => `### ${d.source}\n\n${d.text.length > DOC_LIMIT ? `${d.text.slice(0, DOC_LIMIT)}\n\n[… coupé à ${DOC_LIMIT} caractères]` : d.text}`).join("\n\n") : "Aucune documentation trouvée : ni dans node_modules, ni fournie. N'écris rien que tu ne puisses fonder ; rends un pack vide plutôt qu'un pack deviné."}
+${docs.length ? docs.map((d) => `### ${d.source}\n\n${d.text.length > DOC_LIMIT ? `${d.text.slice(0, DOC_LIMIT)}\n\n[… coupé à ${DOC_LIMIT} caractères]` : d.text}`).join("\n\n") : "Aucune documentation trouvée : ni dans node_modules, ni publiée sur npm, ni fournie. N'écris rien que tu ne puisses fonder ; rends un pack vide plutôt qu'un pack deviné."}
 `;
   return { pkg, ...(version ? { version } : {}), sources: docs.map((d) => d.source), text };
 }
 
 /** La version déclarée par le projet : la seule chose que la fiche lui prend. */
-function versionOf(root: string, pkg: string): string | undefined {
+export function versionOf(root: string, pkg: string): string | undefined {
   try {
     const manifest = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
     return manifest.dependencies?.[pkg] ?? manifest.devDependencies?.[pkg];
@@ -178,6 +184,11 @@ function installedDocs(root: string, pkg: string): { source: string; text: strin
       const path = join(base, f);
       if (!statSync(path).isFile()) continue;
       if (/^readme(\.md)?$/i.test(f) || f.endsWith(".d.ts")) out.push({ source: `${rel}/${f}`, text: readFileSync(path, "utf8") });
+    }
+    // Le dossier docs/ du paquet : c'est souvent là qu'est décrite l'API (le README ne fait que la présenter).
+    for (const d of ["docs", "doc"]) if (existsSync(join(base, d))) {
+      const pages = readdirSync(join(base, d), { recursive: true, encoding: "utf8" }).filter((f) => /\.mdx?$/i.test(f)).map((f) => ({ path: `${d}/${f}`, text: readFileSync(join(base, d, f), "utf8") }));
+      out.push(...selectDocs(pages, (p) => `${rel}/${p}`));
     }
     try {
       const manifest = JSON.parse(readFileSync(join(base, "package.json"), "utf8")) as { types?: string; typings?: string };

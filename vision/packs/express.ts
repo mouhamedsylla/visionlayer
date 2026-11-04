@@ -21,6 +21,7 @@ import { packageName } from "../stack/build.js";
  * ex_returns(Fichier, Fonction, Nom)                 une fonction de premier niveau qui rend un objet : `return router` (un routeur fabriqué)
  * ex_call_bind(Fichier, Nom, Fonction)               const nom = fonction(…) : la valeur d'un appel, gardée dans une variable
  * admin_word(Fichier, Chemin)                         un chemin ou un préfixe dont un morceau commence par « admin »
+ * first_status(Fichier, LigneFonction, 401|403)       le premier statut que répond la fonction : elle garde ce qu'elle fait ensuite
  * status_in(Fichier, LigneFonction, 401|403)          une fonction qui répond 401 ou 403 : throw new HttpError(403), res.status(403)…
  * calls_in(Fichier, LigneFonction, Appelé, Ligne)     une fonction (de premier niveau, ou écrite en argument) qui appelle `Appelé(…)`
  */
@@ -141,6 +142,7 @@ const script: PackScript = ({ file, root, imports, fact }) => {
     const mws = rest.slice(0, -1).flatMap((m) => { const x = unwrap(m); return x?.type === "array" ? x.namedChildren : x ? [x] : []; });
     for (const p of paths) {
       out.push(fact("http_on", [file.path, obj, M, p, sym, hline, line(n)], line(n)));
+      if (ENTRANCE.test(p)) out.push(fact("entrance_route", [file.path, line(n)], line(n)));
       if (target.type === "member_expression") {
         const o = target.childForFieldName("object");
         const prop = target.childForFieldName("property")?.text;
@@ -169,6 +171,10 @@ const script: PackScript = ({ file, root, imports, fact }) => {
   walkAll(root, (n) => { if (isFunction(n) && n.parent?.type === "arguments") fnBodies.push([line(n), n]); });
   for (const [at, body] of fnBodies) {
     const seen = new Set<string>();
+    // Le premier statut qu'elle répond : un 401 ou un 403 écrit d'abord est une garde ; après une validation (400), un refus de connexion.
+    let first: Node | undefined;
+    walkAll(body, (x) => { if (x.type === "number" && /^[1-5]\d\d$/.test(x.text) && x.parent?.type === "arguments" && (!first || x.startIndex < first.startIndex)) first = x; });
+    if (first && (first.text === "401" || first.text === "403")) out.push(fact("first_status", [file.path, at, first.text], line(first)));
     walkAll(body, (x) => {
       if (x.type === "call_expression") {
         const f = x.childForFieldName("function");
@@ -182,6 +188,9 @@ const script: PackScript = ({ file, root, imports, fact }) => {
   }
   return out;
 };
+
+/** Une route dont le chemin dit qu'elle est l'entrée : on y arrive sans être connecté. */
+const ENTRANCE = /(^|\/)[^/]*(login|signin|sign-in|signup|sign-up|register|token|oauth|callback|reset)[^/]*(\/|$)/i;
 
 /** Un morceau du chemin commence par « admin » : /admin, /admin-api, /api/administration. */
 function isAdmin(path: string): boolean {

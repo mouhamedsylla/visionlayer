@@ -77,6 +77,8 @@ export interface TechRow {
   pack?: { id: string; by: "builtin" | "muse" | "project"; at?: string; tests?: number; cost?: number };
   /** Le paquet que l'écrivain lirait. */
   pkg?: string;
+  /** Une bibliothèque hors catalogue : importée par le code, sans pack ; elle n'entre pas dans le compte des technologies. */
+  lib?: boolean;
   note?: string;
 }
 
@@ -132,12 +134,13 @@ export function techRows(map: MapPayload, packs: PacksPayload, techs: Technology
       pack: { id: p.id, by: p.meta ? "muse" : p.local ? "project" : "builtin", ...(p.meta ? { at: p.meta.at, tests: p.meta.tests, ...(p.meta.cost !== undefined ? { cost: p.meta.cost } : {}) } : {}) },
     });
   }
-  const gaps = map.model.coverage.flatMap((c) => c.gaps).filter((g) => g.kind === "pack_missing");
+  const gaps = map.model.coverage.flatMap((c) => c.gaps).filter((g) => g.kind === "pack_missing" || g.kind === "library_not_read");
   const unread: TechRow[] = [];
   for (const g of gaps) {
     if (unread.some((u) => u.key === g.subject)) continue;
     const spec = [g.proof, ...(g.where ?? [])].map((p) => (p?.text ?? "").match(/from\s+["']([^"']+)["']|require\(\s*["']([^"']+)["']/)).find(Boolean);
-    const pkg = (spec?.[1] ?? spec?.[2])?.replace(/^(@[^/]+\/[^/]+|[^@/][^/]*).*$/, "$1");
+    const lib = g.kind === "library_not_read";
+    const pkg = lib ? g.subject : (spec?.[1] ?? spec?.[2])?.replace(/^(@[^/]+\/[^/]+|[^@/][^/]*).*$/, "$1");
     const t = techOf(pkg ? [`npm:${pkg}`] : [], g.subject) ?? (pkg ? techs.find((x) => x.evidence.some((e) => e.kind === "package" && e.package === pkg)) : undefined);
     const writing = packs.job && !packs.job.done && packs.job.pkg === pkg;
     const state: TechState = writing ? "writing" : pkg && packs.queue.includes(pkg) ? "queued" : pkg && packs.failed[pkg] ? "failed" : "unread";
@@ -145,7 +148,7 @@ export function techRows(map: MapPayload, packs: PacksPayload, techs: Technology
       key: g.subject, name: t?.name ?? g.subject, version: t?.versions.at(-1)?.replace(/^[\^~]/, ""), family: FAMILY[t?.category ?? "library"] ?? "Bibliothèque",
       ...(g.proof ? { where: g.proof } : {}), files: g.count, state,
       gives: `${g.count} fichier${g.count > 1 ? "s" : ""} dont la carte ne dit pas ce qu'ils font`,
-      findings: { critical: 0, signal: 0 }, ...(pkg ? { pkg } : {}),
+      findings: { critical: 0, signal: 0 }, ...(pkg ? { pkg } : {}), ...(lib ? { lib: true } : {}),
       ...(state === "writing" ? { note: lastStep(packs.job!.lines) } : state === "queued" ? { note: `en file, ${packs.queue.indexOf(pkg!) + 1}${packs.queue.indexOf(pkg!) ? "e" : "re"}` } : state === "failed" ? { note: packs.failed[pkg!]!.reason } : {}),
     });
   }
