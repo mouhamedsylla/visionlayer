@@ -17,7 +17,7 @@ export interface HubProject { id: string; name: string; path: string; note?: str
 export interface HubOptions { staticDir?: string; projects?: HubProject[]; demo?: boolean; clones?: string }
 
 const GITHUB = /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+?(\.git)?\/?$/;
-const PER_PERSON = 12, WINDOW_MS = 60 * 60_000, AT_ONCE = 4;
+const PER_PERSON = 12, WINDOW_MS = 60 * 60_000, AT_ONCE = 4, PER_DAY = 300;
 
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "projet";
 const packageName = (dir: string) => { try { return (JSON.parse(readFileSync(join(dir, "package.json"), "utf8")) as { name?: string }).name; } catch { return undefined; } };
@@ -48,6 +48,8 @@ export function createHub(opts: HubOptions): Server {
   // Les bornes de la démonstration : par adresse, et le nombre de réponses en cours.
   const asked = new Map<string, number[]>();
   let running = 0;
+  // Le plafond de la journée : quelques centimes la question, jamais plus que ce que le crédit peut tenir.
+  let today = "", todayCount = 0;
   const who = (req: IncomingMessage) => String(req.headers["x-forwarded-for"] ?? req.socket.remoteAddress ?? "?").split(",")[0]!.trim();
 
   return createServer((req, res) => {
@@ -85,6 +87,10 @@ export function createHub(opts: HubOptions): Server {
           const ip = who(req), now = Date.now();
           const recent = (asked.get(ip) ?? []).filter((t) => now - t < WINDOW_MS);
           if (recent.length >= PER_PERSON) return sendError(res, 429, "Limite de la démonstration : réessaie dans une heure, ou lance VisionLayer sur ton projet.");
+          const day = new Date().toISOString().slice(0, 10);
+          if (day !== today) { today = day; todayCount = 0; }
+          if (todayCount >= PER_DAY) return sendError(res, 429, "La démonstration a atteint sa limite du jour : lance VisionLayer sur ton projet, ou reviens demain.");
+          todayCount++;
           if (running >= AT_ONCE) return sendError(res, 503, "Vigie répond déjà à plusieurs personnes : réessaie dans une minute.");
           asked.set(ip, [...recent, now]);
           running++;
