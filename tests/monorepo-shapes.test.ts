@@ -148,3 +148,13 @@ test("un fichier que personne n'importe et qui démarre quelque chose est un pro
   const dep = m.nodes.filter((n) => n.level === "deployable" && !["store", "channel", "external"].includes(n.role));
   assert.deepEqual(dep.map((n) => `${n.name} ${n.role}`).sort(), ["index service", "worker worker"]);
 });
+
+test("tâche planifiée : une fonction enveloppée a son déroulé, avec des options après elle", async () => {
+  const m = await mapOf({ ...API,
+    "package.json": `{ "name": "x", "scripts": { "start": "tsx main.ts" }, "dependencies": { "node-cron": "3", "@prisma/client": "5" } }\n`,
+    "main.ts": [`import cron from "node-cron";`, `import { prisma } from "./db";`, `const EVERY = "* * * * *";`, `async function expire() { return prisma.user.findMany(); }`,
+      `function job(name: string, run: () => Promise<unknown>) { return async () => { await run(); }; }`,
+      `cron.schedule(EVERY, job("expire", () => expire()), { timezone: "UTC" });`].join("\n"),
+  });
+  assert.deepEqual(reads(m, "* * * * *"), ["read user"]);
+});

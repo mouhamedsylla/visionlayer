@@ -76,7 +76,7 @@ export function flowFacts(path: string, root: Node, fact: (rel: string, args: Va
     const body = fn.childForFieldName("body");
     if (!body) continue;
     let pending: Node[] = [];
-    walkAll(body, (n) => {
+    const visit = (n: Node) => {
       if (n.type === "comment") { pending.push(n); return; }
       if (pending.length && n.parent && /statement|declaration|^expression_statement$/.test(n.type)) {
         const text = pending.map((c) => strip(c.text)).filter(Boolean).join(" ");
@@ -102,7 +102,10 @@ export function flowFacts(path: string, root: Node, fact: (rel: string, args: Va
         const cond = enclosingIf(n, fn, false);
         if (cond) out.push(fact("returns_early", [path, at, line(n), cond], line(n)));
       }
-    });
+    };
+    // Une flèche sans accolades : son corps est lui-même une expression (`() => expire()`).
+    if (body.type !== "statement_block") visit(body);
+    walkAll(body, visit);
   }
   return out;
 }

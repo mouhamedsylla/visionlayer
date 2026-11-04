@@ -213,12 +213,14 @@ export function registeredCallbacks(root: Node): Map<string, Node> {
     const fn = n.childForFieldName("function");
     if (fn?.type !== "member_expression") return;
     const args = n.childForFieldName("arguments")?.namedChildren ?? [];
-    const lastArg = args.at(-1);
-    const last = lastArg?.type === "call_expression" ? lastArg.childForFieldName("arguments")?.namedChildren.at(-1) : lastArg;
+    // La fonction donnée : directement, ou enveloppée (`wrap(async () => …)`, `job("nom", () => …)`), en dernier ou avant des options.
+    const fnOf = (x: Node) => (isFunction(x) ? x : x.type === "call_expression" ? x.childForFieldName("arguments")?.namedChildren.at(-1) : undefined);
+    const last = args.slice(1).map(fnOf).reverse().find((x): x is Node => !!x && isFunction(x) && !x.childForFieldName("name")) ?? (args.length === 1 ? fnOf(args[0]!) : undefined);
     if (args.length < 1 || !last || !isFunction(last) || last.childForFieldName("name") || !statement(n)) return;
     const chained = fn.childForFieldName("object")?.type === "call_expression";
-    if (!chained && (args.length < 2 || !named(args[0]))) return;
-    const head = named(args[0]) ? args[0]!.text.replace(/\s+/g, " ").slice(0, 60) : "";
+    // Le premier argument nomme ce qu'on enregistre : un texte, ou une constante (`cron.schedule(EVERY_MINUTE, …)`).
+    if (!chained && (args.length < 2 || !(named(args[0]) || args[0]!.type === "identifier" || args[0]!.type === "member_expression"))) return;
+    const head = args[0] && args.length > 1 ? args[0].text.replace(/\s+/g, " ").slice(0, 60) : "";
     const name = `${fn.text.replace(/\s+/g, "").slice(-40)}(${head})`;
     out.set(out.has(name) ? `${name}:${n.startPosition.row + 1}` : name, last);
   });
