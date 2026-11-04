@@ -167,7 +167,16 @@ export class ReplayStore {
   }
 
   /** Ce que l'ingénieur a changé dans sa copie, hors tests. */
-  diff(id: string): string { const r = this.get(id); return r.copy ? git(r.copy, "diff", "--", ".", ...r.tests.map((t) => `:(exclude)${t}`)) : ""; }
+  diff(id: string): string {
+    const r = this.get(id);
+    if (!r.copy) return "";
+    const tracked = spawnSync("git", ["diff", "HEAD", "--", ".", ...r.tests.map((t) => `:(exclude)${t}`), ":(exclude).vision"], { cwd: r.copy, encoding: "utf8", maxBuffer: 16 << 20 }).stdout;
+    // Un fichier créé par l'ingénieur compte aussi : git ne le voit pas encore.
+    const created = spawnSync("git", ["ls-files", "--others", "--exclude-standard"], { cwd: r.copy, encoding: "utf8" }).stdout.split("\n")
+      .filter((f) => f && !r.tests.includes(f) && !f.startsWith(".vision/"))
+      .map((f) => spawnSync("git", ["diff", "--no-index", "--", "/dev/null", f], { cwd: r.copy!, encoding: "utf8" }).stdout).join("");
+    return tracked + created;
+  }
 
   submit(id: string): Replay {
     const r = this.get(id);

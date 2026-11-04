@@ -100,7 +100,7 @@ rules: |
 
   % Constat read_outside_tx : une fonction lit une entité avant sa transaction, puis l'écrit dedans.
   % Ce qu'elle a décidé d'après cette lecture (un stock suffisant, un état) n'est pas protégé par la transaction. Un verrou le fait taire.
-  rot(F, Fn, N, R, W) :- accesses(F, read, _, N, R), accesses(F, write, _, N, W), R < W, fn_span(F, Fn, S, E), R >= S, W <= E, tx_span(F, TS, TE), W >= TS, W <= TE, R < TS, not locked(F, R).
+  rot(F, Fn, N, R, W) :- accesses(F, read, _, N, R), accesses(F, write, _, N, W), R < W, fn_span(F, Fn, S, E), R >= S, W <= E, tx_span(F, TS, TE), W >= TS, W <= TE, R < TS, not locked(F, R), not cas_write(F, N, W).
   finding(read_outside_tx, Fn, N, F, R) :- rot(F, Fn, N, R, _).
   finding_proof(read_outside_tx, Fn, N, F, R, F, W) :- rot(F, Fn, N, R, W).
 

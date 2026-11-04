@@ -151,3 +151,12 @@ test("prisma : chaque opération sur un modèle est un lien du code vers la tabl
   assert.deepEqual(flow("DELETE /orders/:id"), ["write order"]);
   assert.deepEqual(flow("POST /ghost"), [], "un modèle absent du schéma n'est pas une table");
 });
+
+test("prisma : une écriture qui revérifie l'état dans la transaction protège d'une lecture faite avant", async () => {
+  const body = (write: string) => ({ ...BASE, "package.json": `{ "name": "x", "dependencies": { "express": "4" } }\n`,
+    "server.ts": `import "./orders";\n`, "lib/prisma.ts": `import { PrismaClient } from "@prisma/client";\nexport const prisma = new PrismaClient();\n`,
+    "orders.ts": [`import { prisma } from "./lib/prisma";`, `export async function confirm(id: string) {`, `  const o = await prisma.order.findUnique({ where: { id } });`, `  return prisma.$transaction(async (tx) => {`, `    ${write}`, `  });`, `}`].join("\n") });
+  const rot = async (w: string) => (await mapOf(body(w))).findings.filter((f) => f.code === "read_outside_tx").length;
+  assert.equal(await rot(`await tx.order.update({ where: { id }, data: { status: "PAID" } });`), 1);
+  assert.equal(await rot(`await tx.order.updateMany({ where: { id, status: "PENDING" }, data: { status: "PAID" } });`), 0);
+});
