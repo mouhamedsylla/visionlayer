@@ -114,3 +114,15 @@
 .ln__foot .pill { display: inline-flex; align-items: center; height: 26px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line-strong); background: #fff; font: 500 12.5px/1 var(--font-mono); white-space: nowrap; }
 .ln__foot .pill--o { border: 1.5px dashed var(--line-strong); color: var(--muted); background: transparent; }
 .ln__note, .ln__del { font-size: 12px; color: var(--muted); display: inline-flex; gap: 4px; align-items: center; }
+
+.tb6 { display: grid; grid-template-columns: 150px 120px 44px 90px 70px 70px minmax(0, 1fr) 160px; gap: 10px; align-items: center; padding: 8px 16px; border-top: 1px solid var(--line); font-size: 12.5px; line-height: 17px; }
+.tb6 code, .tb7 code { font: 500 12px/16px var(--font-mono); overflow-wrap: anywhere; }
+.tb6 small { font-size: 11.5px; line-height: 15px; color: var(--muted); }
+.tb6--h, .tb7--h { font: 500 10.5px/14px var(--font-mono); letter-spacing: .07em; text-transform: uppercase; color: var(--muted); background: var(--surface-sunken); border-top: 0; }
+.tb7 { display: grid; grid-template-columns: minmax(0, 1fr) 70px 160px; gap: 10px; align-items: center; width: 100%; padding: 8px 16px; border: 0; border-top: 1px solid var(--line); background: none; font: inherit; font-size: 12.5px; text-align: left; color: inherit; }
+button.tb7 { cursor: pointer; }
+button.tb7:hover { background: var(--surface-sunken); }
+.tb5__top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.tb5__top .tb5__name { font: 600 22px/28px var(--font-mono); margin: 0; }
+.tb5__top .tb5__where { margin-left: auto; }
+.tb5__states { display: flex; flex-wrap: wrap; gap: 6px; padding: 14px 16px; }

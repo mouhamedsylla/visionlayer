@@ -20,9 +20,9 @@ export function MapGridView({ grid, tech, selected, chosen, select, enter }: { g
   const lastRow = row - 1;
   return (
     <div className="map">
-      <span className="lane" style={{ gridColumn: 1 }}>Ce qui appelle</span>
-      <span className="lane" style={{ gridColumn: 3 }}>Ce qui tourne</span>
-      <span className="lane" style={{ gridColumn: 5 }}>Ce qu'ils utilisent</span>
+      <span className="lane" style={{ gridColumn: 1 }}>Clients</span>
+      <span className="lane" style={{ gridColumn: 3 }}>Programmes</span>
+      <span className="lane" style={{ gridColumn: 5 }}>Ressources</span>
       {cells.map(({ m, start, span, downRow }) => (
         <Fragment key={m.node.id}>
           {m.rows.map((r, i) => r.left && (

@@ -45,6 +45,11 @@ const flowStep = S({
   tx: S({ path: z.string(), from: z.number().int(), to: z.number().int() }).optional(),
 });
 
+const routeContract = S({
+  chain: z.array(S({ name: z.string(), proof, def: proof.optional(), statuses: z.array(S({ code: z.string(), proof })) })),
+  input: S({ schema: z.string(), proof, fields: z.array(S({ name: z.string(), type: z.string(), required: z.boolean(), proof })) }).optional(),
+});
+
 const entrypoint = S({
   id: z.string().min(1),
   kind: z.enum(["http", "rpc", "event", "schedule", "message", "main", "cli"]),
@@ -56,6 +61,7 @@ const entrypoint = S({
   files: z.array(z.string()).optional(),
   ranges: z.array(z.tuple([z.number().int(), z.number().int()])).optional(),
   flow: z.array(flowStep).optional(),
+  contract: routeContract.optional(),
 });
 
 const field = S({

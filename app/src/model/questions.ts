@@ -10,8 +10,7 @@ import { triggers } from "./tasks";
 import { FINDING_TONE, plural } from "./words";
 
 /**
- * Le panneau d'un bloc de la Carte (planche 03b) : ce qu'on veut savoir de lui, une ligne par question, chacune avec
- * son fait, ses constats et l'écran qui en répond. Rien n'est propre à un projet ni à une technologie : une ligne vient
+ * Le panneau d'un bloc de la Carte (planche 03b) : une ligne par écran responsable, avec son fait et ses constats. Rien n'est propre à un projet ni à une technologie : une ligne vient
  * de ce que le bloc porte dans le modèle, et n'existe que si son écran a quelque chose à montrer pour ce bloc.
  */
 export interface Question {
@@ -71,24 +70,24 @@ export function blockQuestions(map: MapPayload, knowledge: KnowledgePayload | un
   // L'intérieur : ses modules et ses points d'entrée.
   const modules = map.model.nodes.filter((n) => n.parent === id && n.facets.component).length;
   const entries = (node.facets.entrypoints ?? []).filter((e) => e.kind !== "main");
-  if (modules || entries.length) out.push({ id: "inside", text: "Comment est-il fait ?", fact: [modules && plural(modules, "module", "modules"), entries.length && plural(entries.length, "point d'entrée", "points d'entrée")].filter(Boolean).join(", "), go: "Intérieur", screen: "bloc", item: id, mark: mark("bloc") });
+  if (modules || entries.length) out.push({ id: "inside", text: "Composants", fact: [modules && plural(modules, "module", "modules"), entries.length && plural(entries.length, "point d'entrée", "points d'entrée")].filter(Boolean).join(", "), go: "", screen: "bloc", item: id, mark: mark("bloc") });
 
   // Ce qu'il contient, pour un stockage ; ce qu'il touche, pour un programme.
   const held = node.facets.data?.entities ?? [];
-  if (held.length) out.push({ id: "data", text: "Quelles données, quels états ?", fact: plural(held.length, entityWords(node)[0], entityWords(node)[1]), go: "Données", screen: "donnees", item: id, mark: mark("donnees") });
+  if (held.length) out.push({ id: "data", text: "Données", fact: plural(held.length, entityWords(node)[0], entityWords(node)[1]), go: "", screen: "donnees", item: id, mark: mark("donnees") });
 
   // Qui entre : les routes d'un programme, ou celles qui touchent une ressource, ou la preuve d'un service extérieur.
   const own = (node.facets.entrypoints ?? []).filter((e) => e.kind === "http" || e.kind === "rpc");
   if (own.length) {
     const guarded = own.filter((e) => e.access && !["public", "unknown"].includes(e.access.level)).length;
     const unread = own.filter((e) => !e.access || e.access.level === "unknown").length;
-    out.push({ id: "access", text: "Qui peut y entrer ?", fact: `${guarded} ${guarded > 1 ? "gardées" : "gardée"} sur ${plural(own.length, "route", "routes")}${unread ? `, ${unread} à garde non reconnue` : ""}`, go: "Accès", screen: "acces", item: "entrees", scope: id, mark: mark("acces") });
+    out.push({ id: "access", text: "Accès", fact: `${guarded} ${guarded > 1 ? "gardées" : "gardée"} sur ${plural(own.length, "route", "routes")}${unread ? `, ${unread} à garde non reconnue` : ""}`, go: "", screen: "acces", item: "entrees", scope: id, mark: mark("acces") });
   } else if (node.role === "external") {
     const row = actors(map, node).rows.find((r) => r.group === "outside");
-    if (row) out.push({ id: "access", text: "Comment prouve-t-il qui il est ?", fact: `${row.proof}, ${row.note ?? row.name}`, go: "Accès", screen: "acces", item: row.id, scope: id, mark: mark("acces") });
+    if (row) out.push({ id: "access", text: "Accès", fact: `${row.proof}, ${row.note ?? row.name}`, go: "", screen: "acces", item: row.id, scope: id, mark: mark("acces") });
   } else if (held.length && routesOf(map, node).length) {
     const who = actors(map, node).rows.filter((r) => r.group !== "system").length;
-    out.push({ id: "access", text: "Qui peut les toucher ?", fact: plural(who, "acteur", "acteurs"), go: "Accès", screen: "acces", scope: id, mark: mark("acces") });
+    out.push({ id: "access", text: "Accès", fact: plural(who, "acteur", "acteurs"), go: "", screen: "acces", scope: id, mark: mark("acces") });
   }
 
   // Ce qu'il touche.
@@ -96,20 +95,20 @@ export function blockQuestions(map: MapPayload, knowledge: KnowledgePayload | un
   if (stores(map, node).length && !stores(map).includes(node)) {
     const fact = [writes.length && `écrit ${touchedText(map, node, "write")}`, reads.length && `lit ${touchedText(map, node, "read")}`].filter(Boolean).join(", ")
       || `touche ${stores(map, node).map((s) => s.name).join(", ")}`;
-    out.push({ id: "touches", text: "Que touche-t-il ?", fact, go: "Données", screen: "donnees", ...(stores(map, node).length === 1 ? { item: stores(map, node)[0]!.id } : {}), scope: id, mark: mark("donnees") });
+    out.push({ id: "touches", text: "Données", fact, go: "", screen: "donnees", ...(stores(map, node).length === 1 ? { item: stores(map, node)[0]!.id } : {}), scope: id, mark: mark("donnees") });
   }
 
   // Ce qui décide, et ce qui tombe.
   const m = mechanismsOf(map, node);
   const ownOutage = m.outages.find((o) => o.dep.id === id);
   const topics = node.facets.channel?.topics ?? [];
-  if (topics.length) out.push({ id: "message", text: "Que fait ce message ?", fact: topics.map((t) => t.name).join(", "), go: "Mécanismes", screen: "mecanismes", item: `files:${id}/${topics[0]!.name}`, scope: id });
-  if (ownOutage) out.push({ id: "falls", text: `Si ${node.name} tombe ?`, fact: ownOutage.dependents.length ? `${ownOutage.dependents.map((d) => d.node.name).join(", ")} ${ownOutage.dependents.length > 1 ? "attendent" : "attend"} sans fin` : "aucun délai maximum lu", go: "Mécanismes", screen: "mecanismes", item: `pannes:${id}`, scope: id, mark: mark("mecanismes") });
+  if (topics.length) out.push({ id: "message", text: "Files", fact: topics.map((t) => t.name).join(", "), go: "", screen: "mecanismes", item: `files:${id}/${topics[0]!.name}`, scope: id });
+  if (ownOutage) out.push({ id: "falls", text: "Pannes", fact: ownOutage.dependents.length ? `${ownOutage.dependents.map((d) => d.node.name).join(", ")} ${ownOutage.dependents.length > 1 ? "attendent" : "attend"} sans fin` : "aucun délai maximum lu", go: "", screen: "mecanismes", item: `pannes:${id}`, scope: id, mark: mark("mecanismes") });
   else if (!topics.length && (m.contracts.length || m.queues.length || m.outages.length)) {
     const fills = m.queues.filter((q) => q.producers.some((p) => p.from === id)).map((q) => q.topic);
     const eats = m.queues.filter((q) => q.consumers.some((c) => c.node.id === id)).map((q) => q.topic);
     const fact = [m.contracts.length && plural(m.contracts.length, "contrat", "contrats"), fills.length && `met en file ${fills.join(", ")}`, eats.length && `consomme ${eats.join(", ")}`, m.outages.length && plural(m.outages.length, "dépendance sans délai", "dépendances sans délai")].filter(Boolean).join(", ");
-    out.push({ id: "decides", text: "Qu'est-ce qui décide, et si ça tombe ?", fact, go: "Mécanismes", screen: "mecanismes", ...(m.outages.length && byScreen.get("mecanismes")?.length ? { item: "pannes:" } : {}), scope: id, mark: mark("mecanismes") });
+    out.push({ id: "decides", text: "Mécanismes", fact, go: "", screen: "mecanismes", ...(m.outages.length && byScreen.get("mecanismes")?.length ? { item: "pannes:" } : {}), scope: id, mark: mark("mecanismes") });
   }
 
   // Ce qui tourne sans clic.
@@ -117,7 +116,7 @@ export function blockQuestions(map: MapPayload, knowledge: KnowledgePayload | un
   if (t.length) {
     const n = (k: string) => t.filter((x) => x.kind === k).length;
     const fact = [n("schedule") && plural(n("schedule"), "tâche planifiée", "tâches planifiées"), n("queue") && plural(n("queue"), "file consommée", "files consommées"), n("webhook") && plural(n("webhook"), "webhook", "webhooks")].filter(Boolean).join(", ");
-    out.push({ id: "tasks", text: "Qu'est-ce qui tourne sans clic ?", fact, go: "Tâches", screen: "taches", scope: id, mark: mark("taches") });
+    out.push({ id: "tasks", text: "Tâches", fact, go: "", screen: "taches", scope: id, mark: mark("taches") });
   }
 
   // Ce qui a été dit. Sans règle dans le projet, la question ne se pose pas.
@@ -126,12 +125,12 @@ export function blockQuestions(map: MapPayload, knowledge: KnowledgePayload | un
     const mine = rulesOf(all, map, node);
     const bad = mine.filter((r) => r.tone === "cr").length;
     out.push(mine.length
-      ? { id: "rules", text: "Ce qui a été dit tient-il ?", fact: plural(mine.length, "règle ancrée sur lui", "règles ancrées sur lui"), go: "Règles", screen: "regles", scope: id, ...(bad ? { mark: { text: plural(bad, "contredite", "contredites"), tone: "cr" as const } } : mark("regles") ? { mark: mark("regles")! } : {}) }
-      : { id: "rules", text: "Ce qui a été dit tient-il ?", fact: "aucune règle ancrée sur lui", go: "Règles", screen: "regles", off: true });
+      ? { id: "rules", text: "Règles", fact: plural(mine.length, "règle ancrée sur lui", "règles ancrées sur lui"), go: "", screen: "regles", scope: id, ...(bad ? { mark: { text: plural(bad, "contredite", "contredites"), tone: "cr" as const } } : mark("regles") ? { mark: mark("regles")! } : {}) }
+      : { id: "rules", text: "Règles", fact: "aucune règle ancrée sur lui", go: "", screen: "regles", off: true });
   }
 
   // Sans pack : la seule question est pourquoi rien de plus.
-  if (isUnread(node)) out.push({ id: "unread", text: "Pourquoi rien de plus ?", fact: `aucun pack ne lit ${node.tech?.map((x) => map.tech[x]?.name ?? x).join(", ") || "sa technologie"}`, go: "Écrire le pack", screen: "packs" });
+  if (isUnread(node)) out.push({ id: "unread", text: "Sans pack", fact: `aucun pack ne lit ${node.tech?.map((x) => map.tech[x]?.name ?? x).join(", ") || "sa technologie"}`, go: "", screen: "packs" });
 
   // Un constat dont aucune ligne ne répond reste dans le panneau : aucun n'est perdu.
   const others = [...byScreen].filter(([screen]) => !out.some((q) => q.screen === screen && q.mark)).flatMap(([, list]) => list);

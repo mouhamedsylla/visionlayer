@@ -204,6 +204,7 @@ function mergeProofs(into: Proof[], from: Proof[]) {
 const BUILTINS: Record<string, { inputs: number; run: (args: Value[]) => Value[] | undefined }> = {
   glob: { inputs: 2, run: ([value, pattern]) => globCapture(String(value), String(pattern)) },
   route_path: { inputs: 1, run: ([raw]) => [routePath(String(raw))] },
+  starts_with: { inputs: 2, run: ([value, prefix]) => (String(value).startsWith(String(prefix)) ? [] : undefined) },
 };
 
 /** Ce que les jokers d'un motif prennent dans un chemin, ou rien s'il ne le suit pas. */

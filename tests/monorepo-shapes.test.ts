@@ -67,3 +67,46 @@ test("déroulé : une route écrite en ligne a son déroulé, enveloppée ou non
   assert.deepEqual(flow("POST /b"), ["reply 201"]);
   assert.ok(flow("GET /c")?.includes("reply 204"), String(flow("GET /c")));
 });
+
+test("contrat d'une route : la chaîne dans l'ordre, sans les paquets, le schéma d'entrée, les réponses des intermédiaires", async () => {
+  const m = await mapOf({
+    Dockerfile: `FROM node:20\nCMD ["node", "main.ts"]\n`,
+    "package.json": `{ "name": "x", "dependencies": { "express": "4", "zod": "3", "helmet": "7" } }\n`,
+    "main.ts": [
+      `import express from "express";`,
+      `import helmet from "helmet";`,
+      `import { z } from "zod";`,
+      `import routes from "./routes";`,
+      `import { csrf } from "./guards";`,
+      `const app = express();`,
+      `app.use(helmet());`,
+      `app.use(csrf);`,
+      `app.use("/api", routes);`,
+      `app.listen(3000);`,
+    ].join("\n"),
+    "guards.ts": [
+      `export function csrf(req, res, next) { if (!req.headers.x) return res.status(403).end(); next(); }`,
+      `export function auth(req, res, next) { if (!req.user) return res.status(401).end(); next(); }`,
+      `export function validate(s) { return (req, res, next) => { if (!s.safeParse(req.body).success) return res.status(400).end(); next(); }; }`,
+    ].join("\n"),
+    "routes.ts": [
+      `import { Router } from "express";`,
+      `import { z } from "zod";`,
+      `import { auth, validate } from "./guards";`,
+      `const r = Router();`,
+      `const schema = z.object({ name: z.string().min(1), tags: z.array(z.string()).optional(), on: z.boolean().default(true) });`,
+      `r.use(auth);`,
+      `r.post("/items", validate(schema), async (req, res) => { res.status(201).json({}); });`,
+      `r.patch("/items", validate(schema.partial()), async (req, res) => { res.json({}); });`,
+      `r.put("/items", async (req, res) => { const b = schema.parse(req.body); res.json(b); });`,
+      `export default r;`,
+    ].join("\n"),
+  });
+  const e = (k: string) => m.nodes.flatMap((n) => n.facets.entrypoints ?? []).find((x) => x.key === k)!;
+  const post = e("POST /api/items").contract!;
+  assert.deepEqual(post.chain.map((c) => c.name), ["csrf", "auth", "validate"]);
+  assert.deepEqual(post.chain.map((c) => c.statuses.map((s) => s.code).join()), ["403", "401", "400"]);
+  assert.deepEqual(post.input?.fields.map((f) => `${f.name}|${f.type}|${f.required}`), ["name|string, min 1|true", "tags|string[]|false", "on|boolean, défaut true|false"]);
+  assert.ok(e("PATCH /api/items").contract!.input!.fields.every((f) => !f.required), "partial : rien n'est requis");
+  assert.equal(e("PUT /api/items").contract!.input?.schema, "schema", "schéma appliqué dans le handler");
+});

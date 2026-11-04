@@ -28,7 +28,7 @@ const DEEP_BACK = new Set<string>(["bloc", "deroule", "table"]);
 
 export function App() {
   const data = useData();
-  const { screen, item, scope, go, from, back, origin, crumbs } = useRoute();
+  const { screen, item, scope, tab, go, from, back, origin, crumbs } = useRoute();
   // Le bloc que suit l'écran, là où ce filtre a un sens (planche 03b).
   const block = screen && SCOPED.has(screen) ? data.map?.model.nodes.find((n) => n.id === scope) : undefined;
   const backTo = (fallback: () => void) => ({ back: back ?? fallback, backLabel: from ? placeLabel(from) : undefined });
@@ -49,8 +49,8 @@ export function App() {
               else go("bloc", id);
             }} /></div>
             : screen === "bloc" && data.map.model.nodes.find((n) => n.id === item) ? <div key={`${screen}/${item ?? ""}`} className="view view--ws scr-bk"><BlockScreen map={data.map} block={data.map.model.nodes.find((n) => n.id === item)!} openFlow={(id) => go("deroule", id)} {...backTo(() => go("carte", item))} /></div>
-            : screen === "deroule" && item ? <div key={`${screen}/${item ?? ""}`} className="view view--ws scr-fl"><FlowScreen map={data.map} entryId={item} found={findEntry(data.map, item)} {...backTo(() => go("carte", findEntry(data.map!, item)?.owner.id))} toBlock={() => go("bloc", findEntry(data.map!, item)?.owner.id)} /></div>
-            : screen === "table" && item && findTable(data.map, item) ? (() => { const t = findTable(data.map!, item)!; return <div key={`${screen}/${item}`} className="view view--ws scr-dx scr-fl scr-tb"><TableScreen map={data.map!} store={t.store} entity={t.entity} knowledge={data.knowledge} openFlow={(id) => go("deroule", id)} {...backTo(() => go("donnees", `${t.store.id}/${t.entity.name}`))} /></div>; })()
+            : screen === "deroule" && item ? <div key={`${screen}/${item ?? ""}`} className="view view--ws scr-fl"><FlowScreen map={data.map} {...(tab ? { tab } : {})} openTab={(x) => go("deroule", item, { replace: true, tab: x })} entryId={item} found={findEntry(data.map, item)} {...backTo(() => go("carte", findEntry(data.map!, item)?.owner.id))} toBlock={() => go("bloc", findEntry(data.map!, item)?.owner.id)} /></div>
+            : screen === "table" && item && findTable(data.map, item) ? (() => { const t = findTable(data.map!, item)!; return <div key={`${screen}/${item}`} className="view view--ws scr-dx scr-fl scr-tb"><TableScreen map={data.map!} store={t.store} entity={t.entity} knowledge={data.knowledge} {...(tab ? { tab } : {})} openTab={(x) => go("table", item, { replace: true, tab: x })} openFlow={(id) => go("deroule", id)} {...backTo(() => go("donnees", `${t.store.id}/${t.entity.name}`))} /></div>; })()
             : screen === "mecanismes" ? <div key={screen} className="view view--ws scr-mc"><MechanismsScreen map={data.map} {...(block ? { block } : {})} item={item} open={(id) => go("mecanismes", id, { replace: true })} /></div>
             : screen === "acces" ? <div key={screen} className="view view--ws scr-ax"><AccessScreen map={data.map} {...(block ? { block } : {})} item={item} open={(id) => go("acces", id, { replace: true })} openFlow={(id) => go("deroule", id)} /></div>
             : screen === "taches" ? <div key={screen} className="view view--ws scr-tk"><TasksScreen map={data.map} {...(block ? { block } : {})} openFlow={(id) => go("deroule", id)} /></div>

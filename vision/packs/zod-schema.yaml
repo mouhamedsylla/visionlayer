@@ -1,0 +1,9 @@
+id: zod-schema
+name: Schémas Zod des données reçues
+languages: [javascript, typescript]
+# Pas de `when` : le fichier qui valide peut importer le schéma sans importer zod.
+script: zod-schema.ts
+rules: |
+  % Un schéma, là où il est écrit et partout où il est importé.
+  schema_ref(F, S, F, S) :- schema_def(F, S).
+  schema_ref(F, A, G, S) :- imports(F, A, H, I), schema_ref(H, I, G, S).

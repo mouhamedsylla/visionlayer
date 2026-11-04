@@ -35,27 +35,26 @@ export function AccessScreen({ map, block, item, open, openFlow }: { map: MapPay
   return (
     <Workspace
       head={<div className="ax__intro">
-        <h1 className="ax__title">Qui peut entrer, et ce qu'il a le droit d'y faire</h1>
-        <p className="ax__lead">Lu dans le code : qui appelle le système, comment chacun prouve qui il est, ce qu'il peut appeler et toucher. Les comptes réels et les rôles attribués en base ne sont pas lus.</p>
+        <h1 className="ax__title">Accès</h1>
         <button className="vl-btn vl-btn--secondary vl-btn--sm ax__ask" onClick={() => vigie()}>Demander à Vigie</button>
       </div>}
       panel={row && <Side map={map} row={row} {...(block ? { block } : {})} />}>
       <div className="tiles">
-        <div className="tile"><small>Qui peut appeler</small><b>{plural(a.total, "point d'entrée", "points d'entrée")}</b><span>{levelsText(a.byLevel)}</span></div>
-        <div className="tile"><small>Les acteurs</small><b>{plural(a.rows.length, "acteur", "acteurs")}</b><span>{[humans && plural(humans, "sorte de personne", "sortes de personnes"), outside && plural(outside, "service extérieur", "services extérieurs"), system && plural(system, "tâche du système", "tâches du système")].filter(Boolean).join(", ")}</span></div>
-        <div className="tile"><small>Comment on prouve qui on est</small><b>{a.mechanism ? a.mechanism.name : "Non lu"}</b><span>{a.mechanism ? <Ref proof={a.mechanism.proof} /> : "aucun pack ne lit encore la preuve que présente l'appelant"}</span></div>
-        <div className="tile tile--cr"><small>Vérifié sur la donnée</small><b>Non lu</b><span>la comparaison entre la donnée et l'appelant n'est pas encore lue</span></div>
+        <div className="tile"><small>Points d'entrée</small><b>{plural(a.total, "point d'entrée", "points d'entrée")}</b><span>{levelsText(a.byLevel)}</span></div>
+        <div className="tile"><small>Acteurs</small><b>{plural(a.rows.length, "acteur", "acteurs")}</b><span>{[humans && plural(humans, "sorte de personne", "sortes de personnes"), outside && plural(outside, "service extérieur", "services extérieurs"), system && plural(system, "tâche du système", "tâches du système")].filter(Boolean).join(", ")}</span></div>
+        <div className="tile"><small>Authentification</small><b>{a.mechanism ? a.mechanism.name : "Non lu"}</b><span>{a.mechanism ? <Ref proof={a.mechanism.proof} /> : "aucun pack ne lit encore la preuve que présente l'appelant"}</span></div>
+        <div className="tile tile--cr"><small>Contrôle par ligne</small><b>Non lu</b><span>la comparaison entre la donnée et l'appelant n'est pas encore lue</span></div>
       </div>
         <section className="card">
           <div className="tabs">
             <button className={`seg${tab === "actors" ? " seg--on" : ""}`} onClick={() => setTab("actors")}>Par acteur <span className="vl-count">{a.rows.length}</span></button>
             <button className={`seg${tab === "entries" ? " seg--on" : ""}`} onClick={() => setTab("entries")}>Par point d'entrée <span className="vl-count">{a.total}</span></button>
-            <span className="note">Deux façons de lire la même chose</span>
+            
           </div>
           {tab === "entries" && entryGroups(allRoutes).map((g) => (
             <div key={g.name}><div className="grp">{g.name} <span>{g.entries.length}</span></div>{g.entries.map((e) => <EntryRow key={e.id} e={e} open={() => openFlow(e.id)} />)}</div>
           ))}
-          {tab === "actors" && <><div className="ac ac--h"><span>Acteur</span><span>Sa preuve</span><span>Reconnu par</span><span>Routes atteintes</span><span>Sur la donnée</span><span>À aller voir</span></div>
+          {tab === "actors" && <><div className="ac ac--h"><span>Acteur</span><span>Preuve</span><span>Garde</span><span>Routes</span><span>Par ligne</span><span>Constat</span></div>
           {GROUPS.map(([g, label]) => {
             const list = a.rows.filter((r) => r.group === g);
             if (!list.length) return null;
@@ -108,7 +107,7 @@ function Side({ map, row, block }: { map: MapPayload; row: ActorRow; block?: Arc
           <div><b>—</b><span>vérifiées sur sa donnée, non lu</span></div>
           <div><b>—</b><span>durée de la session, non lue</span></div>
         </div>
-        <span className="lbl">Sa preuve, de la naissance au retrait</span>
+        <span className="lbl">Cycle de la preuve</span>
         <div className="life">
           <div className={row.proofKind ? "" : "nlrow"}><i /><b>présentée</b><p>{row.proof}{map.model.nodes.flatMap((n) => n.facets.trust?.mechanisms ?? [])[0] && <code>{map.model.nodes.flatMap((n) => n.facets.trust?.mechanisms ?? [])[0]!.proof.path}:{map.model.nodes.flatMap((n) => n.facets.trust?.mechanisms ?? [])[0]!.proof.line}</code>}</p></div>
           <div className={row.by ? "now" : "nlrow"}><i /><b>relue</b><p>{row.by ? `à chaque appel, par ${row.by.name}` : "par aucune garde"}{row.by?.proof && <code>{row.by.proof.path}:{row.by.proof.line}</code>}</p></div>
@@ -124,7 +123,7 @@ function Side({ map, row, block }: { map: MapPayload; row: ActorRow; block?: Arc
       </Rep>
       {res.length > 0 && (
         <section className="card">
-          <div className="hd"><h2>Ce qu'il atteint</h2><span>{row.reach} sur {row.total}</span></div>
+          <div className="hd"><h2>Routes atteintes</h2><span>{row.reach} sur {row.total}</span></div>
           {res.map((r) => (
             <div key={r.name} className={`res${r.danger ? " res--cr" : ""}`}>
               <span className="fn">{r.name}</span>

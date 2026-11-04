@@ -89,6 +89,14 @@ export function writers(p: MapPayload, store: ArchNode, entity: Entity): Writer[
   return [...by.values()].sort((a, b) => Number(a.danger) - Number(b.danger));
 }
 
+/** Les points d'entrée dont le code lit une table. */
+export function readers(p: MapPayload, store: ArchNode, entity: Entity): { id: string; key: string; kind: string }[] {
+  const entries = new Map<string, Entrypoint>();
+  for (const n of p.model.nodes) for (const e of n.facets.entrypoints ?? []) entries.set(e.id, e);
+  const ids = new Set(p.model.edges.filter((x) => x.to === store.id && x.kind === "read" && x.target?.entity === entity.name).flatMap((x) => x.occurrences.flatMap((o) => o.entrypoints ?? [])));
+  return [...ids].map((id) => entries.get(id)).filter((e): e is Entrypoint => !!e).map((e) => ({ id: e.id, key: e.key, kind: e.kind }));
+}
+
 /**
  * T1, le cycle de vie d'une table : son champ d'état, l'état que la base pose à la création, puis chaque valeur
  * écrite par le code, avec les fonctions qui l'écrivent et la ligne ; les écritures d'une valeur calculée

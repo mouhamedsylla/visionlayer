@@ -179,6 +179,13 @@ export interface Guard {
   by?: SymbolRef;
 }
 
+/** Le contrat d'une route, lu dans le code : les intermédiaires traversés, le schéma de ce qu'elle reçoit. */
+export interface RouteContract {
+  /** Dans l'ordre où la requête les traverse ; `statuses` : ce que chacun peut répondre, quand son code est lu. */
+  chain: { name: string; proof: Proof; def?: Proof; statuses: { code: string; proof: Proof }[] }[];
+  input?: { schema: string; proof: Proof; fields: { name: string; type: string; required: boolean; proof: Proof }[] };
+}
+
 export interface Entrypoint {
   id: string;
   kind: EntrypointKind;
@@ -201,6 +208,7 @@ export interface Entrypoint {
   ranges?: [number, number][];
   /** Ce que fait son code, dans l'ordre des lignes, fonctions du dépôt dépliées. */
   flow?: FlowStep[];
+  contract?: RouteContract;
 }
 
 /**

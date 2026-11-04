@@ -145,7 +145,7 @@ function ModulePanel({ map, m, openFlow }: { map: MapPayload; m: ModuleCard; ope
       <p className="bk__pname">{m.node.name}</p>
       {m.node.subtitle && <p className="bk__pline">{m.node.subtitle}</p>}
       {touches.length > 0 && <>
-        <div className="bk__sec"><span className="vl-label">Ce qu'il touche</span></div>
+        <div className="bk__sec"><span className="vl-label">Accès données</span></div>
         <div className="bk__chips">{touches.map((t, i) => <Obj key={i} to={t.entity ? { entity: t.entity, node: t.node } : t.topic ? { topic: t.topic, node: t.node } : undefined}><Effect kind={t.kind} what={`${t.entity ?? t.topic}, ${name(t.node)}`} /></Obj>)}</div>
       </>}
       <div className="bk__sec"><span className="vl-label">Sert {m.serves} entrée{m.serves > 1 ? "s" : ""} sur {m.of}</span></div>

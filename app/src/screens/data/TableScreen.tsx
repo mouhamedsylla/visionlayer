@@ -1,14 +1,9 @@
-import { useState } from "react";
 import type { KnowledgePayload, MapPayload } from "../../api/types";
-import { findEntry, flowView } from "../../model/flow";
+import { readers } from "../../model/data";
 import { tableView, type Said } from "../../model/table";
-import { Entry } from "../../lang/objects";
-import { Rep } from "../../lang/Rep";
 import { Ref } from "../../ui/Ref";
 import { Rich } from "../../ui/Rich";
 import { Workspace } from "../../ui/Workspace";
-import { plural } from "../../model/words";
-import { FlowLanes } from "../flow/FlowLanes";
 import { Lifecycle } from "./Lifecycle";
 import { Race } from "./Race";
 import { races } from "../../model/race";
@@ -22,96 +17,58 @@ const STATE: Record<string, { label: string; tone: string }> = {
   contradicted: { label: "contredite", tone: "cr" }, orphan: { label: "code introuvable", tone: "sg" }, unanchored: { label: "sans code", tone: "q" },
 };
 
-/** Planche 05b, Données, une table : ce qu'elle veut dire. Qui la fait naître et la change, ses états, ce qui en est dit, ce que la base garantit. */
-export function TableScreen({ map, store, entity, knowledge, back, backLabel, openFlow }: {
+type Tab = "colonnes" | "etats" | "routes" | "lignee" | "constats" | "regles";
+
+/** Planche 05b, une table : une page, un onglet à la fois. Un déroulé n'est jamais répété ici : l'onglet Routes y mène. */
+export function TableScreen({ map, store, entity, knowledge, tab, openTab, back, backLabel, openFlow }: {
   map: MapPayload; store: Parameters<typeof tableView>[1]; entity: Parameters<typeof tableView>[2]; knowledge?: KnowledgePayload;
-  back: () => void; backLabel?: string; openFlow: (id: string) => void;
+  tab?: string; openTab: (tab: string) => void; back: () => void; backLabel?: string; openFlow: (id: string) => void;
 }) {
   const v = tableView(map, store, entity, knowledge);
-  const [open, setOpen] = useState<Set<string>>(() => new Set(v.writers.slice(0, 1).map((w) => w.id)));
   const status = entity.fields?.find((f) => f.values?.length);
-  const author = v.said.filter((s) => s.who === "author");
-  const agents = v.said.filter((s) => s.who === "agent");
+  const fields = entity.fields ?? [];
+  const reading = readers(map, store, entity);
+  const lineage = lineageFields(map, entity);
+  const raceList = races(entity, v.watch);
+  const tabs: { id: Tab; label: string; n?: number; on: boolean; cr?: boolean }[] = [
+    { id: "colonnes", label: "Colonnes", n: fields.length, on: true },
+    { id: "etats", label: "États", ...(status ? { n: status.values!.length } : {}), on: !!status },
+    { id: "routes", label: "Routes", n: v.writers.length + reading.length, on: true },
+    { id: "lignee", label: "Lignée", on: lineage.length > 0 },
+    { id: "constats", label: "Constats", n: v.watch.length, on: v.watch.length > 0, cr: true },
+    { id: "regles", label: "Règles", n: v.said.length, on: v.said.length > 0 },
+  ];
+  const shown = tabs.filter((t) => t.on);
+  const current = shown.find((t) => t.id === tab)?.id ?? "colonnes";
   return (
-    <Workspace panelWidth={380}
-      head={<div className="tb5__head">
-        <div className="tb5__top">
-          <button className="vl-btn vl-btn--secondary vl-btn--sm" onClick={back}>‹ {backLabel ?? "Données"}</button>
-          <span className="tb5__where">table de {store.name}{entity.proof ? <>, <Ref proof={entity.proof} /></> : null}</span>
-        </div>
+    <Workspace
+      head={<div className="tb5__top">
+        <button className="vl-btn vl-btn--secondary vl-btn--sm" onClick={back}>‹ {backLabel ?? "Données"}</button>
         <h1 className="tb5__name">{entity.name}</h1>
-        <p className="dx__lead"><Rich text={v.sentence} /></p>
-      </div>}
-      panel={<div className="dx__side">
-        <section className="night">
-          <div className="ax__nhead">
-            <span className="lbl">Sa forme</span>
-            <h2 className="tb5__mono">{entity.name}</h2>
-            <p className="sub">{plural(entity.fields?.length ?? 0, "champ", "champs")} ; en italique, ce qu'en dit l'auteur</p>
-          </div>
-          <div className="tb5__fields">
-            {(entity.fields ?? []).map((f) => (
-              <div key={f.name} className="tb5__field">
-                <code>{f.name}</code>
-                <span>{[f.type, f.nullable ? "facultatif" : "", f.values ? `${f.values.length} états` : "", f.default !== undefined ? `${f.default} par défaut` : ""].filter(Boolean).join(", ")}{f.comment ? <em> ; « {f.comment} »</em> : null}</span>
-              </div>
-            ))}
-            {!entity.fields?.length && <p className="sub">Aucun champ lu : le pack de cette technologie ne lit pas le schéma.</p>}
-          </div>
-        </section>
-        <section className="card">
-          <div className="hd"><h2>Ce que la base garantit</h2><span>{plural(v.base.length, "règle", "règles")}</span></div>
-          {v.base.map((g, i) => <div key={i} className="tb5__g"><span><Rich text={g.text} />{g.said ? <em className="tb5__gsaid">« {g.said} », dit l'auteur</em> : null}</span><Ref proof={g.proof} /></div>)}
-          {v.base.length === 0 && <p className="foot">Aucune contrainte lue sur cette table, en dehors de sa clé.</p>}
-        </section>
-        {v.watch.length > 0 && (
-          <section className="card tb5__watch">
-            <div className="hd"><h2>Ce que rien ne garantit</h2><span>{plural(v.watch.length, "constat", "constats")}</span></div>
-            {v.watch.map((f, i) => <div key={i} className="tb5__g"><span><Rich text={f.message.replace(/^./, (c) => c.toUpperCase())} /></span><span className="dx__refs">{f.proof.slice(0, 2).map((p, k) => <Ref key={k} proof={p} />)}</span></div>)}
-          </section>
-        )}
+        <span className="vl-tag vl-tag--neutral">{store.name}</span>
+        {entity.proof && <span className="tb5__where"><Ref proof={entity.proof} /></span>}
       </div>}>
-      <div className="tiles">
-        <div className="tile"><small>Ses états</small><b>{status ? plural(status.values!.length, "état", "états") : "aucun"}</b><span>{v.life?.open.proofs.length ? "une valeur calculée : aucune règle de passage lue" : status ? `champ ${status.name}` : "aucun champ énuméré"}</span></div>
-        <div className="tile"><small>Qui l'écrit</small><b>{plural(v.writers.length, "point d'entrée", "points d'entrée")}</b><span>{v.writers.slice(0, 2).map((w) => w.key).join(", ") || "aucun lu"}</span></div>
-        <div className="tile"><small>Ce qui en est dit</small><b>{plural(v.said.length, "phrase", "phrases")}</b><span>{plural(author.length, "commentaire de l'auteur", "commentaires de l'auteur")}, {plural(agents.length, "déclaration d'agent", "déclarations d'agents")}</span></div>
-        <div className={`tile${v.watch.length ? " tile--cr" : ""}`}><small>À aller voir</small><b>{v.watch.length ? plural(v.watch.length, "constat", "constats") : "rien"}</b><span>{v.watch[0] ? <Rich text={v.watch[0].message.split(" : ")[0]!} /> : "aucun constat sur cette table"}</span></div>
-      </div>
-
-      <Rep code="F1" name={`Comment ${entity.name} circule`} question="Qui la fait naître, qui la change, et ce qui part avec elle ?" flush
-        sentence={v.writers.length ? `${plural(v.writers.length, "point d'entrée l'écrit", "points d'entrée l'écrivent")} ; ${plural(v.readers, "autre la lit", "autres la lisent")}.` : "Aucun point d'entrée lu ne l'écrit."}
-        reads="de haut en bas, le déroulé de chaque point d'entrée qui l'écrit. Épaisse, une écriture ; rouge, une lecture qu'un constat met en cause ; le cadre pointillé entoure ce qu'une transaction protège.">
-        {v.writers.map((w) => {
-          const found = findEntry(map, w.id);
-          if (!found) return null;
-          const on = open.has(w.id);
-          return (
-            <div key={w.id} className="tb5__flow">
-              <div className="tb5__fhead">
-                <button className="tb5__toggle" onClick={() => setOpen((s) => { const x = new Set(s); x.has(w.id) ? x.delete(w.id) : x.add(w.id); return x; })}>{on ? "▾" : "▸"}</button>
-                <Entry e={found.entry} />
-                <span className={`mk ${w.danger ? "mk--cr" : "mk--q"}`}>{w.verb}</span>
-                <button className="vl-btn vl-btn--ghost vl-btn--sm tb5__open" onClick={() => openFlow(w.id)}>Ouvrir son déroulé</button>
-              </div>
-              {on && <FlowLanes v={flowView(map, found.entry, found.owner)} />}
-            </div>
-          );
-        })}
-      </Rep>
-
-      {races(entity, v.watch).map((r, i) => <Race key={i} race={r} />)}
-
-      <Lineage table={entity.name} list={lineageFields(map, entity)} openFlow={openFlow} />
-
-      {v.life && <Lifecycle name={entity.name} life={v.life} />}
-
-      <Rep code="C4" name="Ce qui en est dit" question="Ce que l'auteur et les agents ont déclaré tient-il ?"
-        sentence={v.said.length ? `${plural(author.length, "commentaire de l'auteur", "commentaires de l'auteur")} lu${author.length > 1 ? "s" : ""} dans le code ; ${agents.length ? plural(agents.length, "déclaration d'agent", "déclarations d'agents") : "aucun agent n'a rien déclaré sur elle"}.` : "Rien n'est dit de cette table : ni commentaire de l'auteur, ni déclaration d'agent."}
-        reads="de gauche à droite : ce qui est dit, et par qui ; son état. À filet plein, un agent, confronté au code ; en pointillé, un commentaire de l'auteur, lu tel qu'il est écrit.">
-        <div className="tb5__said">
-          {[...agents, ...author].map((s, i) => <SaidRow key={i} s={s} />)}
-        </div>
-      </Rep>
+      <section className="card">
+        <div className="tabs">{shown.map((t) => <button key={t.id} className={`seg${t.id === current ? " seg--on" : ""}`} onClick={() => openTab(t.id)}>{t.label}{t.n !== undefined && <span className={`vl-count${t.cr ? " vl-count--critical" : ""}`}>{t.n}</span>}</button>)}</div>
+        {current === "colonnes" && <>
+          <div className="tb6 tb6--h"><span>Colonne</span><span>Type</span><span>Null</span><span>Défaut</span><span>Écritures</span><span>Lectures</span><span>Commentaire</span><span>Ligne</span></div>
+          {fields.map((f) => <div key={f.name} className="tb6"><code>{f.name}</code><code>{f.type ?? ""}</code><span>{f.nullable ? "oui" : "non"}</span><code>{f.default ?? ""}</code><span>{f.writes?.length ?? 0}</span><span>{f.reads?.length ?? 0}</span><small>{f.comment ?? ""}</small>{f.proof ? <Ref proof={f.proof} /> : <span />}</div>)}
+          {fields.length === 0 && <p className="foot"><span className="mk mk--nl">non lu</span> colonnes</p>}
+          {v.base.length > 0 && <><div className="hd"><h2>Contraintes</h2><span>{v.base.length}</span></div>{v.base.map((g, i) => <div key={i} className="tb5__g"><span><Rich text={g.text} /></span><Ref proof={g.proof} /></div>)}</>}
+        </>}
+        {current === "etats" && (v.life ? <Lifecycle name={entity.name} life={v.life} /> : <div className="tb5__states">{status?.values?.map((x) => <code key={x} className="vl-code">{x}</code>)}</div>)}
+        {current === "routes" && <>
+          <div className="tb7 tb7--h"><span>Point d'entrée</span><span>Accès</span><span>Valeur écrite</span></div>
+          {v.writers.map((w) => <button key={w.id} className="tb7" onClick={() => openFlow(w.id)}><code>{w.key}</code><span className={`mk ${w.danger ? "mk--cr" : "mk--q"}`}>write</span><code>{w.verb.startsWith("pose ") ? w.verb.slice(5) : ""}</code></button>)}
+          {reading.map((r) => <button key={r.id} className="tb7" onClick={() => openFlow(r.id)}><code>{r.key}</code><span className="mk mk--q">read</span><span /></button>)}
+        </>}
+        {current === "lignee" && <Lineage table={entity.name} list={lineage} openFlow={openFlow} />}
+        {current === "constats" && <>
+          {v.watch.map((f, i) => <div key={i} className="tb5__g"><span><Rich text={f.message} /></span><span className="dx__refs">{f.proof.slice(0, 2).map((p, k) => <Ref key={k} proof={p} />)}</span></div>)}
+          {raceList.map((r, i) => <Race key={i} race={r} />)}
+        </>}
+        {current === "regles" && <div className="tb5__said">{v.said.map((x, i) => <SaidRow key={i} s={x} />)}</div>}
+      </section>
     </Workspace>
   );
 }

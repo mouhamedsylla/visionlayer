@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../../api/client";
 import type { MapPayload, SourceExcerpt } from "../../api/types";
 import { flowView, type findEntry, type FlowRow } from "../../model/flow";
+import { Contract } from "./Contract";
 import { Entry } from "../../lang/objects";
 import { FlowLanes } from "./FlowLanes";
 import { Rep } from "../../lang/Rep";
@@ -11,14 +12,16 @@ import { Workspace } from "../../ui/Workspace";
 import "./flow.css";
 
 /** Le déroulé d'un point d'entrée : F1 (le déroulé), A1 (l'algorithme indexé), A2 (l'aiguillage), du catalogue. */
-export function FlowScreen({ map, entryId, found, back, backLabel, toBlock }: { map: MapPayload; entryId: string; found: ReturnType<typeof findEntry>; back: () => void; backLabel?: string; toBlock: () => void }) {
+export function FlowScreen({ map, entryId, found, tab, openTab, back, backLabel, toBlock }: { map: MapPayload; entryId: string; found: ReturnType<typeof findEntry>; tab?: string; openTab: (tab: string) => void; back: () => void; backLabel?: string; toBlock: () => void }) {
   const [pick, setPick] = useState(1);
   if (!found) return <div className="page"><p className="fl__empty">Ce point d'entrée n'est plus sur la carte ({entryId}).</p></div>;
   const v = flowView(map, found.entry, found.owner);
   const row = v.rows.find((r) => r.n === pick) ?? v.rows[0];
+  const http = found.entry.kind === "http" || found.entry.kind === "rpc";
+  const current = http && tab !== "deroule" ? "contrat" : "deroule";
   return (
     <Workspace panelWidth={460}
-      panel={<>
+      panel={current === "deroule" && <>
         {row && <Indexed row={row} rows={v.rows} />}
         {v.gates.length > 0 && (
             <Rep code="A2" name="Aiguillage" question="Quand refuse-t-il, et que laisse-t-il ?" sentence={`${v.gates.length} façon${v.gates.length > 1 ? "s" : ""} de refuser.`}
@@ -42,12 +45,14 @@ export function FlowScreen({ map, entryId, found, back, backLabel, toBlock }: { 
         <span className="fl__sub">{found.entry.handler?.name}, <Ref proof={found.entry.handler ? { path: found.entry.handler.path, line: found.entry.handler.line } : found.entry.proof} /></span>
         {backLabel !== found.owner.name && <button className="vl-btn vl-btn--secondary vl-btn--sm fl__map" onClick={toBlock}>Intérieur de {found.owner.name}</button>}
       </div>}>
-        <Rep code="F1" name="Déroulé" question="Que fait cette exécution, dans quel ordre ?" sentence={<Rich text={v.sentence} />} flush
+        {http && <div className="tabs fl__tabs"><button className={`seg${current === "contrat" ? " seg--on" : ""}`} onClick={() => openTab("contrat")}>Contrat</button><button className={`seg${current === "deroule" ? " seg--on" : ""}`} onClick={() => openTab("deroule")}>Déroulé <span className="vl-count">{v.rows.length}</span></button></div>}
+        {current === "contrat" && <Contract entry={found.entry} />}
+        {current === "deroule" && <Rep code="F1" name="Déroulé" question="Que fait cette exécution, dans quel ordre ?" sentence={<Rich text={v.sentence} />} flush
           reads="de haut en bas, dans l'ordre. Chaque flèche part du code vers ce qu'il touche : épaisse, il écrit ; grise, il lit ; pointillée, il met en file. Choisir une étape montre son code.">
           {v.rows.length === 0 ? <p className="fl__empty">Aucune étape lue : son code n'appelle ni stockage, ni file, ni service, et ne refuse rien qu'un pack sache lire.</p> : <>
             <FlowLanes v={v} pick={setPick} picked={row?.n} />
           </>}
-        </Rep>
+        </Rep>}
     </Workspace>
   );
 }

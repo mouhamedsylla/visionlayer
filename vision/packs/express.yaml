@@ -44,6 +44,16 @@ rules: |
   % const adminOnly = requirePermission("x") : la constante garde comme la fonction qui la fabrique.
   mw_guard(F, Mw, Lv, H, M) :- ex_call_bind(F, Mw, C), resolves(F, C, H, M), guard_at(H, M, Lv).
 
+  % La chaîne d'une route, du plus loin au plus près : posé sur un parent avant le montage (0), sur son objet (1), sur la route (2).
+  ex_obj_name(F, N) :- ex_obj(F, N, _, _).
+  parent_use(CG, CN, F, Mw, UL) :- mount_on(F, P, Pre, C, ML), ex_obj(F, C, CG, CN), mount_on(F, P, P0, Mw, UL), UL < ML, starts_with(Pre, P0), not ex_obj_name(F, Mw).
+  parent_use(CG, CN, F, Mw, UL) :- ex_mount(PG, PN, _, CG, CN), parent_use(PG, PN, F, Mw, UL).
+  route_chain(F, L, 0, CF, Mw, UL) :- http_on(F, O, _, _, _, _, L), ex_obj(F, O, G, N), parent_use(G, N, CF, Mw, UL).
+  route_chain(F, L, 1, F, Mw, UL) :- http_on(F, O, M, P, _, _, L), use_covers(F, O, M, P, Mw, UL), not ex_obj_name(F, Mw).
+  route_chain(F, L, 2, F, Mw, ML) :- http_on(F, O, M, P, _, _, L), route_mw(F, O, M, P, Mw, ML).
+  % Le schéma donné à un intermédiaire de la route.
+  route_input(F, L, G, S, Mod) :- route_mw_arg(F, L, A, Mod), schema_ref(F, A, G, S).
+
   % Ce qui garde une route (la ligne qui la déclare), et la fonction qui la tient : G1 sur la route, G2 et G3 avant elle
   % sur son objet, G2 et G3 posés sur le parent avant que son routeur y soit monté, G4 dans son code.
   pguard(F, L, Lv, H, D) :- http_on(F, O, M, P, _, _, L), route_mw(F, O, M, P, Mw, _), mw_guard(F, Mw, Lv, H, D).

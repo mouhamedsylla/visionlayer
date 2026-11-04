@@ -21,14 +21,19 @@ export const SCREENS: { id: Screen; label: string; group: string; built?: boolea
   { id: "reglages", label: "Réglages", group: "", built: true },
 ];
 
-type Place = { screen: Screen; item?: string; scope?: string };
+type Place = { screen: Screen; item?: string; scope?: string; tab?: string };
 const parse = (hash: string): Place => {
   const [path = "", query] = hash.split("?");
   const [, s, ...rest] = path.split("/");
   const screen = SCREENS.some((x) => x.id === s && x.built) ? (s as Screen) : "vue";
-  return { screen, item: rest.length ? decodeURIComponent(rest.join("/")) : undefined, ...(query?.startsWith("bloc=") ? { scope: decodeURIComponent(query.slice(5)) } : {}) };
+  const q = new URLSearchParams(query ?? "");
+  return { screen, item: rest.length ? decodeURIComponent(rest.join("/")) : undefined, ...(q.get("bloc") ? { scope: q.get("bloc")! } : {}), ...(q.get("onglet") ? { tab: q.get("onglet")! } : {}) };
 };
-const hashOf = (p: Place) => `#/${p.screen}${p.item ? `/${encodeURIComponent(p.item)}` : ""}${p.scope ? `?bloc=${encodeURIComponent(p.scope)}` : ""}`;
+const hashOf = (p: Place) => `#/${p.screen}${p.item ? `/${encodeURIComponent(p.item)}` : ""}${query(p)}`;
+function query(p: Place) {
+  const q = [p.scope ? `bloc=${encodeURIComponent(p.scope)}` : "", p.tab ? `onglet=${encodeURIComponent(p.tab)}` : ""].filter(Boolean).join("&");
+  return q ? `?${q}` : "";
+}
 
 /**
  * Le chemin parcouru dans l'app (planche 03b) : le retour ramène d'où l'on vient, pas à un écran fixe. La barre
@@ -76,6 +81,8 @@ export interface GoOptions {
   scope?: string | null;
   /** Fixe d'abord l'endroit qu'on quitte : le retour y ramène avec cet élément choisi. */
   leaving?: { screen: Screen; item?: string };
+  /** L'onglet de la page ouverte : `#/table/postgres/order?onglet=etats`. */
+  tab?: string;
 }
 
 /** L'écran, l'élément choisi et le bloc suivi vivent dans l'adresse : `#/carte/api`, `#/acces/entrees?bloc=api`. */
@@ -105,7 +112,7 @@ export function useRoute(): Place & { go: (screen: Screen, item?: string, opts?:
     ...(prev ? { from: prev, back: () => window.history.back() } : {}),
     go: (screen, item, opts) => {
       const scope = opts?.scope === null ? undefined : opts?.scope ?? (screen === state.screen ? state.scope : undefined);
-      const h = hashOf({ screen, ...(item ? { item } : {}), ...(scope ? { scope } : {}) });
+      const h = hashOf({ screen, ...(item ? { item } : {}), ...(scope ? { scope } : {}), ...(opts?.tab ? { tab: opts.tab } : {}) });
       if (opts?.leaving) {
         const at = hashOf(opts.leaving);
         window.history.replaceState(null, "", at);

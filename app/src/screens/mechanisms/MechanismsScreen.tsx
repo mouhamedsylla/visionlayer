@@ -9,7 +9,7 @@ import { Workspace } from "../../ui/Workspace";
 import "./mechanisms.css";
 
 type Tab = "contrats" | "files" | "pannes";
-const TABS: { id: Tab; label: string }[] = [{ id: "contrats", label: "Contrats" }, { id: "files", label: "Files" }, { id: "pannes", label: "Si une dépendance tombe" }];
+const TABS: { id: Tab; label: string }[] = [{ id: "contrats", label: "Contrats" }, { id: "files", label: "Files" }, { id: "pannes", label: "Pannes" }];
 
 /** Planche L6, Mécanismes : comment le système choisit ce qui s'exécute. Les contrats (X3), les files (F2), les dépendances qui peuvent tomber (X4). */
 export function MechanismsScreen({ map, block, item, open }: { map: MapPayload; block?: ArchNode; item?: string; open: (id: string) => void }) {
@@ -25,15 +25,14 @@ export function MechanismsScreen({ map, block, item, open }: { map: MapPayload; 
   return (
     <Workspace
       head={<div className="mc__intro">
-        <h1 className="mc__title">Comment le système choisit ce qui s'exécute</h1>
-        <p className="mc__lead">Ce qui décide, sans qu'une route le dise : quelle implémentation répond à un contrat, ce qui passe par une file et qui le reprend, ce qui attend sans fin quand une dépendance tombe. Tout est lu dans le code, chaque ligne à l'appui.</p>
+        <h1 className="mc__title">Mécanismes</h1>
       </div>}
       panel={tab === "contrats" ? v && <Side v={v} /> : <How tab={tab} />}>
       <div className="tiles">
         <div className="tile"><small>Contrats</small><b>{plural(list.length, "contrat", "contrats")}</b><span>{received ? `reçus par ${plural(received, "classe", "classes")}` : "interfaces et classes abstraites remplies deux fois"}</span></div>
         <div className="tile"><small>Files</small><b>{qs.length ? qs.map((x) => x.topic).join(", ") : "aucune"}</b><span>{qs.length ? `${plural(qs.reduce((n, x) => n + x.producers.length, 0), "lieu y dépose", "lieux y déposent")}` : "aucune file lue"}</span></div>
-        <div className={`tile${outs.length ? " tile--cr" : ""}`}><small>Attendent sans fin</small><b>{outs.length ? outs.map((x) => x.dep.name).join(", ") : "aucune trouvée"}</b><span>{outs.length ? "aucun délai maximum lu" : "aucune trouvée, parmi les clients dont un pack lit le délai"}</span></div>
-        <div className="tile"><small>Écrit puis met en file</small><b>{plural(map.model.findings.filter((f) => f.code === "write_then_enqueue" && (!block || f.nodes?.includes(block.id))).length, "lieu", "lieux")}</b><span>si la file tombe, l'écriture reste</span></div>
+        <div className={`tile${outs.length ? " tile--cr" : ""}`}><small>Sans timeout</small><b>{outs.length ? outs.map((x) => x.dep.name).join(", ") : "aucune trouvée"}</b><span>{outs.length ? "aucun délai maximum lu" : "aucune trouvée, parmi les clients dont un pack lit le délai"}</span></div>
+        <div className="tile"><small>Write puis enqueue</small><b>{plural(map.model.findings.filter((f) => f.code === "write_then_enqueue" && (!block || f.nodes?.includes(block.id))).length, "lieu", "lieux")}</b><span>si la file tombe, l'écriture reste</span></div>
       </div>
       <section className="card">
         <div className="tabs">{TABS.map((t) => <button key={t.id} className={`seg${t.id === tab ? " seg--on" : ""}`} onClick={() => open(t.id === "contrats" ? "" : `${t.id}:`)}>{t.label}<span className="vl-count">{count[t.id]}</span></button>)}</div>
@@ -113,7 +112,7 @@ function Queue({ q }: { q: QueueView }) {
 /** X4 : la dépendance, puis qui en dépend, par où, et ce qui reste écrit. */
 function Outage({ o }: { o: OutageView }) {
   return (
-    <Rep code="X4" name="Si une dépendance tombe" question="Que devient le système ?"
+    <Rep code="X4" name="Panne de dépendance" question="Que devient le système ?"
       sentence={`Si ${o.dep.name} ne répond plus, ${o.dependents.map((d) => d.node.name).join(" et ")} ${o.dependents.length > 1 ? "attendent" : "attend"} sans fin : ${o.message.split(" : ")[0]}.`}
       reads="par ligne : qui en dépend, par quels points d'entrée, et ce que la panne laisse derrière elle.">
       <div className="mc__fig">
@@ -136,7 +135,7 @@ function How({ tab }: { tab: Tab }) {
   return (
     <aside className="mc__side">
       <section className="card">
-        <div className="hd"><h2>Comment c'est trouvé</h2></div>
+        <div className="hd"><h2>Source</h2></div>
         <p className="mc__how">{tab === "files"
           ? "Par le pack de la technologie de file : la file créée, chaque ajout et le worker qui la consomme. Le pack ne lit pas encore les réglages de reprise ni la clé d'unicité d'un message."
           : "Par les clients des dépendances : la connexion à la base et à la file, lue avec ses options. Aucun délai écrit, ou des reprises sans limite, et la panne bloque au lieu d'échouer."}</p>
@@ -190,13 +189,13 @@ function Side({ v }: { v: ContractView }) {
           <p className="sub">{c.interface.path}:{c.interface.line}</p>
         </div>
         {c.summary && <p className="sub">{c.summary.text}</p>}
-        <span className="lbl">Ce qu'il promet</span>
+        <span className="lbl">Opérations</span>
         <div className="mc__ops">
           {c.operations.map((o) => <div key={o.name}><b>{o.name}</b><span>ligne {o.line}</span></div>)}
         </div>
       </section>
       <section className="card">
-        <div className="hd"><h2>Comment c'est trouvé</h2></div>
+        <div className="hd"><h2>Source</h2></div>
         <p className="mc__how">Le contrat et ses implémentations sont lus dans la syntaxe : <code>implements</code>, une interface ou une classe abstraite. {packs.length ? <>Ce que le conteneur branche, et qui le reçoit, vient de la capture {packs.map((p) => <b key={p}>{p}</b>)}.</> : "Aucune capture ne dit ici ce que branche un conteneur."}</p>
         <div className="mc__prov"><Provenance kind="read" /></div>
       </section>

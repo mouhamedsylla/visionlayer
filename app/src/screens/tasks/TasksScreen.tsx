@@ -23,15 +23,14 @@ export function TasksScreen({ map, block, openFlow }: { map: MapPayload; block?:
   return (
     <Workspace
       head={<div className="tk__intro">
-        <h1 className="tk__title">Ce qui tourne sans que personne clique</h1>
-        <p className="tk__lead">Lu dans le code et dans les manifestes de déploiement : les tâches planifiées, les files, les événements qu'un service extérieur envoie. Leurs exécutions réelles ne sont pas lues.</p>
+        <h1 className="tk__title">Tâches planifiées</h1>
       </div>}
       panel={t && <Side t={t} openFlow={openFlow} />}>
       <div className="tiles">
         <div className="tile"><small>Tâches planifiées</small><b>{plural(schedules.length, "tâche", "tâches")}</b><span>{decl ? `déclarées dans ${decl.path.split("/").slice(-2).join("/")}` : "aucune lue"}</span></div>
         <div className="tile"><small>Files</small><b>{queues.length ? `${plural(queues.length, "file", "files")} : ${queues.map((q) => q.entry.key).join(", ")}` : "aucune file"}</b><span>{queues.map((q) => `${q.node.name}, ${q.onFail}`).join(" ; ") || "aucun consommateur lu"}</span></div>
-        <div className="tile"><small>Événements reçus</small><b>{plural(hooks.length, "webhook signé", "webhooks signés")}</b><span>{hooks.map((h) => h.entry.key).join(", ") || "aucun"}</span></div>
-        <div className={`tile${twice.length ? " tile--cr" : ""}`}><small>Lancées plusieurs fois</small><b>{twice.length ? (twice.length === schedules.length ? `Les ${schedules.length} tâches` : plural(twice.length, "tâche", "tâches")) : "aucune"}</b><span>{twice.length ? `elles tournent dans ${twice[0]!.node.name}, déployé sur ${twice[0]!.machines} machines` : "chaque tâche part une fois"}</span></div>
+        <div className="tile"><small>Webhooks</small><b>{plural(hooks.length, "webhook signé", "webhooks signés")}</b><span>{hooks.map((h) => h.entry.key).join(", ") || "aucun"}</span></div>
+        <div className={`tile${twice.length ? " tile--cr" : ""}`}><small>Multi-instances</small><b>{twice.length ? (twice.length === schedules.length ? `Les ${schedules.length} tâches` : plural(twice.length, "tâche", "tâches")) : "aucune"}</b><span>{twice.length ? `elles tournent dans ${twice[0]!.node.name}, déployé sur ${twice[0]!.machines} machines` : "chaque tâche part une fois"}</span></div>
       </div>
           <Rep code="T3" name="Horloge" question="Qu'est-ce qui tourne sans personne, et quand ?" sentence={clock} flush
             reads={<>sur une journée de {map.model.system.name} : chaque marque est un passage, une bande pleine un passage si fréquent qu'il remplit la journée ; « ×N », il a lieu sur chaque machine. Choisir une ligne la détaille à droite.</>}>
@@ -53,7 +52,7 @@ export function TasksScreen({ map, block, openFlow }: { map: MapPayload; block?:
             <div className="lg"><span><i />planifié, heure fixe</span><span><i className="ev" />à la demande</span><span>×N : une fois par machine</span></div>
           </Rep>
           <section className="card">
-            <div className="trg trg--h"><span>Déclencheur</span><span>Quand</span><span>Ce qu'il fait</span><span>Si ça rate</span><span>À aller voir</span></div>
+            <div className="trg trg--h"><span>Déclencheur</span><span>Quand</span><span>Effets</span><span>Échec</span><span>Constat</span></div>
             {list.map((x) => (
               <button key={x.id} className={`trg trg--row${x === t ? " trg--on" : ""}`} onClick={() => setChosen(x.id)}>
                 <code>{x.name}</code><span>{x.when}</span><span>{x.does}</span><span className={x.onFail.includes("non lu") ? "q" : ""}>{x.onFail}</span>
@@ -97,7 +96,7 @@ function Side({ t, openFlow }: { t: Trigger; openFlow: (id: string) => void }) {
         )}
       </section>
       <section className="card">
-        <div className="hd"><h2>Comment c'est trouvé</h2></div>
+        <div className="hd"><h2>Source</h2></div>
         <p className="tk__how">Par les appels aux planificateurs, les consommateurs de file, les routes qu'un service extérieur appelle avec une signature, et le nombre de machines déclaré au déploiement. Chaque pack dit comment sa technologie se lance : un planificateur écrit dans le code tourne dans chaque processus qui le charge, une tâche déclarée au déploiement part une fois par horaire.</p>
       </section>
     </aside>

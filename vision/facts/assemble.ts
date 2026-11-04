@@ -1,5 +1,6 @@
 import { isBuiltin } from "node:module";
 import { packageName as npmName } from "../stack/build.js";
+import { routeContracts } from "./route-contract.js";
 import { uncalledEntries } from "./entry-called.js";
 import { attributeEntrypoints, attributeFieldWrites } from "./entry-reach.js";
 import { attributeFlows } from "./flow.js";
@@ -526,6 +527,7 @@ export function assemble(db: Database, opts: AssembleOptions): ArchModelV2 {
   const graph = fnGraph(rows);
   const { reaches, owners } = attributeEntrypoints(nodes, [...edges.values()], depends, graph, importers);
   attributeFieldWrites(nodes, importers, owners);
+  routeContracts(rows, nodes.flatMap((n) => n.facets.entrypoints ?? []));
   attributeFlows(nodes, [...edges.values()], rows);
   attributeFunctions(nodes, [...edges.values()], rows);
   // Les composants, une fois les occurrences rattachées : leurs liens entre eux ne sont pas des étapes de déroulé.

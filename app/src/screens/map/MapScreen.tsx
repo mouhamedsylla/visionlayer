@@ -20,10 +20,10 @@ export function MapScreen({ map, knowledge, selected, select, enter, ask }: { ma
   const running = map.model.nodes.some((n) => n.level === "deployable");
   return (
     <Workspace
-      head={<div className="mp__intro"><h1 className="page__title">Carte</h1><p className="mp__sentence">Quelles unités s'exécutent, et comment elles communiquent.</p></div>}
+      head={<div className="mp__intro"><h1 className="page__title">Carte</h1></div>}
       panel={chosen && <Panel map={map} {...(knowledge ? { knowledge } : {})} node={chosen} ask={(q) => ask(chosen.id, q)} />}>
       {hero && <MapHero hero={hero} onPick={select} />}
-      {!running && <section className="vl-card mp__none"><b>Aucun programme lancé n'est lu dans ce dépôt.</b><p>Ni script de lancement, ni Dockerfile, ni page, ni manifeste de déploiement. C'est le cas d'une bibliothèque : ce qu'elle exporte n'est pas une carte de ce qui tourne, et VisionLayer ne le représente pas encore.</p></section>}
+      {!running && <section className="vl-card mp__none"><b>0 programme lu</b><p>Aucun script de lancement, Dockerfile, page ou manifeste. Bibliothèque : non représentée.</p></section>}
       {running && <StyleBar map={map} />}
       {running && <Rep code="S1" name="Carte" question="De quoi le système est-il fait ?" sentence={mapSentence(map)} flush
         reads="de gauche à droite : ce qui appelle, ce qui tourne, ce qui est touché. Une file se lit de haut en bas, de qui y dépose à qui la consomme. Choisir un bloc montre ses liens ; double-clic pour entrer. Ctrl ou ⌘ et la molette zooment, glisser déplace.">

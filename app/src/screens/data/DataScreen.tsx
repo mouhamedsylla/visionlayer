@@ -15,7 +15,7 @@ export function DataScreen({ map, block, item, open, openFlow, openTable }: { ma
   // L'adresse porte le stockage et la table choisie (`postgres/order`) : le retour ramène à la même ligne.
   const [storeKey, chosen] = item?.includes("/") ? [item.slice(0, item.indexOf("/")), item.slice(item.indexOf("/") + 1)] : [item, undefined];
   const store = list.find((s) => s.id === storeKey || s.name === storeKey) ?? list.find((s) => s.facets.data?.entities.length) ?? list[0];
-  if (!store) return <div className="page"><h1 className="dx__title">Qui lit, qui écrit, et sous quel contrôle</h1><p className="dx__lead">Aucun stockage n'est lu sur ce projet.</p></div>;
+  if (!store) return <div className="page"><h1 className="dx__title">Données</h1><p className="dx__lead">Aucun stockage n'est lu sur ce projet.</p></div>;
   const t = dataTable(map, store, block);
   const race = t.rows.find((r) => r.seeTone === "cr");
   const row = t.rows.find((r) => r.entity.name === chosen) ?? race ?? t.rows[0];
@@ -28,15 +28,14 @@ export function DataScreen({ map, block, item, open, openFlow, openTable }: { ma
   return (
     <Workspace
       head={<div className="dx__intro">
-        <h1 className="dx__title">Qui lit, qui écrit, et sous quel contrôle</h1>
-        <p className="dx__lead">Les {plural(t.rows.length, "table", "tables")} de {store.name}{decl ? `, déclarées dans ${decl.path}` : ""}, croisées avec le code qui les touche. Chaque case renvoie à sa ligne. Ce que contient la base en production n'est pas lu.</p>
+        <h1 className="dx__title">Données</h1>
       </div>}
       panel={row && <Side map={map} store={store} row={row} findings={t.findings} openFlow={openFlow} openTable={() => openTable(`${store.id}/${row.entity.name}`)} />}>
       <div className="tiles">
-        <div className="tile"><small>Les tables</small><b>{plural(t.rows.length, "table", "tables")}</b><span>{groups.length > 1 ? `en ${groups.length} groupes : ${groups.join(", ").toLowerCase()}` : "déclarées dans le code"}</span></div>
-        <div className="tile"><small>Qui les touche</small><b>{plural(t.columns.length, "partie du code", "parties du code")}</b><span>{t.columns.map((c) => c.label.toLowerCase()).join(", ")}</span></div>
-        <div className="tile"><small>Contrôles en base</small><b>{plural(unique, "contrainte d'unicité", "contraintes d'unicité")}</b><span>{t.rows.find((r) => r.constraint?.includes(", si "))?.constraint ?? "lues dans le schéma"}</span></div>
-        <div className={`tile${race ? " tile--cr" : ""}`}><small>Lue puis réécrite</small><b>{race ? race.entity.name : "aucune"}</b><span>{race ? <Rich text={t.findings.find((f) => f.code === "race_read_then_write")?.message.split(",")[0] ?? ""} /> : "aucune course lue"}</span></div>
+        <div className="tile"><small>Tables</small><b>{plural(t.rows.length, "table", "tables")}</b><span>{groups.length > 1 ? `en ${groups.length} groupes : ${groups.join(", ").toLowerCase()}` : "déclarées dans le code"}</span></div>
+        <div className="tile"><small>Accès code</small><b>{plural(t.columns.length, "partie du code", "parties du code")}</b><span>{t.columns.map((c) => c.label.toLowerCase()).join(", ")}</span></div>
+        <div className="tile"><small>Contraintes</small><b>{plural(unique, "contrainte d'unicité", "contraintes d'unicité")}</b><span>{t.rows.find((r) => r.constraint?.includes(", si "))?.constraint ?? "lues dans le schéma"}</span></div>
+        <div className={`tile${race ? " tile--cr" : ""}`}><small>Read puis write</small><b>{race ? race.entity.name : "aucune"}</b><span>{race ? <Rich text={t.findings.find((f) => f.code === "race_read_then_write")?.message.split(",")[0] ?? ""} /> : "aucune course lue"}</span></div>
       </div>
         <Rep code="X1" name="Matrice d'accès" question="Qui touche quoi ?" flush
           sentence={`${plural(t.rows.length, "table", "tables")} de ${store.name}, touchées par ${plural(t.columns.length, "partie du code", "parties du code")} ; ${writing} y écri${writing > 1 ? "vent" : "t"}.`}
@@ -45,7 +44,7 @@ export function DataScreen({ map, block, item, open, openFlow, openTable }: { ma
             {list.map((s) => <button key={s.id} className={`seg${s.id === store.id ? " seg--on" : ""}`} onClick={() => open(s.id)}>{s.name} <span className="vl-count">{s.facets.data?.entities.length ?? s.facets.channel?.topics.length ?? 0}</span></button>)}
             <span className="note"><span className="rw"><i>lit</i><i className="w">écrit</i></span></span>
           </div>
-          <div className="dt dt--h" style={grid}><span>Table</span>{t.columns.map((c) => <span key={c.id}>{c.label}</span>)}<span>Contrainte</span><span>À aller voir</span></div>
+          <div className="dt dt--h" style={grid}><span>Table</span>{t.columns.map((c) => <span key={c.id}>{c.label}</span>)}<span>Contrainte</span><span>Constat</span></div>
           {groups.map((g) => (
             <div key={g}>
               {groups.length > 1 && <div className="grp">{g} <span>{t.rows.filter((r) => r.group === g).length}</span></div>}
@@ -81,7 +80,7 @@ function Side({ map, store, row, findings, openFlow, openTable }: { openFlow: (i
           <h2>{e.name}</h2>
           <p className="sub">{plural(e.fields?.length ?? 0, "champ", "champs")}{e.proof ? `, déclarée à ${e.proof.path.split("/").pop()}:${e.proof.line}` : ""}</p>
         </div>
-        <button className="vl-btn vl-btn--light vl-btn--sm" style={{ alignSelf: "flex-start" }} onClick={openTable}>Ce qu'elle veut dire ›</button>
+        <button className="vl-btn vl-btn--light vl-btn--sm" style={{ alignSelf: "flex-start" }} onClick={openTable}>Ouvrir la table ›</button>
         <div className="nst">
           <div><b>{lines("write")}</b><span>lignes qui l'écrivent</span></div>
           <div><b>{lines("read")}</b><span>lignes qui la lisent</span></div>
@@ -102,7 +101,7 @@ function Side({ map, store, row, findings, openFlow, openTable }: { openFlow: (i
         )}
       </section>
       <section className="card">
-        <div className="hd"><h2>Qui l'écrit</h2><span>{plural(lines("write"), "ligne", "lignes")}</span></div>
+        <div className="hd"><h2>Écritures</h2><span>{plural(lines("write"), "ligne", "lignes")}</span></div>
         {w.length === 0 && <p className="foot">Aucun point d'entrée lu ne l'écrit.</p>}
         {w.map((x) => (
           <div key={x.key} className={`wr wr--link${x.danger ? " wr--cr" : ""}`} onClick={() => openFlow(x.id)} title="Ouvrir son déroulé">

@@ -22,6 +22,8 @@ import { packageName } from "../stack/build.js";
  * ex_call_bind(Fichier, Nom, Fonction)               const nom = fonction(…) : la valeur d'un appel, gardée dans une variable
  * admin_word(Fichier, Chemin)                         un chemin ou un préfixe dont un morceau commence par « admin »
  * first_status(Fichier, LigneFonction, 401|403)       le premier statut que répond la fonction : elle garde ce qu'elle fait ensuite
+ * fn_status(Fichier, LigneFonction, Code, Ligne)       tout code 4xx ou 5xx qu'une fonction répond : res.status(400), new HttpError(409)
+ * route_mw_arg(Fichier, LigneRoute, Nom, partial|"")   validate(schema), validate({ body: schema.partial() }) : un nom donné à un intermédiaire
  * status_in(Fichier, LigneFonction, 401|403)          une fonction qui répond 401 ou 403 : throw new HttpError(403), res.status(403)…
  * calls_in(Fichier, LigneFonction, Appelé, Ligne)     une fonction (de premier niveau, ou écrite en argument) qui appelle `Appelé(…)`
  */
@@ -153,6 +155,15 @@ const script: PackScript = ({ file, root, imports, fact }) => {
         const made = x?.type === "call_expression" ? x.childForFieldName("function") : undefined;
         const name = made?.type === "identifier" ? made : innermost(m);
         if (name.type === "identifier") out.push(fact("route_mw", [file.path, obj, M, p, name.text, line(m)], line(n)));
+        if (x?.type === "call_expression") walkAll(x.childForFieldName("arguments") ?? x, (a) => {
+          if (a.type !== "identifier" && a.type !== "call_expression") return;
+          const top = a.parent?.type === "arguments" || a.parent?.type === "pair";
+          if (!top) return;
+          const partial = /\.(partial|deepPartial)\(/.test(a.text);
+          let r: Node | null | undefined = a;
+          while (r && r.type !== "identifier") r = r.type === "call_expression" ? r.childForFieldName("function") : r.type === "member_expression" ? r.childForFieldName("object") : undefined;
+          if (r) out.push(fact("route_mw_arg", [file.path, line(n), r.text, partial ? "partial" : ""], line(n)));
+        });
       }
       routes.push({ obj, method: M, path: p, line: line(n) });
       if (isAdmin(p)) out.push(fact("admin_word", [file.path, p], line(n)));
@@ -178,6 +189,7 @@ const script: PackScript = ({ file, root, imports, fact }) => {
     const aboutWho = IDENTITY.test(body.text);
     if (first && (first.text === "401" || (first.text === "403" && aboutWho))) out.push(fact("first_status", [file.path, at, first.text], line(first)));
     walkAll(body, (x) => {
+      if (x.type === "number" && /^[45]\d\d$/.test(x.text) && x.parent?.type === "arguments") out.push(fact("fn_status", [file.path, at, x.text, line(x)], line(x)));
       if (x.type === "call_expression") {
         const f = x.childForFieldName("function");
         if (f?.type === "identifier" && !seen.has(f.text)) { seen.add(f.text); out.push(fact("calls_in", [file.path, at, f.text, line(x)], line(x))); }
