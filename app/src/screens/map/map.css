@@ -1,6 +1,7 @@
 /* Repris de la planche 03 (Carte), mêmes mesures. */
 .scr-map {
 .mp__intro { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.mp__intro--row { flex-direction: row; align-items: center; justify-content: space-between; }
 .mp__titlerow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .mp__sentence { color: var(--ink-2); }
 .mph { display: flex; flex-wrap: wrap; background: var(--night); color: var(--on-night); border-radius: 12px; overflow: hidden; }

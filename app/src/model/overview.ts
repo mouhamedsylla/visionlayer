@@ -25,6 +25,7 @@ export function sidebarCounts(p: MapPayload): Partial<Record<string, { n: number
   const twice = p.model.findings.some((f) => f.code === "scheduled_on_every_instance");
   return {
     carte: { n: blocks },
+    fonctionnalites: { n: entries(p).filter((x) => x.e.kind !== "main").length },
     ...(access ? { acces: { n: access, tone: "critical" as const } } : {}),
     ...(tables ? { donnees: { n: tables } } : {}),
     ...(schedules ? { taches: { n: schedules, ...(twice ? { tone: "signal" as const } : {}) } } : {}),
@@ -45,7 +46,7 @@ export function headline(p: MapPayload): { techs: string; known: string } {
   // Les technologies du programme principal d'abord : son framework, sa base, puis ce qu'il appelle (le paiement…).
   const PRIORITY = ["backend", "framework", "database", "payments", "cloud", "ai"];
   const lead = [...programs(p)].filter((n) => !isUnread(n)).sort((a, b) => (b.facets.entrypoints?.length ?? 0) - (a.facets.entrypoints?.length ?? 0));
-  const ids = [...new Set(lead.flatMap((n) => n.tech ?? []))].filter((t) => !/orm|drizzle|prisma|bullmq|cron/i.test(t));
+  const ids = [...new Set(lead.flatMap((n) => n.tech ?? []))];
   const main = ids.map((t) => p.tech[t]).filter((t) => t && PRIORITY.includes(t.category ?? ""))
     .sort((a, b) => PRIORITY.indexOf(a!.category ?? "") - PRIORITY.indexOf(b!.category ?? "")).map((t) => t!.name);
   const all = p.model.findings.length;

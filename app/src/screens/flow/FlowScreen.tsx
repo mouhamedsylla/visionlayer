@@ -18,13 +18,13 @@ export function FlowScreen({ map, entryId, found, tab, openTab, back, backLabel,
   const v = flowView(map, found.entry, found.owner);
   const row = v.rows.find((r) => r.n === pick) ?? v.rows[0];
   const http = found.entry.kind === "http" || found.entry.kind === "rpc";
-  const current = http && tab !== "deroule" ? "contrat" : "deroule";
+  const current = http && tab === "contrat" ? "contrat" : "deroule";
   return (
     <Workspace panelWidth={460}
       panel={current === "deroule" && <>
         {row && <Indexed row={row} rows={v.rows} />}
         {v.gates.length > 0 && (
-            <Rep code="A2" name="Aiguillage" question="Quand refuse-t-il, et que laisse-t-il ?" sentence={`${v.gates.length} façon${v.gates.length > 1 ? "s" : ""} de refuser.`}
+            <Rep code="A2" name="Aiguillage" question="Quand refuse-t-il, et que laisse-t-il ?"
               reads="de haut en bas : chaque question est la condition d'un refus ; oui, la flèche part à droite vers le refus et son code ; non, l'exécution descend à la question suivante.">
               <div className="fl__gates">
                 {v.gates.map((g, i) => (
@@ -45,7 +45,7 @@ export function FlowScreen({ map, entryId, found, tab, openTab, back, backLabel,
         <span className="fl__sub">{found.entry.handler?.name}, <Ref proof={found.entry.handler ? { path: found.entry.handler.path, line: found.entry.handler.line } : found.entry.proof} /></span>
         {backLabel !== found.owner.name && <button className="vl-btn vl-btn--secondary vl-btn--sm fl__map" onClick={toBlock}>Intérieur de {found.owner.name}</button>}
       </div>}>
-        {http && <div className="tabs fl__tabs"><button className={`seg${current === "contrat" ? " seg--on" : ""}`} onClick={() => openTab("contrat")}>Contrat</button><button className={`seg${current === "deroule" ? " seg--on" : ""}`} onClick={() => openTab("deroule")}>Déroulé <span className="vl-count">{v.rows.length}</span></button></div>}
+        {http && <div className="tabs fl__tabs"><button className={`seg${current === "deroule" ? " seg--on" : ""}`} onClick={() => openTab("deroule")}>Déroulé <span className="vl-count">{v.rows.length}</span></button><button className={`seg${current === "contrat" ? " seg--on" : ""}`} onClick={() => openTab("contrat")}>Contrat</button></div>}
         {current === "contrat" && <Contract entry={found.entry} />}
         {current === "deroule" && <Rep code="F1" name="Déroulé" question="Que fait cette exécution, dans quel ordre ?" sentence={<Rich text={v.sentence} />} flush
           reads="de haut en bas, dans l'ordre. Chaque flèche part du code vers ce qu'il touche : épaisse, il écrit ; grise, il lit ; pointillée, il met en file. Choisir une étape montre son code.">
@@ -67,7 +67,7 @@ function Indexed({ row, rows }: { row: FlowRow; rows: FlowRow[] }) {
   const stepAt = new Map<number, number[]>();
   for (const r of here) stepAt.set(r.step.proof.line, [...(stepAt.get(r.step.proof.line) ?? []), r.n]);
   return (
-    <Rep code="A1" name="Algorithme indexé" question="Que fait ce code, ligne par ligne ?" sentence={<>Étape {row.n} choisie, dans <code>{p.path.split("/").slice(-2).join("/")}</code>.</>} flush
+    <Rep code="A1" name="Algorithme indexé" question="Que fait ce code, ligne par ligne ?" flush
       reads="en face : chaque étape porte un numéro, et le même numéro marque ses lignes dans le code.">
       <div className="fl__code">
         {row.step.why && <p className="fl__why">« {row.step.why.text} »</p>}

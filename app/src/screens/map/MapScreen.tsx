@@ -20,11 +20,9 @@ export function MapScreen({ map, knowledge, selected, select, enter, ask }: { ma
   const running = map.model.nodes.some((n) => n.level === "deployable");
   return (
     <Workspace
-      head={<div className="mp__intro"><h1 className="page__title">Carte</h1></div>}
+      head={<div className="mp__intro mp__intro--row"><h1 className="page__title">Carte</h1><a className="vl-btn vl-btn--secondary vl-btn--sm" href="#/reglages">Relier un agent</a></div>}
       panel={chosen && <Panel map={map} {...(knowledge ? { knowledge } : {})} node={chosen} ask={(q) => ask(chosen.id, q)} />}>
-      {hero && <MapHero hero={hero} onPick={select} />}
       {!running && <section className="vl-card mp__none"><b>0 programme lu</b><p>Aucun script de lancement, Dockerfile, page ou manifeste. Bibliothèque : non représentée.</p></section>}
-      {running && <StyleBar map={map} />}
       {running && <Rep code="S1" name="Carte" question="De quoi le système est-il fait ?" sentence={mapSentence(map)} flush
         reads="de gauche à droite : ce qui appelle, ce qui tourne, ce qui est touché. Une file se lit de haut en bas, de qui y dépose à qui la consomme. Choisir un bloc montre ses liens ; double-clic pour entrer. Ctrl ou ⌘ et la molette zooment, glisser déplace.">
         <ZoomPan><MapGridView grid={grid} tech={map.tech} selected={chosen?.id} chosen={chosen} select={select} enter={enter} /></ZoomPan>
@@ -37,6 +35,8 @@ export function MapScreen({ map, knowledge, selected, select, enter, ask }: { ma
           <span className="lg"><span className="mk mk--nl">non lu</span>sans pack pour cette technologie</span>
         </div>
       </Rep>}
+      {running && <StyleBar map={map} />}
+      {hero && <MapHero hero={hero} onPick={select} />}
     </Workspace>
   );
 }

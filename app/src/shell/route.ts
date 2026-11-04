@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 
-export type Screen = "vue" | "carte" | "bloc" | "deroule" | "table" | "mecanismes" | "acces" | "donnees" | "taches" | "regles" | "agents" | "packs" | "couverture" | "replays" | "reglages";
+export type Screen = "vue" | "carte" | "fonctionnalites" | "bloc" | "deroule" | "table" | "mecanismes" | "acces" | "donnees" | "taches" | "regles" | "agents" | "packs" | "couverture" | "replays" | "reglages";
 
 /** Les écrans des planches, dans l'ordre de la barre latérale. `built` : codé ; les autres restent visibles, sans lien. */
 export const SCREENS: { id: Screen; label: string; group: string; built?: boolean }[] = [
   { id: "vue", label: "Vue d'ensemble", group: "Système", built: true },
   { id: "carte", label: "Carte", group: "Système", built: true },
+  { id: "fonctionnalites", label: "Fonctionnalités", group: "Système", built: true },
   { id: "bloc", label: "Intérieur d'un bloc", group: "", built: true },
   { id: "deroule", label: "Déroulé", group: "", built: true },
   { id: "table", label: "Une table", group: "", built: true },

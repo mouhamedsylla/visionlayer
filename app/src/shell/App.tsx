@@ -13,6 +13,7 @@ import { BlockScreen } from "../screens/block/BlockScreen";
 import { FlowScreen } from "../screens/flow/FlowScreen";
 import { AgentsScreen } from "../screens/agents/AgentsScreen";
 import { SettingsScreen } from "../screens/settings/SettingsScreen";
+import { FeaturesScreen } from "../screens/features/FeaturesScreen";
 import { ReplaysScreen } from "../screens/replay/ReplaysScreen";
 import { MechanismsScreen } from "../screens/mechanisms/MechanismsScreen";
 import { TableScreen } from "../screens/data/TableScreen";
@@ -38,7 +39,7 @@ export function App() {
       <div className="vl app">
         <Sidebar project={data.project} map={data.map} screen={origin} go={(s) => go(s, undefined, { root: true, scope: null })} />
         <main className="main">
-          <Topbar project={data.project} map={data.map} crumbs={crumbs} {...(!DEEP_BACK.has(screen) && back && from ? { back, backLabel: from.screen === "carte" && from.item ? from.item : placeLabel(from) } : {})} {...(block ? { block, clearBlock: () => go(screen, item, { scope: null, replace: true }) } : {})} refreshing={data.refreshing} onRefresh={data.refresh} />
+          <Topbar project={data.project} map={data.map} crumbs={crumbs} {...(!DEEP_BACK.has(screen) && back && from ? { back, backLabel: from.screen === "carte" && from.item ? from.item : placeLabel(from) } : !DEEP_BACK.has(screen) && screen !== "carte" && item ? { back: () => go(screen, undefined, { root: true }), backLabel: placeLabel({ screen }) } : {})} {...(block ? { block, clearBlock: () => go(screen, item, { scope: null, replace: true }) } : {})} refreshing={data.refreshing} onRefresh={data.refresh} />
           {data.error ? <p className="view state">La carte n'a pas pu être lue : {data.error}</p>
             : !data.map ? <p className="view state">Lecture du dépôt…</p>
             : screen === "carte" ? <div key={screen} className="view view--ws scr-map"><MapScreen map={data.map} {...(data.knowledge ? { knowledge: data.knowledge } : {})} selected={item} select={(id) => go("carte", id, { replace: true })} ask={(id, q) => go(q.screen, q.item, { leaving: { screen: "carte", item: id }, ...(q.scope ? { scope: q.scope } : {}) })} enter={(id) => {
@@ -48,6 +49,7 @@ export function App() {
               else if (n?.role === "store" || n?.role === "channel") go("donnees", id);
               else go("bloc", id);
             }} /></div>
+            : screen === "fonctionnalites" ? <div key={screen} className="view scr-ft"><FeaturesScreen map={data.map} openFlow={(id) => go("deroule", id)} /></div>
             : screen === "bloc" && data.map.model.nodes.find((n) => n.id === item) ? <div key={`${screen}/${item ?? ""}`} className="view view--ws scr-bk"><BlockScreen map={data.map} block={data.map.model.nodes.find((n) => n.id === item)!} openFlow={(id) => go("deroule", id)} {...backTo(() => go("carte", item))} /></div>
             : screen === "deroule" && item ? <div key={`${screen}/${item ?? ""}`} className="view view--ws scr-fl"><FlowScreen map={data.map} {...(tab ? { tab } : {})} openTab={(x) => go("deroule", item, { replace: true, tab: x })} entryId={item} found={findEntry(data.map, item)} {...backTo(() => go("carte", findEntry(data.map!, item)?.owner.id))} toBlock={() => go("bloc", findEntry(data.map!, item)?.owner.id)} /></div>
             : screen === "table" && item && findTable(data.map, item) ? (() => { const t = findTable(data.map!, item)!; return <div key={`${screen}/${item}`} className="view view--ws scr-dx scr-fl scr-tb"><TableScreen map={data.map!} store={t.store} entity={t.entity} knowledge={data.knowledge} {...(tab ? { tab } : {})} openTab={(x) => go("table", item, { replace: true, tab: x })} openFlow={(id) => go("deroule", id)} {...backTo(() => go("donnees", `${t.store.id}/${t.entity.name}`))} /></div>; })()
