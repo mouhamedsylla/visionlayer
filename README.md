@@ -8,7 +8,7 @@
 <p align="center">
   <a href="LICENSE"><img alt="License: Apache 2.0" src="https://img.shields.io/badge/license-Apache%202.0-121211?style=flat-square"></a>
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-121211?style=flat-square&logo=typescript&logoColor=white">
-  <img alt="312 tests passing" src="https://img.shields.io/badge/tests-312%20passing-2c9a57?style=flat-square">
+  <img alt="317 tests passing" src="https://img.shields.io/badge/tests-317%20passing-2c9a57?style=flat-square">
   <img alt="Built with Meta Muse" src="https://img.shields.io/badge/built%20with-Meta%20Muse-e2791d?style=flat-square">
   <img alt="Local first" src="https://img.shields.io/badge/local-first-121211?style=flat-square">
 </p>
@@ -53,6 +53,8 @@ When agents write the code, four things quietly get lost.
 | A function, a line | Which code does exactly that? |
 
 **See what each feature does.** The Features screen groups every entry point by resource and draws it as a chain, in code order: reads, refusals, writes, transaction boundaries, replies. One click opens its full flow.
+
+**Follow a process across routes.** The Process screen takes a data with states, like a booking, or a queue, and shows what moves it: the client call, the Stripe webhook, the cron job, each with its guards, its reads and writes, and what resumes on a queue. Computed from the code, with no language model.
 
 **Read the algorithm when it matters.** A feature is traced in the order the code runs it: the route, the guard, the database read, the write, the message put on a queue. Every step opens its line.
 
@@ -129,7 +131,7 @@ This section says what runs today and what does not yet.
 
 | Part | Status |
 |---|---|
-| Reading engine, packs, neutral model, findings | Works today, covered by 312 tests |
+| Reading engine, packs, neutral model, findings | Works today, covered by 317 tests |
 | MCP server for coding agents, activity hooks | Works today |
 | Knowledge layer: notes anchored to code, checked on every change | Works today |
 | Local interface: map, features, flows, contracts, access, data, mechanisms, jobs, rules, sessions | Works today (`pnpm start`) |

@@ -14,6 +14,7 @@ import { FlowScreen } from "../screens/flow/FlowScreen";
 import { AgentsScreen } from "../screens/agents/AgentsScreen";
 import { SettingsScreen } from "../screens/settings/SettingsScreen";
 import { FeaturesScreen } from "../screens/features/FeaturesScreen";
+import { ProcessScreen } from "../screens/process/ProcessScreen";
 import { ReplaysScreen } from "../screens/replay/ReplaysScreen";
 import { MechanismsScreen } from "../screens/mechanisms/MechanismsScreen";
 import { TableScreen } from "../screens/data/TableScreen";
@@ -50,6 +51,7 @@ export function App() {
               else go("bloc", id);
             }} /></div>
             : screen === "fonctionnalites" ? <div key={screen} className="view scr-ft"><FeaturesScreen map={data.map} openFlow={(id) => go("deroule", id)} /></div>
+            : screen === "parcours" ? <div key={screen} className="view scr-pc"><ProcessScreen map={data.map} item={item} open={(id) => go("parcours", id, { replace: true })} openFlow={(id) => go("deroule", id)} openTable={(id) => go("table", id, { tab: "etats" })} /></div>
             : screen === "bloc" && data.map.model.nodes.find((n) => n.id === item) ? <div key={`${screen}/${item ?? ""}`} className="view view--ws scr-bk"><BlockScreen map={data.map} block={data.map.model.nodes.find((n) => n.id === item)!} openFlow={(id) => go("deroule", id)} {...backTo(() => go("carte", item))} /></div>
             : screen === "deroule" && item ? <div key={`${screen}/${item ?? ""}`} className="view view--ws scr-fl"><FlowScreen map={data.map} {...(tab ? { tab } : {})} openTab={(x) => go("deroule", item, { replace: true, tab: x })} entryId={item} found={findEntry(data.map, item)} {...backTo(() => go("carte", findEntry(data.map!, item)?.owner.id))} toBlock={() => go("bloc", findEntry(data.map!, item)?.owner.id)} /></div>
             : screen === "table" && item && findTable(data.map, item) ? (() => { const t = findTable(data.map!, item)!; return <div key={`${screen}/${item}`} className="view view--ws scr-dx scr-fl scr-tb"><TableScreen map={data.map!} store={t.store} entity={t.entity} knowledge={data.knowledge} {...(tab ? { tab } : {})} openTab={(x) => go("table", item, { replace: true, tab: x })} openFlow={(id) => go("deroule", id)} {...backTo(() => go("donnees", `${t.store.id}/${t.entity.name}`))} /></div>; })()

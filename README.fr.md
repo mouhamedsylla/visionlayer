@@ -36,6 +36,8 @@ Quand les agents écrivent le code, quatre choses se perdent sans bruit.
 
 **Voir ce que fait chaque fonctionnalité.** L'écran Fonctionnalités regroupe chaque point d'entrée par ressource et le dessine en chaîne, dans l'ordre du code : lectures, refus, écritures, bornes de transaction, réponses. Un clic ouvre son déroulé complet.
 
+**Suivre un processus à travers les routes.** L'écran Parcours prend une donnée à états, comme une réservation, ou une file, et montre ce qui la fait avancer : l'appel du client, le webhook Stripe, la tâche planifiée, chacun avec ses gardes, ses lectures et écritures, et ce qui reprend sur une file. Calculé depuis le code, sans modèle de langage.
+
 **Lire l'algorithme quand il le faut.** Une feature est tracée dans l'ordre où le code l'exécute : la route, la garde, la lecture en base, l'écriture, le message mis en file. Chaque étape ouvre sa ligne.
 
 **Décider sur des faits.** VisionLayer montre ce qui mérite qu'on aille voir, et dit comment il l'a trouvé. Ce qu'il ne sait pas lire est marqué *non lu*, jamais *sûr*.
@@ -100,7 +102,7 @@ Cette section dit ce qui marche aujourd'hui, et ce qui ne marche pas encore.
 
 | Partie | État |
 |---|---|
-| Moteur de lecture, packs, modèle neutre, constats | Marche aujourd'hui, couvert par 312 tests |
+| Moteur de lecture, packs, modèle neutre, constats | Marche aujourd'hui, couvert par 317 tests |
 | Serveur MCP pour les agents, crochets d'activité | Marche aujourd'hui |
 | Couche de connaissance : notes ancrées au code, vérifiées à chaque changement | Marche aujourd'hui |
 | Interface locale : carte, fonctionnalités, déroulés, contrats, accès, données, mécanismes, tâches, règles, sessions | Marche aujourd'hui (`pnpm start`) |

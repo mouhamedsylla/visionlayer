@@ -7,13 +7,13 @@ import "./features.css";
 
 const VERB: Partial<Record<Link["kind"], string>> = { read: "lit", write: "écrit", message: "file", request: "appelle" };
 
-function Chip({ l }: { l: Link }) {
+export function Chip({ l }: { l: Link }) {
   if (l.kind === "refuse") return <span className="ft-c ft-c--refuse">refus {l.values.join(" ")}</span>;
   if (l.kind === "reply") return <span className="ft-c ft-c--reply">{l.values.join(", ")}</span>;
   return <span className={`ft-c ft-c--${l.kind}`}><em>{VERB[l.kind]}</em> {l.values.join(", ")}</span>;
 }
 
-function Links({ links }: { links: Link[] }) {
+export function Links({ links }: { links: Link[] }) {
   return <>{links.map((l, i) => <Fragment key={i}>{i > 0 && <i className="ft-ar" />}<Chip l={l} /></Fragment>)}</>;
 }
 

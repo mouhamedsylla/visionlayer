@@ -1,0 +1,45 @@
+.pc { display: flex; flex-direction: column; gap: 12px; }
+.pc__none { padding: 16px; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.pc__grid { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 14px; align-items: start; }
+.pc__list { position: sticky; top: 0; display: flex; flex-direction: column; gap: 3px; }
+.pc__list .vl-label { padding: 8px 8px 3px; }
+.pc-item { display: flex; flex-direction: column; gap: 2px; padding: 7px 9px; border: 1px solid transparent; border-radius: 8px; background: none; text-align: left; font: inherit; cursor: pointer; color: var(--ink); min-width: 0; }
+.pc-item:hover { background: var(--surface-sunken); }
+.pc-item.is-on { background: var(--surface); border-color: var(--line-strong); }
+.pc-item__name { font: 500 12.5px/16px var(--font-mono); overflow-wrap: anywhere; }
+.pc-item__name small { color: var(--muted); font: inherit; }
+.pc-item__who { font-size: 11px; line-height: 14px; color: var(--muted); }
+.pc-lanes { display: grid; grid-template-columns: minmax(0, 1fr) 150px; padding: 8px 14px; background: var(--surface-sunken); border-bottom: 1px solid var(--line); font: 500 10.5px/14px var(--font-mono); letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.pc-lanes span:nth-child(2) { display: none; }
+.pc-stage { display: grid; grid-template-columns: minmax(0, 1fr) 26px 134px; align-items: stretch; padding: 12px 14px; border-top: 1px solid var(--line); }
+.pc-lanes + .pc-stage { border-top: 0; }
+.pc-stage__steps { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.pc-step { display: grid; grid-template-columns: 118px 16px minmax(0, 1fr); align-items: start; }
+.pc-step__ar { margin-top: 14px; }
+.pc-who { display: flex; flex-direction: column; gap: 1px; padding: 5px 8px; border-radius: 7px; background: var(--surface-sunken); border: 1px solid var(--line); min-width: 0; }
+.pc-who small { font: 500 9.5px/12px var(--font-mono); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.pc-who b { font-weight: 500; font-size: 12px; line-height: 15px; overflow-wrap: anywhere; }
+.pc-who--external { background: #fbeee1; border-color: #f2d3b4; }
+.pc-who--external small, .pc-who--external b { color: #9a4d0c; }
+.pc-who--clock { background: #e8eefb; border-color: #cbd8f3; }
+.pc-who--clock small, .pc-who--clock b { color: #2a4d9a; }
+.pc-who--queue { border-style: dashed; border-color: var(--line-strong); }
+.pc-card { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: 9px; background: var(--surface); min-width: 0; }
+.pc-card.is-link { cursor: pointer; }
+.pc-card.is-link:hover { border-color: var(--ink); }
+.pc-card__head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+.pc-card__fn { font: 500 11.5px/15px var(--font-mono); color: var(--ink-2); }
+.pc-card__ref { margin-left: auto; }
+.pc-guard { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); }
+.pc-guard code { font: 500 11px/15px var(--font-mono); color: var(--ink); overflow-wrap: anywhere; }
+.pc-then { display: flex; flex-direction: column; gap: 5px; margin-top: 2px; padding: 7px 8px; border: 1px dashed var(--line-strong); border-radius: 7px; background: var(--surface-sunken); }
+.pc-then__head { display: flex; align-items: center; flex-wrap: wrap; }
+.pc-then__head code { font: 500 11.5px/15px var(--font-mono); margin-left: 4px; }
+.pc-then .ft-tx small { background: var(--surface-sunken); }
+.pc-bracket { position: relative; margin: 12px 0; border: 1.5px solid var(--ink); border-left: 0; border-radius: 0 8px 8px 0; width: 10px; }
+.pc-bracket i { position: absolute; top: 50%; left: 8.5px; width: 14px; height: 1.5px; margin-top: -.75px; background: var(--ink); }
+.pc-bracket i::after { content: ""; position: absolute; right: -1px; top: -3.25px; border-left: 6px solid var(--ink); border-top: 4px solid transparent; border-bottom: 4px solid transparent; }
+.pc-stage__state { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 4px; padding-left: 4px; min-width: 0; }
+.pc-stage__state small { font-size: 11px; line-height: 14px; color: var(--muted); }
+.pc-never { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--line); background: #fbeee1; font-size: 12px; color: #9a4d0c; }
+.pc-never b { font-weight: 600; }

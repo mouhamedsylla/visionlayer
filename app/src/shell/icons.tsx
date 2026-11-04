@@ -5,6 +5,7 @@ export const Icon = {
   vue: <svg {...P}><rect x="2.5" y="2.5" width="4.5" height="4.5" rx="1" /><rect x="9" y="2.5" width="4.5" height="4.5" rx="1" /><rect x="2.5" y="9" width="4.5" height="4.5" rx="1" /><rect x="9" y="9" width="4.5" height="4.5" rx="1" /></svg>,
   carte: <svg {...P}><rect x="2" y="2.5" width="5" height="4" rx="1" /><rect x="9" y="9.5" width="5" height="4" rx="1" /><path d="M4.5 6.5v5H9" /></svg>,
   fonctionnalites: <svg {...P}><path d="M2.5 4h4M2.5 8h7M2.5 12h4" /><path d="m8.5 2.5 1.5 1.5-1.5 1.5M11.5 6.5 13 8l-1.5 1.5M8.5 10.5 10 12l-1.5 1.5" /></svg>,
+  parcours: <svg {...P}><circle cx="3.5" cy="3.5" r="1.5" /><circle cx="12.5" cy="8" r="1.5" /><circle cx="3.5" cy="12.5" r="1.5" /><path d="M5 3.5h3.5a2 2 0 0 1 2 2V6.5M11 8H8M5 12.5h3.5a2 2 0 0 0 2-2V9.5" /></svg>,
   mecanismes: <svg {...P}><rect x="6" y="2.5" width="4" height="3.5" rx="1" /><path d="M8 6v2.5M4 8.5h8M4 8.5V10M12 8.5V10" /><rect x="2" y="10" width="4" height="3.5" rx="1" /><rect x="10" y="10" width="4" height="3.5" rx="1" strokeDasharray="2 1.5" /></svg>,
   acces: <svg {...P}><rect x="3.5" y="7" width="9" height="6.5" rx="1" /><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" /></svg>,
   donnees: <svg {...P}><ellipse cx="8" cy="4" rx="5" ry="1.8" /><path d="M3 4v8c0 1 2.2 1.8 5 1.8s5-.8 5-1.8V4M3 8c0 1 2.2 1.8 5 1.8S13 9 13 8" /></svg>,
