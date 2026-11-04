@@ -76,7 +76,6 @@ atelier-api is a real Express, Postgres and Stripe application we use as a test 
 
 ## Tested on projects it had never seen
 
-**[Open the read-only demo](https://mouhamedsylla.github.io/visionlayer/)**: what the engine returned for two of these projects, frozen as it was. Actions that need execution (free questions to Vigie, writing a pack, playing a Replay) run when you start VisionLayer on your own project.
 
 A tool that only works on the project it was tuned on is useless. So we drew 11 public Express projects at random, ran the engine with **no change to its code** at measure time, and compared it with an independent count of their sources.
 
@@ -165,17 +164,13 @@ git clone https://github.com/mouhamedsylla/visionlayer && cd visionlayer
 pnpm install
 ```
 
-Read the bundled example, then your own project:
+Start it, then choose a project: a folder on your machine, or a GitHub address. The code is only read, never installed or run.
 
 ```bash
-pnpm facts tests/corpus/atelier-api
+pnpm start
 ```
 
-```bash
-pnpm ui /path/to/your/project
-```
-
-`pnpm ui` serves the map API on `http://127.0.0.1:4173`; the new interface is being built. Run the tests with `pnpm test`.
+It opens on `http://127.0.0.1:4173` (`pnpm start --port 5000` for another port). To ask Muse questions or let it write packs, put your Meta key in `~/.visionlayer.env` as `MODEL_API_KEY=...`. Run the tests with `pnpm test`.
 
 ### Connect your coding agents
 

@@ -58,7 +58,6 @@ atelier-api est une vraie application Express, Postgres et Stripe qui nous sert 
 
 ## Essayé sur des projets jamais vus
 
-**[Ouvrir la démonstration en lecture seule](https://mouhamedsylla.github.io/visionlayer/)** : ce que le moteur a rendu pour deux de ces projets, figé tel quel. Les gestes qui demandent une exécution tournent quand VisionLayer est lancé sur ton projet.
 
 Nous avons tiré au hasard 11 projets Express publics et lancé le moteur **sans toucher à son code au moment de la mesure**, puis comparé à un décompte indépendant de leurs sources : 7 sur 11 se lisent bien (par exemple mini-erp-crm : 20 routes sur 20, 7 tables sur 7, un effet lu sur 19 routes). 2 ont révélé des défauts généraux, corrigés puis remesurés. Les interfaces injectées restent non lues, et un très gros dépôt à plusieurs applications n'est pas concluant.
 
@@ -142,8 +141,10 @@ Lire l'exemple fourni, puis votre propre projet :
 pnpm facts tests/corpus/atelier-api
 ```
 
+Lance-le, puis choisis un projet : un dossier de ta machine ou une adresse GitHub. Le code est seulement lu, jamais installé ni exécuté. Pour poser des questions à Muse, mets ta clé dans `~/.visionlayer.env` : `MODEL_API_KEY=...`.
+
 ```bash
-pnpm ui /chemin/vers/votre/projet
+pnpm start
 ```
 
 `pnpm ui` sert l'API de la carte sur `http://127.0.0.1:4173` ; la nouvelle interface est en construction. Les tests se lancent avec `pnpm test`.

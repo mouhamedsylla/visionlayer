@@ -16,3 +16,6 @@ tests/corpus/controle/*/checkout/
 
 # A symlink named node_modules is not matched by node_modules/
 node_modules
+
+# Les projets de la démonstration publique : du code de tiers, jamais dans ce dépôt
+/demo/
