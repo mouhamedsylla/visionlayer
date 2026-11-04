@@ -8,7 +8,7 @@
 <p align="center">
   <a href="LICENSE"><img alt="License: Apache 2.0" src="https://img.shields.io/badge/license-Apache%202.0-121211?style=flat-square"></a>
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-121211?style=flat-square&logo=typescript&logoColor=white">
-  <img alt="307 tests passing" src="https://img.shields.io/badge/tests-307%20passing-2c9a57?style=flat-square">
+  <img alt="312 tests passing" src="https://img.shields.io/badge/tests-312%20passing-2c9a57?style=flat-square">
   <img alt="Built with Meta Muse" src="https://img.shields.io/badge/built%20with-Meta%20Muse-e2791d?style=flat-square">
   <img alt="Local first" src="https://img.shields.io/badge/local-first-121211?style=flat-square">
 </p>
@@ -51,6 +51,8 @@ When agents write the code, four things quietly get lost.
 | A cross-cutting question | Who can enter? Who writes this table? What runs without a click? |
 | A feature | What happens, step by step, when a customer pays? |
 | A function, a line | Which code does exactly that? |
+
+**See what each feature does.** The Features screen groups every entry point by resource and draws it as a chain, in code order: reads, refusals, writes, transaction boundaries, replies. One click opens its full flow.
 
 **Read the algorithm when it matters.** A feature is traced in the order the code runs it: the route, the guard, the database read, the write, the message put on a queue. Every step opens its line.
 
@@ -123,19 +125,18 @@ These are not made-up exercises. On atelier-api, the first Replay is a race betw
 
 ## Status
 
-VisionLayer is being built in the open during the hackathon. This section says what runs today and what does not yet.
+This section says what runs today and what does not yet.
 
 | Part | Status |
 |---|---|
-| Reading engine, packs, neutral model, findings | Works today, covered by 307 tests |
+| Reading engine, packs, neutral model, findings | Works today, covered by 312 tests |
 | MCP server for coding agents, activity hooks | Works today |
 | Knowledge layer: notes anchored to code, checked on every change | Works today |
-| Local interface | Being built: the previous one is removed, `pnpm ui` serves the map API |
-| Pack writer with Muse Spark | Works today (`pnpm packs`) |
-| Vigie on the Model API and on Baseten | Being built |
-| Replays with Vigie as coach | Being built |
-
-Screenshots will be added once each part runs for real.
+| Local interface: map, features, flows, contracts, access, data, mechanisms, jobs, rules, sessions | Works today (`pnpm start`) |
+| Pack writer with Muse Spark | Works today |
+| Vigie on the Model API | Works today: cites file and line; needs your key |
+| Vigie on Baseten | Not run yet |
+| Replays | One real replay checked end to end, with a project's own tests; the coach is limited |
 
 ## How it works
 

@@ -34,6 +34,8 @@ Quand les agents écrivent le code, quatre choses se perdent sans bruit.
 | Une feature | Que se passe-t-il, étape par étape, quand un client paie ? |
 | Une fonction, une ligne | Quel code fait exactement cela ? |
 
+**Voir ce que fait chaque fonctionnalité.** L'écran Fonctionnalités regroupe chaque point d'entrée par ressource et le dessine en chaîne, dans l'ordre du code : lectures, refus, écritures, bornes de transaction, réponses. Un clic ouvre son déroulé complet.
+
 **Lire l'algorithme quand il le faut.** Une feature est tracée dans l'ordre où le code l'exécute : la route, la garde, la lecture en base, l'écriture, le message mis en file. Chaque étape ouvre sa ligne.
 
 **Décider sur des faits.** VisionLayer montre ce qui mérite qu'on aille voir, et dit comment il l'a trouvé. Ce qu'il ne sait pas lire est marqué *non lu*, jamais *sûr*.
@@ -94,19 +96,18 @@ Ce ne sont pas des exercices inventés. Sur atelier-api, le premier Replay est u
 
 ## État
 
-VisionLayer se construit en public pendant le hackathon. Cette section dit ce qui marche aujourd'hui, et ce qui ne marche pas encore.
+Cette section dit ce qui marche aujourd'hui, et ce qui ne marche pas encore.
 
 | Partie | État |
 |---|---|
-| Moteur de lecture, packs, modèle neutre, constats | Marche aujourd'hui, couvert par 307 tests |
+| Moteur de lecture, packs, modèle neutre, constats | Marche aujourd'hui, couvert par 312 tests |
 | Serveur MCP pour les agents, crochets d'activité | Marche aujourd'hui |
 | Couche de connaissance : notes ancrées au code, vérifiées à chaque changement | Marche aujourd'hui |
-| Interface locale | En construction : l'ancienne est retirée, `pnpm ui` sert l'API de la carte |
-| Écrivain de packs avec Muse Spark | Marche aujourd'hui (`pnpm packs`) |
-| Vigie sur la Model API et sur Baseten | En construction |
-| Replays avec Vigie en entraîneur | En construction |
-
-Les captures d'écran seront ajoutées quand chaque partie tournera pour de vrai.
+| Interface locale : carte, fonctionnalités, déroulés, contrats, accès, données, mécanismes, tâches, règles, sessions | Marche aujourd'hui (`pnpm start`) |
+| Écrivain de packs avec Muse Spark | Marche aujourd'hui |
+| Vigie sur la Model API | Marche aujourd'hui : cite fichier et ligne ; demande ta clé |
+| Vigie sur Baseten | Pas encore lancée |
+| Replays | Un vrai replay vérifié de bout en bout, avec les tests du projet ; l'entraîneur reste limité |
 
 ## Comment ça marche
 
@@ -147,7 +148,7 @@ Lance-le, puis choisis un projet : un dossier de ta machine ou une adresse GitHu
 pnpm start
 ```
 
-`pnpm ui` sert l'API de la carte sur `http://127.0.0.1:4173` ; la nouvelle interface est en construction. Les tests se lancent avec `pnpm test`.
+L'interface s'ouvre sur `http://127.0.0.1:4173`. Les tests se lancent avec `pnpm test`.
 
 ### Relier vos agents de code
 
