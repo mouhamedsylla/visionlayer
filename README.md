@@ -221,7 +221,7 @@ We opened two public repositories it had never read, by their GitHub address, wi
 | [node-express-realworld-example-app](https://github.com/gothinkster/node-express-realworld-example-app) (Express, Prisma) | 21 routes, 18 with a readable flow, 4 tables |
 | [node-express-boilerplate](https://github.com/hagopj13/node-express-boilerplate) (Express, Mongoose) | 15 routes, **no flow and no table**: there is no Mongoose pack yet, and no warning says so on the map. Write the pack first. |
 
-So discovery depends on packs. VisionLayer ships packs for a small stack (Express, Fastify, Prisma, Drizzle, BullMQ, node-cron, Stripe...). For another technology, the screens stay thin until the pack writer has written its pack. Only JavaScript and TypeScript are read.
+So discovery depends on packs. VisionLayer ships packs for a small stack (Express, Prisma, Drizzle, BullMQ, node-cron, Stripe and other SDKs...). For another technology, the screens stay thin until the pack writer has written its pack. Only JavaScript and TypeScript are read.
 
 **Knowledge does not fill itself.** On a new project the rules and sessions are empty. They come from a coding agent you link: it reads the map, then declares what the code does not say in `.vision/knowledge/`. We checked this with Muse Code on Atelier API: it called the four tools and wrote a rule anchored to `cancelBooking`. Without a linked agent, only the rules written in the project's own README are picked up.
 

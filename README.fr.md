@@ -192,7 +192,7 @@ Nous avons ouvert deux dépôts publics jamais lus, par leur adresse GitHub, san
 | [node-express-realworld-example-app](https://github.com/gothinkster/node-express-realworld-example-app) (Express, Prisma) | 21 routes, 18 avec un déroulé lisible, 4 tables |
 | [node-express-boilerplate](https://github.com/hagopj13/node-express-boilerplate) (Express, Mongoose) | 15 routes, **aucun déroulé et aucune table** : il n'y a pas encore de pack Mongoose, et aucun avertissement ne le dit sur la carte. Il faut d'abord écrire le pack. |
 
-La découverte dépend donc des packs. VisionLayer fournit des packs pour une petite pile (Express, Fastify, Prisma, Drizzle, BullMQ, node-cron, Stripe…). Pour une autre technologie, les écrans restent pauvres tant que l'écrivain n'a pas écrit son pack. Seuls JavaScript et TypeScript sont lus.
+La découverte dépend donc des packs. VisionLayer fournit des packs pour une petite pile (Express, Prisma, Drizzle, BullMQ, node-cron, Stripe et d’autres SDK…). Pour une autre technologie, les écrans restent pauvres tant que l'écrivain n'a pas écrit son pack. Seuls JavaScript et TypeScript sont lus.
 
 **La connaissance ne se remplit pas toute seule.** Sur un nouveau projet, les règles et les sessions sont vides. Elles viennent d'un agent de code que tu relies : il lit la carte, puis déclare dans `.vision/knowledge/` ce que le code ne dit pas. Nous l'avons vérifié avec Muse Code sur Atelier API : il a appelé les quatre outils et écrit une règle ancrée à `cancelBooking`. Sans agent relié, seules les règles écrites dans le README du projet sont reprises.
 
