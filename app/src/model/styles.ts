@@ -21,10 +21,10 @@ export function styles(p: MapPayload): Style[] {
   if (appCalls.length) {
     const direct = links.find((l) => apps.some((a) => a.id === l.from) && store(l.to));
     const a = byId.get(appCalls[0]!.from)!, s = byId.get(appCalls[0]!.to)!;
-    out.push({ id: "client-server", name: "Client-serveur",
-      reason: direct ? `${a.name} appelle ${s.name}, mais touche aussi ${byId.get(direct.to)!.name} sans passer par lui.` : `${apps.length > 1 ? `${apps.length} applications appellent` : `${a.name} n'appelle que`} ${s.name} ; ${apps.length > 1 ? "aucune ne touche" : "elle ne touche jamais"} la base.`,
+    out.push({ id: "client-server", name: "Client-server",
+      reason: direct ? `${a.name} calls ${s.name}, but also touches ${byId.get(direct.to)!.name} without going through it.` : `${apps.length > 1 ? `${apps.length} applications call` : `${a.name} only calls`} ${s.name}; ${apps.length > 1 ? "none touches" : "it never touches"} the database.`,
       ...(appCalls[0]!.first ? { proof: appCalls[0]!.first } : {}),
-      ...(direct ? { warn: `${byId.get(direct.from)!.name} lit ${byId.get(direct.to)!.name} sans le serveur`, ...(direct.first ? { warnProof: direct.first } : {}) } : {}) });
+      ...(direct ? { warn: `${byId.get(direct.from)!.name} reads ${byId.get(direct.to)!.name} without the server`, ...(direct.first ? { warnProof: direct.first } : {}) } : {}) });
   }
 
   const puts = links.filter((l) => l.kind === "message" && byId.get(l.to)?.role === "channel");
@@ -32,23 +32,23 @@ export function styles(p: MapPayload): Style[] {
   if (consumed) {
     const consumer = nodes.find((n) => n.id !== consumed.from && (n.facets.entrypoints ?? []).some((e) => (e.kind === "message" || e.kind === "event") && consumed.entities.includes(e.key)))!;
     const deaf = puts.flatMap((l) => l.entities).filter((t) => !nodes.some((n) => (n.facets.entrypoints ?? []).some((e) => e.key === t)));
-    out.push({ id: "event", name: "Événementiel",
-      reason: `${byId.get(consumed.from)!.name} met ${consumed.entities.slice(0, 2).map((t) => `« ${t} »`).join(", ")} en file ; ${consumer.name}${consumer.id !== consumed.from ? ", déployé à part," : ""} le consomme.`,
-      ...(consumed.first ? { proof: consumed.first } : {}), ...(deaf.length ? { warn: `${deaf.join(", ")} : personne n'écoute` } : {}) });
+    out.push({ id: "event", name: "Event-driven",
+      reason: `${byId.get(consumed.from)!.name} enqueues ${consumed.entities.slice(0, 2).map((t) => `“${t}”`).join(", ")}; ${consumer.name}${consumer.id !== consumed.from ? ", deployed apart," : ""} consumes it.`,
+      ...(consumed.first ? { proof: consumed.first } : {}), ...(deaf.length ? { warn: `${deaf.join(", ")}: nobody listens` } : {}) });
   }
 
   const between = links.filter((l) => prog(l.from) && prog(l.to) && l.from !== l.to && (l.kind === "call" || l.kind === "request"));
-  if (between.length >= 2) out.push({ id: "microservices", name: "Microservices", reason: `${between.length} appels synchrones entre programmes, de ${byId.get(between[0]!.from)!.name} à ${byId.get(between[0]!.to)!.name}.`, ...(between[0]!.first ? { proof: between[0]!.first } : {}) });
+  if (between.length >= 2) out.push({ id: "microservices", name: "Microservices", reason: `${between.length} synchronous calls between programs, from ${byId.get(between[0]!.from)!.name} to ${byId.get(between[0]!.to)!.name}.`, ...(between[0]!.first ? { proof: between[0]!.first } : {}) });
 
   const contract = p.model.nodes.find((n) => n.facets.component?.grouping === "contract");
-  if (contract) out.push({ id: "contract", name: "Trait local", local: true, reason: `${contract.name} : une interface et ses implémentations, montrée à l'intérieur de son bloc, pas sur la carte.`, ...(contract.proof[0] ? { proof: contract.proof[0] } : {}) });
+  if (contract) out.push({ id: "contract", name: "Local trait", local: true, reason: `${contract.name}: an interface and its implementations, shown inside its block, not on the map.`, ...(contract.proof[0] ? { proof: contract.proof[0] } : {}) });
   return out;
 }
 
-/** La phrase : « Client-serveur, avec une partie événementielle. » */
+/** La phrase : “Client-serveur, avec une partie événementielle.” */
 export function styleSentence(list: Style[]): string {
   const main = list.filter((s) => !s.local);
-  if (!main.length) return "Aucun style reconnu : la carte garde la disposition par défaut.";
+  if (!main.length) return "No style recognized: the map keeps the default layout.";
   const [first, ...rest] = main;
-  return `${first!.name}${rest.length ? `, avec ${rest.map((s) => s.id === "event" ? "une partie événementielle" : s.name.toLowerCase()).join(" et ")}` : ""}.`;
+  return `${first!.name}${rest.length ? `, with ${rest.map((s) => s.id === "event" ? "an event-driven part" : s.name.toLowerCase()).join(" and ")}` : ""}.`;
 }

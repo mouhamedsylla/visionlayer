@@ -13,10 +13,10 @@ export function CoverageCard({ map }: { map: MapPayload }) {
   const flagged = all.filter((t) => t.state === "c").length, watch = all.filter((t) => t.state === "s").length;
   return (
     <div className="ov__cov">
-      <Rep code="S4" name="Grille de couverture" question="Qu'est-ce qui est lu ?"
-        sentence={`${grid.understood} fichiers sur ${grid.total} sont lus entièrement${flagged ? ` ; ${flagged} porte${flagged > 1 ? "nt" : ""} un constat` : ""}${watch ? `, ${watch} à surveiller` : ""}.`}
-        action={<div className="vl-legend"><span><i />Lu</span><span><i className="q" />Sans fait</span><span><i className="s" />À surveiller</span><span><i className="c" />Constat</span></div>}
-        reads={<>par colonne : un dossier, une case par fichier, la couleur dit son état. Survoler une case la nomme. {map.packs.length} packs actifs{grid.biggest ? `, plus grand dossier : ${grid.biggest.name}, ${grid.biggest.tiles.length} fichiers` : ""}.</>}>
+      <Rep code="S4" name="Coverage grid" question="What is read?"
+        sentence={`${grid.understood} files out of ${grid.total} are fully read${flagged ? `; ${flagged} carry a finding` : ""}${watch ? `, ${watch} to watch` : ""}.`}
+        action={<div className="vl-legend"><span><i />Read</span><span><i className="q" />No fact</span><span><i className="s" />To watch</span><span><i className="c" />Finding</span></div>}
+        reads={<>per column: a folder, one tile per file, the color gives its state. Hover a tile to name it. {map.packs.length} packs actifs{grid.biggest ? `, largest folder: ${grid.biggest.name}, ${grid.biggest.tiles.length} files` : ""}.</>}>
         <div className="ov__covgrid">
           <div className="ov__folders">
             {grid.folders.map((d) => (

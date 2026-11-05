@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import type { Entrypoint, TechLabel } from "../api/types";
 
 /**
- * Les 12 objets du langage visuel (planche L1, « Le vocabulaire commun ») : chaque objet du modèle neutre a
+ * Les 12 objets du langage visuel (planche L1, “Le vocabulaire commun”) : chaque objet du modèle neutre a
  * une seule forme, sur tous les écrans. Un écran compose ces objets ; il n'en dessine jamais d'autres.
  */
 
@@ -43,7 +43,7 @@ export function Client(p: Card) {
 export function External(p: Card) {
   return (
     <button className={`lx-node lx-node--ext${p.on ? " is-on" : ""}${p.far ? " is-far" : ""}`} onClick={p.onClick} title={p.title}>
-      <span className="lx-node__head"><Mono tech={p.tech} name={p.name} muted /><b>{p.name}</b><span className="vl-tag vl-tag--neutral">Extérieur</span></span>
+      <span className="lx-node__head"><Mono tech={p.tech} name={p.name} muted /><b>{p.name}</b><span className="vl-tag vl-tag--neutral">External</span></span>
       {p.meta && <span className="lx-node__meta">{p.meta}</span>}
       {p.children}
     </button>
@@ -79,7 +79,7 @@ export function Component({ name, contract, on, far, onClick, children }: { name
 /** Fonction : son nom en mono, puce en retrait. */
 export const Fn = ({ name, onClick }: { name: string; onClick?: () => void }) => <span className={`lx-fn${onClick ? " is-link" : ""}`} onClick={onClick}>{name}</span>;
 
-const GUARD: Record<string, string> = { public: "ouverte", authenticated: "connexion", role: "rôle", signature: "signée", internal: "interne", unknown: "garde non lue" };
+const GUARD: Record<string, string> = { public: "ouverte", authenticated: "connexion", role: "role", signature: "signed", internal: "interne", unknown: "guard not read" };
 
 /** Point d'entrée : méthode en badge et route, ou horloge et nom pour une tâche ; sa garde en marque. */
 export function Entry({ e, guard = true, onClick }: { e: Entrypoint; guard?: boolean; onClick?: () => void }) {
@@ -89,7 +89,7 @@ export function Entry({ e, guard = true, onClick }: { e: Entrypoint; guard?: boo
   return (
     <span className={`lx-entry${onClick ? " is-link" : ""}`} onClick={onClick}>
       {http ? <><span className={`vl-method${/^(GET|HEAD|OPTIONS)$/.test(verb!) ? " vl-method--read" : ""}`}>{verb}</span><span className="lx-entry__key">{rest.join(" ")}</span></>
-        : e.kind === "schedule" ? <>{GLYPH.clock}<span className="lx-entry__key">{e.handler?.name ?? "tâche"}</span><span className="lx-entry__cron">{e.key}</span></>
+        : e.kind === "schedule" ? <>{GLYPH.clock}<span className="lx-entry__key">{e.handler?.name ?? "task"}</span><span className="lx-entry__cron">{e.key}</span></>
         : <>{GLYPH.queue}<span className="lx-entry__key">{e.key}</span></>}
       {guard && e.access && <span className={`vl-tag ${e.access.level === "unknown" ? "vl-tag--signal" : "vl-tag--neutral"}`}>{by ?? GUARD[e.access.level]}</span>}
     </span>

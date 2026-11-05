@@ -12,7 +12,7 @@ import { EntryRow } from "../block/EntryRow";
 import { entryGroups } from "../../model/block";
 import "./access.css";
 
-const GROUPS = [["people", "Personnes"], ["outside", "Service extérieur"], ["system", "Le système lui-même"]] as const;
+const GROUPS = [["people", "People"], ["outside", "External service"], ["system", "The system itself"]] as const;
 
 /** Planche 04, Accès par acteur : qui peut entrer, comment il le prouve, ce qu'il atteint. */
 /**
@@ -35,40 +35,40 @@ export function AccessScreen({ map, block, item, open, openFlow }: { map: MapPay
   return (
     <Workspace
       head={<div className="ax__intro">
-        <h1 className="ax__title">Accès</h1>
-        <button className="vl-btn vl-btn--secondary vl-btn--sm ax__ask" onClick={() => vigie()}>Demander à Vigie</button>
+        <h1 className="ax__title">Access</h1>
+        <button className="vl-btn vl-btn--secondary vl-btn--sm ax__ask" onClick={() => vigie()}>Ask Vigie</button>
       </div>}
       panel={row && <Side map={map} row={row} {...(block ? { block } : {})} />}>
       <div className="tiles">
-        <div className="tile"><small>Points d'entrée</small><b>{plural(a.total, "point d'entrée", "points d'entrée")}</b><span>{levelsText(a.byLevel)}</span></div>
-        <div className="tile"><small>Acteurs</small><b>{plural(a.rows.length, "acteur", "acteurs")}</b><span>{[humans && plural(humans, "sorte de personne", "sortes de personnes"), outside && plural(outside, "service extérieur", "services extérieurs"), system && plural(system, "tâche du système", "tâches du système")].filter(Boolean).join(", ")}</span></div>
-        <div className="tile"><small>Authentification</small><b>{a.mechanism ? a.mechanism.name : "Non lu"}</b><span>{a.mechanism ? <Ref proof={a.mechanism.proof} /> : "aucun pack ne lit encore la preuve que présente l'appelant"}</span></div>
-        <div className="tile tile--cr"><small>Contrôle par ligne</small><b>Non lu</b><span>la comparaison entre la donnée et l'appelant n'est pas encore lue</span></div>
+        <div className="tile"><small>Entry points</small><b>{plural(a.total, "entry point", "entry points")}</b><span>{levelsText(a.byLevel)}</span></div>
+        <div className="tile"><small>Actors</small><b>{plural(a.rows.length, "acteur", "acteurs")}</b><span>{[humans && plural(humans, "kind of person", "kinds of people"), outside && plural(outside, "external service", "external services"), system && plural(system, "system task", "system tasks")].filter(Boolean).join(", ")}</span></div>
+        <div className="tile"><small>Authentication</small><b>{a.mechanism ? a.mechanism.name : "Not read"}</b><span>{a.mechanism ? <Ref proof={a.mechanism.proof} /> : "no pack reads the proof the caller presents yet"}</span></div>
+        <div className="tile tile--cr"><small>Row-level check</small><b>Not read</b><span>the comparison between the data and the caller isn't read yet</span></div>
       </div>
         <section className="card">
           <div className="tabs">
-            <button className={`seg${tab === "actors" ? " seg--on" : ""}`} onClick={() => setTab("actors")}>Par acteur <span className="vl-count">{a.rows.length}</span></button>
-            <button className={`seg${tab === "entries" ? " seg--on" : ""}`} onClick={() => setTab("entries")}>Par point d'entrée <span className="vl-count">{a.total}</span></button>
+            <button className={`seg${tab === "actors" ? " seg--on" : ""}`} onClick={() => setTab("actors")}>By actor <span className="vl-count">{a.rows.length}</span></button>
+            <button className={`seg${tab === "entries" ? " seg--on" : ""}`} onClick={() => setTab("entries")}>By entry point <span className="vl-count">{a.total}</span></button>
             
           </div>
           {tab === "entries" && entryGroups(allRoutes).map((g) => (
             <div key={g.name}><div className="grp">{g.name} <span>{g.entries.length}</span></div>{g.entries.map((e) => <EntryRow key={e.id} e={e} open={() => openFlow(e.id)} />)}</div>
           ))}
-          {tab === "actors" && <><div className="ac ac--h"><span>Acteur</span><span>Preuve</span><span>Garde</span><span>Routes</span><span>Par ligne</span><span>Constat</span></div>
+          {tab === "actors" && <><div className="ac ac--h"><span>Actor</span><span>Proof</span><span>Guard</span><span>Routes</span><span>Per row</span><span>Finding</span></div>
           {GROUPS.map(([g, label]) => {
             const list = a.rows.filter((r) => r.group === g);
             if (!list.length) return null;
             return (
               <div key={g}>
-                <div className="grp">{label} <span>{g === "system" ? `${list.length}, aucune preuve demandée, accès complet à la base` : list.length}</span></div>
+                <div className="grp">{label} <span>{g === "system" ? `${list.length}, no proof asked, full database access` : list.length}</span></div>
                 {list.map((r) => <Actor key={r.id} r={r} on={r.id === row?.id} pick={() => setChosen(r.id)} />)}
               </div>
             );
           })}</>}
         </section>
         {m.tables.length > 0 && (
-          <Rep code="X1" name="Matrice d'accès" question="Qui touche quoi ?" sentence={<Rich text={m.sentence} />} flush
-            reads="par ligne : une table, et ce que chaque acteur peut y faire par les routes qu'il atteint. Noir, il écrit ; à filet, il lit. Déduit des déroulés : une route dont le code n'est pas lu n'y figure pas.">
+          <Rep code="X1" name="Access matrix" question="Who touches what?" sentence={<Rich text={m.sentence} />} flush
+            reads="per row: a table, and what each actor can do there through the routes it reaches. Black, it writes; outlined, it reads. Derived from the flows: a route whose code is not read isn't listed.">
             <table className="ax__mx">
               <thead><tr><th>Table</th>{m.actors.map((x) => <th key={x.id} className={x.id === row?.id ? "is-on" : ""}><button onClick={() => setChosen(x.id)}>{x.name}</button></th>)}</tr></thead>
               <tbody>{m.tables.map((t) => <tr key={t}><td><Obj to={{ entity: t }}><code>{t}</code></Obj></td>{m.actors.map((x) => { const k = m.cell(t, x.id); return <td key={x.id} className={x.id === row?.id ? "is-on" : ""}>{k && <Effect kind={k} what="" />}</td>; })}</tr>)}</tbody>
@@ -84,10 +84,10 @@ function Actor({ r, on, pick }: { r: ActorRow; on: boolean; pick: () => void }) 
     <button className={`ac ac--row${on ? " ac--on" : ""}`} onClick={pick}>
       <span className="ac__who"><ActorMark label="" kind={r.group === "people" ? (r.id === "role" ? "role" : "person") : "service"} initials={r.name.replace(/[^A-Za-zÀ-ÿ]/g, "").slice(0, 2).toUpperCase()} /><span><b>{r.name}</b>{r.note && <small>{r.note}</small>}</span></span>
       <span className={`pf${r.proofKind ? ` pf--${r.proofKind}` : ""}`}>{r.proof}</span>
-      <span className={r.by ? "fn" : "q"}>{r.by?.name ?? "rien"}</span>
+      <span className={r.by ? "fn" : "q"}>{r.by?.name ?? "nothing"}</span>
       {r.reachText ? <span className="q">{r.reachText}</span> : <span className="reach"><i><b style={{ width: `${Math.round((r.reach / Math.max(1, r.total)) * 100)}%` }} /></i>{r.reach} / {r.total}</span>}
-      <span className={r.data === "non lu" ? "nl" : "q"}>{r.data}</span>
-      <span className={r.see ? "see" : "q"}>{r.see ?? "rien"}</span>
+      <span className={r.data === "not read" ? "nl" : "q"}>{r.data}</span>
+      <span className={r.see ? "see" : "q"}>{r.see ?? "nothing"}</span>
     </button>
   );
 }
@@ -98,36 +98,36 @@ function Side({ map, row, block }: { map: MapPayload; row: ActorRow; block?: Arc
     <aside className="ax__side">
       <section className="night">
         <div className="ax__nhead">
-          <span className="lbl">Acteur choisi</span>
+          <span className="lbl">Selected actor</span>
           <h2>{row.name}</h2>
-          <p className="sub">{row.by ? <>reconnu par {row.by.name}{row.by.proof && <>, {row.by.proof.path.split("/").pop()}:{row.by.proof.line}</>}</> : row.group === "system" ? "le système lui-même, sans preuve" : "aucune garde"}</p>
+          <p className="sub">{row.by ? <>recognized by {row.by.name}{row.by.proof && <>, {row.by.proof.path.split("/").pop()}:{row.by.proof.line}</>}</> : row.group === "system" ? "the system itself, no proof" : "no guard"}</p>
         </div>
         <div className="nst">
           <div><b>{row.reachText ? "—" : row.reach}</b><span>routes atteintes</span></div>
-          <div><b>—</b><span>vérifiées sur sa donnée, non lu</span></div>
-          <div><b>—</b><span>durée de la session, non lue</span></div>
+          <div><b>—</b><span>checked on its data, not read</span></div>
+          <div><b>—</b><span>session lifetime, not read</span></div>
         </div>
-        <span className="lbl">Cycle de la preuve</span>
+        <span className="lbl">Proof cycle</span>
         <div className="life">
-          <div className={row.proofKind ? "" : "nlrow"}><i /><b>présentée</b><p>{row.proof}{map.model.nodes.flatMap((n) => n.facets.trust?.mechanisms ?? [])[0] && <code>{map.model.nodes.flatMap((n) => n.facets.trust?.mechanisms ?? [])[0]!.proof.path}:{map.model.nodes.flatMap((n) => n.facets.trust?.mechanisms ?? [])[0]!.proof.line}</code>}</p></div>
-          <div className={row.by ? "now" : "nlrow"}><i /><b>relue</b><p>{row.by ? `à chaque appel, par ${row.by.name}` : "par aucune garde"}{row.by?.proof && <code>{row.by.proof.path}:{row.by.proof.line}</code>}</p></div>
-          <div className="nlrow"><i /><b>obtenue, expire, retirée</b><p>non lu : aucun pack ne lit encore la vie de la preuve</p></div>
+          <div className={row.proofKind ? "" : "nlrow"}><i /><b>presented</b><p>{row.proof}{map.model.nodes.flatMap((n) => n.facets.trust?.mechanisms ?? [])[0] && <code>{map.model.nodes.flatMap((n) => n.facets.trust?.mechanisms ?? [])[0]!.proof.path}:{map.model.nodes.flatMap((n) => n.facets.trust?.mechanisms ?? [])[0]!.proof.line}</code>}</p></div>
+          <div className={row.by ? "now" : "nlrow"}><i /><b>relue</b><p>{row.by ? `on each call, by ${row.by.name}` : "by no guard"}{row.by?.proof && <code>{row.by.proof.path}:{row.by.proof.line}</code>}</p></div>
+          <div className="nlrow"><i /><b>obtained, expires, removed</b><p>not read: no pack reads the proof's lifecycle yet</p></div>
         </div>
         {row.see && <div className="warn">{row.see.replace(/^./, (c) => c.toUpperCase())}.{row.seeProof && <> <Ref proof={row.seeProof} /></>}</div>}
       </section>
-      <Rep code="X2" name="Pile des couches" question="Où cet appel est-il vérifié ?" sentence={`Un appel de ${row.name.toLowerCase()} est vérifié à ${plural(layers(map, row).filter((l) => l.state === "read").length, "couche lue", "couches lues")}.`}
-        reads="de haut en bas, comme l'appel traverse le système, de la preuve à la base. Plein : lu dans le code ; orange pointillé : non lu ; rouge : absent.">
+      <Rep code="X2" name="Layer stack" question="Where is this call checked?" sentence={`A call from ${row.name.toLowerCase()} is checked at ${plural(layers(map, row).filter((l) => l.state === "read").length, "layer read", "layers read")}.`}
+        reads="top to bottom, as the call crosses the system, from the proof to the database. Solid: read from the code; dotted orange: not read; red: missing.">
         <div className="ax__stack">{layers(map, row).map((l, i) => (
           <div key={i} className={`ax__layer ax__layer--${l.state}`}><span><b>{l.name}</b> <small>{l.what}</small></span><span className="ax__lnote">{l.proof ? <Ref proof={l.proof} /> : l.note}</span></div>
         ))}</div>
       </Rep>
       {res.length > 0 && (
         <section className="card">
-          <div className="hd"><h2>Routes atteintes</h2><span>{row.reach} sur {row.total}</span></div>
+          <div className="hd"><h2>Routes reached</h2><span>{row.reach} out of {row.total}</span></div>
           {res.map((r) => (
             <div key={r.name} className={`res${r.danger ? " res--cr" : ""}`}>
               <span className="fn">{r.name}</span>
-              {r.danger ? <span className="mk mk--cr">sans rôle</span> : <span />}
+              {r.danger ? <span className="mk mk--cr">no role</span> : <span />}
               <span className="reach"><i><b style={{ width: `${Math.round((r.reached / r.of) * 100)}%`, ...(r.danger ? { background: "var(--critical)" } : {}) }} /></i></span>
               <span>{r.reached} / {r.of}</span>
             </div>

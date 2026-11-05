@@ -14,7 +14,7 @@ export function FlowLanes({ v, pick, picked }: { v: ReturnType<typeof flowView>;
   const n = v.cols.length;
   return <>
     <div className="fl__cols" style={{ gridTemplateColumns: `minmax(220px, 1.1fr) repeat(${n}, minmax(64px, 1fr))` }}>
-      <span className="vl-label">Étape</span>
+      <span className="vl-label">Step</span>
       {v.cols.map((c) => <span key={c.id} className={`fl__col fl__col--${c.kind}`}><b>{c.name}</b><small>{c.sub}</small></span>)}
     </div>
     {frames(v.moments).map((g, gi) => {
@@ -58,11 +58,11 @@ export function StepRow({ r, n, on, pick }: { r: FlowRow; n: number; on: boolean
         <span className="fl__what">
           {r.tone === "effect" ? <Obj to={s.target?.entity ? { entity: s.target.entity, node: s.target.node } : s.target?.topic ? { topic: s.target.topic, node: s.target.node } : s.target ? { service: s.target.node } : undefined}><Effect kind={s.kind as "write"} what={r.what} /></Obj>
             : r.tone === "refuse" ? <Effect kind="refuse" what={[s.status, s.code ?? s.name].filter(Boolean).join(" ")} />
-            : r.tone === "invoke" ? <span className="fl__inv">appelle <code>{s.name}()</code></span>
-            : r.tone === "reply" ? <span className="fl__inv">répond <code>{[s.status, s.name].filter(Boolean).join(" ")}</code></span>
-            : <span className="fl__inv">s'arrête</span>}
+            : r.tone === "invoke" ? <span className="fl__inv">calls <code>{s.name}()</code></span>
+            : r.tone === "reply" ? <span className="fl__inv">replies <code>{[s.status, s.name].filter(Boolean).join(" ")}</code></span>
+            : <span className="fl__inv">stops</span>}
           {s.when && <small>si <code>{s.when}</code></small>}
-          {s.onError && <small>quand l'appel juste avant échoue</small>}
+          {s.onError && <small>when the call just before fails</small>}
         </span>
       </span>
       <span className="fl__lanes">

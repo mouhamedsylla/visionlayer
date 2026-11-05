@@ -12,18 +12,18 @@ export const AGENT: Record<AgentSession["agent"], { name: string; mono: string }
 
 export const total = (s: AgentSession) => s.tokens.input + s.tokens.output;
 
-/** « 9,6 M », « 812 k ». */
+/** “9,6 M”, “812 k”. */
 export function tokens(n: number): string {
-  return n >= 1e6 ? `${(n / 1e6).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} M` : n >= 1e3 ? `${Math.round(n / 1e3)} k` : String(n);
+  return n >= 1e6 ? `${(n / 1e6).toLocaleString("en-GB", { maximumFractionDigits: 1 })} M` : n >= 1e3 ? `${Math.round(n / 1e3)} k` : String(n);
 }
 
-/** A-t-elle lu la carte avant d'écrire ? « lue avant », « lue après », « non lue », ou sans objet si rien n'est écrit. */
+/** A-t-elle lu la carte avant d'écrire ? “lue avant”, “lue après”, “non lue”, ou sans objet si rien n'est écrit. */
 export function mapState(s: AgentSession): "before" | "after" | "never" | "none" {
   if (!s.writes.length) return s.mapReads.length ? "before" : "none";
   if (!s.mapReads.length) return "never";
   return s.mapReads.some((r) => r.beforeFirstWrite) ? "before" : "after";
 }
-export const MAP_STATE = { before: "lue avant", after: "lue après", never: "non lue", none: "sans objet" } as const;
+export const MAP_STATE = { before: "read before", after: "read after", never: "not read", none: "not applicable" } as const;
 
 /** Les fichiers écrits par plusieurs sessions : deux agents sur le même code. */
 export function overlaps(list: AgentSession[]): Map<string, AgentSession[]> {
@@ -53,9 +53,9 @@ export function agentTiles(list: AgentSession[]) {
   const writers = list.filter((s) => s.writes.length), before = writers.filter((s) => mapState(s) === "before");
   const ov = [...overlaps(list)].sort((a, b) => b[1].length - a[1].length)[0];
   return [
-    { label: "Sessions cette semaine", value: plural(week.length, "session", "sessions"), note: kinds.length ? `${plural(kinds.length, "agent", "agents")} : ${kinds.join(", ")}` : "aucun agent consigné" },
-    { label: "Tokens", value: tokens(sum), note: sum ? `dont ${Math.round((cached / Math.max(1, list.reduce((n, s) => n + s.tokens.input, 0))) * 100)} % de contexte relu depuis le cache` : "aucun compteur reçu" },
-    { label: "Carte lue avant d'écrire", value: `${before.length} session${before.length > 1 ? "s" : ""} sur ${writers.length}`, note: "celles qui ont modifié au moins un fichier" },
-    { label: "Chevauchement", value: ov ? ov[0].split("/").slice(-2).join("/") : "aucun", note: ov ? `modifié par ${plural(ov[1].length, "session", "sessions")}` : "aucun fichier écrit par deux sessions", tone: ov ? "cr" : "" },
+    { label: "Sessions this week", value: plural(week.length, "session", "sessions"), note: kinds.length ? `${plural(kinds.length, "agent", "agents")}: ${kinds.join(", ")}` : "no agent logged" },
+    { label: "Tokens", value: tokens(sum), note: sum ? `including ${Math.round((cached / Math.max(1, list.reduce((n, s) => n + s.tokens.input, 0))) * 100)}% context read back from cache` : "no count received" },
+    { label: "Map read before writing", value: `${before.length} session${before.length > 1 ? "s" : ""} out of ${writers.length}`, note: "those that changed at least one file" },
+    { label: "Overlap", value: ov ? ov[0].split("/").slice(-2).join("/") : "none", note: ov ? `changed by ${plural(ov[1].length, "session", "sessions")}` : "no file written by two sessions", tone: ov ? "cr" : "" },
   ];
 }

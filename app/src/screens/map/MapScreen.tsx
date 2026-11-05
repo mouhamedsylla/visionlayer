@@ -20,19 +20,19 @@ export function MapScreen({ map, knowledge, selected, select, enter, ask }: { ma
   const running = map.model.nodes.some((n) => n.level === "deployable");
   return (
     <Workspace
-      head={<div className="mp__intro mp__intro--row"><h1 className="page__title">Carte</h1><a className="vl-btn vl-btn--secondary vl-btn--sm" href="#/reglages">Relier un agent</a></div>}
+      head={<div className="mp__intro mp__intro--row"><h1 className="page__title">Map</h1><a className="vl-btn vl-btn--secondary vl-btn--sm" href="#/reglages">Link an agent</a></div>}
       panel={chosen && <Panel map={map} {...(knowledge ? { knowledge } : {})} node={chosen} ask={(q) => ask(chosen.id, q)} />}>
-      {!running && <section className="vl-card mp__none"><b>0 programme lu</b><p>Aucun script de lancement, Dockerfile, page ou manifeste. Bibliothèque : non représentée.</p></section>}
-      {running && <Rep code="S1" name="Carte" question="De quoi le système est-il fait ?" sentence={mapSentence(map)} flush
-        reads="de gauche à droite : ce qui appelle, ce qui tourne, ce qui est touché. Une file se lit de haut en bas, de qui y dépose à qui la consomme. Choisir un bloc montre ses liens ; double-clic pour entrer. Ctrl ou ⌘ et la molette zooment, glisser déplace.">
+      {!running && <section className="vl-card mp__none"><b>0 programs read</b><p>No start script, Dockerfile, page or manifest. Library: not drawn.</p></section>}
+      {running && <Rep code="S1" name="Map" question="What is the system made of?" sentence={mapSentence(map)} flush
+        reads="left to right: what calls, what runs, what is touched. A queue reads top to bottom, from who enqueues to who consumes. Pick a block to see its links; double-click to enter. Ctrl or ⌘ and the wheel zoom, drag moves.">
         <ZoomPan><MapGridView grid={grid} tech={map.tech} selected={chosen?.id} chosen={chosen} select={select} enter={enter} /></ZoomPan>
         <div className="mp__legend">
-          <span className="lg"><span className="a sw"><i /></span>appel</span>
-          <span className="lg"><span className="a a--w sw"><i /></span>écriture</span>
+          <span className="lg"><span className="a sw"><i /></span>call</span>
+          <span className="lg"><span className="a a--w sw"><i /></span>write</span>
           <span className="lg"><span className="a a--r sw"><i /></span>lecture</span>
-          <span className="lg"><span className="a a--q sw"><i /></span>message en file</span>
-          <span className="lg"><span className="a a--u sw"><i /></span>import, sans pack</span>
-          <span className="lg"><span className="mk mk--nl">non lu</span>sans pack pour cette technologie</span>
+          <span className="lg"><span className="a a--q sw"><i /></span>queued message</span>
+          <span className="lg"><span className="a a--u sw"><i /></span>import, no pack</span>
+          <span className="lg"><span className="mk mk--nl">not read</span>no pack for this technology</span>
         </div>
       </Rep>}
       {running && <StyleBar map={map} />}

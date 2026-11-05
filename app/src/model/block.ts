@@ -9,9 +9,9 @@ import { plural } from "./words";
 
 export type Column = "own" | "shared" | "base";
 export const COLUMN: Record<Column, { title: string; note: string }> = {
-  own: { title: "Propres", note: "le code d'une seule fonctionnalité" },
-  shared: { title: "Partagés", note: "servis par plusieurs" },
-  base: { title: "Socle", note: "servis par presque tout" },
+  own: { title: "Own", note: "the code of a single feature" },
+  shared: { title: "Shared", note: "served by several" },
+  base: { title: "Core", note: "served by almost everything" },
 };
 
 export interface ModuleCard {
@@ -43,15 +43,15 @@ export function blockView(p: MapPayload, block: ArchNode) {
   const most = [...modules].sort((a, b) => b.serves - a.serves)[0];
   const kinds: Record<string, number> = {};
   for (const e of entries) kinds[e.kind] = (kinds[e.kind] ?? 0) + 1;
-  const KIND: Record<string, string> = { http: "routes", schedule: "tâches planifiées", message: "files", event: "événements", rpc: "appelables", cli: "commandes" };
+  const KIND: Record<string, string> = { http: "routes", schedule: "scheduled tasks", message: "queues", event: "events", rpc: "appelables", cli: "commandes" };
   return {
     modules, calls, entries,
     tiles: [
       { label: "Modules", value: String(modules.length), note: (["own", "shared", "base"] as Column[]).map((c) => `${modules.filter((m) => m.column === c).length} ${COLUMN[c].title.toLowerCase()}`).join(", ") },
-      { label: "Points d'entrée", value: String(entries.length), note: Object.entries(kinds).map(([k, n]) => `${n} ${KIND[k] ?? k}`).join(", ") || "aucun" },
-      { label: "Données écrites", value: plural(written.size, "table", "tables"), note: written.size ? (shared.length ? `${shared.length} écrite${shared.length > 1 ? "s" : ""} par plusieurs modules` : "chacune par un seul module") : "aucune écriture lue" },
-      { label: "Le plus partagé", value: most?.node.name ?? "aucun", note: most ? `${most.serves} entrées sur ${entries.length}` : "pas de module calculé" },
-      { label: "Origine", value: modules.some((m) => m.contract) ? "calculés, 1 contrat lu" : "calculés", note: "regroupés par dossier, servis selon les appels" },
+      { label: "Entry points", value: String(entries.length), note: Object.entries(kinds).map(([k, n]) => `${n} ${KIND[k] ?? k}`).join(", ") || "none" },
+      { label: "Data written", value: plural(written.size, "table", "tables"), note: written.size ? (shared.length ? `${shared.length} written by several modules` : "each by a single module") : "no write read" },
+      { label: "Most shared", value: most?.node.name ?? "none", note: most ? `${most.serves} entries out of ${entries.length}` : "no computed module" },
+      { label: "Origin", value: modules.some((m) => m.contract) ? "computed, 1 contract read" : "computed", note: "grouped by folder, served according to calls" },
     ],
   };
 }
@@ -61,7 +61,7 @@ export function entryGroups(entries: Entrypoint[]): { name: string; entries: Ent
   const by = new Map<string, Entrypoint[]>();
   for (const e of entries) {
     const path = e.kind === "http" ? (e.key.split(" ")[1] ?? "") : "";
-    const k = e.kind === "http" ? `/${path.split("/").filter(Boolean)[0] ?? ""}` : e.kind === "schedule" ? "tâches planifiées" : e.kind === "message" ? "files" : e.kind;
+    const k = e.kind === "http" ? `/${path.split("/").filter(Boolean)[0] ?? ""}` : e.kind === "schedule" ? "scheduled tasks" : e.kind === "message" ? "queues" : e.kind;
     (by.get(k) ?? by.set(k, []).get(k)!).push(e);
   }
   return [...by].map(([name, list]) => ({ name, entries: list })).sort((a, b) => b.entries.length - a.entries.length);
@@ -105,7 +105,7 @@ export function calledName(text?: string): string | undefined {
 /** L'étiquette d'une flèche d'appel : les fonctions appelées, deux au plus. */
 export function callLabel(calls: ArchEdge[], from: string, to: string): string {
   const names = [...new Set(calls.filter((c) => c.from === from && c.to === to).flatMap((c) => c.occurrences.map((o) => calledName(o.text))).filter((x): x is string => !!x))];
-  if (!names.length) return `${callCount(calls, from, to)} appels`;
+  if (!names.length) return `${callCount(calls, from, to)} calls`;
   return names.slice(0, 2).join(", ") + (names.length > 2 ? ` +${names.length - 2}` : "");
 }
 
@@ -136,10 +136,10 @@ export function focusView(v: ReturnType<typeof blockView>, sel: ModuleCard) {
 
 /** La phrase de S2 pour le module choisi : ce qu'il sert, sur quoi il s'appuie, qui l'appelle. */
 export function focusSentence(sel: ModuleCard, f: ReturnType<typeof focusView>): string {
-  const head = sel.column === "own" ? `\`${sel.node.name}\` sert ${plural(sel.serves, "entrée", "entrées")} sur ${sel.of} ; aucun autre module ne l'appelle`
-    : sel.column === "shared" ? `\`${sel.node.name}\` est partagé par ${sel.serves} entrées sur ${sel.of}`
-    : `\`${sel.node.name}\` est au socle : ${sel.serves} entrées sur ${sel.of} passent par lui`;
+  const head = sel.column === "own" ? `\`${sel.node.name}\` serves ${plural(sel.serves, "entry", "entries")} out of ${sel.of}; no other module calls it`
+    : sel.column === "shared" ? `\`${sel.node.name}\` is shared by ${sel.serves} entries out of ${sel.of}`
+    : `\`${sel.node.name}\` is core: ${sel.serves} entries out of ${sel.of} go through it`;
   const uses = [...f.right, ...f.below, ...f.back.filter((x) => x.out)].map((x) => `\`${x.m.node.name}\``);
   const by = [...f.left, ...f.above, ...f.back.filter((x) => !x.out)].length;
-  return `${head}.${uses.length ? ` Il s'appuie sur ${uses.slice(0, 3).join(", ")}${uses.length > 3 ? ` et ${uses.length - 3} autres` : ""}.` : " Il n'appelle aucun autre module."}${by ? ` ${plural(by, "module l'appelle", "modules l'appellent")}.` : ""}`;
+  return `${head}.${uses.length ? ` It relies on ${uses.slice(0, 3).join(", ")}${uses.length > 3 ? ` and ${uses.length - 3} more` : ""}.` : " It calls no other module."}${by ? ` ${plural(by, "module calls it", "modules call it")}.` : ""}`;
 }

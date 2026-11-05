@@ -5,7 +5,7 @@ import type { EdgeKind } from "../api/types";
 
 /** Effet : ce qu'une étape fait au système. Écrire est plein, lire à filet, la mise en file pointillée, un refus porte son code. */
 export function Effect({ kind, what }: { kind: EdgeKind | "refuse"; what: string }) {
-  const word: Record<string, string> = { write: "Écrit", read: "Lit", request: "Appelle", call: "Appelle", message: "Met en file", trigger: "Déclenche", use: "Emploie", refuse: "Refuse" };
+  const word: Record<string, string> = { write: "Writes", read: "Reads", request: "Calls", call: "Calls", message: "Enqueues", trigger: "Triggers", use: "Uses", refuse: "Refuses" };
   return <span className={`lx-fx lx-fx--${kind}`}>{word[kind] ?? kind} {what}</span>;
 }
 
@@ -16,7 +16,7 @@ export const Step = ({ n, tone }: { n: number; tone?: "refuse" | "quiet" }) => <
 export function Moment({ title, count, open, toggle, children }: { title: string; count: number; open: boolean; toggle: () => void; children: ReactNode }) {
   return (
     <div className="lx-moment">
-      <button className="lx-moment__head" onClick={toggle}><span className="vl-label">{title}</span><span className="lx-moment__n">{count} étape{count > 1 ? "s" : ""} {open ? "▾" : "▸"}</span></button>
+      <button className="lx-moment__head" onClick={toggle}><span className="vl-label">{title}</span><span className="lx-moment__n">{count} step{count > 1 ? "s" : ""} {open ? "▾" : "▸"}</span></button>
       {open && children}
     </div>
   );
@@ -28,13 +28,13 @@ export const Frame = ({ label, children, className }: { label: string; children:
 
 /** Provenance : d'où vient un fait. Rien ne vient du modèle de langage. */
 export function Provenance({ kind, who }: { kind: "read" | "declared" | "proposed" | "unread"; who?: string }) {
-  const text = { read: "lu dans le code", declared: `déclaré${who ? `, ${who}` : ""}`, proposed: "proposé, pack non chargé", unread: "non lu" }[kind];
+  const text = { read: "read from the code", declared: `declared${who ? `, ${who}` : ""}`, proposed: "proposed, pack not loaded", unread: "not read" }[kind];
   return <span className={`lx-prov lx-prov--${kind}`}><i />{text}</span>;
 }
 
 /** Gravité : toujours un libellé ; la couleur seule ne dit rien. */
 export const Gravity = ({ tone }: { tone: "critical" | "signal" | "live" }) =>
-  <span className={`vl-tag vl-tag--${tone}`}>{{ critical: "Constat", signal: "À surveiller", live: "Vérifié" }[tone]}</span>;
+  <span className={`vl-tag vl-tag--${tone}`}>{{ critical: "Finding", signal: "To watch", live: "Checked" }[tone]}</span>;
 
 type Trait = "call" | "write" | "read" | "message" | "use";
 /** Un lien (L1, les traits) : plein, il appelle ; épais, il écrit ; fin et gris, il lit ; tirets, il met en file ; pointillé, il importe sans pack. L'étiquette dit ce qui passe. */

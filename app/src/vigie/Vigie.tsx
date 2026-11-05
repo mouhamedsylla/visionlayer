@@ -41,7 +41,7 @@ export function VigieProvider({ map, children }: { map?: MapPayload; children: R
   );
 }
 
-const TOOL_LABEL: Record<string, string> = { system_overview: "la carte", entrypoints: "les points d'entrée", flow: "le déroulé", findings: "les constats", table: "la table", source: "le code" };
+const TOOL_LABEL: Record<string, string> = { system_overview: "the map", entrypoints: "the entry points", flow: "the flow", findings: "the findings", table: "the table", source: "the code" };
 const stepLabel = (s: VigieStep) => `${TOOL_LABEL[s.tool] ?? s.tool} ${Object.values(s.input).filter((v) => v !== "" && v !== undefined && typeof v !== "number").map(String).join(" ")}`.trim();
 
 /** Trois questions d'exemple, tirées de la carte : la route la plus exposée, le déroulé le plus long, et une hors couverture. */
@@ -52,8 +52,8 @@ function examples(map?: MapPayload): string[] {
   const key = flagged?.message.match(/`((?:GET|POST|PUT|PATCH|DELETE) [^`]+)`/)?.[1];
   const longest = [...entries].sort((a, b) => (b.flow?.length ?? 0) - (a.flow?.length ?? 0))[0];
   return [
-    key ? `Qui peut appeler ${key}, et qu'est-ce qui le vérifie ?` : "Quelles routes sont ouvertes sans connexion ?",
-    longest ? `Que fait ${longest.key}, dans quel ordre ?` : "Quelles tables sont écrites par plusieurs fonctions ?",
+    key ? `Who can call ${key}, and what checks it?` : "Which routes are open without a login?",
+    longest ? `What does ${longest.key} do, in what order?` : "Which tables are written by several functions?",
     "Quelle est la latence de l'API en production ?",
   ];
 }
@@ -65,29 +65,29 @@ function Panel({ map, turns, busy, draft, setDraft, ask, close }: { map?: MapPay
     <aside className="vg" aria-label="Vigie">
       <header className="vg__head">
         <span className="vg__face" aria-hidden="true"><i /><i /></span>
-        <span className="vg__who"><b>Vigie</b><small>Muse Spark, répond depuis la carte et cite ses lignes</small></span>
-        <button className="vg__close" onClick={close} aria-label="Fermer">×</button>
+        <span className="vg__who"><b>Vigie</b><small>Muse Spark, answers from the map and cites its lines</small></span>
+        <button className="vg__close" onClick={close} aria-label="Close">×</button>
       </header>
       <div className="vg__body">
         {turns.length === 0 && (
           <div className="vg__intro">
-            <p>Pose une question sur le système. Vigie ne lit que ce que VisionLayer a lu : la carte, et le code qu'elle cite. Ce qu'elle ne couvre pas, il le dit « non lu ».</p>
+            <p>Ask a question about the system. Vigie only reads what VisionLayer has read: the map, and the code it cites. What it doesn't cover, it calls “not read”.</p>
             {examples(map).map((q) => <button key={q} className="vg__ex" onClick={() => ask(q)}>{q}</button>)}
           </div>
         )}
         {turns.map((t, i) => (
           <div key={i} className="vg__turn">
             <p className="vg__q">{t.q}</p>
-            {t.error ? <p className="vg__err">Vigie n'a pas pu répondre : {t.error}</p>
-              : !t.a ? <div className="vg__wait"><p>Vigie lit le système…</p>{t.reading?.map((s, k) => <code key={k}>{stepLabel(s)}</code>)}</div>
+            {t.error ? <p className="vg__err">Vigie could not answer: {t.error}</p>
+              : !t.a ? <div className="vg__wait"><p>Vigie is reading the system…</p>{t.reading?.map((s, k) => <code key={k}>{stepLabel(s)}</code>)}</div>
               : <Answer a={t.a} />}
           </div>
         ))}
         <div ref={end} />
       </div>
       <form className="vg__ask" onSubmit={(e) => { e.preventDefault(); ask(draft); }}>
-        <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Qui peut exporter les données clients ?" disabled={busy} autoFocus />
-        <button className="vl-btn vl-btn--primary vl-btn--sm" disabled={busy || !draft.trim()}>Demander</button>
+        <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Who can export customer data?" disabled={busy} autoFocus />
+        <button className="vl-btn vl-btn--primary vl-btn--sm" disabled={busy || !draft.trim()}>Ask</button>
       </form>
     </aside>
   );
@@ -101,7 +101,7 @@ export function Answer({ a }: { a: VigieAnswer }) {
     <div className="vg__a">
       {lines.map((l, i) => <p key={i} className={/^\s*[-•]/.test(l) ? "vg__li" : ""}>{inline(l.replace(/^\s*[-•]\s*/, ""), open)}</p>)}
       <details className="vg__trace">
-        <summary>Il a lu : {a.steps.map((s) => s.tool).join(", ") || "rien"}</summary>
+        <summary>It read: {a.steps.map((s) => s.tool).join(", ") || "nothing"}</summary>
         {a.steps.map((s, i) => <code key={i}>{s.tool} {Object.values(s.input).filter((v) => v !== "" && v !== undefined).map(String).join(" ")}</code>)}
       </details>
       <p className="vg__cost">{a.model}, {a.usage.turns} tours, {a.usage.seconds} s, {(a.usage.cost * 100).toFixed(1)} centimes</p>

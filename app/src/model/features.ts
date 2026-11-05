@@ -12,7 +12,7 @@ export interface Feature { entry: Entrypoint; chain: Link[] }
 export interface FeatureGroup { id: string; name: string; http: boolean; features: Feature[]; writes: string[] }
 
 const TARGETED = new Set<FlowStep["kind"]>(["read", "write", "message", "request"]);
-const OTHER: Record<string, string> = { schedule: "Tâches planifiées", message: "Consommateurs de files", event: "Événements", cli: "Commandes" };
+const OTHER: Record<string, string> = { schedule: "Scheduled tasks", message: "Queue consumers", event: "Events", cli: "Commands" };
 
 /** La chaîne d'un déroulé : les étapes qui se voient depuis l'extérieur ; deux étapes voisines de même genre n'en font qu'une. */
 export function chainOf(steps: FlowStep[], name: (node: string) => string = (x) => x): Link[] {

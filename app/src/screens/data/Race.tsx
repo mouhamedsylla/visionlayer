@@ -6,8 +6,8 @@ import { Rich } from "../../ui/Rich";
 /** T2, la frise de course : deux couloirs, le temps de haut en bas, au centre la valeur de la donnée après chaque étape. */
 export function Race({ race }: { race: RaceView }) {
   return (
-    <Rep code="T2" name="Frise de course" question="Et si deux exécutions se croisent ?" sentence={<Rich text={race.sentence} />}
-      reads="de haut en bas, dans l'ordre du temps. À gauche et à droite, les deux exécutions ; au centre, la valeur de la donnée après chaque étape. En rouge, l'écriture que rien n'empêche.">
+    <Rep code="T2" name="Race timeline" question="What if two runs overlap?" sentence={<Rich text={race.sentence} />}
+      reads="top to bottom, in time order. Left and right, the two runs; in the center, the data's value after each step. In red, the write nothing prevents.">
       <div className="rc">
         <span /><span className="vl-label">{race.left}</span><span /><span className="vl-label rc__mid">{race.subject}</span><span /><span className="vl-label rc__r">{race.right}</span>
         {race.steps.map((s, i) => [

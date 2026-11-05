@@ -50,17 +50,17 @@ function buildStep(p: MapPayload, entry: Entrypoint | undefined, fns: string[], 
   const t = entry ? triggers(p).find((x) => x.entry.id === entry.id) : undefined;
   const app = entry?.calledBy?.map((id) => p.model.nodes.find((n) => n.id === id)).find((n) => n && n.role !== "external");
   const hook = entry && entry.kind === "http" && /webhook|\/hooks?\//i.test(entry.key);
-  const trigger = !entry ? { kind: "none" as const, label: "point d'entrée non lu" }
+  const trigger = !entry ? { kind: "none" as const, label: "entry point not read" }
     : t?.kind === "schedule" ? { kind: "clock" as const, label: t.when }
     : t?.kind === "queue" ? { kind: "queue" as const, label: `file ${entry.key}` }
     : t?.kind === "webhook" ? { kind: "external" as const, label: t.name }
     : hook ? { kind: "external" as const, label: "webhook" }
-    : { kind: "client" as const, label: app?.name ?? "appel HTTP" };
+    : { kind: "client" as const, label: app?.name ?? "HTTP call" };
   // Un point d'entrée qui aiguille (un webhook à plusieurs cas) : seule la branche de la fonction qui écrit compte.
   const steps = sliceOf(entry?.flow ?? [], fns);
   const mentions = (w: string) => !!field && (WORD(field.name).test(w) || (field.values ?? []).some((v) => WORD(v).test(w)));
   const guards = steps.filter((s) => s.kind === "refuse" && s.when && mentions(s.when)).slice(0, 3)
-    .map((s) => ({ when: s.when!, status: [s.status, s.code].filter(Boolean)[0] ?? "refus", proof: s.proof }));
+    .map((s) => ({ when: s.when!, status: [s.status, s.code].filter(Boolean)[0] ?? "refused", proof: s.proof }));
   const chain = chainOf(steps, nodeName).flatMap((l) => {
     if (l.kind !== "refuse") return [l];
     const values = l.values.filter((v) => v !== "erreur");
@@ -115,17 +115,17 @@ function stateProcess(p: MapPayload, store: ArchNode, entity: Entity, field: Fie
   if (start) {
     const own = stepsOf(p, byValue(start), field, entity.name);
     const made = own.length ? own : creators(p, entity, field);
-    stages.push({ id: start, label: start, tone: "start", note: own.length ? "état de départ" : "état posé par la base à la création", steps: made });
+    stages.push({ id: start, label: start, tone: "start", note: own.length ? "start state" : "state set by the database at creation", steps: made });
   }
   for (const v of values) if (v !== start && byValue(v).length) stages.push({ id: v, label: v, tone: "state", steps: stepsOf(p, byValue(v), field, entity.name) });
   const computed = writes.filter((w) => !w.value);
   const rest = values.filter((v) => v !== start && !byValue(v).length);
-  if (computed.length) stages.push({ id: "*", label: "valeur calculée", tone: "any", ...(rest.length ? { note: `peut poser ${rest.join(", ")}` } : {}), steps: stepsOf(p, computed, field, entity.name) });
+  if (computed.length) stages.push({ id: "*", label: "computed value", tone: "any", ...(rest.length ? { note: `can set ${rest.join(", ")}` } : {}), steps: stepsOf(p, computed, field, entity.name) });
   if (stages.length < 2 && !computed.length) return undefined;
   const kinds = [...new Set(stages.flatMap((s) => s.steps.map((x) => x.trigger.kind)))].filter((k) => k !== "none");
   const never = computed.length ? [] : rest;
-  const who = [...new Set(stages.flatMap((s) => s.steps.map((x) => x.trigger.label)))].filter((l) => l !== "point d'entrée non lu");
-  const sentence = `\`${entity.name}.${field.name}\` : ${plural(stages.filter((s) => s.tone !== "any").length, "état écrit", "états écrits")}, déclenchés par ${who.slice(0, 4).join(", ")}${who.length > 4 ? ` et ${who.length - 4} autres` : ""}.${never.length ? ` ${never.join(", ")} : jamais écrit par le code.` : ""}`;
+  const who = [...new Set(stages.flatMap((s) => s.steps.map((x) => x.trigger.label)))].filter((l) => l !== "entry point not read");
+  const sentence = `\`${entity.name}.${field.name}\`: ${plural(stages.filter((s) => s.tone !== "any").length, "state written", "states written")}, triggered by ${who.slice(0, 4).join(", ")}${who.length > 4 ? ` and ${who.length - 4} more` : ""}.${never.length ? ` ${never.join(", ")}: never written by the code.` : ""}`;
   return { id: `etat:${store.id}/${entity.name}.${field.name}`, kind: "state", name: entity.name, sub: field.name, triggers: kinds, stages, never, sentence, table: `${store.id}/${entity.name}` };
 }
 
@@ -144,12 +144,12 @@ export function processes(p: MapPayload): Process[] {
     const consumers = consumersOf(q).map((c) => buildStep(p, c.entry, [], c.entry.proof, undefined, 1));
     if (!producers.length && !consumers.length) return [];
     const stages: ProcStage[] = [
-      ...(producers.length ? [{ id: "dépose", label: `dépose dans ${q.topic}`, tone: "queue" as const, steps: producers }] : []),
-      ...(consumers.length ? [{ id: "consomme", label: `consomme ${q.topic}`, tone: "queue" as const, steps: consumers }] : []),
+      ...(producers.length ? [{ id: "enqueues", label: `enqueues into ${q.topic}`, tone: "queue" as const, steps: producers }] : []),
+      ...(consumers.length ? [{ id: "consomme", label: `consumes ${q.topic}`, tone: "queue" as const, steps: consumers }] : []),
     ];
     const kinds = [...new Set(stages.flatMap((s) => s.steps.map((x) => x.trigger.kind)))];
-    const sentence = `File \`${q.topic}\` : ${producers.length ? `${plural(producers.length, "point d'entrée y dépose", "points d'entrée y déposent")}` : "aucun dépôt lu dans le code"}${consumers.length ? `, ${plural(consumers.length, "consommateur", "consommateurs")}` : ", aucun consommateur lu"}.`;
-    return [{ id: `file:${q.id}`, kind: "queue" as const, name: q.topic, sub: "file", triggers: kinds, stages, never: [], sentence }];
+    const sentence = `Queue \`${q.topic}\`: ${producers.length ? `${plural(producers.length, "entry point enqueues", "entry points enqueue")}` : "no enqueue read in the code"}${consumers.length ? `, ${plural(consumers.length, "consumer", "consumers")}` : ", no consumer read"}.`;
+    return [{ id: `file:${q.id}`, kind: "queue" as const, name: q.topic, sub: "queue", triggers: kinds, stages, never: [], sentence }];
   });
   return [...states, ...files];
 }

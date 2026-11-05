@@ -53,7 +53,7 @@ export function lineage(p: MapPayload, entity: Entity, field: Field): Lineage {
     for (const id of w.entrypoints ?? []) {
       const e = findEntry(p, id)?.entry;
       if (!e || from.some((x) => x.key === id)) continue;
-      from.push({ key: id, entry: id, label: entryLabel(e), sub: w.value !== undefined ? `pose ${w.value}` : w.fn ?? "valeur calculée", tone: "plain", verb: "écrit", proof: w.proof });
+      from.push({ key: id, entry: id, label: entryLabel(e), sub: w.value !== undefined ? `pose ${w.value}` : w.fn ?? "computed value", tone: "plain", verb: "writes", proof: w.proof });
     }
   }
 
@@ -63,12 +63,12 @@ export function lineage(p: MapPayload, entity: Entity, field: Field): Lineage {
   for (const r of named) for (const id of r.entrypoints ?? []) {
     const e = findEntry(p, id)?.entry;
     if (!e || to.some((x) => x.key === id)) continue;
-    const bad = unguarded.find((f) => f.message.includes(`« ${e.key} »`));
-    const why = bad && (/sans garde de rôle/.test(bad.message) ? "sans garde de rôle" : "sans garde");
-    to.push({ key: id, entry: id, label: entryLabel(e), sub: why || `lu par ${r.fn ?? "?"}`, tone: bad ? "danger" : "plain", verb: bad ? "exposé" : "lu", proof: r.proof });
+    const bad = unguarded.find((f) => f.message.includes(`“${e.key}”`));
+    const why = bad && (/no role guard/.test(bad.message) ? "no role guard" : "no guard");
+    to.push({ key: id, entry: id, label: entryLabel(e), sub: why || `read by ${r.fn ?? "?"}`, tone: bad ? "danger" : "plain", verb: bad ? "exposed" : "read", proof: r.proof });
     for (const s of services(p, e)) {
       if (to.some((x) => x.key === `svc:${s.node.id}`)) continue;
-      to.push({ key: `svc:${s.node.id}`, label: s.node.name, sub: s.via ? `après lecture, par la ${s.via}` : `appelé par ${e.key}`, tone: "outside", verb: "atteint", proof: s.proof });
+      to.push({ key: `svc:${s.node.id}`, label: s.node.name, sub: s.via ? `after reading, by the ${s.via}` : `called by ${e.key}`, tone: "outside", verb: "atteint", proof: s.proof });
     }
   }
 
@@ -77,19 +77,19 @@ export function lineage(p: MapPayload, entity: Entity, field: Field): Lineage {
   const logged = p.model.findings.filter((f: Finding) => f.code === "personal_data_logged" && (writePaths.has(f.proof[0]?.path ?? "") || f.message.includes(`\`${field.name}\``)));
   for (const f of logged) {
     const at = f.proof[0]!;
-    to.push({ key: `log:${at.path}:${at.line}`, label: "journal", sub: f.message.includes("corps entier") ? "avec toute la requête" : "le champ", tone: "danger", verb: "journalisé", proof: at });
+    to.push({ key: `log:${at.path}:${at.line}`, label: "journal", sub: f.message.includes("whole body") ? "with the whole request" : "the field", tone: "danger", verb: "logged", proof: at });
   }
 
   const whole = new Set((field.reads ?? []).filter((r) => r.whole).flatMap((r) => r.entrypoints ?? [])).size;
   const deletes = entity.deletes ?? [];
   const out = [...new Set(to.filter((x) => x.tone === "outside").map((x) => x.label))];
-  const logs = to.some((x) => x.verb === "journalisé");
-  const and = (xs: string[]) => xs.length > 1 ? `${xs.slice(0, -1).join(", ")} et ${xs.at(-1)}` : xs[0] ?? "";
-  const sentence = `\`${entity.name}.${field.name}\` ${from.length ? `est écrit par ${from.length} point${from.length > 1 ? "s" : ""} d'entrée` : "n'est écrit par aucun point d'entrée lu"}`
-    + (to.length ? `, lu en le nommant par ${to.filter((x) => x.entry).length}` : "")
+  const logs = to.some((x) => x.verb === "logged");
+  const and = (xs: string[]) => xs.length > 1 ? `${xs.slice(0, -1).join(", ")} and ${xs.at(-1)}` : xs[0] ?? "";
+  const sentence = `\`${entity.name}.${field.name}\` ${from.length ? `is written by ${from.length} entry point${from.length > 1 ? "s" : ""}` : "is written by no entry point read"}`
+    + (to.length ? `, read by name by ${to.filter((x) => x.entry).length}` : "")
     + (out.length ? ` ; il atteint ${and(out)}` : "")
-    + (logs ? `${out.length ? "," : " ;"} et il est journalisé` : "")
-    + (deletes.length ? `. Une ligne est supprimée en ${deletes.length} endroit${deletes.length > 1 ? "s" : ""}.` : ". Aucune ligne n'est supprimée dans le code lu.");
+    + (logs ? `${out.length ? "," : " ;"} et il est logged` : "")
+    + (deletes.length ? `. A row is deleted in ${deletes.length} place${deletes.length > 1 ? "s" : ""}.` : ". No row is deleted in the code read.");
   return { field, personal: personal(field.name), from, to, whole, deletes, sentence };
 }
 

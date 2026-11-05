@@ -24,7 +24,7 @@ export function flowView(p: MapPayload, entry: Entrypoint, owner: ArchNode) {
   const modules = p.model.nodes.filter((n) => n.parent === owner.id && n.level === "component");
   const moduleOf = (path: string) => modules.find((m) => (m.files ?? []).includes(path));
   const home = moduleOf(entry.handler?.path ?? entry.proof.path);
-  const cols: Col[] = [{ id: "code", name: entry.handler?.name && entry.handler.name !== "fonction anonyme" ? entry.handler.name : owner.name, sub: home?.name ?? owner.name, kind: "code" }];
+  const cols: Col[] = [{ id: "code", name: entry.handler?.name && entry.handler.name !== "anonymous function" ? entry.handler.name : owner.name, sub: home?.name ?? owner.name, kind: "code" }];
   const col = (id: string, make: () => Col) => { let i = cols.findIndex((c) => c.id === id); if (i < 0) { cols.push(make()); i = cols.length - 1; } return i; };
   // Les modules traversés d'abord, dans l'ordre où le code y passe ; puis les cibles.
   for (const s of steps) { const m = moduleOf(s.proof.path); if (m && m.id !== home?.id) col(m.id, () => ({ id: m.id, name: m.name, sub: "module", kind: "module" })); }
@@ -43,18 +43,18 @@ export function flowView(p: MapPayload, entry: Entrypoint, owner: ArchNode) {
   return { cols, rows, moments: moments(rows), gates: gates(rows), sentence: sentence(entry, rows, nodes) };
 }
 
-/** Les moments : « Vérifier » (ce qui précède le premier effet), puis un moment par fonction du dépôt appelée au premier niveau, « Agir » pour les effets écrits dans le point d'entrée lui-même, « Répondre » pour la réponse. */
+/** Les moments : “Vérifier” (ce qui précède le premier effet), puis un moment par fonction du dépôt appelée au premier niveau, “Agir” pour les effets écrits dans le point d'entrée lui-même, “Répondre” pour la réponse. */
 function moments(rows: FlowRow[]): MomentRows[] {
   const first = rows.findIndex((r) => r.tone === "effect");
   const out: MomentRows[] = [];
   const verify = rows.slice(0, first < 0 ? rows.length : first);
-  if (verify.length) out.push({ title: "Vérifier", rows: verify });
+  if (verify.length) out.push({ title: "Verify", rows: verify });
   let cur: MomentRows | undefined;
   for (const r of rows.slice(verify.length)) {
     const top = r.step.depth === 0;
-    const title = !top ? undefined : r.tone === "invoke" ? `${r.step.name ?? "appelle"}()` : r.tone === "reply" ? "Répondre" : cur && cur.title !== "Répondre" && !cur.title.endsWith("()") ? cur.title : "Agir";
+    const title = !top ? undefined : r.tone === "invoke" ? `${r.step.name ?? "calls"}()` : r.tone === "reply" ? "Reply" : cur && cur.title !== "Reply" && !cur.title.endsWith("()") ? cur.title : "Act";
     if (title && (!cur || title !== cur.title || r.tone === "invoke")) { cur = { title, rows: [] }; out.push(cur); }
-    (cur ??= (out.push({ title: "Agir", rows: [] }), out[out.length - 1]!)).rows.push(r);
+    (cur ??= (out.push({ title: "Act", rows: [] }), out[out.length - 1]!)).rows.push(r);
   }
   return out;
 }
@@ -63,8 +63,8 @@ function moments(rows: FlowRow[]): MomentRows[] {
 function gates(rows: FlowRow[]): Gate[] {
   return rows.filter((r) => r.tone === "refuse").map((r) => ({
     n: r.n,
-    question: r.step.when ? `${r.step.when} ?` : r.step.onError ? "l'appel juste avant échoue ?" : "sans condition",
-    refusal: [r.step.status, r.step.code ?? r.step.name].filter(Boolean).join(" ") || "refus",
+    question: r.step.when ? `${r.step.when}?` : r.step.onError ? "the call just before fails?" : "no condition",
+    refusal: [r.step.status, r.step.code ?? r.step.name].filter(Boolean).join(" ") || "refused",
     leaves: [...new Set(rows.filter((x) => x.n < r.n && x.tone === "effect" && (x.step.kind === "write" || x.step.kind === "message")).map((x) => x.what))],
   }));
 }
@@ -79,14 +79,14 @@ function sentence(entry: Entrypoint, rows: FlowRow[], nodes: Map<string, ArchNod
   const queues = [...new Set(rows.filter((r) => r.step.kind === "message").map((r) => r.what))];
   const reply = rows.find((r) => r.tone === "reply")?.step.status;
   const parts = [
-    before ? `refuse dans ${before} cas avant tout effet` : "",
-    reads.length ? `lit ${reads.join(", ")}` : "",
-    out.length ? `appelle ${out.join(", ")}` : "",
-    writes.length ? `écrit ${writes.join(", ")}` : "",
-    queues.length ? `met en file ${queues.join(", ")}` : "",
-    reply ? `répond ${reply}` : "",
+    before ? `refuses in ${before} case${before > 1 ? "s" : ""} before any effect` : "",
+    reads.length ? `reads ${reads.join(", ")}` : "",
+    out.length ? `calls ${out.join(", ")}` : "",
+    writes.length ? `writes ${writes.join(", ")}` : "",
+    queues.length ? `enqueues ${queues.join(", ")}` : "",
+    reply ? `replies ${reply}` : "",
   ].filter(Boolean);
-  return parts.length ? `${entry.key} ${parts.join(", ")}.` : `${entry.key} : aucun effet lu dans son code.`;
+  return parts.length ? `${entry.key} ${parts.join(", ")}.` : `${entry.key}: no effect read in its code.`;
 }
 
 /** Les étapes d'un moment, découpées par transaction : une suite d'étapes dans la même transaction forme un cadre. */

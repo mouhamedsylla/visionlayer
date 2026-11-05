@@ -11,9 +11,9 @@ export interface Column { id: string; label: string }
 export interface TableRow { entity: Entity; cells: Record<string, { read: boolean; write: boolean }>; constraint?: string; see?: string; seeTone?: "cr" | "q"; group: string }
 
 const part = (n: ArchNode, e: Entrypoint): Column =>
-  e.kind === "schedule" ? { id: `${n.id}:schedule`, label: "Tâches planifiées" }
+  e.kind === "schedule" ? { id: `${n.id}:schedule`, label: "Scheduled tasks" }
   : e.kind === "message" || e.kind === "event" ? { id: `${n.id}:message`, label: n.role === "worker" ? n.name : `${n.name}, files` }
-  : { id: `${n.id}:http`, label: `Routes de ${n.name}` };
+  : { id: `${n.id}:http`, label: `Routes of ${n.name}` };
 
 /** Sans bloc, tous les stockages ; pour un programme, ceux qu'il lit ou écrit. Une ressource n'en touche pas d'autres : son écran s'ouvre sur elle. */
 export function stores(p: MapPayload, scope?: ArchNode): ArchNode[] {
@@ -54,11 +54,11 @@ export function dataTable(p: MapPayload, store: ArchNode, scope?: ArchNode): { c
     const race = findings.find((f) => f.code === "race_read_then_write" && f.message.includes(` ${entity.name} `));
     const unused = findings.find((f) => f.code === "unused_value" && f.message.startsWith(`${entity.name}.`));
     const [r, w] = [touched(entity.name, "read"), touched(entity.name, "write")];
-    const see = race ? { see: "lue puis réécrite sans revérifier", seeTone: "cr" as const }
+    const see = race ? { see: "read then rewritten without re-checking", seeTone: "cr" as const }
       : unused ? { see: sentence(unused.message).replace(/^[^ ]+ accepte/, "accepte"), seeTone: "q" as const }
-      : !r && !w ? { see: "ni lue ni écrite", seeTone: "q" as const }
-      : w && !r ? { see: "écrite, jamais relue", seeTone: "q" as const }
-      : r && !w ? { see: "rien ne l'écrit", seeTone: "q" as const } : {};
+      : !r && !w ? { see: "neither read nor written", seeTone: "q" as const }
+      : w && !r ? { see: "written, never read back", seeTone: "q" as const }
+      : r && !w ? { see: "nothing writes it", seeTone: "q" as const } : {};
     const unique = (entity.constraints ?? []).filter((c) => c.kind === "unique" || (c.kind === "index" && c.where));
     const constraint = unique[0] ? `${unique[0].fields.join(", ")} unique${unique[0].where ? `, si ${unique[0].where}` : ""}` : undefined;
     return { entity, cells: cells.get(entity.name) ?? {}, ...(constraint ? { constraint } : {}), ...see, group: entity.group ?? "Tables" };
@@ -81,7 +81,7 @@ export function writers(p: MapPayload, store: ArchNode, entity: Entity): Writer[
       const e = entries.get(id);
       if (!e) continue;
       const value = status?.writes?.find((w) => w.entrypoints?.includes(id) && w.value)?.value;
-      const w = by.get(id) ?? by.set(id, { id, key: e.kind === "schedule" ? `${e.handler?.name ?? e.key}(), ${e.key}` : e.key, kind: e.kind, verb: value ? `pose ${value}` : "écrit", proofs: [], danger: false }).get(id)!;
+      const w = by.get(id) ?? by.set(id, { id, key: e.kind === "schedule" ? `${e.handler?.name ?? e.key}(), ${e.key}` : e.key, kind: e.kind, verb: value ? `pose ${value}` : "writes", proofs: [], danger: false }).get(id)!;
       if (!w.proofs.some((x) => x.path === o.path && x.line === o.line)) w.proofs.push(o);
       if (e.handler?.name && culprits.has(e.handler.name)) w.danger = true;
     }
@@ -117,10 +117,10 @@ export function lifecycle(entity: Entity) {
   const start = field.default && field.values!.includes(field.default) ? field.default : undefined;
   const steps = field.values!.filter((v) => written.has(v) && v !== start).map((v) => ({ value: v, ...written.get(v)! }));
   const rest = field.values!.filter((v) => !written.has(v) && v !== start);
-  // Une valeur calculée peut poser n'importe quel état : rien n'est « jamais écrit » quand il y en a une.
+  // Une valeur calculée peut poser n'importe quel état : rien n'est “jamais écrit” quand il y en a une.
   const never = open.proofs.length ? [] : rest;
   const anyOf = open.proofs.length ? rest : [];
-  const tail = (fns: string[]) => fns.length > 1 ? `${fns.slice(0, -1).join(", ")} ou ${fns.at(-1)}` : fns[0] ?? "le code";
-  const sentence = `${start ? `Une ligne de \`${entity.name}\` naît \`${start}\`` : `\`${entity.name}.${field.name}\` est écrit par le code`}${steps.length ? ` ; ${steps.map((s) => `\`${tail(s.fns)}\` la passe à \`${s.value}\``).slice(0, 3).join(", ")}` : ""}${open.proofs.length ? ` ; \`${tail(open.fns)}\` y écrit une valeur calculée : n'importe lequel des ${field.values!.length} états, dans n'importe quel ordre d'après ce qui est lu` : ""}.${never.length ? ` ${never.map((v) => `\`${v}\``).join(", ")} ${never.length > 1 ? "ne sont jamais écrits" : "n'est jamais écrit"}.` : ""}`;
+  const tail = (fns: string[]) => fns.length > 1 ? `${fns.slice(0, -1).join(", ")} or ${fns.at(-1)}` : fns[0] ?? "the code";
+  const sentence = `${start ? `A row of \`${entity.name}\` starts as \`${start}\`` : `\`${entity.name}.${field.name}\` is written by the code`}${steps.length ? `; ${steps.map((s) => `\`${tail(s.fns)}\` moves it to \`${s.value}\``).slice(0, 3).join(", ")}` : ""}${open.proofs.length ? `; \`${tail(open.fns)}\` writes a computed value: any of the ${field.values!.length} states, in any order from what is read` : ""}.${never.length ? ` ${never.map((v) => `\`${v}\``).join(", ")} ${never.length > 1 ? "are never written" : "is never written"}.` : ""}`;
   return { field, start, steps, never, anyOf, open, sentence };
 }

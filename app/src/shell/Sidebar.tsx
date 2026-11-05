@@ -23,7 +23,7 @@ export function Sidebar({ project, map, screen, go }: { project?: ProjectInfo; m
       </div>
       <label className="side__search">
         {Icon.search}
-        <input placeholder="Rechercher…" aria-label="Rechercher une route, une table, un fichier" />
+        <input placeholder="Search…" aria-label="Search a route, a table, a file" />
         <span className="vl-kbd">⌘K</span>
       </label>
       {groups.map((g) => (
@@ -32,7 +32,7 @@ export function Sidebar({ project, map, screen, go }: { project?: ProjectInfo; m
           {SCREENS.filter((s) => s.group === g).map((s) => {
             const c = counts[s.id];
             return (
-              <a key={s.id} href={s.built ? `#/${s.id}` : undefined} aria-disabled={!s.built} title={s.built ? undefined : "Écran à venir"}
+              <a key={s.id} href={s.built ? `#/${s.id}` : undefined} aria-disabled={!s.built} title={s.built ? undefined : "Screen coming soon"}
                 className={`vl-nav${screen === s.id ? " vl-nav--active" : ""}${s.built ? "" : " vl-nav--soon"}`}
                 onClick={(e) => { e.preventDefault(); if (s.built) go(s.id); }}>
                 {Icon[s.id as keyof typeof Icon]}<span>{s.label}</span>
@@ -45,10 +45,10 @@ export function Sidebar({ project, map, screen, go }: { project?: ProjectInfo; m
       <div className="side__foot">
         <a className="side__vigie" href="#" onClick={(e) => { e.preventDefault(); vigie(); }}>
           <span className="side__vigieicon">{Icon.vigie}</span>
-          <span className="side__vigietext"><b>Demander à Vigie</b><small>Muse Spark, cite ses preuves</small></span>
+          <span className="side__vigietext"><b>Ask Vigie</b><small>Muse Spark, cites its proof</small></span>
           <span className="vl-kbd side__kbd">⌘J</span>
         </a>
-        <a href="#/reglages" className={`vl-nav${screen === "reglages" ? " vl-nav--active" : ""}`} onClick={(e) => { e.preventDefault(); go("reglages"); }}>{Icon.reglages}<span>Réglages</span></a>
+        <a href="#/reglages" className={`vl-nav${screen === "reglages" ? " vl-nav--active" : ""}`} onClick={(e) => { e.preventDefault(); go("reglages"); }}>{Icon.reglages}<span>Settings</span></a>
         {project?.user && (
           <div className="side__user">
             <span className="side__avatar">{initials}</span>

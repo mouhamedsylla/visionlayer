@@ -21,8 +21,8 @@ export function MapGridView({ grid, tech, selected, chosen, select, enter }: { g
   return (
     <div className="map">
       <span className="lane" style={{ gridColumn: 1 }}>Clients</span>
-      <span className="lane" style={{ gridColumn: 3 }}>Programmes</span>
-      <span className="lane" style={{ gridColumn: 5 }}>Ressources</span>
+      <span className="lane" style={{ gridColumn: 3 }}>Programs</span>
+      <span className="lane" style={{ gridColumn: 5 }}>Resources</span>
       {cells.map(({ m, start, span, downRow }) => (
         <Fragment key={m.node.id}>
           {m.rows.map((r, i) => r.left && (

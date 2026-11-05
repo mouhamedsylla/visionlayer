@@ -33,10 +33,10 @@ export function sidebarCounts(p: MapPayload): Partial<Record<string, { n: number
   };
 }
 
-/** Le salut de la planche : « Bonsoir, Mouhamed ». */
+/** Le salut de la planche : “Bonsoir, Mouhamed”. */
 export function greeting(user: string | undefined, now = new Date()): string {
   const h = now.getHours();
-  const word = h >= 18 || h < 5 ? "Bonsoir" : "Bonjour";
+  const word = h >= 18 || h < 5 ? "Good evening" : "Hello";
   const first = user?.trim().split(/\s+/)[0];
   return first ? `${word}, ${first}` : word;
 }
@@ -51,7 +51,7 @@ export function headline(p: MapPayload): { techs: string; known: string } {
     .sort((a, b) => PRIORITY.indexOf(a!.category ?? "") - PRIORITY.indexOf(b!.category ?? "")).map((t) => t!.name);
   const all = p.model.findings.length;
   const critical = p.model.findings.filter((f) => FINDING_TONE[f.code] === "critical").length;
-  return { techs: main.slice(0, 3).join(", "), known: `${plural(all, "point à savoir", "points à savoir")}, dont ${plural(critical, "constat", "constats")}.` };
+  return { techs: main.slice(0, 3).join(", "), known: `${plural(all, "point worth knowing", "points worth knowing")}, including ${plural(critical, "finding", "findings")}.` };
 }
 
 /* --- La carte noire --------------------------------------------------------------------------- */
@@ -79,21 +79,21 @@ export function overviewHero(p: MapPayload): Hero | undefined {
     const users = programs(p).filter((n) => (n.files ?? []).some((f) => where.some((w) => w.path === f)));
     const blocks = p.model.nodes.filter((n) => isUnread(n) && n.tech?.some((t) => p.tech[t]?.name === g.subject));
     const second = blocks.length
-      ? `${blocks.map((b) => b.name).join(" et ")} tourne${blocks.length > 1 ? "nt" : ""} sans que la carte sache ce que ${blocks.length > 1 ? "leur" : "son"} code fait.`
-      : users.length ? `${users.map((u) => u.name).join(", ")} l'emploie${users.length > 1 ? "nt" : ""}, et la carte ne dit pas ce qu'il${users.length > 1 ? "s" : ""} en fai${users.length > 1 ? "nt" : "t"}.` : undefined;
+      ? `${blocks.map((b) => b.name).join(" and ")} run${blocks.length > 1 ? "" : "s"} without the map knowing what ${blocks.length > 1 ? "their" : "its"} code does.`
+      : users.length ? `${users.map((u) => u.name).join(", ")} use${users.length > 1 ? "" : "s"} it, and the map doesn't say what ${users.length > 1 ? "they do" : "it does"} with it.` : undefined;
     const n = where.length || g.count;
     return {
-      kind: "unread", tag: `Non lu${g.proof && g.proof.line > 0 ? `, ${g.proof.path}:${g.proof.line}` : ""}`,
-      lead: "VisionLayer ne lit pas ", code: g.subject, ...(second ? { second } : {}),
-      text: `Muse peut écrire le pack depuis la documentation de ${g.subject}, jamais depuis ce projet. Ses tests tournent à part ; rien n'est chargé avant qu'ils passent, et le retirer rend la carte d'avant.`,
+      kind: "unread", tag: `Not read${g.proof && g.proof.line > 0 ? `, ${g.proof.path}:${g.proof.line}` : ""}`,
+      lead: "VisionLayer doesn't read ", code: g.subject, ...(second ? { second } : {}),
+      text: `Muse can write the pack from ${g.subject}'s documentation, never from this project. Its tests run apart; nothing loads before they pass, and removing it restores the previous map.`,
       side: {
-        title: `Où le code emploie ${g.subject}`, note: plural(n, "fichier", "fichiers"),
-        rows: where.slice(0, 4).map((w, i) => ({ idx: String(i + 1).padStart(2, "0"), code: w.text?.trim() || w.path, what: w.path, tag: "non lu", ...(w.line > 0 ? { proof: w } : {}) })),
-        ...(where.length > 4 ? { more: `Voir les ${where.length - 4} autres ›` } : gaps.length > 1 ? { more: `et ${plural(gaps.length - 1, "autre technologie non lue", "autres technologies non lues")} ›` } : {}),
+        title: `Where the code uses ${g.subject}`, note: plural(n, "file", "files"),
+        rows: where.slice(0, 4).map((w, i) => ({ idx: String(i + 1).padStart(2, "0"), code: w.text?.trim() || w.path, what: w.path, tag: "not read", ...(w.line > 0 ? { proof: w } : {}) })),
+        ...(where.length > 4 ? { more: `See the other ${where.length - 4} ›` } : gaps.length > 1 ? { more: `and ${plural(gaps.length - 1, "other technology not read", "other technologies not read")} ›` } : {}),
       },
     };
   }
-  // Seul un constat grave porte le titre de la page : « sans appel lu » est une hygiène, pas une alerte.
+  // Seul un constat grave porte le titre de la page : “sans appel lu” est une hygiène, pas une alerte.
   const f = byGravity(p.model.findings).find((x) => FINDING_TONE[x.code] === "critical");
   if (!f) return undefined;
   // L'écran de sa question, l'élément choisi.
@@ -102,9 +102,9 @@ export function overviewHero(p: MapPayload): Hero | undefined {
     kind: "finding", tag: `Constat, ${f.proof[0]!.path}:${f.proof[0]!.line}`, go,
     lead: sentence(f.message), text: rest(f.message),
     side: {
-      title: "Les lignes qui le prouvent", note: plural(f.proof.length, "ligne", "lignes"),
-      rows: f.proof.slice(0, 4).map((x, i) => ({ idx: String(i + 1).padStart(2, "0"), code: x.text?.trim() || x.path, what: `${x.path}:${x.line}`, tag: x.pack ?? "lu", proof: x })),
-      ...(f.proof.length > 4 ? { more: `Voir les ${f.proof.length - 4} autres ›` } : {}),
+      title: "The lines proving it", note: plural(f.proof.length, "line", "lines"),
+      rows: f.proof.slice(0, 4).map((x, i) => ({ idx: String(i + 1).padStart(2, "0"), code: x.text?.trim() || x.path, what: `${x.path}:${x.line}`, tag: x.pack ?? "read", proof: x })),
+      ...(f.proof.length > 4 ? { more: `See the other ${f.proof.length - 4} ›` } : {}),
     },
   };
 }
@@ -115,12 +115,14 @@ export const byGravity = (list: Finding[]) => [...list].sort((a, b) => rank(a) -
 
 /** La première proposition d'un constat fait son titre ; la suite, son explication. */
 export function sentence(message: string): string {
-  const i = message.indexOf(" : ");
-  return (i > 0 ? message.slice(0, i) : message).replace(/^« (.*) »$/, "$1").replace(/^[a-zà-ÿ]/, (c) => c.toUpperCase());
+  const i = cut(message);
+  return (i > 0 ? message.slice(0, i) : message).trim().replace(/^(?:“(.*)”|« (.*) »)$/, "$1$2").replace(/^[a-zà-ÿ]/, (c) => c.toUpperCase());
 }
+/** Où finit la première proposition : « : » en français, « : » en anglais. */
+function cut(message: string): number { const f = message.indexOf(" : "); return f > 0 ? f : message.indexOf(": "); }
 export function rest(message: string): string {
-  const i = message.indexOf(" : ");
-  return i > 0 ? message.slice(i + 3).replace(/^./, (c) => c.toUpperCase()) : "";
+  const i = cut(message);
+  return i > 0 ? message.slice(i + (message[i] === " " ? 3 : 2)).trim().replace(/^./, (c) => c.toUpperCase()) : "";
 }
 
 /* --- Le bandeau de faits ---------------------------------------------------------------------- */
@@ -137,7 +139,7 @@ export function overviewStats(p: MapPayload, claims: { total: number; contradict
   const deployables = p.model.nodes.filter((n) => n.level === "deployable");
   const many = progs.filter((n) => (n.instances?.min ?? 1) > 1);
   const deployNote = many.length
-    ? `${many.map((n) => n.name).join(", ")} sur ${many[0]!.instances!.min} machines`
+    ? `${many.map((n) => n.name).join(", ")} on ${many[0]!.instances!.min} machines`
     : `${plural(progs.length, "programme", "programmes")}, ${plural(deployables.length - progs.length, "ressource", "ressources")}`;
   const routes = entries(p).filter((x) => x.e.kind === "http" || x.e.kind === "rpc");
   const uncalled = p.model.findings.filter((f) => f.code === "uncalled_entry").length;
@@ -154,29 +156,29 @@ export function overviewStats(p: MapPayload, claims: { total: number; contradict
   const times = schedules.length ? Math.max(...schedules) : 1;
   return [
     {
-      label: "Déployables", value: String(deployables.length),
+      label: "Deployables", value: String(deployables.length),
       mini: { kind: "tiles", cells: pad(deployables.map((n): Cell => (isUnread(n) ? "s" : RESOURCE_ROLES.has(n.role) ? "q" : "")), 9) },
       note: deployNote,
     },
     {
-      label: "Points d'entrée", value: String(routes.length || entries(p).length), unit: routes.length ? "routes" : "entrées",
+      label: "Entry points", value: String(routes.length || entries(p).length), unit: routes.length ? "routes" : "entries",
       mini: { kind: "bars", bars: bars.length ? bars : [{ cls: "q", height: 30 }] },
-      note: uncalled ? `${uncalled} sans appel lu` : "toutes appelées dans le dépôt",
+      note: uncalled ? `${uncalled} with no call read` : "all called in the repository",
     },
     {
       label: "Tables", value: String(entities.length),
       mini: { kind: "tiles", cells: pad(entities.map((x): Cell => (touched.has(x.name) ? "" : "s")), 15) },
-      note: idle.length ? `${idle.slice(0, 2).map((x) => x.name).join(", ")} : ni lue${idle.length > 1 ? "s" : ""} ni écrite${idle.length > 1 ? "s" : ""}` : entities.length ? "toutes lues ou écrites" : "aucune table lue",
+      note: idle.length ? `${idle.slice(0, 2).map((x) => x.name).join(", ")}: neither read nor written` : entities.length ? "all read or written" : "no table read",
     },
     {
-      label: "Tâches planifiées", value: String(schedules.length), ...(times > 1 ? { unit: `× ${times}` } : {}),
+      label: "Scheduled tasks", value: String(schedules.length), ...(times > 1 ? { unit: `× ${times}` } : {}),
       mini: { kind: "tiles", cells: pad(schedules.flatMap((k): Cell[] => ["", ...Array<Cell>(k - 1).fill("s"), "e"]), 9) },
-      note: !schedules.length ? "aucune" : times > 1 ? `Chacune tourne ${times} fois` : "Chacune tourne une fois",
+      note: !schedules.length ? "none" : times > 1 ? `Each runs ${times} times` : "Each runs once",
     },
     {
-      label: "Règles déclarées", value: String(claims.total),
+      label: "Declared rules", value: String(claims.total),
       mini: { kind: "tiles", cells: pad([...Array<Cell>(claims.contradicted).fill("c"), ...Array<Cell>(Math.max(0, claims.total - claims.contradicted)).fill("q")], 12) },
-      note: claims.total ? (claims.contradicted ? `${claims.contradicted} contredite${claims.contradicted > 1 ? "s" : ""} par le code` : "toutes tiennent contre le code") : "aucune règle déclarée",
+      note: claims.total ? (claims.contradicted ? `${claims.contradicted} contradicted by the code` : "all hold against the code") : "no declared rule",
     },
   ];
 }
@@ -184,7 +186,7 @@ export function overviewStats(p: MapPayload, claims: { total: number; contradict
 /* --- La grille de couverture ------------------------------------------------------------------ */
 
 export type TileState = "i" | "q" | "s" | "c";
-export const TILE_LABEL: Record<TileState, string> = { i: "lu", q: "lu, sans fait", s: "à surveiller", c: "constat" };
+export const TILE_LABEL: Record<TileState, string> = { i: "read", q: "read, no fact", s: "to watch", c: "finding" };
 export interface Tile { path: string; state: TileState; what: string }
 export interface Folder { name: string; tiles: Tile[] }
 
@@ -202,7 +204,7 @@ export function coverage(p: MapPayload): { folders: Folder[]; understood: number
   const unread = new Map<string, string>();
   for (const g of p.model.coverage.flatMap((c) => c.gaps)) {
     if (g.kind !== "language_not_read" && g.kind !== "pack_missing") continue;
-    for (const w of g.where ?? []) if (!unread.has(w.path)) unread.set(w.path, g.kind === "pack_missing" ? `emploie ${g.subject}, sans pack` : `${g.subject} : langage non lu`);
+    for (const w of g.where ?? []) if (!unread.has(w.path)) unread.set(w.path, g.kind === "pack_missing" ? `uses ${g.subject}, no pack` : `${g.subject}: language not read`);
   }
   const all = [...new Set([...p.files, ...unread.keys()])].filter((f) => !/(^|\/)(node_modules|dist)\//.test(f)).sort();
   const tile = (path: string): Tile => {
@@ -211,7 +213,7 @@ export function coverage(p: MapPayload): { folders: Folder[]; understood: number
     if (unread.has(path)) return { path, state: "s", what: unread.get(path)! };
     if (f) return { path, state: "s", what: sentence(f.message) };
     const by = owner.get(path);
-    return by ? { path, state: "i", what: `exécuté par ${by}` } : { path, state: "q", what: "analysé, aucun programme lu ne l'exécute" };
+    return by ? { path, state: "i", what: `run by ${by}` } : { path, state: "q", what: "analyzed, no program read runs it" };
   };
   const folders = [...columns(all)].map(([name, files]) => ({ name, tiles: files.map(tile) }));
   const biggest = [...folders].sort((a, b) => b.tiles.length - a.tiles.length)[0];
@@ -223,7 +225,7 @@ export function coverage(p: MapPayload): { folders: Folder[]; understood: number
  * Les colonnes : le dossier de premier niveau sous la racine commune ; un dossier qui porte plus de la moitié
  * des fichiers et range les siens dans des sous-dossiers se découpe un cran plus bas (`src` donne `auth`,
  * `bookings`…, et `src` pour ses fichiers posés à sa racine) ; au-delà de 14 colonnes, les plus petites se
- * regroupent dans « autres ».
+ * regroupent dans “autres”.
  */
 function columns(files: string[]): Map<string, string[]> {
   const root = commonDir(files);
@@ -232,22 +234,22 @@ function columns(files: string[]): Map<string, string[]> {
     const by = new Map<string, string[]>();
     for (const f of list) {
       const r = f.slice(root.length).split("/");
-      const k = r.length > depth + 1 ? r[depth]! : prefix || "autres";
+      const k = r.length > depth + 1 ? r[depth]! : prefix || "others";
       (by.get(k) ?? by.set(k, []).get(k)!).push(f);
     }
     for (const [k, l] of by) {
       const deeper = l.some((f) => f.slice(root.length).split("/").length > depth + 2);
-      if (k !== prefix && k !== "autres" && depth < 4 && l.length > files.length / 2 && deeper) split(l, depth + 1, k, out);
+      if (k !== prefix && k !== "others" && depth < 4 && l.length > files.length / 2 && deeper) split(l, depth + 1, k, out);
       else (out.get(k) ?? out.set(k, []).get(k)!).push(...l);
     }
   };
   const out = new Map<string, string[]>();
   split(files, 0, "", out);
-  const sorted = [...out].sort((a, b) => (a[0] === "autres" ? 1 : b[0] === "autres" ? -1 : 0));
+  const sorted = [...out].sort((a, b) => (a[0] === "others" ? 1 : b[0] === "others" ? -1 : 0));
   if (sorted.length <= 12) return new Map(sorted);
-  const keep = [...sorted].filter(([k]) => k !== "autres").sort((a, b) => b[1].length - a[1].length).slice(0, 11).map(([k]) => k);
+  const keep = [...sorted].filter(([k]) => k !== "others").sort((a, b) => b[1].length - a[1].length).slice(0, 11).map(([k]) => k);
   const res = new Map(sorted.filter(([k]) => keep.includes(k)));
-  res.set("autres", sorted.filter(([k]) => !keep.includes(k)).flatMap(([, v]) => v));
+  res.set("others", sorted.filter(([k]) => !keep.includes(k)).flatMap(([, v]) => v));
   return res;
 }
 
@@ -284,12 +286,12 @@ const ICON: Partial<Record<FindingCode, string>> & { other: string } = {
   write_then_enqueue: "M2.5 5h7l-2-2M13.5 11h-7l2 2",
   other: "M8 4.5v4.5M8 11.5v.01M8 1.8l6.5 11.4H1.5z",
 };
-const ACTION: Partial<Record<Screen, string>> = { acces: "Accès", donnees: "Données", table: "Données", taches: "Tâches", mecanismes: "Mécanismes", bloc: "Le bloc", carte: "Carte" };
+const ACTION: Partial<Record<Screen, string>> = { acces: "Access", donnees: "Data", table: "Data", taches: "Tasks", mecanismes: "Mechanisms", bloc: "The block", carte: "Map" };
 
 export function attention(p: MapPayload): Attention[] {
   return byGravity(p.model.findings).map((f) => ({
     tone: FINDING_TONE[f.code], icon: ICON[f.code] ?? ICON.other,
     title: sentence(f.message), sub: rest(f.message), proof: f.proof[0]!,
-    action: ACTION[findingPlace(p, f).screen] ?? "Carte", go: findingPlace(p, f),
+    action: ACTION[findingPlace(p, f).screen] ?? "Map", go: findingPlace(p, f),
   }));
 }

@@ -32,7 +32,7 @@ export function CodeProvider({ children }: { children: ReactNode }) {
         <aside className="code" aria-label="Code">
           <header className="code__head">
             <span className="mono">{at.path}<b>:{at.line}</b></span>
-            <button type="button" className="vl-btn vl-btn--ghost-night vl-btn--sm" onClick={() => setAt(undefined)} aria-label="Fermer">{Icon.close}</button>
+            <button type="button" className="vl-btn vl-btn--ghost-night vl-btn--sm" onClick={() => setAt(undefined)} aria-label="Close">{Icon.close}</button>
           </header>
           {error && <p className="code__err">{error}</p>}
           {excerpt && (

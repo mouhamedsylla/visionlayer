@@ -4,23 +4,23 @@ export type Screen = "vue" | "carte" | "fonctionnalites" | "parcours" | "bloc" |
 
 /** Les écrans des planches, dans l'ordre de la barre latérale. `built` : codé ; les autres restent visibles, sans lien. */
 export const SCREENS: { id: Screen; label: string; group: string; built?: boolean }[] = [
-  { id: "vue", label: "Vue d'ensemble", group: "Système", built: true },
-  { id: "carte", label: "Carte", group: "Système", built: true },
-  { id: "fonctionnalites", label: "Fonctionnalités", group: "Système", built: true },
-  { id: "parcours", label: "Parcours", group: "Système", built: true },
-  { id: "bloc", label: "Intérieur d'un bloc", group: "", built: true },
-  { id: "deroule", label: "Déroulé", group: "", built: true },
-  { id: "table", label: "Une table", group: "", built: true },
-  { id: "mecanismes", label: "Mécanismes", group: "Système", built: true },
-  { id: "acces", label: "Accès", group: "Système", built: true },
-  { id: "donnees", label: "Données", group: "Système", built: true },
-  { id: "taches", label: "Tâches planifiées", group: "Système", built: true },
-  { id: "regles", label: "Règles et décisions", group: "Connaissance", built: true },
-  { id: "agents", label: "Sessions d'agents", group: "Connaissance", built: true },
-  { id: "packs", label: "Packs", group: "Lecture", built: true },
-  { id: "couverture", label: "Couverture", group: "Lecture" },
-  { id: "replays", label: "Replays", group: "Pratique", built: true },
-  { id: "reglages", label: "Réglages", group: "", built: true },
+  { id: "vue", label: "Overview", group: "System", built: true },
+  { id: "carte", label: "Map", group: "System", built: true },
+  { id: "fonctionnalites", label: "Features", group: "System", built: true },
+  { id: "parcours", label: "Process", group: "System", built: true },
+  { id: "bloc", label: "Inside a block", group: "", built: true },
+  { id: "deroule", label: "Flow", group: "", built: true },
+  { id: "table", label: "A table", group: "", built: true },
+  { id: "mecanismes", label: "Mechanisms", group: "System", built: true },
+  { id: "acces", label: "Access", group: "System", built: true },
+  { id: "donnees", label: "Data", group: "System", built: true },
+  { id: "taches", label: "Scheduled tasks", group: "System", built: true },
+  { id: "regles", label: "Rules and decisions", group: "Knowledge", built: true },
+  { id: "agents", label: "Agent sessions", group: "Knowledge", built: true },
+  { id: "packs", label: "Packs", group: "Reading", built: true },
+  { id: "couverture", label: "Coverage", group: "Reading" },
+  { id: "replays", label: "Replays", group: "Practice", built: true },
+  { id: "reglages", label: "Settings", group: "", built: true },
 ];
 
 type Place = { screen: Screen; item?: string; scope?: string; tab?: string };
@@ -68,8 +68,8 @@ function crumbsOf(): Crumb[] {
     if (!DEEP.has(p.screen) && places[i + 1]?.screen === p.screen) return;
     const back = places.length - 1 - i;
     const entering = places[i + 1]?.screen === "bloc" && places[i + 1]?.item === p.item;
-    if (p.screen === "carte" && p.item && !entering) out.push({ label: "Carte", back }, { label: p.item, back, node: p.item });
-    else if (p.screen === "carte") out.push({ label: "Carte", back });
+    if (p.screen === "carte" && p.item && !entering) out.push({ label: "Map", back }, { label: p.item, back, node: p.item });
+    else if (p.screen === "carte") out.push({ label: "Map", back });
     else out.push({ label: placeLabel(p), back, ...(p.screen === "bloc" && p.item ? { node: p.item } : {}) });
   });
   return out;

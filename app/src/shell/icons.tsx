@@ -26,7 +26,7 @@ export const Icon = {
   close: <svg {...P} width="14" height="14"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" /></svg>,
 };
 
-/** Le logo « points aux blocs » des planches. */
+/** Le logo “points aux blocs” des planches. */
 export const Logo = (
   <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="8" fill="#121211" /><g fill="#f5f4f1"><circle cx="7.5" cy="9" r="1.4" opacity=".45" /><circle cx="7.5" cy="15" r="1.4" opacity=".7" /><circle cx="7.5" cy="21" r="1.4" /><circle cx="11.5" cy="9" r="1.4" opacity=".7" /><circle cx="11.5" cy="15" r="1.4" /><circle cx="11.5" cy="21" r="1.4" /><rect x="16" y="7.5" width="8" height="6" rx="1.5" /></g><rect x="16" y="16.5" width="8" height="6" rx="1.5" fill="#a29f99" /><path d="M20 13.5v3" stroke="#f5f4f1" strokeWidth="1.2" /></svg>
 );

@@ -20,11 +20,11 @@ export function Overview({ map, project, claims, go }: { map: MapPayload; projec
       <div className="page__head">
         <div className="ov__hello">
           <h1 className="page__title">{greeting(project?.user)}</h1>
-          <p className="ov__line">{project?.name ?? map.model.system.name}{line.techs ? ` : ${line.techs}` : ""}. Analysé {since(map.builtAt)}. <span className="ov__known">{line.known}</span></p>
+          <p className="ov__line">{project?.name ?? map.model.system.name}{line.techs ? ` : ${line.techs}` : ""}. Analyzed {since(map.builtAt)}. <span className="ov__known">{line.known}</span></p>
         </div>
         <div className="ov__actions">
-          <button className="vl-btn vl-btn--secondary" disabled title="Filtrer par déployable : à venir">Tous les déployables{Icon.down}</button>
-          <button className="vl-btn vl-btn--primary" disabled title="Réglages des agents : à venir">{Icon.plus}Brancher un agent</button>
+          <button className="vl-btn vl-btn--secondary" disabled title="Filter by deployable: coming soon">All deployables{Icon.down}</button>
+          <button className="vl-btn vl-btn--primary" disabled title="Agent settings: coming soon">{Icon.plus}Connect an agent</button>
         </div>
       </div>
       {hero && <HeroCard hero={hero} onMap={(to) => (to ? go(to.screen, to.item) : go("carte"))} />}

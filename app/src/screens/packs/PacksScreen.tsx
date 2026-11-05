@@ -24,7 +24,7 @@ export function PacksScreen({ map, item, open, onChanged }: { map: MapPayload; i
   }, [data, running, onChanged]);
   const rows = useMemo(() => data ? techRows(map, data, techs) : [], [map, data, techs]);
   if (error) return <p className="state">{error}</p>;
-  if (!data) return <p className="state">Lecture des packs…</p>;
+  if (!data) return <p className="state">Reading packs…</p>;
   const proposal = item ? data.proposals.find((p) => p.id === item) : undefined;
   const act = (f: Promise<PacksPayload>) => f.then((d) => { setData(d); onChanged(); open(); }).catch((e) => setError(String(e.message ?? e)));
   if (proposal) return <Workshop map={map} proposal={proposal} others={data.proposals.filter((p) => p.id !== proposal.id)} open={open} accept={() => act(api.accept(proposal.id))} reject={() => act(api.reject(proposal.id))} />;

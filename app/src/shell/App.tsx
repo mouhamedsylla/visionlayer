@@ -41,8 +41,8 @@ export function App() {
         <Sidebar project={data.project} map={data.map} screen={origin} go={(s) => go(s, undefined, { root: true, scope: null })} />
         <main className="main">
           <Topbar project={data.project} map={data.map} crumbs={crumbs} {...(!DEEP_BACK.has(screen) && back && from ? { back, backLabel: from.screen === "carte" && from.item ? from.item : placeLabel(from) } : !DEEP_BACK.has(screen) && screen !== "carte" && item ? { back: () => go(screen, undefined, { root: true }), backLabel: placeLabel({ screen }) } : {})} {...(block ? { block, clearBlock: () => go(screen, item, { scope: null, replace: true }) } : {})} refreshing={data.refreshing} onRefresh={data.refresh} />
-          {data.error ? <p className="view state">La carte n'a pas pu être lue : {data.error}</p>
-            : !data.map ? <p className="view state">Lecture du dépôt…</p>
+          {data.error ? <p className="view state">The map could not be read: {data.error}</p>
+            : !data.map ? <p className="view state">Reading the repository…</p>
             : screen === "carte" ? <div key={screen} className="view view--ws scr-map"><MapScreen map={data.map} {...(data.knowledge ? { knowledge: data.knowledge } : {})} selected={item} select={(id) => go("carte", id, { replace: true })} ask={(id, q) => go(q.screen, q.item, { leaving: { screen: "carte", item: id }, ...(q.scope ? { scope: q.scope } : {}) })} enter={(id) => {
               const n = data.map!.model.nodes.find((x) => x.id === id);
               const topic = n?.facets.channel?.topics[0]?.name;

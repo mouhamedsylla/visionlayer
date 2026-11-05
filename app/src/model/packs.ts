@@ -35,11 +35,11 @@ export function steps(p: PackProposal): Step[] {
   const f = forms(p);
   const ok = p.preview?.state.status === "active";
   return [
-    { n: "1", label: "Inventaire", count: `${f.length} formes`, done: f.length > 0 },
-    { n: "2", label: "Tests", count: ok ? `${p.tests.length} sur ${p.tests.length} passent` : "à revoir", done: ok },
-    { n: "3", label: "Règles", count: `${p.rules.length} règle${p.rules.length > 1 ? "s" : ""}`, done: true },
-    { n: "4", label: "Vérification", count: ok ? "5 sur 5" : p.preview?.state.reason ? "refusé" : "en attente", done: ok },
-    { n: "5", label: "Différence", count: "à décider", done: false },
+    { n: "1", label: "Inventory", count: `${f.length} formes`, done: f.length > 0 },
+    { n: "2", label: "Tests", count: ok ? `${p.tests.length} out of ${p.tests.length} pass` : "to review", done: ok },
+    { n: "3", label: "Rules", count: `${p.rules.length} rule${p.rules.length > 1 ? "s" : ""}`, done: true },
+    { n: "4", label: "Check", count: ok ? "5 out of 5" : p.preview?.state.reason ? "refused" : "pending", done: ok },
+    { n: "5", label: "Diff", count: "to decide", done: false },
   ];
 }
 
@@ -49,11 +49,11 @@ export function checks(p: PackProposal): { title: string; note: string; ok: bool
   const reason = s?.reason ?? "";
   const failedAt = (k: RegExp) => s?.status === "failed" && k.test(reason);
   return [
-    { title: "Schéma strict du pack", note: "aucun champ inconnu, aucun script", ok: !failedAt(/schéma|script|champ/) },
-    { title: `${p.tests.length} tests de forme`, note: "un petit fichier d'exemple par forme, hors du projet", ok: !failedAt(/test/) },
-    { title: "Il produit ce qu'il déclare", note: `${p.provides.length} relations déclarées`, ok: !failedAt(/déclarer|provides|arguments/) },
-    { title: "Déclarations sans cycle", note: "aucune boucle avec les autres packs du projet", ok: !failedAt(/cycle/) },
-    { title: "Chargé à part, la carte acceptée intacte", note: s?.status === "failed" ? reason : "essayé dans un domaine isolé avant la décision", ok: s?.status !== "failed" },
+    { title: "Strict pack schema", note: "no unknown field, no script", ok: !failedAt(/schéma|schema|script|champ|field/) },
+    { title: `${p.tests.length} form tests`, note: "a small sample file per form, outside the project", ok: !failedAt(/test/) },
+    { title: "It produces what it declares", note: `${p.provides.length} relations declared`, ok: !failedAt(/déclarer|declare|provides|arguments/) },
+    { title: "Declarations without cycle", note: "no loop with the project's other packs", ok: !failedAt(/cycle/) },
+    { title: "Loaded apart, the accepted map intact", note: s?.status === "failed" ? reason : "tried in an isolated domain before the decision", ok: s?.status !== "failed" },
   ];
 }
 
@@ -83,14 +83,14 @@ export interface TechRow {
 }
 
 const FAMILY: Record<string, string> = {
-  language: "Langage", runtime: "Exécution", framework: "Cadre applicatif", styling: "Interface", data: "Données", backend: "Serveur",
-  cloud: "Cloud", database: "Base de données", ai: "IA", media: "Médias", build: "Livraison", test: "Tests", quality: "Qualité",
-  analytics: "Mesure", ci: "Livraison", library: "Bibliothèque",
+  language: "Language", runtime: "Runtime", framework: "Framework", styling: "Interface", data: "Data", backend: "Server",
+  cloud: "Cloud", database: "Database", ai: "IA", media: "Media", build: "Delivery", test: "Tests", quality: "Quality",
+  analytics: "Metrics", ci: "Delivery", library: "Library",
 };
 const LABEL: Record<string, [string, string]> = {
-  entrypoints: ["point d'entrée", "points d'entrée"], data: ["donnée", "données"], contract: ["contrat", "contrats"],
-  channel: ["file de messages", "files de messages"], config: ["réglage", "réglages"], trust: ["garde", "gardes"],
-  functions: ["fonction", "fonctions"], component: ["composant", "composants"], edges: ["lien", "liens"], nodes: ["bloc", "blocs"],
+  entrypoints: ["entry point", "entry points"], data: ["data", "data"], contract: ["contrat", "contrats"],
+  channel: ["message queue", "message queues"], config: ["setting", "settings"], trust: ["garde", "gardes"],
+  functions: ["function", "functions"], component: ["composant", "composants"], edges: ["lien", "liens"], nodes: ["block", "blocks"],
 };
 
 /** Par pack : combien d'éléments de la carte il prouve, rangés par sorte, les fichiers cités et la première preuve. */
@@ -127,9 +127,9 @@ export function techRows(map: MapPayload, packs: PacksPayload, techs: Technology
     const found = map.model.findings.filter((x) => x.proof.some((q) => q.pack === p.id));
     const crit = found.filter((x) => FINDING_TONE[x.code] === "critical");
     read.push({
-      key: p.id, name: t?.name ?? p.name, version: t?.versions.at(-1)?.replace(/^[\^~]/, ""), family: FAMILY[t?.category ?? "library"] ?? "Bibliothèque",
+      key: p.id, name: t?.name ?? p.name, version: t?.versions.at(-1)?.replace(/^[\^~]/, ""), family: FAMILY[t?.category ?? "library"] ?? "Library",
       where: f?.first, files: f?.files.size ?? 0, state: "read",
-      gives: kinds.length ? kinds.map(([k, n]) => `${n} ${n > 1 ? LABEL[k]![1] : LABEL[k]![0]}`).join(", ") : "aucun élément sur la carte",
+      gives: kinds.length ? kinds.map(([k, n]) => `${n} ${n > 1 ? LABEL[k]![1] : LABEL[k]![0]}`).join(", ") : "no item on the map",
       findings: { critical: crit.length, signal: found.length - crit.length, ...(found[0] ? { first: found[0].message } : {}) },
       pack: { id: p.id, by: p.meta ? "muse" : p.local ? "project" : "builtin", ...(p.meta ? { at: p.meta.at, tests: p.meta.tests, ...(p.meta.cost !== undefined ? { cost: p.meta.cost } : {}) } : {}) },
     });
@@ -145,11 +145,11 @@ export function techRows(map: MapPayload, packs: PacksPayload, techs: Technology
     const writing = packs.job && !packs.job.done && packs.job.pkg === pkg;
     const state: TechState = writing ? "writing" : pkg && packs.queue.includes(pkg) ? "queued" : pkg && packs.failed[pkg] ? "failed" : "unread";
     unread.push({
-      key: g.subject, name: t?.name ?? g.subject, version: t?.versions.at(-1)?.replace(/^[\^~]/, ""), family: FAMILY[t?.category ?? "library"] ?? "Bibliothèque",
+      key: g.subject, name: t?.name ?? g.subject, version: t?.versions.at(-1)?.replace(/^[\^~]/, ""), family: FAMILY[t?.category ?? "library"] ?? "Library",
       ...(g.proof ? { where: g.proof } : {}), files: g.count, state,
-      gives: `${g.count} fichier${g.count > 1 ? "s" : ""} dont la carte ne dit pas ce qu'ils font`,
+      gives: `${g.count} file${g.count > 1 ? "s" : ""} whose behavior the map doesn't state`,
       findings: { critical: 0, signal: 0 }, ...(pkg ? { pkg } : {}), ...(lib ? { lib: true } : {}),
-      ...(state === "writing" ? { note: lastStep(packs.job!.lines) } : state === "queued" ? { note: `en file, ${packs.queue.indexOf(pkg!) + 1}${packs.queue.indexOf(pkg!) ? "e" : "re"}` } : state === "failed" ? { note: packs.failed[pkg!]!.reason } : {}),
+      ...(state === "writing" ? { note: lastStep(packs.job!.lines) } : state === "queued" ? { note: `queued, #${packs.queue.indexOf(pkg!) + 1}` } : state === "failed" ? { note: packs.failed[pkg!]!.reason } : {}),
     });
   }
   const order = (r: TechRow) => r.findings.critical * 100 + r.findings.signal * 10 + r.files;
@@ -157,12 +157,12 @@ export function techRows(map: MapPayload, packs: PacksPayload, techs: Technology
   return [...unread, ...read.sort((a, b) => mine(b) - mine(a) || order(b) - order(a))];
 }
 
-/** La dernière étape lisible de l'écrivain, en mots : « lit la documentation », « essaie ses tests »… */
+/** La dernière étape lisible de l'écrivain, en mots : “lit la documentation”, “essaie ses tests”… */
 function lastStep(lines: string[]): string {
-  const l = [...lines].reverse().find((x) => /\[\d+\]|Fiche|écrit le pack|Pack proposé|Chargé/.test(x)) ?? "";
-  if (/Chargé/.test(l)) return "chargé, la carte se recalcule";
-  if (/Pack proposé/.test(l)) return "essai à part sur ce projet";
-  if (/check_pack|submit_pack/.test(l)) return "essaie ses tests";
-  if (/\[\d+\]/.test(l)) return "écrit les formes et leurs tests";
-  return "lit la documentation";
+  const l = [...lines].reverse().find((x) => /\[\d+\]|Brief|is writing the pack|Pack proposed|Loaded/.test(x)) ?? "";
+  if (/Loaded/.test(l)) return "loaded, the map recomputes";
+  if (/Pack proposed/.test(l)) return "separate trial on this project";
+  if (/check_pack|submit_pack/.test(l)) return "tries its tests";
+  if (/\[\d+\]/.test(l)) return "writes the forms and their tests";
+  return "reads the documentation";
 }

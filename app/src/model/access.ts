@@ -5,7 +5,7 @@ import { plural } from "./words";
 /**
  * La planche 04 (Accès, par acteur), calculée depuis les gardes des points d'entrée : qui appelle le
  * système, comment il prouve qui il est, ce qu'il atteint. Ce que le moteur ne lit pas encore (la
- * comparaison entre la donnée et l'appelant, la durée d'une session) est dit « non lu », jamais deviné.
+ * comparaison entre la donnée et l'appelant, la durée d'une session) est dit “non lu”, jamais deviné.
  */
 
 export interface ActorRow {
@@ -51,34 +51,34 @@ export function actors(p: MapPayload, scope?: ArchNode): { rows: ActorRow[]; tot
   const open = routes.filter((e) => e.access?.level === "public");
   const signedIn = routes.filter((e) => e.access?.level === "authenticated");
   const roles = routes.filter((e) => e.access?.level === "role");
-  if (open.length) rows.push({ id: "public", group: "people", name: "Visiteur", proof: "aucune preuve", proofKind: "", reach: open.length, total, data: "sans objet", routes: open });
+  if (open.length) rows.push({ id: "public", group: "people", name: "Visitor", proof: "no proof", proofKind: "", reach: open.length, total, data: "not applicable", routes: open });
   if (signedIn.length) {
     const reach = [...open, ...signedIn];
     const f = unguarded[0];
     rows.push({
-      id: "authenticated", group: "people", name: "Personne connectée", proof: mechanism ? mechanism.name : "session, non lue", proofKind: "k", ...(byOf(signedIn) ? { by: byOf(signedIn)! } : {}),
-      reach: reach.length, total, data: "non lu", ...(f ? { see: `atteint ${sentence(f.message)}`, seeProof: f.proof[0]! } : {}), routes: reach,
+      id: "authenticated", group: "people", name: "Logged-in person", proof: mechanism ? mechanism.name : "session, not read", proofKind: "k", ...(byOf(signedIn) ? { by: byOf(signedIn)! } : {}),
+      reach: reach.length, total, data: "not read", ...(f ? { see: `atteint ${sentence(f.message)}`, seeProof: f.proof[0]! } : {}), routes: reach,
     });
   }
   if (roles.length) {
     const names = [...new Set(roles.flatMap((e) => e.access?.roles ?? []))];
     const reach = [...open, ...signedIn, ...roles];
-    const unassigned = p.model.findings.find((f) => f.code === "unused_value" && /\.role\b/.test(f.message) && (!names.length || names.some((r) => f.message.includes(`« ${r} »`))));
+    const unassigned = p.model.findings.find((f) => f.code === "unused_value" && /\.role\b/.test(f.message) && (!names.length || names.some((r) => f.message.includes(`“${r}”`))));
     rows.push({
-      id: "role", group: "people", name: names.length ? names.map((r) => `Rôle ${r}`).join(", ") : "Rôle vérifié", note: names.length ? undefined : "le code ne nomme pas le rôle", proof: mechanism ? mechanism.name : "session, non lue", proofKind: "k",
-      ...(byOf(roles) ? { by: byOf(roles)! } : {}), reach: reach.length, total, data: "non lu",
-      ...(unassigned ? { see: "aucun code n'attribue ce rôle", seeProof: unassigned.proof[0]! } : {}), routes: reach,
+      id: "role", group: "people", name: names.length ? names.map((r) => `Role ${r}`).join(", ") : "Role checked", note: names.length ? undefined : "the code doesn't name the role", proof: mechanism ? mechanism.name : "session, not read", proofKind: "k",
+      ...(byOf(roles) ? { by: byOf(roles)! } : {}), reach: reach.length, total, data: "not read",
+      ...(unassigned ? { see: "no code assigns this role", seeProof: unassigned.proof[0]! } : {}), routes: reach,
     });
   }
 
   // Une garde que le moteur ne reconnaît pas : ces routes ont une porte, mais personne ne sait encore laquelle.
   const unknown = routes.filter((e) => !e.access || e.access.level === "unknown");
-  if (unknown.length) rows.push({ id: "unknown", group: "people", name: "Garde non reconnue", note: "aucun pack ne lit encore la garde de ces routes", proof: "non lue", proofKind: "", reach: unknown.length, total, data: "non lu", routes: unknown });
+  if (unknown.length) rows.push({ id: "unknown", group: "people", name: "Guard not recognized", note: "no pack reads the guard of these routes yet", proof: "not read", proofKind: "", reach: unknown.length, total, data: "not read", routes: unknown });
 
   // Les services extérieurs : un appel signé vient d'un service que la carte connaît (un webhook).
   for (const e of routes.filter((x) => x.access?.level === "signature")) {
     const from = e.calledBy?.map((id) => p.model.nodes.find((n) => n.id === id)).find((n) => n?.role === "external");
-    rows.push({ id: `sig:${e.id}`, group: "outside", name: from?.name ?? "Service signé", note: e.key, proof: "signature", proofKind: "g", ...(byOf([e]) ? { by: byOf([e])! } : {}), reach: 1, total, data: "sans objet", routes: [e] });
+    rows.push({ id: `sig:${e.id}`, group: "outside", name: from?.name ?? "Signed service", note: e.key, proof: "signature", proofKind: "g", ...(byOf([e]) ? { by: byOf([e])! } : {}), reach: 1, total, data: "not applicable", routes: [e] });
   }
 
   // Le système lui-même : ce qui tourne sans appelant, tâches planifiées et consommateurs de file.
@@ -87,17 +87,17 @@ export function actors(p: MapPayload, scope?: ArchNode): { rows: ActorRow[]; tot
     for (const e of (n.facets.entrypoints ?? []).filter((x) => x.kind === "schedule" || x.kind === "message" || x.kind === "event")) {
       const machines = n.instances?.min ?? 1;
       rows.push({
-        id: e.id, group: "system", name: e.handler?.name && e.handler.name !== "fonction anonyme" ? `${e.handler.name}()` : n.name,
-        note: e.kind === "schedule" ? `planifiée ${e.key}` : `lit la file ${e.key}`, proof: "interne", proofKind: "", reach: 0, total,
-        reachText: e.kind === "schedule" ? "tâche" : "file", data: "toutes",
-        ...(e.kind === "schedule" && machines > 1 ? { see: `tourne sur les ${machines} machines`, ...(twice ? { seeProof: twice.proof[0]! } : {}) } : {}), routes: [],
+        id: e.id, group: "system", name: e.handler?.name && e.handler.name !== "anonymous function" ? `${e.handler.name}()` : n.name,
+        note: e.kind === "schedule" ? `scheduled ${e.key}` : `reads queue ${e.key}`, proof: "interne", proofKind: "", reach: 0, total,
+        reachText: e.kind === "schedule" ? "task" : "queue", data: "all",
+        ...(e.kind === "schedule" && machines > 1 ? { see: `runs on the ${machines} machines`, ...(twice ? { seeProof: twice.proof[0]! } : {}) } : {}), routes: [],
       });
     }
   }
   return { rows, total, byLevel, ...(mechanism ? { mechanism } : {}) };
 }
 
-/** Ce qu'un acteur atteint, rangé par premier segment de chemin : « /bookings 4 / 4 ». */
+/** Ce qu'un acteur atteint, rangé par premier segment de chemin : “/bookings 4 / 4”. */
 export function reachByResource(p: MapPayload, row: ActorRow, scope?: ArchNode): { name: string; reached: number; of: number; danger: boolean }[] {
   const all = routesOf(p, scope);
   const seg = (e: Entrypoint) => { const path = e.key.split(" ")[1] ?? e.key; const s = path.split("/").filter(Boolean)[0]; return s ? `/${s}` : "/"; };
@@ -113,7 +113,7 @@ export function reachByResource(p: MapPayload, row: ActorRow, scope?: ArchNode):
 
 /** La phrase des cases du haut. */
 export function levelsText(byLevel: Record<string, number>): string {
-  const w: Record<string, string> = { public: "ouverts à tous", authenticated: "avec une session", role: "avec un rôle", signature: "signés", internal: "internes", unknown: "à garde non reconnue" };
+  const w: Record<string, string> = { public: "open to all", authenticated: "with a session", role: "with a role", signature: "signed", internal: "internes", unknown: "with an unrecognized guard" };
   return Object.entries(byLevel).map(([k, n]) => `${n} ${w[k] ?? k}`).join(", ");
 }
 export { plural };
@@ -138,9 +138,9 @@ export function accessMatrix(rows: ActorRow[], only?: string[]) {
   const tables = [...cells.keys()].sort((x, y) => [...cells.get(y)!.values()].filter((k) => k === "write").length - [...cells.get(x)!.values()].filter((k) => k === "write").length || x.localeCompare(y));
   const open = actorsIn.find((a) => a.id === "public");
   const openWrites = open ? tables.filter((t) => cells.get(t)!.get(open.id) === "write") : [];
-  const sentence = !tables.length ? "Aucune table n'est touchée par une route lue."
-    : openWrites.length ? `Sans aucune preuve, un visiteur écrit ${openWrites.slice(0, 3).map((t) => `\`${t}\``).join(", ")}${openWrites.length > 3 ? ` et ${openWrites.length - 3} autres` : ""}.`
-    : `${plural(tables.length, "table est touchée", "tables sont touchées")} par ${plural(actorsIn.length, "acteur", "acteurs")} ; un visiteur n'en écrit aucune.`;
+  const sentence = !tables.length ? "No table is touched by a route read."
+    : openWrites.length ? `With no proof at all, a visitor writes ${openWrites.slice(0, 3).map((t) => `\`${t}\``).join(", ")}${openWrites.length > 3 ? ` and ${openWrites.length - 3} more` : ""}.`
+    : `${plural(tables.length, "table is touched", "tables are touched")} by ${plural(actorsIn.length, "actor", "actors")}; a visitor writes none.`;
   return { actors: actorsIn, tables, cell: (t: string, a: string) => cells.get(t)?.get(a), sentence };
 }
 
@@ -149,15 +149,15 @@ export interface Layer { name: string; what: string; state: "read" | "unread" | 
 export function layers(p: MapPayload, row: ActorRow): Layer[] {
   const mech = p.model.nodes.flatMap((n) => n.facets.trust?.mechanisms ?? [])[0];
   const out: Layer[] = [];
-  out.push(mech ? { name: mech.name, what: "lit la preuve de l'appelant", state: "read", proof: mech.proof, note: "lu" } : { name: "Preuve", what: "ce qui lit la session ou le jeton", state: "unread", note: "non lu" });
-  if (row.group === "system") out.push({ name: "Aucune garde", what: "le système s'appelle lui-même", state: "none", note: "sans objet" });
-  else if (row.id === "public") out.push({ name: "Aucune garde", what: "la route est ouverte à tous", state: "none", note: "voulu ou non, à décider" });
-  else if (row.by) out.push({ name: row.by.name, what: row.group === "outside" ? "vérifie la signature" : "refuse sans preuve valable", state: "read", ...(row.by.proof ? { proof: row.by.proof } : {}), note: "lu" });
-  else out.push({ name: "Garde", what: "la garde de ces routes", state: "unread", note: "non lue" });
+  out.push(mech ? { name: mech.name, what: "reads the caller's proof", state: "read", proof: mech.proof, note: "read" } : { name: "Proof", what: "what reads the session or token", state: "unread", note: "not read" });
+  if (row.group === "system") out.push({ name: "No guard", what: "the system calls itself", state: "none", note: "not applicable" });
+  else if (row.id === "public") out.push({ name: "No guard", what: "the route is open to all", state: "none", note: "intended or not, to decide" });
+  else if (row.by) out.push({ name: row.by.name, what: row.group === "outside" ? "checks the signature" : "refuses without valid proof", state: "read", ...(row.by.proof ? { proof: row.by.proof } : {}), note: "read" });
+  else out.push({ name: "Guard", what: "the guard of these routes", state: "unread", note: "not read" });
   const roles = p.model.nodes.some((n) => (n.facets.entrypoints ?? []).some((e) => e.access?.level === "role"));
-  if (row.id === "role") out.push({ name: "Rôle", what: "vérifié avant d'agir", state: "read", ...(row.by?.proof ? { proof: row.by.proof } : {}), note: "lu" });
-  else if (row.id === "authenticated" && roles && row.see) out.push({ name: "Rôle", what: "jamais vérifié sur certaines routes", state: "absent", ...(row.seeProof ? { proof: row.seeProof } : {}), note: "absent" });
-  if (row.group === "people" && row.id !== "public") out.push({ name: "Sur la donnée", what: "la ligne appartient-elle à l'appelant ?", state: "unread", note: "non lu" });
-  out.push({ name: "Base", what: "règles par ligne", state: "none", note: "aucune lue" });
+  if (row.id === "role") out.push({ name: "Role", what: "checked before acting", state: "read", ...(row.by?.proof ? { proof: row.by.proof } : {}), note: "read" });
+  else if (row.id === "authenticated" && roles && row.see) out.push({ name: "Role", what: "never checked on some routes", state: "absent", ...(row.seeProof ? { proof: row.seeProof } : {}), note: "absent" });
+  if (row.group === "people" && row.id !== "public") out.push({ name: "On the data", what: "does the row belong to the caller?", state: "unread", note: "not read" });
+  out.push({ name: "Database", what: "row-level rules", state: "none", note: "none read" });
   return out;
 }

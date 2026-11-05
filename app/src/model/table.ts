@@ -41,7 +41,7 @@ export function tableView(p: MapPayload, store: ArchNode, entity: Entity, knowle
     .flatMap((x) => x.occurrences.flatMap((o) => o.entrypoints ?? []))).size;
   const watch = p.model.findings.filter((f) => new RegExp(`(^|[^\\w])${name}([^\\w]|$)`).test(f.message) && ["read_outside_tx", "race_read_then_write", "unused_value", "write_then_enqueue"].includes(f.code));
   const sentence = life?.sentence
-    ?? `\`${name}\` est écrite par ${plural(w.length, "point d'entrée", "points d'entrée")} et lue par ${plural(readers, "autre", "autres")}.`;
+    ?? `\`${name}\` is written by ${plural(w.length, "entry point", "entry points")} and read by ${plural(readers, "other", "others")}.`;
   return { store, entity, sentence, writers: w, readers, life, said: said(entity, knowledge), base: guarantees(store, entity), watch };
 }
 
@@ -70,15 +70,15 @@ function guarantees(store: ArchNode, entity: Entity): Guarantee[] {
   const code = (s: string) => `\`${s}\``;
   for (const c of entity.constraints ?? []) {
     const at = out.length;
-    if (c.kind === "unique" && !c.where) out.push({ text: c.fields.length > 1 ? `Une seule ligne par ${c.fields.map(code).join(" et ")}.` : `Deux lignes n'ont jamais le même ${code(c.fields[0]!)}.`, proof: c.proof });
-    if ((c.kind === "unique" || c.kind === "index") && c.where) out.push({ text: `Une seule ligne par ${c.fields.map(code).join(" et ")}, si ${code(c.where)}.`, proof: c.proof });
+    if (c.kind === "unique" && !c.where) out.push({ text: c.fields.length > 1 ? `One row per ${c.fields.map(code).join(" and ")}.` : `No two rows have the same ${code(c.fields[0]!)}.`, proof: c.proof });
+    if ((c.kind === "unique" || c.kind === "index") && c.where) out.push({ text: `One row per ${c.fields.map(code).join(" and ")}, if ${code(c.where)}.`, proof: c.proof });
     if (c.kind === "check" && c.where) out.push({ text: `Toujours vrai : ${code(c.where)}.`, proof: c.proof });
     if (c.kind === "foreign" && c.references) {
       const r = code(c.references);
-      const t = c.onDelete === "Cascade" ? `Supprimée avec sa ligne de ${r}.`
-        : c.onDelete === "SetNull" ? `Gardée sans ${r} quand sa ligne de ${r} est supprimée.`
-        : c.onDelete === "Restrict" || c.onDelete === "NoAction" ? `Sa ligne de ${r} ne peut pas être supprimée tant qu'elle existe.`
-        : `Renvoie toujours à une ligne de ${r}.`;
+      const t = c.onDelete === "Cascade" ? `Deleted with its ${r} row.`
+        : c.onDelete === "SetNull" ? `Kept without ${r} when its ${r} row is deleted.`
+        : c.onDelete === "Restrict" || c.onDelete === "NoAction" ? `Its ${r} row can't be deleted while it exists.`
+        : `Always points to a ${r} row.`;
       out.push({ text: t, proof: c.proof });
     }
     if (c.comment && out[at]) out[at]!.said = c.comment;
@@ -89,9 +89,9 @@ function guarantees(store: ArchNode, entity: Entity): Guarantee[] {
     for (const c of other.constraints ?? []) {
       if (c.kind !== "foreign" || c.references !== entity.name || !c.onDelete) continue;
       const o = code(other.name);
-      const t = c.onDelete === "Cascade" ? `La supprimer supprime ses lignes de ${o}.`
-        : c.onDelete === "SetNull" ? `La supprimer laisse ses lignes de ${o} sans elle.`
-        : c.onDelete === "Restrict" || c.onDelete === "NoAction" ? `Elle ne peut pas être supprimée tant qu'une ligne de ${o} la vise.`
+      const t = c.onDelete === "Cascade" ? `Deleting it deletes its ${o} rows.`
+        : c.onDelete === "SetNull" ? `Deleting it leaves its ${o} rows without it.`
+        : c.onDelete === "Restrict" || c.onDelete === "NoAction" ? `It can't be deleted while a ${o} row points to it.`
         : "";
       if (t) out.push({ text: t, proof: c.proof });
     }

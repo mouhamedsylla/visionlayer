@@ -52,9 +52,9 @@ When agents write the code, four things quietly get lost.
 | A feature | What happens, step by step, when a customer pays? |
 | A function, a line | Which code does exactly that? |
 
-**See what each feature does.** The **Fonctionnalités** screen groups every entry point by resource and draws it as a chain, in code order: reads, refusals, writes, transaction boundaries, replies. One click opens its full flow.
+**See what each feature does.** The **Features** screen groups every entry point by resource and draws it as a chain, in code order: reads, refusals, writes, transaction boundaries, replies. One click opens its full flow.
 
-**Follow a process across routes.** The **Parcours** screen takes a data with states, like a booking, or a queue, and shows what moves it: the client call, the Stripe webhook, the cron job, each with its guards, its reads and writes, and what resumes on a queue. Computed from the code, with no language model.
+**Follow a process across routes.** The **Process** screen takes a data with states, like a booking, or a queue, and shows what moves it: the client call, the Stripe webhook, the cron job, each with its guards, its reads and writes, and what resumes on a queue. Computed from the code, with no language model.
 
 **Read the algorithm when it matters.** A feature is traced in the order the code runs it: the route, the guard, the database read, the write, the message put on a queue. Every step opens its line.
 
@@ -161,7 +161,7 @@ flowchart LR
 
 ## Run it locally
 
-Requires Node 22.5 or later (tested on 24), pnpm and git. Nothing needs to be deployed: everything below runs on your machine. The interface is in French; screen names below are as they appear.
+Requires Node 22.5 or later (tested on 24), pnpm and git. Nothing needs to be deployed: everything below runs on your machine. The interface is in English; screen names below are as they appear.
 
 ```bash
 git clone https://github.com/mouhamedsylla/visionlayer && cd visionlayer
@@ -173,10 +173,10 @@ Open `http://127.0.0.1:4173`. The first start clones four example projects at pi
 
 | Project | Look at |
 |---|---|
-| **Atelier API** | **Parcours** (the process view): `bookings.status`, from the client call to the Stripe webhook and the cron job |
-| **Barbershop Booking System** | **Parcours**: `booking.status`; **Mécanismes**: `PaymentProvider` and its implementations |
-| **Lingua CRM** | **Fonctionnalités**: 125 entry points by resource; **Parcours**: the `automations` queue |
-| **Mini ERP CRM** | **Replays**, **Sessions d'agents**, **Règles et décisions**: a real Muse Code session and what it left |
+| **Atelier API** | **Process**: `bookings.status`, from the client call to the Stripe webhook and the cron job |
+| **Barbershop Booking System** | **Process**: `booking.status`; **Mechanisms**: `PaymentProvider` and its implementations |
+| **Lingua CRM** | **Features**: 125 entry points by resource; **Process**: the `automations` queue |
+| **Mini ERP CRM** | **Replays**, **Agent sessions**, **Rules and decisions**: a real Muse Code session and what it left |
 
 To open your own project, run `pnpm start` and give a folder or a `https://github.com/owner/repo` address. Use `--port 5000` for another port.
 

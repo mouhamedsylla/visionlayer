@@ -24,17 +24,17 @@ export function Projects({ hub }: { hub: Hub }) {
   };
   return (
     <div className="vl pj">
-      <header className="pj__head">{Logo}<div><h1>VisionLayer</h1><p>La carte de ce qui tourne, lue dans le code.{hub.demo ? " Démonstration : choisis un projet, explore-le, pose tes questions à Muse." : ""}</p></div></header>
+      <header className="pj__head">{Logo}<div><h1>VisionLayer</h1><p>The map of what runs, read from the code.{hub.demo ? " Demo: pick a project, explore it, ask Muse your questions." : ""}</p></div></header>
       {!hub.demo && (
         <form className="pj__open" onSubmit={submit}>
-          <label htmlFor="pj-target">Ouvrir un projet</label>
-          <div><input id="pj-target" value={target} onChange={(e) => setTarget(e.target.value)} placeholder="/chemin/du/projet ou https://github.com/propriétaire/dépôt" disabled={busy} autoFocus /><button className="vl-btn vl-btn--primary" disabled={busy || !target.trim()}>{busy ? "Lecture…" : "Ouvrir"}</button></div>
-          <small>Le code est seulement lu : rien n'est installé ni exécuté.</small>
+          <label htmlFor="pj-target">Open a project</label>
+          <div><input id="pj-target" value={target} onChange={(e) => setTarget(e.target.value)} placeholder="/path/to/project or https://github.com/owner/repo" disabled={busy} autoFocus /><button className="vl-btn vl-btn--primary" disabled={busy || !target.trim()}>{busy ? "Lecture…" : "Open"}</button></div>
+          <small>The code is only read: nothing is installed or run.</small>
           {error && <p className="pj__err">{error}</p>}
         </form>
       )}
       {hub.projects.length > 0 && <section className="pj__list">
-        <h2>{hub.demo ? "Projets" : "Projets récents"}</h2>
+        <h2>{hub.demo ? "Projects" : "Recent projects"}</h2>
         {hub.projects.map((p) => <button key={p.id} className="pj__row" onClick={() => open(p.id)}><b>{p.name}</b><span>{p.note ?? p.path ?? ""}</span><i>›</i></button>)}
       </section>}
     </div>

@@ -15,13 +15,13 @@ export function StyleBar({ map }: { map: MapPayload }) {
   const shown = done ? list.filter((s) => confirmed!.includes(s.id)) : list;
   const toggle = (id: string) => setPicked((p) => { const x = new Set(p); x.has(id) ? x.delete(id) : x.add(id); return x; });
   return (
-    <section className="mp__style" aria-label="Style d'architecture">
+    <section className="mp__style" aria-label="Architecture style">
       <div className="mp__stylehead">
-        <span className={`vl-tag ${done ? "vl-tag--live" : "vl-tag--signal"}`}>{done ? "Confirmé" : "Proposé, à confirmer"}</span>
+        <span className={`vl-tag ${done ? "vl-tag--live" : "vl-tag--signal"}`}>{done ? "Confirmed" : "Proposed, to confirm"}</span>
         <b>{styleSentence(shown)}</b>
         <span className="mp__styleact">
-          {done ? <button className="vl-btn vl-btn--secondary vl-btn--sm" onClick={() => setConfirmed(undefined)}>Corriger</button>
-            : <button className="vl-btn vl-btn--primary vl-btn--sm" onClick={() => api.confirmStyle([...picked]).then((r) => setConfirmed(r.confirmed))}>Confirmer</button>}
+          {done ? <button className="vl-btn vl-btn--secondary vl-btn--sm" onClick={() => setConfirmed(undefined)}>Correct</button>
+            : <button className="vl-btn vl-btn--primary vl-btn--sm" onClick={() => api.confirmStyle([...picked]).then((r) => setConfirmed(r.confirmed))}>Confirm</button>}
         </span>
       </div>
       <div className="mp__reasons">
@@ -34,7 +34,7 @@ export function StyleBar({ map }: { map: MapPayload }) {
           </label>
         ))}
       </div>
-      <p className="mp__rhow">Reconnu aux signes lus dans le code, sans modèle. Le style ne décide que de la place des blocs ; la disposition client-serveur est celle de la carte ci-dessous.</p>
+      <p className="mp__rhow">Recognized from signs read in the code, with no model. The style only decides where blocks go; the client-server layout is the map below.</p>
     </section>
   );
 }

@@ -6,7 +6,7 @@ import { Rich } from "../../ui/Rich";
 /** La carte noire de la planche : la phrase et deux gestes à gauche, la liste mono qui la prouve à droite. */
 export function HeroCard({ hero, onMap }: { hero: Hero; onMap: (go?: Hero["go"]) => void }) {
   return (
-    <section className="ovh" aria-label={hero.kind === "unread" ? "Technologie non lue" : "Constat"}>
+    <section className="ovh" aria-label={hero.kind === "unread" ? "Technology not read" : "Finding"}>
       <div className="ovh__main">
         <span className="vl-tag vl-tag--signal ovh__tag">{hero.tag}</span>
         <h2 className="ovh__title">
@@ -15,8 +15,8 @@ export function HeroCard({ hero, onMap }: { hero: Hero; onMap: (go?: Hero["go"])
         </h2>
         {hero.text && <p className="ovh__text"><Rich text={hero.text} /></p>}
         <div className="ovh__actions">
-          {hero.kind === "unread" && <a className="vl-btn vl-btn--light" href="#/packs">{Icon.packs}Écrire le pack avec Muse</a>}
-          <button className="vl-btn vl-btn--ghost-night" onClick={() => onMap(hero.go)}>{hero.kind === "unread" ? "Voir ce qui n'est pas lu" : hero.go?.label ?? "Voir sur la carte"}</button>
+          {hero.kind === "unread" && <a className="vl-btn vl-btn--light" href="#/packs">{Icon.packs}Write the pack with Muse</a>}
+          <button className="vl-btn vl-btn--ghost-night" onClick={() => onMap(hero.go)}>{hero.kind === "unread" ? "See what is not read" : hero.go?.label ?? "See on the map"}</button>
         </div>
       </div>
       <div className="ovh__side">

@@ -3,7 +3,7 @@ import type { ArchNode, KnowledgePayload, MapPayload } from "../api/types";
 /**
  * L'écran Règles et décisions (planche Regles) : ce qui est déclaré, confronté au code. Deux sources, jamais un
  * modèle de langue : les affirmations des agents (`.vision/knowledge/`), ancrées et revérifiées à chaque carte ; et les
- * règles écrites dans un document (une section « Règles » du README), lues telles quelles, sans ancrage.
+ * règles écrites dans un document (une section “Règles” du README), lues telles quelles, sans ancrage.
  */
 
 export type Tone = "ok" | "sg" | "cr" | "q";
@@ -14,12 +14,12 @@ export interface RuleRow {
   evidence: Evidence[]; tests: string[]; note: string; since?: string;
 }
 
-const KINDS: Record<string, string> = { rule: "règle", invariant: "invariant", decision: "décision", guarantee: "garantie", limit: "limite", failure: "panne" };
+const KINDS: Record<string, string> = { rule: "rule", invariant: "invariant", decision: "decision", guarantee: "garantie", limit: "limite", failure: "panne" };
 const STATE: Record<string, [string, Tone]> = {
-  verified: ["Tient", "ok"], current: ["En vigueur", "q"], stale: ["À reconfirmer", "sg"],
-  contradicted: ["Contredite", "cr"], orphan: ["Code introuvable", "sg"], unanchored: ["Sans code", "q"],
+  verified: ["Holds", "ok"], current: ["In force", "q"], stale: ["To reconfirm", "sg"],
+  contradicted: ["Contradicted", "cr"], orphan: ["Code not found", "sg"], unanchored: ["No code", "q"],
 };
-const STATUS: Record<string, string> = { moved: "déplacé, retrouvé à l'identique", candidate: "introuvable à sa place ; un symbole du même nom existe ailleurs", orphan: "introuvable" };
+const STATUS: Record<string, string> = { moved: "moved, found identical", candidate: "not found in place; a symbol with the same name exists elsewhere", orphan: "introuvable" };
 
 export function rules(k?: KnowledgePayload): RuleRow[] {
   const out: RuleRow[] = [];
@@ -28,26 +28,26 @@ export function rules(k?: KnowledgePayload): RuleRow[] {
     const [state, tone] = STATE[claim.state] ?? ["?", "q"];
     const found = claim.anchors.filter((a) => a.at);
     const evidence = claim.anchors.map((a): Evidence => ({
-      what: a.ref.symbol ?? a.ref.marker ?? "le code ancré", path: a.at?.path ?? a.ref.path, line: a.at?.line ?? 0, to: a.at?.endLine ?? 0,
-      ...(a.checkNote ? { note: a.checkNote } : a.status !== "ok" ? { note: STATUS[a.status] } : a.changed ? { note: "le code a changé depuis la déclaration" } : {}),
+      what: a.ref.symbol ?? a.ref.marker ?? "the anchored code", path: a.at?.path ?? a.ref.path, line: a.at?.line ?? 0, to: a.at?.endLine ?? 0,
+      ...(a.checkNote ? { note: a.checkNote } : a.status !== "ok" ? { note: STATUS[a.status] } : a.changed ? { note: "the code changed since the declaration" } : {}),
     }));
     const failed = claim.anchors.find((a) => a.check === "failed");
-    const code = failed?.checkNote ? `Ne tient plus : ${failed.checkNote}.`
-      : !claim.anchors.length ? "Aucun ancrage : rien ne la relie au code."
-      : !found.length ? "Son code est introuvable."
-      : `Ancrée sur ${found.map((a) => a.ref.symbol ?? a.at!.path.split("/").pop()).join(", ")}${claim.anchors.some((a) => a.check === "ok") ? " ; la vérification passe" : ""}${claim.anchors.some((a) => a.changed) ? " ; le code a changé depuis" : ""}.`;
+    const code = failed?.checkNote ? `No longer holds: ${failed.checkNote}.`
+      : !claim.anchors.length ? "No anchor: nothing links it to the code."
+      : !found.length ? "Its code can't be found."
+      : `Anchored on ${found.map((a) => a.ref.symbol ?? a.at!.path.split("/").pop()).join(", ")}${claim.anchors.some((a) => a.check === "ok") ? "; the check passes" : ""}${claim.anchors.some((a) => a.changed) ? "; the code changed since" : ""}.`;
     out.push({
       id: claim.id, text: claim.text, who: "agent", kind: KINDS[claim.type]!, src: { path: claim.file, line: claim.line }, code, state, tone, evidence, tests: claim.tests,
-      note: claim.state === "contradicted" ? "VisionLayer ne tranche pas : la règle ou le code est faux. L'écart va à l'agent du projet."
-        : claim.state === "stale" ? "Le code ancré a changé : un agent doit la reconfirmer ou la corriger."
-        : `Déclarée par un agent dans ${c.name}${claim.reference.date ? `, le ${claim.reference.date.slice(0, 10)}` : ""}${claim.reference.uncommitted ? ", non commitée" : ""}.`,
+      note: claim.state === "contradicted" ? "VisionLayer doesn't decide: the rule or the code is wrong. The gap goes to the project's agent."
+        : claim.state === "stale" ? "The anchored code changed: an agent must reconfirm or correct it."
+        : `Declared by an agent in ${c.name}${claim.reference.date ? `, le ${claim.reference.date.slice(0, 10)}` : ""}${claim.reference.uncommitted ? ", uncommitted" : ""}.`,
       ...(claim.reference.commit ? { since: claim.reference.commit.slice(0, 7) } : {}),
     });
   }
   for (const [i, d] of (k?.documents ?? []).entries()) out.push({
-    id: `doc:${i}`, text: d.text, who: "document", kind: "règle", src: { path: d.path, line: d.line },
-    code: "Écrite dans un document : rien ne la relie au code, rien n'est vérifié.", state: "Dite, non vérifiée", tone: "q", evidence: [], tests: [],
-    note: `Lue dans ${d.path}, section « ${d.section} ». Un agent qui la déclare dans .vision/knowledge/ l'ancre sur le code qui la tient ; elle est alors revérifiée à chaque analyse.`,
+    id: `doc:${i}`, text: d.text, who: "document", kind: "rule", src: { path: d.path, line: d.line },
+    code: "Written in a document: nothing links it to the code, nothing is checked.", state: "Stated, not checked", tone: "q", evidence: [], tests: [],
+    note: `Read in ${d.path}, section “${d.section}”. An agent that declares it in .vision/knowledge/ anchors it on the code that holds it; it is then re-checked at every analysis.`,
   });
   // Les contredites d'abord, puis celles à reconfirmer ; l'ordre de déclaration sinon.
   const rank: Record<Tone, number> = { cr: 0, sg: 1, ok: 2, q: 3 };

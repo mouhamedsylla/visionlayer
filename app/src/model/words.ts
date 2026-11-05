@@ -2,24 +2,24 @@ import type { EdgeKind, FindingCode, NodeRole } from "../api/types";
 
 /** Ce qu'est un bloc, dit comme un ingénieur le dit (C4) : application, service, base de données, file. */
 export const ROLE: Record<NodeRole, string> = {
-  actor: "personne", external: "service extérieur", app: "application", service: "service", function: "fonction",
-  worker: "worker", job: "tâche", store: "base de données", channel: "file de messages", binary: "programme",
-  managed: "service géré", module: "module", layer: "couche", adapter: "adaptateur",
+  actor: "person", external: "external service", app: "application", service: "service", function: "function",
+  worker: "worker", job: "task", store: "database", channel: "message queue", binary: "program",
+  managed: "managed service", module: "module", layer: "layer", adapter: "adapter",
 };
 
-/** Le verbe d'un lien, conjugué au nombre de ses lignes : « 21 écritures », « 8 appels ». */
+/** Le verbe d'un lien, conjugué au nombre de ses lignes : “21 écritures”, “8 appels”. */
 export function edgeCount(kind: EdgeKind, n: number): string {
   const word: Record<EdgeKind, [string, string]> = {
-    call: ["appel", "appels"], read: ["lecture", "lectures"], write: ["écriture", "écritures"], message: ["mise en file", "mises en file"],
-    request: ["appel", "appels"], trigger: ["déclenchement", "déclenchements"], use: ["import", "imports"], deploy: ["déploiement", "déploiements"],
+    call: ["call", "calls"], read: ["lecture", "lectures"], write: ["write", "writes"], message: ["enqueue", "enqueues"],
+    request: ["call", "calls"], trigger: ["trigger", "triggers"], use: ["import", "imports"], deploy: ["deployment", "deployments"],
   };
   return `${n} ${word[kind][n > 1 ? 1 : 0]}`;
 }
 
-/** Le verbe d'un lien dans une phrase : « API écrit dans postgres ». */
+/** Le verbe d'un lien dans une phrase : “API écrit dans postgres”. */
 export const EDGE_VERB: Record<EdgeKind, string> = {
-  call: "appelle", read: "lit", write: "écrit dans", message: "met en file sur", request: "appelle",
-  trigger: "réveille", use: "emploie", deploy: "déploie",
+  call: "calls", read: "reads", write: "writes into", message: "enqueues sur", request: "calls",
+  trigger: "wakes", use: "emploie", deploy: "deploys",
 };
 
 /** L'écran qui répond à un constat : où aller le comprendre. */
@@ -39,11 +39,11 @@ export function plural(n: number, one: string, many: string): string {
   return `${n} ${n > 1 ? many : one}`;
 }
 
-/** « il y a 4 min », « il y a 2 h », à partir d'une date ISO. */
+/** “il y a 4 min”, “il y a 2 h”, à partir d'une date ISO. */
 export function since(iso: string, now = Date.now()): string {
   const s = Math.max(0, Math.round((now - Date.parse(iso)) / 1000));
-  if (s < 60) return "à l'instant";
-  if (s < 3600) return `il y a ${Math.round(s / 60)} min`;
-  if (s < 86400) return `il y a ${Math.round(s / 3600)} h`;
-  return `il y a ${Math.round(s / 86400)} j`;
+  if (s < 60) return "just now";
+  if (s < 3600) return `${Math.round(s / 60)} min ago`;
+  if (s < 86400) return `${Math.round(s / 3600)} h ago`;
+  return `${Math.round(s / 86400)} d ago`;
 }

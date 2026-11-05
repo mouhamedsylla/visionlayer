@@ -28,13 +28,13 @@ export function aggregate(edges: ArchEdge[]): MapLink[] {
   return [...by.values()];
 }
 
-/** Les mots d'une flèche : « 21 écritures », « 8 appels », « 6 mises en file ». */
+/** Les mots d'une flèche : “21 écritures”, “8 appels”, “6 mises en file”. */
 export function countLabel(kind: EdgeKind, n: number): string {
   const w: Record<EdgeKind, [string, string]> = {
-    call: ["appel", "appels"], request: ["appel", "appels"], read: ["lecture", "lectures"], write: ["écriture", "écritures"],
-    message: ["mise en file", "mises en file"], trigger: ["déclenche", "déclenche"], use: ["import, sans pack", "imports, sans pack"], deploy: ["déploiement", "déploiements"],
+    call: ["call", "calls"], request: ["call", "calls"], read: ["lecture", "lectures"], write: ["write", "writes"],
+    message: ["enqueue", "enqueues"], trigger: ["triggers", "triggers"], use: ["import, no pack", "imports, no pack"], deploy: ["deployment", "deployments"],
   };
-  return kind === "trigger" ? "déclenche" : `${n} ${w[kind][n > 1 ? 1 : 0]}`;
+  return kind === "trigger" ? "triggers" : `${n} ${w[kind][n > 1 ? 1 : 0]}`;
 }
 
 export function mapGrid(p: MapPayload): MapGrid {
@@ -104,15 +104,15 @@ export function blockLines(n: ArchNode, tech: MapPayload["tech"]): string[] {
   const routes = ep.filter((e) => e.kind === "http" || e.kind === "rpc");
   if (routes.length) {
     const guarded = routes.filter((e) => e.access && !["public", "unknown"].includes(e.access.level)).length;
-    out.push(`${routes.length} route${routes.length > 1 ? "s" : ""}${guarded ? `, ${guarded} gardée${guarded > 1 ? "s" : ""}` : ""}`);
+    out.push(`${routes.length} route${routes.length > 1 ? "s" : ""}${guarded ? `, ${guarded} guarded` : ""}`);
   }
   const schedules = ep.filter((e) => e.kind === "schedule").length;
-  if (schedules) out.push(`${schedules} tâche${schedules > 1 ? "s" : ""} planifiée${schedules > 1 ? "s" : ""}`);
+  if (schedules) out.push(`${schedules} scheduled task${schedules > 1 ? "s" : ""}`);
   const consumes = ep.filter((e) => e.kind === "message" || e.kind === "event").map((e) => e.key);
-  if (consumes.length) out.push(`consomme ${consumes.join(", ")}`);
+  if (consumes.length) out.push(`consumes ${consumes.join(", ")}`);
   const topics = n.facets.channel?.topics.map((t) => t.name) ?? [];
   if (topics.length) out.push(`file${topics.length > 1 ? "s" : ""} ${topics.join(", ")}`);
-  if (isUnread(n)) out.push(n.subtitle!.replace(/ : non lue?$/, ""));
+  if (isUnread(n)) out.push(n.subtitle!.replace(/ : not read?$/, ""));
   return out;
 }
 
@@ -123,11 +123,11 @@ export function tableGroups(store: ArchNode, selected: ArchNode | undefined, lin
     const w = links.find((l) => l.from === selected.id && l.to === store.id && l.kind === "write")?.entities ?? [];
     const r = links.find((l) => l.from === selected.id && l.to === store.id && l.kind === "read")?.entities ?? [];
     const groups = [
-      ...(w.length ? [{ label: `Écrite${w.length > 1 ? "s" : ""} par ${selected.name}`, cls: "w" as const, tables: w }] : []),
-      ...(r.length ? [{ label: `Lue${r.length > 1 ? "s" : ""} par ${selected.name}`, cls: "r" as const, tables: r }] : []),
+      ...(w.length ? [{ label: `Written by ${selected.name}`, cls: "w" as const, tables: w }] : []),
+      ...(r.length ? [{ label: `Read by ${selected.name}`, cls: "r" as const, tables: r }] : []),
     ];
     if (groups.length) return groups;
   }
   if (!all.length) return [];
-  return [{ label: "Tables", cls: "q", tables: all.length > 7 ? [...all.slice(0, 6), `…${all.length - 6} autres`] : all }];
+  return [{ label: "Tables", cls: "q", tables: all.length > 7 ? [...all.slice(0, 6), `…${all.length - 6} more`] : all }];
 }

@@ -63,10 +63,10 @@ export function ZoomPan({ children, minWidth = 960 }: { children: ReactNode; min
       onPointerCancel={() => { drag.current = null; }}>
       <div className="zp__inner" ref={inner} style={{ minWidth, transform: `translate(${t.x}px, ${t.y}px) scale(${t.k})` }}>{children}</div>
       <div className="zp__tools" onPointerDown={(e) => e.stopPropagation()}>
-        <button aria-label="Dézoomer" onClick={() => zoomAt(1 / 1.25)}>−</button>
-        <button className="zp__pct" title="Taille réelle" onClick={() => zoomAt(1 / t.k)}>{Math.round(t.k * 100)} %</button>
-        <button aria-label="Zoomer" onClick={() => zoomAt(1.25)}>+</button>
-        <button onClick={fit}>Ajuster</button>
+        <button aria-label="Zoom out" onClick={() => zoomAt(1 / 1.25)}>−</button>
+        <button className="zp__pct" title="Actual size" onClick={() => zoomAt(1 / t.k)}>{Math.round(t.k * 100)} %</button>
+        <button aria-label="Zoom in" onClick={() => zoomAt(1.25)}>+</button>
+        <button onClick={fit}>Fit</button>
       </div>
     </div>
   );

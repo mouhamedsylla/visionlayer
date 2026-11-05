@@ -10,10 +10,10 @@ import { Links } from "../features/FeaturesScreen";
 import "../features/features.css";
 import "./process.css";
 
-const WHO: Record<TriggerKind, string> = { client: "client", external: "service extérieur", clock: "horloge", queue: "file", none: "non lu" };
+const WHO: Record<TriggerKind, string> = { client: "client", external: "external service", clock: "clock", queue: "queue", none: "not read" };
 
 function Chain({ step }: { step: ProcStep }) {
-  if (!step.chain.length) return <span className="ft-r__empty">aucun effet lu</span>;
+  if (!step.chain.length) return <span className="ft-r__empty">no effect read</span>;
   return <span className="ft-r__chain">{chainRuns(step.chain).map((run, i) => (
     <Fragment key={i}>{i > 0 && <i className="ft-ar" />}{run.tx ? <span className="ft-tx"><small>transaction</small><Links links={run.links} /></span> : <Links links={run.links} />}</Fragment>
   ))}</span>;
@@ -27,7 +27,7 @@ function Step({ step, openFlow }: { step: ProcStep; openFlow: (id: string) => vo
       <i className="ft-ar pc-step__ar" />
       <div className={`pc-card${e ? " is-link" : ""}`} onClick={e ? () => openFlow(e.id) : undefined} role={e ? "button" : undefined}>
         <div className="pc-card__head">
-          {e ? <Entry e={e} /> : <code>{step.fns[0] ?? "fonction"}</code>}
+          {e ? <Entry e={e} /> : <code>{step.fns[0] ?? "function"}</code>}
           {step.fns.length > 0 && e && <code className="pc-card__fn">{step.fns.join(", ")}()</code>}
           <span className="pc-card__ref" onClick={(ev) => ev.stopPropagation()}><Ref proof={step.proof} /></span>
         </div>
@@ -35,7 +35,7 @@ function Step({ step, openFlow }: { step: ProcStep; openFlow: (id: string) => vo
         <Chain step={step} />
         {step.then.map((t) => t.steps.map((c) => (
           <div key={`${t.topic}/${c.id}`} className="pc-then" onClick={(ev) => { ev.stopPropagation(); if (c.entry) openFlow(c.entry.id); }}>
-            <span className="pc-then__head"><span className="ft-c ft-c--message"><em>file</em> {t.topic}</span><i className="ft-ar" /><code>{c.entry?.handler?.name && c.entry.handler.name !== "fonction anonyme" ? c.entry.handler.name : "consommateur"}</code></span>
+            <span className="pc-then__head"><span className="ft-c ft-c--message"><em>queue</em> {t.topic}</span><i className="ft-ar" /><code>{c.entry?.handler?.name && c.entry.handler.name !== "anonymous function" ? c.entry.handler.name : "consumer"}</code></span>
             <Chain step={c} />
           </div>
         )))}
@@ -48,7 +48,7 @@ function Stage({ stage, openFlow }: { stage: ProcStage; openFlow: (id: string) =
   return (
     <section className={`pc-stage pc-stage--${stage.tone}`}>
       <div className="pc-stage__steps">
-        {stage.steps.length ? stage.steps.map((s) => <Step key={s.id} step={s} openFlow={openFlow} />) : <p className="ft-r__empty">aucun point d'entrée lu</p>}
+        {stage.steps.length ? stage.steps.map((s) => <Step key={s.id} step={s} openFlow={openFlow} />) : <p className="ft-r__empty">no entry point read</p>}
       </div>
       <div className="pc-bracket"><i /></div>
       <div className="pc-stage__state">
@@ -75,19 +75,19 @@ export function ProcessScreen({ map, item, open, openFlow, openTable }: { map: M
   const states = list.filter((x) => x.kind === "state"), files = list.filter((x) => x.kind === "queue");
   return (
     <div className="page pc">
-      <h1 className="page__title">Parcours</h1>
-      {!cur ? <section className="vl-card pc__none"><b>Aucun parcours lu</b><p>Ni champ d'état écrit par le code, ni file : les routes de ce projet se lisent une à une dans Fonctionnalités.</p></section> : (
+      <h1 className="page__title">Process</h1>
+      {!cur ? <section className="vl-card pc__none"><b>No process read</b><p>No state field written by the code, no queue: this project's routes read one by one in Features.</p></section> : (
         <div className="pc__grid">
-          <nav className="pc__list" aria-label="Parcours">
-            {states.length > 0 && <span className="vl-label">Données à états</span>}
+          <nav className="pc__list" aria-label="Process">
+            {states.length > 0 && <span className="vl-label">Stateful data</span>}
             {states.map((x) => <Item key={x.id} x={x} on={x.id === cur.id} open={() => open(x.id)} />)}
-            {files.length > 0 && <span className="vl-label">Files</span>}
+            {files.length > 0 && <span className="vl-label">Queues</span>}
             {files.map((x) => <Item key={x.id} x={x} on={x.id === cur.id} open={() => open(x.id)} />)}
           </nav>
-          <Rep name={cur.kind === "state" ? `${cur.name}.${cur.sub}` : `File ${cur.name}`} sentence={<Rich text={cur.sentence} />} {...(cur.table ? { action: <button className="vl-btn vl-btn--secondary vl-btn--sm" onClick={() => openTable(cur.table!)}>Table {cur.name}</button> } : {})} flush>
-            <div className="pc-lanes"><span>Déclencheur</span><span>Point d'entrée, ce qu'il fait</span><span>{cur.kind === "state" ? "État écrit" : "Rôle"}</span></div>
+          <Rep name={cur.kind === "state" ? `${cur.name}.${cur.sub}` : `Queue ${cur.name}`} sentence={<Rich text={cur.sentence} />} {...(cur.table ? { action: <button className="vl-btn vl-btn--secondary vl-btn--sm" onClick={() => openTable(cur.table!)}>Table {cur.name}</button> } : {})} flush>
+            <div className="pc-lanes"><span>Trigger</span><span>Entry point, what it does</span><span>{cur.kind === "state" ? "State written" : "Role"}</span></div>
             {cur.stages.map((s) => <Stage key={s.id} stage={s} openFlow={openFlow} />)}
-            {cur.never.length > 0 && <div className="pc-never"><b>Jamais écrit par le code :</b> {cur.never.map((v) => <State key={v} value={v} never />)}</div>}
+            {cur.never.length > 0 && <div className="pc-never"><b>Never written by the code:</b> {cur.never.map((v) => <State key={v} value={v} never />)}</div>}
           </Rep>
         </div>
       )}

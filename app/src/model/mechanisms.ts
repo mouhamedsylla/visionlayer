@@ -30,10 +30,10 @@ export function contracts(map: MapPayload): ContractView[] {
 }
 
 function sentenceOf(name: string, impls: ImplRow[], consumers: { name: string }[], config?: string[]): string {
-  const who = consumers.length ? `${consumers.map((k) => k.name).slice(0, 2).join(" et ")}${consumers.length > 2 ? ` et ${consumers.length - 2} autres` : ""} ${consumers.length > 1 ? "le reçoivent" : "le reçoit"} du conteneur` : "aucune classe ne le reçoit d'un conteneur, d'après ce qui est lu";
+  const who = consumers.length ? `${consumers.map((k) => k.name).slice(0, 2).join(" and ")}${consumers.length > 2 ? ` and ${consumers.length - 2} more` : ""} ${consumers.length > 1 ? "receive it" : "receives it"} from the container` : "no class receives it from a container, from what is read";
   const bound = impls.filter((i) => i.bound.length).length;
-  const how = config?.length ? `, choisie selon ${config.join(", ")}` : bound ? `, ${bound === impls.length ? "chacune branchée" : `${bound} branchées`} par le conteneur` : "";
-  return `${name} a ${plural(impls.length, "implémentation", "implémentations")}${how} ; ${who}.`;
+  const how = config?.length ? `, picked by ${config.join(", ")}` : bound ? `, ${bound === impls.length ? "each bound" : `${bound} bound`} by the container` : "";
+  return `${name} has ${plural(impls.length, "implementation", "implementations")}${how}; ${who}.`;
 }
 
 type Entry = NonNullable<ArchNode["facets"]["entrypoints"]>[number];
@@ -49,7 +49,7 @@ export interface QueueView {
   consumers: { node: ArchNode; entry: Entry; effects: { verb: string; what: string }[]; refuses: string[] }[];
 }
 
-const VERB: Record<string, string> = { read: "lit", write: "écrit", request: "appelle", call: "appelle", message: "met en file" };
+const VERB: Record<string, string> = { read: "reads", write: "writes", request: "calls", call: "calls", message: "enqueues" };
 
 export function queues(map: MapPayload): QueueView[] {
   const out: QueueView[] = [];
@@ -65,7 +65,7 @@ export function queues(map: MapPayload): QueueView[] {
       .map(({ node: n, entry }) => {
         const own = map.model.edges.filter((e) => e.from === n.id && VERB[e.kind]);
         const effects = own.map((e) => ({ verb: VERB[e.kind]!, what: e.target?.entity ?? e.target?.topic ?? name(e.to) }));
-        const refuses = [...new Set((entry.flow ?? []).filter((s) => s.kind === "refuse").map((s) => s.name ?? s.code ?? "refus"))];
+        const refuses = [...new Set((entry.flow ?? []).filter((s) => s.kind === "refuse").map((s) => s.name ?? s.code ?? "refused"))];
         return { node: n, entry, effects, refuses };
       });
     out.push({ id: `${node.id}/${t.name}`, node, topic: t.name, proof: t.proof, producers, consumers });
@@ -95,7 +95,7 @@ export function outages(map: MapPayload): OutageView[] {
     const froms = [...new Set([...edges.map(other), ...named])];
     const dependents = froms.map((id) => {
       const mine = edges.filter((e) => other(e) === id);
-      const kinds = [...new Set(mine.map((e) => (e.kind === "trigger" ? "la consomme" : VERB[e.kind] ?? e.kind)))].join(", ") || "s'y connecte";
+      const kinds = [...new Set(mine.map((e) => (e.kind === "trigger" ? "consumes it" : VERB[e.kind] ?? e.kind)))].join(", ") || "s'y connecte";
       const entries = [...new Set(mine.flatMap((e) => (e.kind === "trigger" && e.target?.entrypoint ? [e.target.entrypoint] : e.occurrences.flatMap((o) => o.entrypoints ?? []))))].map((x) => findEntry(map, x)?.entry.key ?? x);
       return { node: byId.get(id)!, how: kinds, entries };
     }).filter((d) => d.node);

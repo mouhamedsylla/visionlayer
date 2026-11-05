@@ -14,19 +14,19 @@ test("interface, Carte : la grille de la planche 03 se déduit des rôles et du 
   assert.deepEqual(grid.middle.map((m) => m.node.name), ["api", "redis", "worker", "Serveur SMTP", "Resend"]);
   // Ce qui appelle l'API : l'app web, et Stripe par son webhook, avec le retour vers Stripe.
   const api = grid.middle[0]!;
-  assert.deepEqual(api.rows.map((r) => `${r.left?.name} ${r.leftArrows.map((a) => `${a.back ? "<" : ">"}${a.label}`).join(" ")}`), ["web >8 appels", "Stripe >1 appel <5 appels"]);
-  assert.equal(api.down?.label, "6 mises en file");
+  assert.deepEqual(api.rows.map((r) => `${r.left?.name} ${r.leftArrows.map((a) => `${a.back ? "<" : ">"}${a.label}`).join(" ")}`), ["web >8 calls", "Stripe >1 call <5 calls"]);
+  assert.equal(api.down?.label, "6 enqueues");
   assert.deepEqual(grid.right.map((n) => n.name), ["postgres"]);
   // Postgres montre les tables du point de vue du bloc choisi.
   const groups = tableGroups(grid.right[0]!, api.node, grid.links);
-  assert.deepEqual(groups.map((g) => `${g.label} ${g.tables.length}`), ["Écrites par api 9", "Lues par api 7"]);
+  assert.deepEqual(groups.map((g) => `${g.label} ${g.tables.length}`), ["Written by api 9", "Read by api 7"]);
 });
 
-test("interface, Vue d'ensemble : chaque nombre vient de la carte", async () => {
+test("interface, Overview : chaque nombre vient de la carte", async () => {
   const map = await new MapSource(ATELIER).refresh();
   const stats = overviewStats(map, { total: 0, contradicted: 0 });
-  assert.deepEqual(stats.map((s) => `${s.label} ${s.value}${s.unit ? ` ${s.unit}` : ""}`), ["Déployables 5", "Points d'entrée 15 routes", "Tables 14", "Tâches planifiées 3 × 2", "Règles déclarées 0"]);
-  assert.equal(stats[3]!.note, "Chacune tourne 2 fois");
+  assert.deepEqual(stats.map((s) => `${s.label} ${s.value}${s.unit ? ` ${s.unit}` : ""}`), ["Deployables 5", "Entry points 15 routes", "Tables 14", "Scheduled tasks 3 × 2", "Declared rules 0"]);
+  assert.equal(stats[3]!.note, "Each runs 2 times");
   const grid = coverage(map);
   assert.equal(grid.total, 67);
   assert.ok(grid.folders.some((f) => f.name === "auth") && grid.folders.some((f) => f.name === "bookings"), grid.folders.map((f) => f.name).join(", "));

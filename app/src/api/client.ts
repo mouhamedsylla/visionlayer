@@ -48,7 +48,7 @@ export const api = {
         if (m.error) throw new Error(m.error);
         if (m.answer) return m.answer;
       }
-      if (done) throw new Error("réponse interrompue");
+      if (done) throw new Error("reply interrupted");
     }
   },
   replays: () => get<Replay[]>("/api/replays"),
